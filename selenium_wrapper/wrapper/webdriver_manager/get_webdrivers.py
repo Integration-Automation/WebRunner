@@ -1,5 +1,3 @@
-import sys
-
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.firefox.service import Service
@@ -12,6 +10,12 @@ from webdriver_manager.opera import OperaDriverManager
 from webdriver_manager.microsoft import IEDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriver_manager.utils import ChromeType
+
+from selenium_wrapper.utils.exception.exceptions import WebDriverException
+from selenium_wrapper.utils.exception.exceptions import WebDriverNotFoundException
+
+from selenium_wrapper.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
+from selenium_wrapper.utils.exception.exception_tag import selenium_wrapper_opera_path_error
 
 webdriver_manager_dict = {
     "chrome": ChromeDriverManager,
@@ -45,8 +49,12 @@ webdriver_dict = {
 def get_webdriver(web_driver_name: str, opera_path: str = None, **kwargs):
     web_driver_name = str(web_driver_name).lower()
     webdriver_value = webdriver_dict.get(web_driver_name)
+    if webdriver_value is None:
+        raise WebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
     webdriver_install_manager = webdriver_manager_dict.get(web_driver_name)
     if web_driver_name in ["opera"]:
+        if opera_path is None:
+            raise WebDriverException(selenium_wrapper_opera_path_error)
         opera_options = webdriver.ChromeOptions()
         opera_options.add_argument('allow-elevated-browser')
         opera_options.binary_location = opera_path
