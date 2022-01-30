@@ -1,3 +1,3 @@
-from selenium_wrapper.wrapper.webdriver_manager.get_webdrivers import get_webdriver
-from selenium_wrapper.wrapper.webdriver_manager.close_webdriver import close_driver
-
+from selenium_wrapper.wrapper.webdriver_manager.get_webdriver.get_webdrivers import get_webdriver
+from selenium_wrapper.wrapper.webdriver_manager.close_webdriver.close_webdriver import close_driver
+from selenium_wrapper.wrapper.webdriver_manager.webdriver_options.webdriver_with_options import set_webdriver_options

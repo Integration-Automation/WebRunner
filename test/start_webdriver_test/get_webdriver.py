@@ -1,12 +1,13 @@
 import time
 from selenium_wrapper import get_webdriver
 from selenium_wrapper import close_driver
+from selenium_wrapper import set_webdriver_options
 
 
 if __name__ == "__main__":
     driver = get_webdriver(
-        "opera",
-        r"C:\Users\JE-Chen\.wdm\drivers\operadriver\win64\v.97.0.4692.71\operadriver_win64/"
+        "chrome",
+        set_webdriver_options("chrome", key_and_vale_dict={"headless": True})
     )
     driver.get("http://www.python.org")
     print(driver.title)

@@ -4,3 +4,7 @@ class WebDriverException(Exception):
 
 class WebDriverNotFoundException(Exception):
     pass
+
+
+class OptionsWrongTypeException(Exception):
+    pass
