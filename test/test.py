@@ -8,5 +8,4 @@ if __name__ == "__main__":
     )
     driver.get("http://www.python.org")
     print(driver.title)
-    time.sleep(3)
     close_driver(driver)

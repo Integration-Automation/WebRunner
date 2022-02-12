@@ -8,3 +8,7 @@ class WebDriverNotFoundException(Exception):
 
 class OptionsWrongTypeException(Exception):
     pass
+
+
+class ArgumentWrongTypeException(Exception):
+    pass
