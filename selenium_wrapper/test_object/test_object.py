@@ -14,14 +14,15 @@ type_list = [
 class TestObject(object):
 
     def __init__(self, test_object_name: str, object_type=None):
-        self.object_type = object_type
+        self.test_object_type = object_type
         self.test_object_name: str = test_object_name
-        if self.object_type not in type_list:
+        if self.test_object_type not in type_list:
             raise TypeError
 
 
 def create_test_object(object_type, test_object_name: str):
     return TestObject(object_type, test_object_name)
+
 
 def get_test_object_type_list():
     return type_list
