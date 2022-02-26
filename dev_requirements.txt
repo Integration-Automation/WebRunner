@@ -1,4 +1,4 @@
-selenium
 wheel
 twine
 sphinx
+selenium_wrapper
