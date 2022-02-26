@@ -1,7 +1,7 @@
 from selenium_wrapper import get_webdriver
 
 if __name__ == "__main__":
-    driver_wrapper = get_webdriver("firefox")
+    driver_wrapper = get_webdriver("edge")
     driver = driver_wrapper.webdriver
     driver.get("http://www.python.org")
     print(driver.title)

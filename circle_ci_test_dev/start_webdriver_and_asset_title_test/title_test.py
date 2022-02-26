@@ -1,6 +1,6 @@
 from selenium_wrapper import get_webdriver
 
-firefox_webdriver_wrapper = get_webdriver("firefox")
+firefox_webdriver_wrapper = get_webdriver("edge")
 
 firefox_webdriver = firefox_webdriver_wrapper.webdriver
 

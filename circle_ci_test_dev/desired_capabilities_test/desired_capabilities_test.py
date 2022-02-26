@@ -8,4 +8,4 @@ print(get_desired_capabilities_keys())
 for keys in get_desired_capabilities_keys():
     print(get_desired_capabilities(keys))
 
-driver_wrapper = get_webdriver("firefox", capabilities=get_desired_capabilities("firefox"))
+driver_wrapper = get_webdriver("edge", capabilities=get_desired_capabilities("firefox"))
