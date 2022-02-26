@@ -59,6 +59,7 @@ webdriver_dict = {
 class WebdriverWrapper(object):
 
     def __init__(self, webdriver_name: str, opera_path: str = None, **kwargs):
+        self.webdriver_name = webdriver_name
         self.webdriver = None
         self.current_webdriver_list = []
         self.set_driver(webdriver_name, opera_path, **kwargs)
@@ -89,7 +90,7 @@ class WebdriverWrapper(object):
         self.webdriver.get(url)
 
     def set_webdriver_options_capability(self, key_and_vale_dict: dict):
-        set_webdriver_options_capability_wrapper(self.webdriver, key_and_vale_dict)
+        set_webdriver_options_capability_wrapper(self.webdriver_name, key_and_vale_dict)
 
     def find_element(self, test_object: TestObject):
         return find_element_wrapper(self.webdriver, test_object)
