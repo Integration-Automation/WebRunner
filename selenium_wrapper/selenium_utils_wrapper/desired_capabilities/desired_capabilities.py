@@ -12,8 +12,10 @@ desired_capabilities_dict = {
     "safari": DesiredCapabilities.SAFARI,
 }
 
+
 def get_desired_capabilities_keys():
     return desired_capabilities_dict.keys()
+
 
 def get_desired_capabilities(webdriver_name: str):
     desired_capabilities = desired_capabilities_dict.get(webdriver_name)

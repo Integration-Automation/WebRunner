@@ -17,7 +17,15 @@ from selenium_wrapper.utils.exception.exceptions import WebDriverNotFoundExcepti
 from selenium_wrapper.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
 from selenium_wrapper.utils.exception.exception_tag import selenium_wrapper_opera_path_error
 
+from selenium_wrapper.selenium_webdrive_wrapper.webdriver_quit_wrapper import quit_wrapper
+
 from selenium_wrapper.test_object.test_object import TestObject
+
+from selenium_wrapper.selenium_webdrive_wrapper.webdriver_find_wrapper import find_element_wrapper
+from selenium_wrapper.selenium_webdrive_wrapper.webdriver_find_wrapper import find_elements_wrapper
+
+from selenium_wrapper.selenium_webdrive_wrapper.webdriver_with_options import set_webdriver_options_capability_wrapper
+
 
 webdriver_manager_dict = {
     "chrome": ChromeDriverManager,
@@ -50,44 +58,44 @@ webdriver_dict = {
 
 class WebdriverWrapper(object):
 
-    def __init__(self, web_driver_name: str, opera_path: str = None, **kwargs):
+    def __init__(self, webdriver_name: str, opera_path: str = None, **kwargs):
         self.webdriver = None
-        self.current_webdriver = []
-        self.set_driver(web_driver_name, opera_path, **kwargs)
+        self.current_webdriver_list = []
+        self.set_driver(webdriver_name, opera_path, **kwargs)
 
-    def set_driver(self, web_driver_name: str, opera_path: str = None, **kwargs):
-        web_driver_name = str(web_driver_name).lower()
-        webdriver_value = webdriver_dict.get(web_driver_name)
+    def set_driver(self, webdriver_name: str, opera_path: str = None, **kwargs):
+        webdriver_name = str(webdriver_name).lower()
+        webdriver_value = webdriver_dict.get(webdriver_name)
         if webdriver_value is None:
             raise WebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
-        webdriver_install_manager = webdriver_manager_dict.get(web_driver_name)
-        if web_driver_name in ["opera"]:
+        webdriver_install_manager = webdriver_manager_dict.get(webdriver_name)
+        if webdriver_name in ["opera"]:
             if opera_path is None:
                 raise WebDriverException(selenium_wrapper_opera_path_error)
             opera_options = webdriver.ChromeOptions()
             opera_options.add_argument('allow-elevated-browser')
             opera_options.binary_location = opera_path
             self.webdriver = webdriver_value(
-                executable_path=webdriver_manager_dict.get(web_driver_name)().install(), options=opera_options, **kwargs
+                executable_path=webdriver_manager_dict.get(webdriver_name)().install(), options=opera_options, **kwargs
             )
         else:
-            webdriver_service = webdriver_service_dict.get(web_driver_name)(
+            webdriver_service = webdriver_service_dict.get(webdriver_name)(
                 webdriver_install_manager().install(),
-                **kwargs
             )
             self.webdriver = webdriver_value(service=webdriver_service, **kwargs)
-        self.current_webdriver.append(self.webdriver)
+        self.current_webdriver_list.append(self.webdriver)
 
     def open_browser(self, url: str):
         self.webdriver.get(url)
 
+    def set_webdriver_options_capability(self, key_and_vale_dict: dict):
+        set_webdriver_options_capability_wrapper(self.webdriver, key_and_vale_dict)
+
     def find_element(self, test_object: TestObject):
-        return self.webdriver.find_element(test_object.test_object_type, test_object.test_object_name)
+        return find_element_wrapper(self.webdriver, test_object)
 
     def find_elements(self, test_object: TestObject):
-        return self.webdriver.find_elements(test_object.test_object_type, test_object.test_object_name)
+        return find_elements_wrapper(self.webdriver, test_object)
 
     def quit(self):
-        for not_closed_webdriver in self.current_webdriver:
-            not_closed_webdriver.close()
-        self.webdriver.quit()
+        quit_wrapper(self.webdriver, self.current_webdriver_list)

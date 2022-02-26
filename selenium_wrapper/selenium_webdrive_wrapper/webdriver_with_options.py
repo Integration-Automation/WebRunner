@@ -22,15 +22,16 @@ selenium_options_dict = {
 }
 
 
-def set_webdriver_options_argument(webdriver_options, argument_iterable):
-    for i in argument_iterable:
+def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list, set]):
+    webdriver_options = selenium_options_dict.get(webdriver_name)()
+    for i in range(len(argument_iterable)):
         if type(argument_iterable[i]) != str:
             raise ArgumentWrongTypeException(selenium_wrapper_set_argument_error)
         webdriver_options.add_argument(argument_iterable[i])
     return webdriver_options
 
 
-def set_webdriver_options(webdriver_name: str, key_and_vale_dict: dict):
+def set_webdriver_options_capability_wrapper(webdriver_name: str, key_and_vale_dict: dict):
     webdriver_options = selenium_options_dict.get(webdriver_name)()
     if webdriver_options is None:
         raise WebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
