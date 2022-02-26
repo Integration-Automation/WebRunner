@@ -1,1 +1,1 @@
-selenium_wrapper
+je_selenium_wrapper
