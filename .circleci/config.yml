@@ -1,0 +1,58 @@
+version: 2.1
+
+orbs:
+  windows: circleci/windows@2.4.1
+
+jobs:
+  build-and-test-windows-dev:
+    executor:
+      name: windows/default
+      shell: powershell.exe
+
+    steps:
+      - checkout
+      # upgrade
+      - run:
+          command: pip install --upgrade --user pip setuptools wheel
+          name: pip install --upgrade --user pip setuptools wheel
+      # pip require package
+      - run:
+          command: pip install --user -r dev_requirements.txt
+          name: pip dev_requirements.txt
+      # desired_capabilities test
+      - run:
+          command: python ./circle_ci_test_dev/desired_capabilities_test/desired_capabilities_test.py
+          name: desired_capabilities_test
+      # find_and_click test
+      - run:
+          command: python ./circle_ci_test_dev/find_and_click_test/find_and_click_test.py
+          name: find_and_click_test
+      # multi_driver test
+      - run:
+          command: python ./circle_ci_test_dev/multi_driver_test/multi_driver_test.py
+          name: multi_driver test
+      # start_webdriver_and_asset_title test
+      - run:
+          command: python ./circle_ci_test_dev/start_webdriver_and_asset_title_test/title_test.py
+          name: start_webdriver_and_asset_title test
+      # get_webdriver test
+      - run:
+          command: python ./circle_ci_test_dev/start_webdriver_test/get_webdriver.py
+          name: get_webdriver
+      # start_webdriver_with_options test
+      - run:
+          command: python ./circle_ci_test_dev/start_webdriver_with_options/start_webdriver_with_options.py
+          name: start_webdriver_with_options
+      # test_object test
+      - run:
+          command: python ./circle_ci_test_dev/test_object_test/test_object_test.py
+          name: test_object_test
+      # test
+      - run:
+          command: python ./circle_ci_test_dev/test.py
+          name: test
+
+workflows:
+  main:
+    jobs:
+      - build-and-test-windows-dev
