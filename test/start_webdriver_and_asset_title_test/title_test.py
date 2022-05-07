@@ -10,4 +10,4 @@ firefox_webdriver.implicitly_wait(1)
 
 assert firefox_webdriver.title == "Welcome to Python.org"
 
-firefox_webdriver_wrapper.close()
+firefox_webdriver_wrapper.quit()
