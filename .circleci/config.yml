@@ -29,14 +29,10 @@ jobs:
                   $source = "https://download.mozilla.org/?product=firefox-latest&os=win64&lang=en-US" |
                   $destination = "$workdir\firefox.exe" |
                   if (Get-Command 'Invoke-Webrequest') |
-                  { |
-                       Invoke-WebRequest $source -OutFile $destination |
-                  } |
+                  { Invoke-WebRequest $source -OutFile $destination } |
                   else |
-                  { |
-                      $WebClient = New-Object System.Net.WebClient |
-                      $webclient.DownloadFile($source, $destination) |
-                  } |
+                  { $WebClient = New-Object System.Net.WebClient |
+                  $webclient.DownloadFile($source, $destination) } |
                   Start-Process -FilePath "$workdir\firefox.exe" -ArgumentList "/S" |
                   Start-Sleep -s 35 |
                   rm -Force $workdir/firefox*|
