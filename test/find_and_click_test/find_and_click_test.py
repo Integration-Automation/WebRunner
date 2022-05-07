@@ -1,5 +1,5 @@
-from selenium_wrapper import get_webdriver
-from selenium_wrapper import TestObject
+from web_runner import get_webdriver
+from web_runner import TestObject
 
 driver_wrapper = get_webdriver("chrome")
 driver_wrapper.open_browser("https://www.google.com.tw")

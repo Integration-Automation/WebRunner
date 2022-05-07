@@ -1,5 +1,5 @@
-from selenium_wrapper import create_test_object
-from selenium_wrapper import get_test_object_type_list
+from web_runner import create_test_object
+from web_runner import get_test_object_type_list
 
 new_test_object = create_test_object("test_object", "id")
 print(new_test_object.test_object_type)

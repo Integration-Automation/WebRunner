@@ -1,4 +1,4 @@
-from selenium_wrapper import get_webdriver
+from web_runner import get_webdriver
 
 if __name__ == "__main__":
     driver_wrapper = get_webdriver(
