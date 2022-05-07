@@ -1,5 +1,5 @@
-from web_runner import get_webdriver
-from web_runner import TestObject
+from je_eb_runner import get_webdriver
+from je_eb_runner import TestObject
 
 driver_wrapper = get_webdriver("chrome")
 driver_wrapper.open_browser("https://www.google.com.tw")
