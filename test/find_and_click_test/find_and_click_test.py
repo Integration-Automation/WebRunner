@@ -1,7 +1,7 @@
-from selenium_wrapper import get_webdriver
-from selenium_wrapper import TestObject
+from je_web_runner import get_webdriver
+from je_web_runner import TestObject
 
-driver_wrapper = get_webdriver("chrome")
+driver_wrapper = get_webdriver("firefox")
 driver_wrapper.open_browser("https://www.google.com.tw")
 google_input = TestObject("q", "name")
 driver_wrapper.webdriver.implicitly_wait(5)

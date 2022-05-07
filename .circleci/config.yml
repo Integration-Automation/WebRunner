@@ -19,6 +19,14 @@ jobs:
       - run:
           command: pip install --user -r dev_requirements.txt
           name: pip dev_requirements.txt
+      - run:
+          command: |
+            $SourceURL = "https://download.mozilla.org/?product=firefox-latest&os=win&lang=en-US";
+            $Installer = $env:TEMP + "\firefox.exe";
+            Invoke-WebRequest $SourceURL -OutFile $Installer;
+            Start-Process -FilePath $Installer -Args "/s" -Verb RunAs -Wait;
+            Remove-Item $Installer;
+          name: install firefox
       # desired_capabilities test
       - run:
           command: python ./test/desired_capabilities_test/desired_capabilities_test.py
@@ -41,7 +49,7 @@ jobs:
           name: get_webdriver
       # start_webdriver_with_options test
       - run:
-          command: python ./test/start_webdriver_with_options/start_webdriver_with_options.py
+          command: python ./test/start_webdriver_with_options/webdriver_with_options.py
           name: start_webdriver_with_options
       # test_object test
       - run:

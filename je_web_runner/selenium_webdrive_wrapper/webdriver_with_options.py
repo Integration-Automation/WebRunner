@@ -5,12 +5,12 @@ from selenium.webdriver.ie import options
 from selenium.webdriver.edge import options
 from selenium.webdriver.opera import options
 
-from selenium_wrapper.utils.exception.exceptions import WebDriverNotFoundException
-from selenium_wrapper.utils.exception.exceptions import OptionsWrongTypeException
-from selenium_wrapper.utils.exception.exceptions import ArgumentWrongTypeException
-from selenium_wrapper.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
-from selenium_wrapper.utils.exception.exception_tag import selenium_wrapper_set_options_error
-from selenium_wrapper.utils.exception.exception_tag import selenium_wrapper_set_argument_error
+from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
+from je_web_runner.utils.exception.exceptions import OptionsWrongTypeException
+from je_web_runner.utils.exception.exceptions import ArgumentWrongTypeException
+from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
+from je_web_runner.utils.exception.exception_tag import selenium_wrapper_set_options_error
+from je_web_runner.utils.exception.exception_tag import selenium_wrapper_set_argument_error
 
 selenium_options_dict = {
     "chrome": webdriver.chrome.options.Options,
