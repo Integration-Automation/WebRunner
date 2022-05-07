@@ -27,14 +27,6 @@ jobs:
             Start-Process -FilePath $Installer -Args "/s" -Verb RunAs -Wait;
             Remove-Item $Installer;
           name: install firefox
-      - run:
-          command: |
-            $SourceURL = "https://download.mozilla.org/?product=firefox-latest&os=win&lang=en-US";
-            $Installer = $env:TEMP + "\chrome.exe";
-            Invoke-WebRequest $SourceURL -OutFile $Installer;
-            Start-Process -FilePath $Installer -Args "/s" -Verb RunAs -Wait;
-            Remove-Item $Installer;
-          name: install chrome
       # desired_capabilities test
       - run:
           command: python ./test/desired_capabilities_test/desired_capabilities_test.py
