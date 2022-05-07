@@ -49,7 +49,7 @@ jobs:
           name: get_webdriver
       # start_webdriver_with_options test
       - run:
-          command: python ./test/start_webdriver_with_options/start_webdriver_with_options.py
+          command: python ./test/start_webdriver_with_options/webdriver_with_options.py
           name: start_webdriver_with_options
       # test_object test
       - run:
