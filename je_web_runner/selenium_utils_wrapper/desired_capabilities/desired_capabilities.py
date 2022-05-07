@@ -1,7 +1,7 @@
 from selenium.webdriver import DesiredCapabilities
 
-from je_eb_runner.utils.exception.exceptions import WebDriverException
-from je_eb_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
+from je_web_runner.utils.exception.exceptions import WebDriverException
+from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
 
 
 desired_capabilities_dict = {

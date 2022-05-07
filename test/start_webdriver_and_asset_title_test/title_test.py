@@ -1,4 +1,4 @@
-from je_eb_runner import get_webdriver
+from je_web_runner import get_webdriver
 
 firefox_webdriver_wrapper = get_webdriver("firefox")
 

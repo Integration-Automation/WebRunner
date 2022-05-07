@@ -1,4 +1,4 @@
-from je_eb_runner.selenium_webdrive_wrapper.webdriver_wrapper import WebdriverWrapper
+from je_web_runner.selenium_webdrive_wrapper.webdriver_wrapper import WebdriverWrapper
 
 
 def get_webdriver(webdriver_name: str = "chrome", opera_path: str = None, **kwargs):

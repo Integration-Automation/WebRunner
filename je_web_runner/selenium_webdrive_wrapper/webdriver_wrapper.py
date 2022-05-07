@@ -11,20 +11,20 @@ from webdriver_manager.microsoft import IEDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriver_manager.utils import ChromeType
 
-from je_eb_runner.utils.exception.exceptions import WebDriverException
-from je_eb_runner.utils.exception.exceptions import WebDriverNotFoundException
+from je_web_runner.utils.exception.exceptions import WebDriverException
+from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
 
-from je_eb_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
-from je_eb_runner.utils.exception.exception_tag import selenium_wrapper_opera_path_error
+from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
+from je_web_runner.utils.exception.exception_tag import selenium_wrapper_opera_path_error
 
-from je_eb_runner.selenium_webdrive_wrapper.webdriver_quit_wrapper import quit_wrapper
+from je_web_runner.selenium_webdrive_wrapper.webdriver_quit_wrapper import quit_wrapper
 
-from je_eb_runner.test_object.test_object import TestObject
+from je_web_runner.test_object.test_object import TestObject
 
-from je_eb_runner.selenium_webdrive_wrapper.webdriver_find_wrapper import find_element_wrapper
-from je_eb_runner.selenium_webdrive_wrapper.webdriver_find_wrapper import find_elements_wrapper
+from je_web_runner.selenium_webdrive_wrapper.webdriver_find_wrapper import find_element_wrapper
+from je_web_runner.selenium_webdrive_wrapper.webdriver_find_wrapper import find_elements_wrapper
 
-from je_eb_runner.selenium_webdrive_wrapper.webdriver_with_options import set_webdriver_options_capability_wrapper
+from je_web_runner.selenium_webdrive_wrapper.webdriver_with_options import set_webdriver_options_capability_wrapper
 
 
 webdriver_manager_dict = {
