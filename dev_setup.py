@@ -4,14 +4,14 @@ with open("README.md", "r") as README:
     long_description = README.read()
 
 setuptools.setup(
-    name="je_selenium_wrapper_dev",
-    version="0.0.02",
+    name="je_web_runner_dev",
+    version="0.0.01",
     author="JE-Chen",
     author_email="zenmailman@gmail.com",
     description="selenium get_webdriver_wrapper",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/JE-Chen/SeleniumWrapper_JE",
+    url="https://github.com/JE-Chen/WebRunner",
     packages=setuptools.find_packages(),
     install_requires=[
         "selenium",
