@@ -1,4 +1,4 @@
 wheel
 twine
 sphinx
-je_selenium_wrapper_dev
+je_web_runner_dev
