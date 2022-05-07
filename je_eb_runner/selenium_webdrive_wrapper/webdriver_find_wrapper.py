@@ -1,4 +1,4 @@
-from web_runner.test_object.test_object import TestObject
+from je_eb_runner.test_object.test_object import TestObject
 
 
 def find_element_wrapper(webdriver, test_object: TestObject):

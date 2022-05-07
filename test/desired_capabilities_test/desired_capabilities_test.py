@@ -1,7 +1,7 @@
-from web_runner import get_desired_capabilities
-from web_runner import get_desired_capabilities_keys
+from je_eb_runner import get_desired_capabilities
+from je_eb_runner import get_desired_capabilities_keys
 
-from web_runner import get_webdriver
+from je_eb_runner import get_webdriver
 
 print(get_desired_capabilities_keys())
 

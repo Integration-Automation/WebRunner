@@ -1,8 +1,0 @@
-from web_runner.selenium_webdrive_wrapper.get_webdrivers import get_webdriver
-from web_runner.selenium_webdrive_wrapper.webdriver_with_options import set_webdriver_options_argument
-from web_runner.test_object.test_object import TestObject
-from web_runner.selenium_utils_wrapper.desired_capabilities.desired_capabilities import get_desired_capabilities
-from web_runner.selenium_utils_wrapper.desired_capabilities.desired_capabilities import get_desired_capabilities_keys
-from web_runner.test_object.test_object import create_test_object
-from web_runner.test_object.test_object import get_test_object_type_list
-
