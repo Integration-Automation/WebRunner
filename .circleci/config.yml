@@ -21,7 +21,7 @@ jobs:
           name: pip dev_requirements.txt
       - run:
           command: |
-            $SourceURL = "https://download.mozilla.org/?product=firefox-msi-latest-ssl&os=win64&lang=en-US";
+            $SourceURL = "https://download.mozilla.org/?product=firefox-latest&os=win&lang=en-US";
             $Installer = $env:TEMP + "\firefox.exe";
             Invoke-WebRequest $SourceURL -OutFile $Installer;
             Start-Process -FilePath $Installer -Args "/s" -Verb RunAs -Wait;
