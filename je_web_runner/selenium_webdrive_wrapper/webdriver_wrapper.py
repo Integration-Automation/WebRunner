@@ -83,6 +83,7 @@ class WebdriverWrapper(object):
                 webdriver_install_manager().install(),
             )
             self.webdriver = webdriver_value(service=webdriver_service, **kwargs)
+            self.webdriver_name = webdriver_name
         self.current_webdriver_list.append(self.webdriver)
         return self.webdriver
 
