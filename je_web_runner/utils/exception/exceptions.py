@@ -2,13 +2,17 @@ class WebDriverException(Exception):
     pass
 
 
-class WebDriverNotFoundException(Exception):
+class WebDriverNotFoundException(WebDriverException):
     pass
 
 
-class OptionsWrongTypeException(Exception):
+class OptionsWrongTypeException(WebDriverException):
     pass
 
 
-class ArgumentWrongTypeException(Exception):
+class ArgumentWrongTypeException(WebDriverException):
+    pass
+
+
+class WebDriverIsNoneException(WebDriverException):
     pass

@@ -11,7 +11,7 @@ from webdriver_manager.microsoft import IEDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriver_manager.utils import ChromeType
 
-from je_web_runner.utils.exception.exceptions import WebDriverException
+from je_web_runner.utils.exception.exceptions import WebDriverException, WebDriverIsNoneException
 from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
 
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
@@ -91,15 +91,23 @@ class WebdriverWrapper(object):
         self.webdriver.get(url)
 
     def set_webdriver_options_capability(self, key_and_vale_dict: dict):
+        if self.webdriver_name is None:
+            raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
         set_webdriver_options_capability_wrapper(self.webdriver_name, key_and_vale_dict)
 
     def find_element(self, test_object: TestObject):
+        if self.webdriver is None:
+            raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
         return find_element_wrapper(self.webdriver, test_object)
 
     def find_elements(self, test_object: TestObject):
+        if self.webdriver is None:
+            raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
         return find_elements_wrapper(self.webdriver, test_object)
 
     def quit(self):
+        if self.webdriver is None:
+            raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
         quit_wrapper(self.webdriver, self.current_webdriver_list)
 
 
