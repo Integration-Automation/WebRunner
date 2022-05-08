@@ -1,7 +1,7 @@
-from je_web_runner import get_webdriver
+from je_web_runner import get_webdriver_manager
 
 if __name__ == "__main__":
-    driver_wrapper = get_webdriver("firefox")
+    driver_wrapper = get_webdriver_manager("firefox")
     driver = driver_wrapper.webdriver
     driver_wrapper.open_browser("http://www.python.org")
     print(driver.title)

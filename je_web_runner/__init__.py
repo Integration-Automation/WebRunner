@@ -1,4 +1,4 @@
-from je_web_runner.selenium_webdrive_wrapper.get_webdrivers import get_webdriver
+from je_web_runner.selenium_webdrive_wrapper.get_webdrivers import get_webdriver_manager
 from je_web_runner.selenium_webdrive_wrapper.webdriver_with_options import set_webdriver_options_argument
 from je_web_runner.test_object.test_object import TestObject
 from je_web_runner.selenium_utils_wrapper.desired_capabilities.desired_capabilities import get_desired_capabilities

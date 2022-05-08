@@ -1,6 +1,6 @@
-from je_web_runner import get_webdriver
+from je_web_runner import get_webdriver_manager
 
-firefox_webdriver_wrapper = get_webdriver("firefox")
+firefox_webdriver_wrapper = get_webdriver_manager("firefox")
 
 firefox_webdriver = firefox_webdriver_wrapper.webdriver
 

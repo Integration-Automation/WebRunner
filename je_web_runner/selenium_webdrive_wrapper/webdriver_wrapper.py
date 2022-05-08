@@ -58,11 +58,10 @@ webdriver_dict = {
 
 class WebdriverWrapper(object):
 
-    def __init__(self, webdriver_name: str, opera_path: str = None, **kwargs):
-        self.webdriver_name = webdriver_name
+    def __init__(self, **kwargs):
+        self.webdriver_name = None
         self.webdriver = None
         self.current_webdriver_list = []
-        self.set_driver(webdriver_name, opera_path, **kwargs)
 
     def set_driver(self, webdriver_name: str, opera_path: str = None, **kwargs):
         webdriver_name = str(webdriver_name).lower()
@@ -85,6 +84,7 @@ class WebdriverWrapper(object):
             )
             self.webdriver = webdriver_value(service=webdriver_service, **kwargs)
         self.current_webdriver_list.append(self.webdriver)
+        return self.webdriver
 
     def open_browser(self, url: str):
         self.webdriver.get(url)
@@ -100,3 +100,6 @@ class WebdriverWrapper(object):
 
     def quit(self):
         quit_wrapper(self.webdriver, self.current_webdriver_list)
+
+
+web_runner = WebdriverWrapper()
