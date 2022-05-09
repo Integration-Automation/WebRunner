@@ -16,3 +16,11 @@ class ArgumentWrongTypeException(WebDriverException):
 
 class WebDriverIsNoneException(WebDriverException):
     pass
+
+
+class WebRunnerExecuteException(WebDriverException):
+    pass
+
+
+class WebRunnerJsonException(WebDriverException):
+    pass

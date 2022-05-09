@@ -21,8 +21,8 @@ from je_web_runner.selenium_webdrive_wrapper.webdriver_quit_wrapper import quit_
 
 from je_web_runner.test_object.test_object import TestObject
 
-from je_web_runner.selenium_webdrive_wrapper.webdriver_find_wrapper import find_element_wrapper
-from je_web_runner.selenium_webdrive_wrapper.webdriver_find_wrapper import find_elements_wrapper
+from je_web_runner.selenium_webdrive_wrapper.webdriver_find_wrapper import find_element_with_test_object_record
+from je_web_runner.selenium_webdrive_wrapper.webdriver_find_wrapper import find_elements_with_test_object_record
 
 from je_web_runner.selenium_webdrive_wrapper.webdriver_with_options import set_webdriver_options_capability_wrapper
 
@@ -98,12 +98,12 @@ class WebdriverWrapper(object):
     def find_element(self, test_object: TestObject):
         if self.webdriver is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
-        return find_element_wrapper(self.webdriver, test_object)
+        return find_element_with_test_object_record(self.webdriver, test_object)
 
     def find_elements(self, test_object: TestObject):
         if self.webdriver is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
-        return find_elements_wrapper(self.webdriver, test_object)
+        return find_elements_with_test_object_record(self.webdriver, test_object)
 
     def quit(self):
         if self.webdriver is None:
