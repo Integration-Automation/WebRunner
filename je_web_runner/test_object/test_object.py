@@ -13,7 +13,7 @@ type_list = [
 
 class TestObject(object):
 
-    def __init__(self, test_object_name: str, object_type=None):
+    def __init__(self, test_object_name: str, object_type: str):
         self.test_object_type = object_type
         self.test_object_name: str = test_object_name
         if self.test_object_type not in type_list:

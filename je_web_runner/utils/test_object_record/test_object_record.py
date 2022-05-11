@@ -1,4 +1,4 @@
-from je_web_runner import TestObject
+from je_web_runner.test_object.test_object import TestObject
 
 
 class TestObjectRecord(object):

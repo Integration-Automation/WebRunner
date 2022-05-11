@@ -3,9 +3,9 @@ import sys
 from je_web_runner import get_webdriver_manager
 
 try:
-    firefox_webdriver_wrapper = get_webdriver_manager("firefox")
+    web_manager = get_webdriver_manager("firefox")
 
-    firefox_webdriver = firefox_webdriver_wrapper.webdriver
+    firefox_webdriver = web_manager.webdriver_wrapper.current_webdriver
 
     firefox_webdriver.get("http://www.python.org")
 
@@ -13,7 +13,7 @@ try:
 
     assert firefox_webdriver.title == "Welcome to Python.org"
 
-    firefox_webdriver_wrapper.quit()
+    web_manager.quit()
 except Exception as error:
     print(repr(error), file=sys.stderr)
     sys.exit(1)
