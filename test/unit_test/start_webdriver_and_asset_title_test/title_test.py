@@ -1,11 +1,12 @@
 import sys
 
 from je_web_runner import get_webdriver_manager
+from je_web_runner import webdriver_wrapper
 
 try:
     web_manager = get_webdriver_manager("firefox")
 
-    firefox_webdriver = web_manager.webdriver_wrapper.current_webdriver
+    firefox_webdriver = webdriver_wrapper.current_webdriver
 
     firefox_webdriver.get("http://www.python.org")
 

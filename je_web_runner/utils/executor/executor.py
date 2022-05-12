@@ -7,24 +7,20 @@ from je_web_runner.utils.test_object_record.test_object_record import test_objec
 from je_web_runner.selenium_wrapper.webdriver_manager import web_runner
 
 event_dict = {
-
+    # webdriver manager
     "get_webdriver_manager": web_runner.new_driver,
-
-    "TestObject": test_object_record.save_test_object,
-
-    "to_url": web_runner.webdriver_wrapper.to_url,
-
-    "implicitly_wait": web_runner.webdriver_wrapper.wait_implicitly,
-
     "change_index_of_webdriver": web_runner.change_webdriver,
-
-    "input_to_element": web_runner.webdriver_element.input_to_element,
-    "click_element": web_runner.webdriver_element.click_element,
-
+    "quit": web_runner.quit,
+    # test object
+    "TestObject": test_object_record.save_test_object,
+    # webdriver wrapper
+    "to_url": web_runner.webdriver_wrapper.to_url,
+    "implicitly_wait": web_runner.webdriver_wrapper.wait_implicitly,
     "find_element": web_runner.webdriver_wrapper.find_element_with_test_object_record,
     "find_elements": web_runner.webdriver_wrapper.find_elements_with_test_object_record,
-
-    "quit": web_runner.quit,
+    # web element
+    "input_to_element": web_runner.webdriver_element.input_to_element,
+    "click_element": web_runner.webdriver_element.click_element,
 
 }
 

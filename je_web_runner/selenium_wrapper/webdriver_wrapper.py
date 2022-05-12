@@ -96,12 +96,16 @@ class WebDriverWrapper(object):
     def find_element(self, test_object: TestObject):
         if self.current_webdriver is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
-        return self.current_webdriver.find_element(test_object.test_object_type, test_object.test_object_name)
+        web_element_wrapper.current_web_element = self.current_webdriver.find_element(
+            test_object.test_object_type, test_object.test_object_name)
+        return web_element_wrapper.current_web_element
 
     def find_elements(self, test_object: TestObject):
         if self.current_webdriver is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
-        return self.current_webdriver.find_elements(test_object.test_object_type, test_object.test_object_name)
+        web_element_wrapper.current_web_element = self.current_webdriver.find_elements(
+            test_object.test_object_type, test_object.test_object_name)
+        return web_element_wrapper.current_web_element
 
     def find_element_with_test_object_record(self, element_name: str):
         if self.current_webdriver is None:
