@@ -55,10 +55,10 @@ jobs:
       - run:
           command: python ./test/unit_test/test_object_test/test_object_test.py
           name: test_object_test
-      # test
+      # check_value test
       - run:
-          command: python ./test/test.py
-          name: test
+          command: python ./test/unit_test/check_value_test/check_value_test.py
+          name: check_value_test
 
   build-and-test-windows-stable:
     executor:
@@ -111,10 +111,10 @@ jobs:
       - run:
           command: python ./test/unit_test/test_object_test/test_object_test.py
           name: test_object_test
-      # test
+      # check_value test
       - run:
-          command: python ./test/test.py
-          name: test
+          command: python ./test/unit_test/check_value_test/check_value_test.py
+          name: check_value_test
 
 workflows:
   main:
