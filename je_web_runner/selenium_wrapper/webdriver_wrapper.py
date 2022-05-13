@@ -14,10 +14,10 @@ from selenium.webdriver.edge.service import Service
 from selenium.webdriver.ie.service import Service
 from selenium.webdriver.safari.service import Service
 
-from je_web_runner.selenium_wrapper import webdriver_manager
 from je_web_runner.test_object.test_object import TestObject
 
 from je_web_runner.selenium_wrapper.webdriver_with_options import set_webdriver_options_capability_wrapper
+from je_web_runner.utils.assert_value.result_check import check_result
 from je_web_runner.utils.exception.exceptions import WebDriverException, WebDriverIsNoneException
 from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
 
@@ -127,6 +127,12 @@ class WebDriverWrapper(object):
 
     def wait_implicitly(self, time_to_wait: int):
         self.current_webdriver.implicitly_wait(time_to_wait)
+
+    def check_current_webdriver(self, check_dict: dict):
+        check_result(self.current_webdriver, check_dict)
+
+    def quit(self):
+        self.current_webdriver.quit()
 
 
 webdriver_wrapper = WebDriverWrapper()
