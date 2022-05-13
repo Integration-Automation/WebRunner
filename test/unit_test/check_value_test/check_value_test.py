@@ -2,7 +2,7 @@ from sys import stderr
 
 from je_web_runner import webdriver_wrapper
 
-webdriver_wrapper.set_driver("chrome")
+webdriver_wrapper.set_driver("firefox")
 firefox_webdriver = webdriver_wrapper.current_webdriver
 webdriver_wrapper.to_url("http://www.python.org")
 webdriver_wrapper.wait_implicitly(3)
