@@ -3,7 +3,7 @@ from sys import stderr
 from je_web_runner.utils.exception.exception_tag import executor_data_error, executor_list_error
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
 from je_web_runner.utils.json.json_file.json_file import read_action_json
-from je_web_runner.utils.test_object_record.test_object_record import test_object_record
+from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.selenium_wrapper.webdriver_manager import web_runner
 
 event_dict = {
@@ -12,7 +12,8 @@ event_dict = {
     "change_index_of_webdriver": web_runner.change_webdriver,
     "quit": web_runner.quit,
     # test object
-    "TestObject": test_object_record.save_test_object,
+    "SaveTestObject": test_object_record.save_test_object,
+    "CleanTestObject": test_object_record.clean_record,
     # webdriver wrapper
     "to_url": web_runner.webdriver_wrapper.to_url,
     "implicitly_wait": web_runner.webdriver_wrapper.wait_implicitly,

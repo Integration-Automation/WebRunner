@@ -14,18 +14,18 @@ from selenium.webdriver.edge.service import Service
 from selenium.webdriver.ie.service import Service
 from selenium.webdriver.safari.service import Service
 
-from je_web_runner.test_object.test_object import TestObject
+from je_web_runner.utils.test_object.test_object_class import TestObject
 
 from je_web_runner.selenium_wrapper.webdriver_with_options import set_webdriver_options_capability_wrapper
-from je_web_runner.utils.assert_value.result_check import check_result
+from je_web_runner.utils.assert_value.result_check import check_webdriver
 from je_web_runner.utils.exception.exceptions import WebDriverException, WebDriverIsNoneException
 from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
 
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_opera_path_error
-from je_web_runner.utils.test_object_record.test_object_record import test_object_record
 
 from je_web_runner.selenium_wrapper.web_element_wrapper import web_element_wrapper
+from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 
 _webdriver_dict = {
     "chrome": webdriver.Chrome,
@@ -103,9 +103,9 @@ class WebDriverWrapper(object):
     def find_elements(self, test_object: TestObject):
         if self.current_webdriver is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
-        web_element_wrapper.current_web_element = self.current_webdriver.find_elements(
+        web_element_wrapper.current_web_element_list = self.current_webdriver.find_elements(
             test_object.test_object_type, test_object.test_object_name)
-        return web_element_wrapper.current_web_element
+        return web_element_wrapper.current_web_element_list
 
     def find_element_with_test_object_record(self, element_name: str):
         if self.current_webdriver is None:
@@ -119,7 +119,7 @@ class WebDriverWrapper(object):
     def find_elements_with_test_object_record(self, element_name: str):
         if self.current_webdriver is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
-        web_element_wrapper.current_web_element = self.current_webdriver.find_elements(
+        web_element_wrapper.current_web_element_list = self.current_webdriver.find_elements(
             test_object_record.test_object_record_dict.get(element_name).test_object_type,
             test_object_record.test_object_record_dict.get(element_name).test_object_name
         )
@@ -129,9 +129,10 @@ class WebDriverWrapper(object):
         self.current_webdriver.implicitly_wait(time_to_wait)
 
     def check_current_webdriver(self, check_dict: dict):
-        check_result(self.current_webdriver, check_dict)
+        check_webdriver(self.current_webdriver, check_dict)
 
     def quit(self):
+        test_object_record.clean_record()
         self.current_webdriver.quit()
 
 

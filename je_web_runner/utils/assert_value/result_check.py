@@ -1,4 +1,5 @@
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.webdriver.remote.webelement import WebElement
 
 from je_web_runner.utils.exception.exceptions import AssertException
 
@@ -25,13 +26,23 @@ def _make_webdriver_check_dict(webdriver_to_check: WebDriver):
     return webdriver_detail_dict
 
 
-def check_result(webdriver_to_check: WebDriver, result_check_dict: dict):
-    """
-    :param webdriver_to_check: webdriver to check value
-    :param result_check_dict: the dict include data name and value to check result_dict is valid or not
-    :return:
-    """
-    check_dict = _make_webdriver_check_dict(webdriver_to_check)
+def _make_web_element_check_dict(web_element_to_check: WebElement):
+    web_element_detail_dict = dict()
+    web_element_detail_dict.update(
+        {
+            "tag_name": web_element_to_check.tag_name,
+            "text": web_element_to_check.text,
+            "location_once_scrolled_into_view": web_element_to_check.location_once_scrolled_into_view,
+            "size": web_element_to_check.size,
+            "location": web_element_to_check.location,
+            "parent": web_element_to_check.parent,
+            "id": web_element_to_check.id,
+        }
+    )
+    return web_element_detail_dict
+
+
+def check_value(check_dict: dict, result_check_dict: dict):
     for key, value in result_check_dict.items():
         if check_dict.get(key) != value:
             raise AssertException(
@@ -39,3 +50,18 @@ def check_result(webdriver_to_check: WebDriver, result_check_dict: dict):
                     right_value=value, wrong_value=check_dict.get(key)
                 )
             )
+
+
+def check_webdriver(webdriver_to_check: WebDriver, result_check_dict: dict):
+    """
+    :param webdriver_to_check: webdriver to check value
+    :param result_check_dict: the dict include data name and value to check result_dict is valid or not
+    :return:
+    """
+    check_dict = _make_webdriver_check_dict(webdriver_to_check)
+    check_value(check_dict, result_check_dict)
+
+
+def check_web_element(web_element_to_check: WebElement, result_check_dict: dict):
+    check_dict = _make_web_element_check_dict(web_element_to_check)
+    check_value(check_dict, result_check_dict)
