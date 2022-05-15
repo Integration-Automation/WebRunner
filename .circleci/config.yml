@@ -59,6 +59,10 @@ jobs:
       - run:
           command: python ./test/unit_test/check_value_test/check_value_test.py
           name: check_value_test
+      # switch test
+      - run:
+          command: python ./test/unit_test/switch_test/switch_test.py
+          name: switch_test
       # executor test
       - run:
           command: python ./test/unit_test/executor_test/executor_test.py
@@ -119,6 +123,10 @@ jobs:
       - run:
           command: python ./test/unit_test/check_value_test/check_value_test.py
           name: check_value_test
+      # switch test
+      - run:
+          command: python ./test/unit_test/switch_test/switch_test.py
+          name: switch_test
       # executor test
       - run:
           command: python ./test/unit_test/executor_test/executor_test.py
