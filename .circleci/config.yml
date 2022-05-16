@@ -55,6 +55,9 @@ jobs:
       - run:
           command: python ./test/unit_test/test_object_test/test_object_test.py
           name: test_object_test
+      - run:
+          command: python ./test/unit_test/test_record_class_test/test_record_class_test.py
+          name: test_record_class_test
       # check_value test
       - run:
           command: python ./test/unit_test/check_value_test/check_value_test.py
@@ -63,6 +66,10 @@ jobs:
       - run:
           command: python ./test/unit_test/switch_test/switch_test.py
           name: switch_test
+      # close_choose_webdriver test
+      - run:
+          command: python ./test/unit_test/close_choose_webdriver_test/close_choose_webdriver_test.py
+          name: close_choose_webdriver_test
       # executor test
       - run:
           command: python ./test/unit_test/executor_test/executor_test.py
@@ -119,6 +126,9 @@ jobs:
       - run:
           command: python ./test/unit_test/test_object_test/test_object_test.py
           name: test_object_test
+      - run:
+          command: python ./test/unit_test/test_record_class_test/test_record_class_test.py
+          name: test_record_class_test
       # check_value test
       - run:
           command: python ./test/unit_test/check_value_test/check_value_test.py
@@ -127,6 +137,10 @@ jobs:
       - run:
           command: python ./test/unit_test/switch_test/switch_test.py
           name: switch_test
+      # close_choose_webdriver test
+      - run:
+          command: python ./test/unit_test/close_choose_webdriver_test/close_choose_webdriver_test.py
+          name: close_choose_webdriver_test
       # executor test
       - run:
           command: python ./test/unit_test/executor_test/executor_test.py

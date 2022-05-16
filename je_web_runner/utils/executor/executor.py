@@ -16,7 +16,7 @@ event_dict = {
     "CleanTestObject": test_object_record.clean_record,
     # webdriver wrapper
     "to_url": web_runner.webdriver_wrapper.to_url,
-    "implicitly_wait": web_runner.webdriver_wrapper.wait_implicitly,
+    "implicitly_wait": web_runner.webdriver_wrapper.implicitly_wait,
     "find_element": web_runner.webdriver_wrapper.find_element_with_test_object_record,
     "find_elements": web_runner.webdriver_wrapper.find_elements_with_test_object_record,
     # web element

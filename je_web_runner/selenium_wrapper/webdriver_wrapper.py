@@ -1,6 +1,10 @@
+from typing import List
+
 from selenium.common.exceptions import NoAlertPresentException
+from selenium.webdriver import ActionChains
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium import webdriver
+from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.wait import WebDriverWait
 
 from webdriver_manager.chrome import ChromeDriverManager
@@ -63,6 +67,7 @@ class WebDriverWrapper(object):
     def __init__(self):
         self.current_webdriver: [WebDriver, None] = None
         self._webdriver_name: [str, None] = None
+        self._action_chain: [ActionChains, None] = None
 
     # start a new webdriver
 
@@ -87,6 +92,7 @@ class WebDriverWrapper(object):
             )
             self.current_webdriver = webdriver_value(service=webdriver_service, **kwargs)
             self._webdriver_name = webdriver_name
+            self._action_chain = ActionChains(self.current_webdriver)
         return self.current_webdriver
 
     def set_webdriver_options_capability(self, key_and_vale_dict: dict):
@@ -130,7 +136,7 @@ class WebDriverWrapper(object):
 
     # wait
 
-    def wait_implicitly(self, time_to_wait: int):
+    def implicitly_wait(self, time_to_wait: int):
         self.current_webdriver.implicitly_wait(time_to_wait)
 
     def explict_wait(self, wait_time: int, statement, until_type: bool = True):
@@ -143,6 +149,15 @@ class WebDriverWrapper(object):
 
     def to_url(self, url: str):
         self.current_webdriver.get(url)
+
+    def forward(self):
+        self.current_webdriver.forward()
+
+    def back(self):
+        self.current_webdriver.back()
+
+    def refresh(self):
+        self.current_webdriver.refresh()
 
     # webdriver new page
     def switch(self, switch_type: str, switchy_target_name: str = None):
@@ -169,12 +184,139 @@ class WebDriverWrapper(object):
         else:
             return switch_type_dict.get(switch_type)(switchy_target_name)
 
+    # timeout
+    def set_script_timeout(self, time_to_wait) -> None:
+        self.current_webdriver.set_script_timeout(time_to_wait)
+
+    def set_page_load_timeout(self, time_to_wait) -> None:
+        self.current_webdriver.set_page_load_timeout(time_to_wait)
+
+    # cookie
+    def get_cookies(self) -> List[dict]:
+        return self.current_webdriver.get_cookies()
+
+    def get_cookie(self, name) -> dict:
+        return self.current_webdriver.get_cookie(name)
+
+    def add_cookie(self, cookie_dict: dict):
+        self.current_webdriver.add_cookie(cookie_dict)
+
+    def delete_cookie(self, name) -> None:
+        self.current_webdriver.delete_cookie(name)
+
+    def delete_all_cookies(self) -> None:
+        self.current_webdriver.delete_all_cookies()
+
+    # exec selenium command
+    def execute(self, driver_command: str, params: dict = None) -> dict:
+        return self.current_webdriver.execute(driver_command, params)
+
+    def execute_script(self, script, *args):
+        self.current_webdriver.execute_script(script, *args)
+
+    def execute_async_script(self, script: str, *args):
+        self.current_webdriver.execute_async_script(script, *args)
+
+    # ActionChains
+    def move_to_element(self, targe_element: WebElement):
+        self._action_chain.move_to_element(targe_element)
+
+    def move_to_element_with_offset(self, target_element: WebElement, x: int, y: int):
+        self._action_chain.move_to_element_with_offset(target_element, x, y)
+
+    def drag_and_drop(self, web_element: WebElement, targe_element: WebElement):
+        self._action_chain.drag_and_drop(web_element, targe_element)
+
+    def drag_and_drop_offset(self, web_element: WebElement, target_x: int, target_y: int):
+        self._action_chain.drag_and_drop_by_offset(web_element, target_x, target_y)
+
+    def perform(self):
+        self._action_chain.perform()
+
+    def reset_actions(self):
+        self._action_chain.reset_actions()
+
+    def left_click(self, on_element: WebElement = None):
+        self._action_chain.click(on_element)
+
+    def left_click_and_hold(self, on_element: WebElement = None):
+        self._action_chain.click_and_hold(on_element)
+
+    def right_click(self, on_element: WebElement = None):
+        self._action_chain.context_click(on_element)
+
+    def left_double_click(self, on_element: WebElement = None):
+        self._action_chain.double_click(on_element)
+
+    def release(self, on_element: WebElement = None):
+        self._action_chain.release(on_element)
+
+    def press_key(self, keycode_on_key_class, on_element: WebElement = None):
+        self._action_chain.key_down(keycode_on_key_class, on_element)
+
+    def release_key(self, keycode_on_key_class, on_element: WebElement = None):
+        self._action_chain.key_up(keycode_on_key_class, on_element)
+
+    def move_by_offset(self, x: int, y: int):
+        self._action_chain.move_by_offset(x, y)
+
+    def pause(self, seconds: int):
+        self._action_chain.pause(seconds)
+
+    def send_keys(self, *keys_to_send):
+        self._action_chain.send_keys(*keys_to_send)
+
+    def send_keys_to_element(self, element: WebElement, *keys_to_send):
+        self._action_chain.send_keys_to_element(element, *keys_to_send)
+
+    def scroll(self, x: int, y: int, delta_x: int, delta_y: int, duration: int = 0, origin: str = "viewport"):
+        self._action_chain.send_keys_to_element(x, y, delta_x, delta_y, duration, origin)
+
     # webdriver wrapper add function
     def check_current_webdriver(self, check_dict: dict):
         check_webdriver(self.current_webdriver, check_dict)
 
+    # window
+    def maximize_window(self) -> None:
+        self.current_webdriver.maximize_window()
+
+    def fullscreen_window(self) -> None:
+        self.current_webdriver.fullscreen_window()
+
+    def minimize_window(self) -> None:
+        self.current_webdriver.minimize_window()
+
+    def set_window_size(self, width, height, window_handle='current') -> dict:
+        return self.current_webdriver.set_window_size(width, height, window_handle)
+
+    def set_window_position(self, x, y, window_handle='current') -> dict:
+        return self.current_webdriver.set_window_position(x, y, window_handle)
+
+    def get_window_position(self, window_handle='current') -> dict:
+        return self.current_webdriver.set_window_position(window_handle)
+
+    def get_window_rect(self) -> dict:
+        return self.current_webdriver.get_window_rect()
+
+    def set_window_rect(self, x=None, y=None, width=None, height=None) -> dict:
+        return self.current_webdriver.set_window_rect(x, y, width, height)
+
+    # save as file
+    def get_screenshot_as_png(self) -> bytes:
+        return self.current_webdriver.get_screenshot_as_png()
+
+    def get_screenshot_as_base64(self) -> str:
+        return self.current_webdriver.get_screenshot_as_base64()
+
+    # log
+    def get_log(self, log_type):
+        return self.current_webdriver.get_log
+
+    # close event
+
     def quit(self):
         test_object_record.clean_record()
+        self._action_chain = None
         self.current_webdriver.quit()
 
 

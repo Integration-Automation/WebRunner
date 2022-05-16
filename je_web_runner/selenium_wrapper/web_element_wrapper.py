@@ -18,7 +18,7 @@ class WebElementWrapper(object):
         self.current_web_element.send_keys(input_value)
 
     def click_element(self):
-        self.current_web_element.click()
+        self.current_web_element.lef_click()
 
     def change_web_element(self, element_index: int):
         self.current_web_element = self.current_web_element_list[element_index]
@@ -28,14 +28,6 @@ class WebElementWrapper(object):
 
     def get_select(self):
         return Select(self.current_web_element)
-
-    def drag_and_drop(self, webdriver: WebDriver, targe_element: WebElement):
-        action_chain = ActionChains(webdriver)
-        action_chain.drag_and_drop(self.current_web_element, targe_element)
-
-    def drag_and_drop_offset(self, webdriver: WebDriver, target_x: int, target_y: int):
-        action_chain = ActionChains(webdriver)
-        action_chain.drag_and_drop_by_offset(self.current_web_element, target_x, target_y)
 
 
 web_element_wrapper = WebElementWrapper()
