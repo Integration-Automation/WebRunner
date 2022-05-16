@@ -18,7 +18,7 @@ class WebElementWrapper(object):
         self.current_web_element.send_keys(input_value)
 
     def click_element(self):
-        self.current_web_element.lef_click()
+        self.current_web_element.click()
 
     def change_web_element(self, element_index: int):
         self.current_web_element = self.current_web_element_list[element_index]
