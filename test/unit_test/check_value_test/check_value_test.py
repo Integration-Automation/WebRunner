@@ -5,7 +5,7 @@ from je_web_runner import webdriver_wrapper, TestObject, web_element_wrapper
 webdriver_wrapper.set_driver("firefox")
 firefox_webdriver = webdriver_wrapper.current_webdriver
 webdriver_wrapper.to_url("http://www.python.org")
-webdriver_wrapper.wait_implicitly(3)
+webdriver_wrapper.implicitly_wait(3)
 webdriver_wrapper.check_current_webdriver(
     {
         "title": "Welcome to Python.org"
@@ -22,7 +22,7 @@ except Exception as error:
 
 
 google_input = TestObject("q", "name")
-webdriver_wrapper.wait_implicitly(3)
+webdriver_wrapper.implicitly_wait(3)
 webdriver_wrapper.find_element(google_input)
 web_element_wrapper.check_current_web_element(
     {

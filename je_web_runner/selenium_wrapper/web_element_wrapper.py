@@ -1,9 +1,7 @@
 from typing import List
 
-from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver import ActionChains
 
 from je_web_runner.utils.assert_value.result_check import check_web_element
 
