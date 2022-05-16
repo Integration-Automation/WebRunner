@@ -8,7 +8,7 @@ try:
     firefox_webdriver = webdriver_wrapper.current_webdriver
     webdriver_wrapper.to_url("http://www.python.org")
     google_input = TestObject("q", "name")
-    webdriver_wrapper.wait_implicitly(3)
+    webdriver_wrapper.implicitly_wait(3)
     webdriver_wrapper.find_element(google_input)
     webdriver_wrapper.switch("active_element")
     webdriver_wrapper.quit()
