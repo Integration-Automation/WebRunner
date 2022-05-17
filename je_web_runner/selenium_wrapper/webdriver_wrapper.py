@@ -139,7 +139,7 @@ class WebDriverWrapper(object):
     def implicitly_wait(self, time_to_wait: int):
         self.current_webdriver.implicitly_wait(time_to_wait)
 
-    def explict_wait(self, wait_time: int, statement, until_type: bool = True):
+    def explict_wait(self, wait_time: int, statement: bool, until_type: bool = True):
         if until_type:
             return WebDriverWait(self.current_webdriver, wait_time).until(statement)
         else:

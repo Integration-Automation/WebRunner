@@ -6,7 +6,7 @@ from selenium.webdriver.support.ui import Select
 from je_web_runner.utils.assert_value.result_check import check_web_element
 
 
-class WebElementWrapper(object):
+class WebElementWrapper(WebElement):
 
     def __init__(self):
         self.current_web_element: [WebElement] = None
@@ -26,6 +26,7 @@ class WebElementWrapper(object):
 
     def get_select(self):
         return Select(self.current_web_element)
+
 
 
 web_element_wrapper = WebElementWrapper()
