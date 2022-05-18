@@ -8,6 +8,8 @@ from je_web_runner.utils.test_object.test_object_class import get_test_object_ty
 # selenium utils
 from je_web_runner.selenium_utils_wrapper.desired_capabilities.desired_capabilities import get_desired_capabilities
 from je_web_runner.selenium_utils_wrapper.desired_capabilities.desired_capabilities import get_desired_capabilities_keys
+# Keys
+from je_web_runner.selenium_utils_wrapper.keys.selenium_keys import Keys
 # utils
 from je_web_runner.utils.executor.executor import execute_action
 # webdriver wrapper
