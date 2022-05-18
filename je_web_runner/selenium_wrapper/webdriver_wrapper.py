@@ -270,7 +270,7 @@ class WebDriverWrapper(object):
         self._action_chain.send_keys_to_element(element, *keys_to_send)
 
     def scroll(self, x: int, y: int, delta_x: int, delta_y: int, duration: int = 0, origin: str = "viewport"):
-        self._action_chain.send_keys_to_element(x, y, delta_x, delta_y, duration, origin)
+        self._action_chain.scroll(x, y, delta_x, delta_y, duration, origin)
 
     # webdriver wrapper add function
     def check_current_webdriver(self, check_dict: dict):
@@ -293,7 +293,7 @@ class WebDriverWrapper(object):
         return self.current_webdriver.set_window_position(x, y, window_handle)
 
     def get_window_position(self, window_handle='current') -> dict:
-        return self.current_webdriver.set_window_position(window_handle)
+        return self.current_webdriver.get_window_position(window_handle)
 
     def get_window_rect(self) -> dict:
         return self.current_webdriver.get_window_rect()

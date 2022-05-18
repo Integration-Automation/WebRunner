@@ -1,4 +1,7 @@
+from sys import stderr
+
 from selenium.webdriver.remote.webdriver import WebDriver
+from selenium.common.exceptions import WebDriverException
 
 from je_web_runner.selenium_wrapper.web_element_wrapper import web_element_wrapper
 from je_web_runner.utils.exception.exceptions import WebDriverIsNoneException
@@ -39,8 +42,11 @@ class WebdriverManager(object):
         if self._current_webdriver_list is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
         test_object_record.clean_record()
-        for not_closed_webdriver in self._current_webdriver_list:
-            not_closed_webdriver.close()
+        try:
+            for not_closed_webdriver in self._current_webdriver_list:
+                not_closed_webdriver.close()
+        except WebDriverException as error:
+            print(repr(error), file=stderr)
         self.current_webdriver.quit()
 
 

@@ -11,6 +11,8 @@ try:
     webdriver_wrapper.implicitly_wait(3)
     webdriver_wrapper.find_element(google_input)
     webdriver_wrapper.switch("active_element")
+    webdriver_wrapper.switch("parent_frame")
+    webdriver_wrapper.switch("default_content")
     webdriver_wrapper.quit()
 except Exception as error:
     print(repr(error), file=stderr)

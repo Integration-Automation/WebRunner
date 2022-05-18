@@ -70,6 +70,30 @@ jobs:
       - run:
           command: python ./test/unit_test/close_choose_webdriver_test/close_choose_webdriver_test.py
           name: close_choose_webdriver_test
+      # redirect test
+      - run:
+          command: python ./test/unit_test/redirect_test/redirect_test.py
+          name: redirect_test
+      # cookie test
+      - run:
+          command: python ./test/unit_test/cookie_test/cookie_test.py
+          name: cookie_test
+      # set_timeout test
+      - run:
+          command: python ./test/unit_test/set_timeout_test/set_timeout_test.py
+          name: set_timeout_test
+      # action_chains test
+      - run:
+          command: python ./test/unit_test/action_chains_test/action_chains_test.py
+          name: action_chains_test
+      # window test
+      - run:
+          command: python ./test/unit_test/window_test/window_test.py
+          name: window_test
+      # screenshot test
+      - run:
+          command: python ./test/unit_test/screenshot_test/screenshot_test.py
+          name: screenshot_test
       # executor test
       - run:
           command: python ./test/unit_test/executor_test/executor_test.py
@@ -141,6 +165,30 @@ jobs:
       - run:
           command: python ./test/unit_test/close_choose_webdriver_test/close_choose_webdriver_test.py
           name: close_choose_webdriver_test
+      # redirect test
+      - run:
+          command: python ./test/unit_test/redirect_test/redirect_test.py
+          name: redirect_test
+      # cookie test
+      - run:
+          command: python ./test/unit_test/cookie_test/cookie_test.py
+          name: cookie_test
+      # set_timeout test
+      - run:
+          command: python ./test/unit_test/set_timeout_test/set_timeout_test.py
+          name: set_timeout_test
+      # action_chains test
+      - run:
+          command: python ./test/unit_test/action_chains_test/action_chains_test.py
+          name: action_chains_test
+      # window test
+      - run:
+          command: python ./test/unit_test/window_test/window_test.py
+          name: window_test
+      # screenshot test
+      - run:
+          command: python ./test/unit_test/screenshot_test/screenshot_test.py
+          name: screenshot_test
       # executor test
       - run:
           command: python ./test/unit_test/executor_test/executor_test.py
