@@ -15,14 +15,64 @@ event_dict = {
     "SaveTestObject": test_object_record.save_test_object,
     "CleanTestObject": test_object_record.clean_record,
     # webdriver wrapper
-    "to_url": web_runner.webdriver_wrapper.to_url,
-    "implicitly_wait": web_runner.webdriver_wrapper.implicitly_wait,
+    "set_driver": web_runner.webdriver_wrapper.set_driver,
+    "set_webdriver_options_capability": web_runner.webdriver_wrapper.set_driver,
     "find_element": web_runner.webdriver_wrapper.find_element_with_test_object_record,
     "find_elements": web_runner.webdriver_wrapper.find_elements_with_test_object_record,
+    "implicitly_wait": web_runner.webdriver_wrapper.implicitly_wait,
+    "explict_wait": web_runner.webdriver_wrapper.explict_wait,
+    "to_url": web_runner.webdriver_wrapper.to_url,
+    "forward": web_runner.webdriver_wrapper.forward,
+    "back": web_runner.webdriver_wrapper.back,
+    "refresh": web_runner.webdriver_wrapper.refresh,
+    "switch": web_runner.webdriver_wrapper.switch,
+    "set_script_timeout": web_runner.webdriver_wrapper.set_script_timeout,
+    "set_page_load_timeout": web_runner.webdriver_wrapper.set_page_load_timeout,
+    "get_cookies": web_runner.webdriver_wrapper.get_cookies,
+    "get_cookie": web_runner.webdriver_wrapper.get_cookie,
+    "add_cookie": web_runner.webdriver_wrapper.add_cookie,
+    "delete_cookie": web_runner.webdriver_wrapper.delete_cookie,
+    "delete_all_cookies": web_runner.webdriver_wrapper.delete_all_cookies,
+    "execute": web_runner.webdriver_wrapper.execute,
+    "execute_script": web_runner.webdriver_wrapper.execute_script,
+    "execute_async_script": web_runner.webdriver_wrapper.execute_async_script,
+    "move_to_element": web_runner.webdriver_wrapper.move_to_element_with_test_object,
+    "move_to_element_with_offset": web_runner.webdriver_wrapper.move_to_element_with_offset_and_test_object,
+    "drag_and_drop": web_runner.webdriver_wrapper.drag_and_drop_with_test_object,
+    "drag_and_drop_offset": web_runner.webdriver_wrapper.drag_and_drop_offset_with_test_object,
+    "perform": web_runner.webdriver_wrapper.perform,
+    "reset_actions": web_runner.webdriver_wrapper.reset_actions,
+    "left_click": web_runner.webdriver_wrapper.left_click_with_test_object,
+    "left_click_and_hold": web_runner.webdriver_wrapper.left_click_and_hold_with_test_object,
+    "right_click": web_runner.webdriver_wrapper.right_click_with_test_object,
+    "left_double_click": web_runner.webdriver_wrapper.left_double_click_with_test_object,
+    "release": web_runner.webdriver_wrapper.release_with_test_object,
+    "press_key": web_runner.webdriver_wrapper.press_key_with_test_object,
+    "release_key": web_runner.webdriver_wrapper.release_key_with_test_object,
+    "move_by_offset": web_runner.webdriver_wrapper.move_by_offset,
+    "pause": web_runner.webdriver_wrapper.pause,
+    "send_keys": web_runner.webdriver_wrapper.send_keys,
+    "send_keys_to_element": web_runner.webdriver_wrapper.send_keys_to_element_with_test_object,
+    "scroll": web_runner.webdriver_wrapper.scroll,
+    "check_current_webdriver": web_runner.webdriver_wrapper.check_current_webdriver,
+    "maximize_window": web_runner.webdriver_wrapper.maximize_window,
+    "fullscreen_window": web_runner.webdriver_wrapper.fullscreen_window,
+    "minimize_window": web_runner.webdriver_wrapper.minimize_window,
+    "set_window_size": web_runner.webdriver_wrapper.set_window_size,
+    "set_window_position": web_runner.webdriver_wrapper.set_window_position,
+    "get_window_position": web_runner.webdriver_wrapper.get_window_position,
+    "get_window_rect": web_runner.webdriver_wrapper.get_window_rect,
+    "set_window_rect": web_runner.webdriver_wrapper.set_window_rect,
+    "get_screenshot_as_png": web_runner.webdriver_wrapper.get_screenshot_as_png,
+    "get_screenshot_as_base64": web_runner.webdriver_wrapper.get_screenshot_as_base64,
+    "get_log": web_runner.webdriver_wrapper.get_log,
+    "single_quit": web_runner.webdriver_wrapper.quit,
     # web element
     "input_to_element": web_runner.webdriver_element.input_to_element,
     "click_element": web_runner.webdriver_element.click_element,
-
+    "change_web_element": web_runner.webdriver_element.change_web_element,
+    "check_current_web_element": web_runner.webdriver_element.check_current_web_element,
+    "get_select": web_runner.webdriver_element.get_select,
 }
 
 
@@ -51,18 +101,17 @@ def execute_action(action_list: list):
     """
     execute_record_string = ""
     event_response_list = []
-    try:
-        if len(action_list) > 0 or type(action_list) is not list:
-            for action in action_list:
-                event_response = execute_event(action)
-                print("execute: ", str(action))
-                execute_record_string = "".join(execute_record_string)
-                event_response_list.append(event_response)
-        else:
-            raise WebRunnerExecuteException(executor_list_error)
-        return execute_record_string, event_response_list
-    except Exception as error:
-        print(repr(error), file=stderr)
+
+    if len(action_list) > 0 or type(action_list) is not list:
+        for action in action_list:
+            event_response = execute_event(action)
+            print("execute: ", str(action))
+            execute_record_string = "".join(execute_record_string)
+            event_response_list.append(event_response)
+    else:
+        raise WebRunnerExecuteException(executor_list_error)
+    return execute_record_string, event_response_list
+
 
 
 def execute_files(execute_files_list: list):

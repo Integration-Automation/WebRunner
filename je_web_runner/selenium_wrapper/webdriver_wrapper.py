@@ -221,14 +221,46 @@ class WebDriverWrapper(object):
     def move_to_element(self, targe_element: WebElement):
         self._action_chain.move_to_element(targe_element)
 
+    def move_to_element_with_test_object(self, element_name: str):
+        element = self.current_webdriver.find_element(
+            test_object_record.test_object_record_dict.get(element_name).test_object_type,
+            test_object_record.test_object_record_dict.get(element_name).test_object_name
+        )
+        self._action_chain.move_to_element(element)
+
     def move_to_element_with_offset(self, target_element: WebElement, x: int, y: int):
         self._action_chain.move_to_element_with_offset(target_element, x, y)
+
+    def move_to_element_with_offset_and_test_object(self, element_name: str, x: int, y: int):
+        element = self.current_webdriver.find_element(
+            test_object_record.test_object_record_dict.get(element_name).test_object_type,
+            test_object_record.test_object_record_dict.get(element_name).test_object_name
+        )
+        self._action_chain.move_to_element_with_offset(element, x, y)
 
     def drag_and_drop(self, web_element: WebElement, targe_element: WebElement):
         self._action_chain.drag_and_drop(web_element, targe_element)
 
+    def drag_and_drop_with_test_object(self, element_name: str, target_element_name: str):
+        element = self.current_webdriver.find_element(
+            test_object_record.test_object_record_dict.get(element_name).test_object_type,
+            test_object_record.test_object_record_dict.get(element_name).test_object_name
+        )
+        another_element = self.current_webdriver.find_element(
+            test_object_record.test_object_record_dict.get(target_element_name).test_object_type,
+            test_object_record.test_object_record_dict.get(target_element_name).test_object_name
+        )
+        self._action_chain.drag_and_drop(element, another_element)
+
     def drag_and_drop_offset(self, web_element: WebElement, target_x: int, target_y: int):
         self._action_chain.drag_and_drop_by_offset(web_element, target_x, target_y)
+
+    def drag_and_drop_offset_with_test_object(self, element_name: str, target_x: int, target_y: int):
+        element = self.current_webdriver.find_element(
+            test_object_record.test_object_record_dict.get(element_name).test_object_type,
+            test_object_record.test_object_record_dict.get(element_name).test_object_name
+        )
+        self._action_chain.drag_and_drop_by_offset(element, target_x, target_y)
 
     def perform(self):
         self._action_chain.perform()
@@ -239,23 +271,93 @@ class WebDriverWrapper(object):
     def left_click(self, on_element: WebElement = None):
         self._action_chain.click(on_element)
 
+    def left_click_with_test_object(self, element_name: str = None):
+        if element_name is None:
+            self._action_chain.click(None)
+        else:
+            element = self.current_webdriver.find_element(
+                test_object_record.test_object_record_dict.get(element_name).test_object_type,
+                test_object_record.test_object_record_dict.get(element_name).test_object_name
+            )
+            self._action_chain.click(element)
+
     def left_click_and_hold(self, on_element: WebElement = None):
         self._action_chain.click_and_hold(on_element)
+
+    def left_click_and_hold_with_test_object(self, element_name: str = None):
+        if element_name is None:
+            self._action_chain.click_and_hold(None)
+        else:
+            element = self.current_webdriver.find_element(
+                test_object_record.test_object_record_dict.get(element_name).test_object_type,
+                test_object_record.test_object_record_dict.get(element_name).test_object_name
+            )
+            self._action_chain.click_and_hold(element)
 
     def right_click(self, on_element: WebElement = None):
         self._action_chain.context_click(on_element)
 
+    def right_click_with_test_object(self, element_name: str = None):
+        if element_name is None:
+            self._action_chain.context_click(None)
+        else:
+            element = self.current_webdriver.find_element(
+                test_object_record.test_object_record_dict.get(element_name).test_object_type,
+                test_object_record.test_object_record_dict.get(element_name).test_object_name
+            )
+            self._action_chain.context_click(element)
+
     def left_double_click(self, on_element: WebElement = None):
         self._action_chain.double_click(on_element)
+
+    def left_double_click_with_test_object(self, element_name: str = None):
+        if element_name is None:
+            self._action_chain.double_click(None)
+        else:
+            web_element_wrapper.current_web_element = self.current_webdriver.find_element(
+                test_object_record.test_object_record_dict.get(element_name).test_object_type,
+                test_object_record.test_object_record_dict.get(element_name).test_object_name
+            )
+            self._action_chain.double_click(web_element_wrapper.current_web_element)
 
     def release(self, on_element: WebElement = None):
         self._action_chain.release(on_element)
 
+    def release_with_test_object(self, element_name: str = None):
+        if element_name is None:
+            self._action_chain.release(None)
+        else:
+            web_element_wrapper.current_web_element = self.current_webdriver.find_element(
+                test_object_record.test_object_record_dict.get(element_name).test_object_type,
+                test_object_record.test_object_record_dict.get(element_name).test_object_name
+            )
+            self._action_chain.release(web_element_wrapper.current_web_element)
+
     def press_key(self, keycode_on_key_class, on_element: WebElement = None):
         self._action_chain.key_down(keycode_on_key_class, on_element)
 
+    def press_key_with_test_object(self, keycode_on_key_class, element_name: str = None):
+        if element_name is None:
+            self._action_chain.key_down(keycode_on_key_class, None)
+        else:
+            web_element_wrapper.current_web_element = self.current_webdriver.find_element(
+                test_object_record.test_object_record_dict.get(element_name).test_object_type,
+                test_object_record.test_object_record_dict.get(element_name).test_object_name
+            )
+            self._action_chain.key_down(keycode_on_key_class, web_element_wrapper.current_web_element)
+
     def release_key(self, keycode_on_key_class, on_element: WebElement = None):
         self._action_chain.key_up(keycode_on_key_class, on_element)
+
+    def release_key_with_test_object(self, keycode_on_key_class, element_name: str = None):
+        if element_name is None:
+            self._action_chain.key_up(keycode_on_key_class, None)
+        else:
+            web_element_wrapper.current_web_element = self.current_webdriver.find_element(
+                test_object_record.test_object_record_dict.get(element_name).test_object_type,
+                test_object_record.test_object_record_dict.get(element_name).test_object_name
+            )
+            self._action_chain.key_up(keycode_on_key_class, web_element_wrapper.current_web_element)
 
     def move_by_offset(self, x: int, y: int):
         self._action_chain.move_by_offset(x, y)
@@ -263,11 +365,18 @@ class WebDriverWrapper(object):
     def pause(self, seconds: int):
         self._action_chain.pause(seconds)
 
-    def send_keys(self, *keys_to_send):
+    def send_keys(self, keys_to_send):
         self._action_chain.send_keys(*keys_to_send)
 
-    def send_keys_to_element(self, element: WebElement, *keys_to_send):
+    def send_keys_to_element(self, element: WebElement, keys_to_send):
         self._action_chain.send_keys_to_element(element, *keys_to_send)
+
+    def send_keys_to_element_with_test_object(self, element_name: str, keys_to_send):
+        web_element_wrapper.current_web_element = self.current_webdriver.find_element(
+            test_object_record.test_object_record_dict.get(element_name).test_object_type,
+            test_object_record.test_object_record_dict.get(element_name).test_object_name
+        )
+        self._action_chain.send_keys_to_element(web_element_wrapper.current_web_element, *keys_to_send)
 
     def scroll(self, x: int, y: int, delta_x: int, delta_y: int, duration: int = 0, origin: str = "viewport"):
         self._action_chain.scroll(x, y, delta_x, delta_y, duration, origin)

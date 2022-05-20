@@ -13,5 +13,8 @@ class TestObjectRecord(object):
         test_object = TestObject(test_object_name, object_type)
         self.test_object_record_dict.update({test_object.test_object_name: test_object})
 
+    def remove_test_object(self, test_object_name: str):
+        return self.test_object_record_dict.pop(test_object_name, False)
+
 
 test_object_record = TestObjectRecord()
