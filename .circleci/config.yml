@@ -98,6 +98,10 @@ jobs:
       - run:
           command: python ./test/unit_test/executor_test/executor_test.py
           name: executor_test
+      # argparse test
+      - run:
+          command: python ./test/unit_test/argparse/argparse_test.py
+          name: screenshot_test
 
   build-and-test-windows-stable:
     executor:
@@ -193,6 +197,10 @@ jobs:
       - run:
           command: python ./test/unit_test/executor_test/executor_test.py
           name: executor_test
+      # argparse test
+      - run:
+          command: python ./test/unit_test/argparse/argparse_test.py
+          name: screenshot_test
 workflows:
   main:
     jobs:

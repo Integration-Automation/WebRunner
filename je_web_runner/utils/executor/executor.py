@@ -113,7 +113,6 @@ def execute_action(action_list: list):
     return execute_record_string, event_response_list
 
 
-
 def execute_files(execute_files_list: list):
     """
     :param execute_files_list: list include execute files path
