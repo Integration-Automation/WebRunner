@@ -9,6 +9,7 @@ from je_web_runner.je_web_runner.webrunner_manager import get_webdriver_manager
 from je_web_runner.selenium_utils_wrapper.desired_capabilities.desired_capabilities import get_desired_capabilities
 from je_web_runner.selenium_utils_wrapper.desired_capabilities.desired_capabilities import get_desired_capabilities_keys
 # Keys
+from je_web_runner.selenium_utils_wrapper.keys.selenium_keys import Keys
 # utils
 from je_web_runner.utils.executor.executor import execute_action
 # test object
