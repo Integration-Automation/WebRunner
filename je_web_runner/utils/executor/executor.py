@@ -1,10 +1,8 @@
-from sys import stderr
-
+from je_web_runner.je_web_runner.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tag import executor_data_error, executor_list_error
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
-from je_web_runner.selenium_wrapper.webdriver_manager import web_runner
 
 event_dict = {
     # webdriver manager

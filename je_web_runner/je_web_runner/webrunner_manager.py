@@ -1,15 +1,12 @@
 from sys import stderr
 
-from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.remote.webdriver import WebDriver
 
-from je_web_runner.selenium_wrapper.web_element_wrapper import web_element_wrapper
-from je_web_runner.utils.exception.exceptions import WebDriverIsNoneException
-
+from je_web_runner.je_web_runner.web_element_wrapper import web_element_wrapper
+from je_web_runner.je_web_runner.webdriver_wrapper import webdriver_wrapper
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
-
-
-from je_web_runner.selenium_wrapper.webdriver_wrapper import webdriver_wrapper
+from je_web_runner.utils.exception.exceptions import WebDriverIsNoneException
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 
 

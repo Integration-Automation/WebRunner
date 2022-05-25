@@ -1,37 +1,32 @@
 from typing import List
 
+from selenium import webdriver
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver import ActionChains
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.edge.service import Service
+from selenium.webdriver.firefox.service import Service
+from selenium.webdriver.ie.service import Service
 from selenium.webdriver.remote.webdriver import WebDriver
-from selenium import webdriver
 from selenium.webdriver.remote.webelement import WebElement
+from selenium.webdriver.safari.service import Service
 from selenium.webdriver.support.wait import WebDriverWait
 
-from webdriver_manager.chrome import ChromeDriverManager
-from webdriver_manager.firefox import GeckoDriverManager
-from webdriver_manager.opera import OperaDriverManager
-from webdriver_manager.microsoft import IEDriverManager
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
-from webdriver_manager.utils import ChromeType
-
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.edge.service import Service
-from selenium.webdriver.ie.service import Service
-from selenium.webdriver.safari.service import Service
-
-from je_web_runner.utils.test_object.test_object_class import TestObject
-
-from je_web_runner.selenium_wrapper.webdriver_with_options import set_webdriver_options_capability_wrapper
+from je_web_runner.je_web_runner.web_element_wrapper import web_element_wrapper
+from je_web_runner.je_web_runner.webdriver_with_options import set_webdriver_options_capability_wrapper
 from je_web_runner.utils.assert_value.result_check import check_webdriver
+from je_web_runner.utils.exception.exception_tag import selenium_wrapper_opera_path_error
+from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebDriverException, WebDriverIsNoneException
 from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
-
-from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
-from je_web_runner.utils.exception.exception_tag import selenium_wrapper_opera_path_error
-
-from je_web_runner.selenium_wrapper.web_element_wrapper import web_element_wrapper
+from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
+from je_web_runner.webdriver_manager.chrome import ChromeDriverManager
+from je_web_runner.webdriver_manager.firefox import GeckoDriverManager
+from je_web_runner.webdriver_manager.microsoft import EdgeChromiumDriverManager
+from je_web_runner.webdriver_manager.microsoft import IEDriverManager
+from je_web_runner.webdriver_manager.opera import OperaDriverManager
+from je_web_runner.webdriver_manager.utils import ChromeType
 
 _webdriver_dict = {
     "chrome": webdriver.Chrome,

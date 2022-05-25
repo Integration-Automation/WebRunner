@@ -8,7 +8,6 @@ selenium_wrapper_set_argument_error = "only accept str type"
 executor_data_error = "executor receive wrong data"
 executor_list_error = "executor receive wrong data list is none or wrong type"
 
-
 cant_find_json_error = "can't find json"
 cant_save_json_error = "can't save json"
 cant_reformat_json_error = "can't reformat json is type right?"

@@ -8,7 +8,7 @@ type_list = [
     By.TAG_NAME,
     By.CLASS_NAME,
     By.LINK_TEXT
-             ]
+]
 
 
 class TestObject(object):

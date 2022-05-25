@@ -1,7 +1,4 @@
-from sys import stderr
-
 from je_web_runner import webdriver_wrapper, TestObject, Keys
-
 
 webdriver_wrapper.set_driver("firefox")
 webdriver_wrapper.to_url("https://google.com")
@@ -29,4 +26,3 @@ webdriver_wrapper.send_keys(Keys.F1)
 webdriver_wrapper.send_keys_to_element(google_input_element, Keys.F1)
 webdriver_wrapper.perform()
 webdriver_wrapper.quit()
-

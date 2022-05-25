@@ -5,7 +5,7 @@ with open("README.md", "r") as README:
 
 setuptools.setup(
     name="je_web_runner_dev",
-    version="0.0.15",
+    version="0.0.17",
     author="JE-Chen",
     author_email="zenmailman@gmail.com",
     description="selenium get_webdriver_wrapper",
@@ -15,7 +15,8 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "selenium",
-        "webdriver-manager"
+        'requests',
+        'python-dotenv'
     ],
     classifiers=[
         "Programming Language :: Python :: 3.5",
@@ -30,4 +31,3 @@ setuptools.setup(
 
 # python dev_setup.py sdist bdist_wheel
 # python -m twine upload dist/*
-
