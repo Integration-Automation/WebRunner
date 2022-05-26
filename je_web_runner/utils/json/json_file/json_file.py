@@ -39,4 +39,3 @@ def write_action_json(json_save_path: str, action_json: list):
         raise WebRunnerJsonException(cant_save_json_error)
     finally:
         lock.release()
-

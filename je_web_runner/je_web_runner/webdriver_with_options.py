@@ -1,16 +1,16 @@
 from selenium import webdriver
 from selenium.webdriver.chrome import options
+from selenium.webdriver.edge import options
 from selenium.webdriver.firefox import options
 from selenium.webdriver.ie import options
-from selenium.webdriver.edge import options
 from selenium.webdriver.opera import options
 
-from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
-from je_web_runner.utils.exception.exceptions import OptionsWrongTypeException
-from je_web_runner.utils.exception.exceptions import ArgumentWrongTypeException
-from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
-from je_web_runner.utils.exception.exception_tag import selenium_wrapper_set_options_error
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_set_argument_error
+from je_web_runner.utils.exception.exception_tag import selenium_wrapper_set_options_error
+from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
+from je_web_runner.utils.exception.exceptions import ArgumentWrongTypeException
+from je_web_runner.utils.exception.exceptions import OptionsWrongTypeException
+from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
 
 selenium_options_dict = {
     "chrome": webdriver.chrome.options.Options,

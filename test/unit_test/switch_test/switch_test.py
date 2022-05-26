@@ -1,7 +1,7 @@
 from sys import stderr
 
-from je_web_runner import webdriver_wrapper
 from je_web_runner import TestObject
+from je_web_runner import webdriver_wrapper
 
 try:
     webdriver_wrapper.set_driver("firefox")

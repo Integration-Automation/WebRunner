@@ -17,8 +17,8 @@ execute_action(test_execute_list)
 
 test_execute_list = [
     ["to_url", {"url": "https://www.google.com"}],
-    ["implicitly_wait", {"time_to_wait": 3}],
     ["move_to_element", {"element_name": "q"}],
+    ["implicitly_wait", {"time_to_wait": 3}],
     ["move_to_element_with_offset", {"element_name": "q", "x": 10, "y": 10}],
     ["move_by_offset", {"x": 10, "y": 10}],
     ["drag_and_drop", {"element_name": "q", "target_element_name": "q"}],

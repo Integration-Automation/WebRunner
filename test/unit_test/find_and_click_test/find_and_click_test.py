@@ -1,9 +1,9 @@
 import sys
 
-from je_web_runner import get_webdriver_manager
 from je_web_runner import TestObject
-from je_web_runner import webdriver_wrapper
+from je_web_runner import get_webdriver_manager
 from je_web_runner import web_element_wrapper
+from je_web_runner import webdriver_wrapper
 
 try:
     driver_wrapper = get_webdriver_manager("firefox")
