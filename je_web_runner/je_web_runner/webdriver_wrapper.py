@@ -111,8 +111,7 @@ class WebDriverWrapper(object):
             ]:
         if self._webdriver_name is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
-        self.current_webdriver = set_webdriver_options_capability_wrapper(self._webdriver_name, key_and_vale_dict)
-        return self.current_webdriver
+        return set_webdriver_options_capability_wrapper(self._webdriver_name, key_and_vale_dict)
 
     # web element
     def find_element(self, test_object: TestObject) -> WebElement:
