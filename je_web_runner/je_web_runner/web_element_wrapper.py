@@ -12,19 +12,19 @@ class WebElementWrapper(object):
         self.current_web_element: [WebElement] = None
         self.current_web_element_list: [List[WebElement]] = None
 
-    def input_to_element(self, input_value):
+    def input_to_element(self, input_value) -> None:
         self.current_web_element.send_keys(input_value)
 
-    def click_element(self):
+    def click_element(self) -> None:
         self.current_web_element.click()
 
-    def change_web_element(self, element_index: int):
+    def change_web_element(self, element_index: int) -> None:
         self.current_web_element = self.current_web_element_list[element_index]
 
-    def check_current_web_element(self, check_dict: dict):
+    def check_current_web_element(self, check_dict: dict) -> None:
         check_web_element(self.current_web_element, check_dict)
 
-    def get_select(self):
+    def get_select(self) -> Select:
         return Select(self.current_web_element)
 
 

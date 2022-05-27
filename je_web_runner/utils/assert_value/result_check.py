@@ -4,7 +4,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from je_web_runner.utils.exception.exceptions import AssertException
 
 
-def _make_webdriver_check_dict(webdriver_to_check: WebDriver):
+def _make_webdriver_check_dict(webdriver_to_check: WebDriver) -> dict:
     webdriver_detail_dict = dict()
     webdriver_detail_dict.update(
         {
@@ -26,7 +26,7 @@ def _make_webdriver_check_dict(webdriver_to_check: WebDriver):
     return webdriver_detail_dict
 
 
-def _make_web_element_check_dict(web_element_to_check: WebElement):
+def _make_web_element_check_dict(web_element_to_check: WebElement) -> dict:
     web_element_detail_dict = dict()
     web_element_detail_dict.update(
         {

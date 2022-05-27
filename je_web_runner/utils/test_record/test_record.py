@@ -3,7 +3,7 @@ class TestRecord(object):
     def __init__(self):
         self.test_record_list = list()
 
-    def clean_record(self):
+    def clean_record(self) -> None:
         self.test_record_list = list()
 
 

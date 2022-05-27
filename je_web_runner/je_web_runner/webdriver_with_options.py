@@ -1,3 +1,5 @@
+from typing import Union
+
 from selenium import webdriver
 from selenium.webdriver.chrome import options
 from selenium.webdriver.edge import options
@@ -22,7 +24,12 @@ selenium_options_dict = {
 }
 
 
-def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list, set]):
+def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list, set]) -> \
+        Union[
+            webdriver.chrome.options.Options, webdriver.chrome.options.Options,
+            webdriver.firefox.options.Options, webdriver.opera.options.Options,
+            webdriver.edge.options.Options, webdriver.ie.options.Options
+        ]:
     webdriver_options = selenium_options_dict.get(webdriver_name)()
     for i in range(len(argument_iterable)):
         if type(argument_iterable[i]) != str:
@@ -31,7 +38,12 @@ def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list
     return webdriver_options
 
 
-def set_webdriver_options_capability_wrapper(webdriver_name: str, key_and_vale_dict: dict):
+def set_webdriver_options_capability_wrapper(webdriver_name: str, key_and_vale_dict: dict) -> \
+        Union[
+            webdriver.chrome.options.Options, webdriver.chrome.options.Options,
+            webdriver.firefox.options.Options, webdriver.opera.options.Options,
+            webdriver.edge.options.Options, webdriver.ie.options.Options
+        ]:
     webdriver_options = selenium_options_dict.get(webdriver_name)()
     if webdriver_options is None:
         raise WebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)

@@ -18,24 +18,24 @@ class WebdriverManager(object):
         self.webdriver_element = web_element_wrapper
         self.current_webdriver: [WebDriver, None] = None
 
-    def new_driver(self, webdriver_name: str, opera_path: str = None, **kwargs):
+    def new_driver(self, webdriver_name: str, opera_path: str = None, **kwargs) -> None:
         self.current_webdriver = webdriver_wrapper.set_driver(webdriver_name, opera_path, **kwargs)
         self._current_webdriver_list.append(self.current_webdriver)
 
-    def change_webdriver(self, index_of_webdriver: int):
+    def change_webdriver(self, index_of_webdriver: int) -> None:
         self.current_webdriver = self._current_webdriver_list[index_of_webdriver]
         self.webdriver_wrapper.current_webdriver = self.current_webdriver
 
-    def close_current_webdriver(self):
+    def close_current_webdriver(self) -> None:
         self._current_webdriver_list.remove(self.current_webdriver)
         self.current_webdriver.close()
 
-    def close_choose_webdriver(self, webdriver_index):
+    def close_choose_webdriver(self, webdriver_index) -> None:
         self.current_webdriver = self._current_webdriver_list[webdriver_index]
         self.current_webdriver.close()
         self._current_webdriver_list.remove(self._current_webdriver_list[webdriver_index])
 
-    def quit(self):
+    def quit(self) -> None:
         if self._current_webdriver_list is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
         test_object_record.clean_record()
@@ -47,7 +47,7 @@ class WebdriverManager(object):
         self.current_webdriver.quit()
 
 
-def get_webdriver_manager(webdriver_name: str, opera_path: str = None, **kwargs):
+def get_webdriver_manager(webdriver_name: str, opera_path: str = None, **kwargs) -> WebdriverManager:
     web_runner.new_driver(webdriver_name, opera_path)
     return web_runner
 

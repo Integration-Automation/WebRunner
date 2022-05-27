@@ -1,3 +1,5 @@
+from typing import Tuple
+
 from je_web_runner.je_web_runner.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tag import executor_data_error, executor_list_error
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
@@ -88,7 +90,7 @@ def execute_event(action: list):
         raise WebRunnerExecuteException(executor_data_error)
 
 
-def execute_action(action_list: list):
+def execute_action(action_list: list) -> Tuple[str, str]:
     """
     :param action_list: like this structure
     [
@@ -111,7 +113,7 @@ def execute_action(action_list: list):
     return execute_record_string, event_response_list
 
 
-def execute_files(execute_files_list: list):
+def execute_files(execute_files_list: list) -> list:
     """
     :param execute_files_list: list include execute files path
     :return: every execute detail as list

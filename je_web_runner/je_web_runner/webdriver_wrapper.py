@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from selenium import webdriver
 from selenium.common.exceptions import NoAlertPresentException
@@ -66,7 +66,16 @@ class WebDriverWrapper(object):
 
     # start a new webdriver
 
-    def set_driver(self, webdriver_name: str, opera_path: str = None, **kwargs):
+    def set_driver(self, webdriver_name: str, opera_path: str = None, **kwargs) -> \
+            Union[
+            webdriver.Chrome,
+            webdriver.Chrome,
+            webdriver.Firefox,
+            webdriver.Opera,
+            webdriver.Edge,
+            webdriver.Ie,
+            webdriver.Safari,
+            ]:
         webdriver_name = str(webdriver_name).lower()
         webdriver_value = _webdriver_dict.get(webdriver_name)
         if webdriver_value is None:
@@ -90,28 +99,37 @@ class WebDriverWrapper(object):
             self._action_chain = ActionChains(self.current_webdriver)
         return self.current_webdriver
 
-    def set_webdriver_options_capability(self, key_and_vale_dict: dict):
+    def set_webdriver_options_capability(self, key_and_vale_dict: dict) -> \
+            Union[
+            webdriver.Chrome,
+            webdriver.Chrome,
+            webdriver.Firefox,
+            webdriver.Opera,
+            webdriver.Edge,
+            webdriver.Ie,
+            webdriver.Safari,
+            ]:
         if self._webdriver_name is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
-        set_webdriver_options_capability_wrapper(self._webdriver_name, key_and_vale_dict)
+        self.current_webdriver = set_webdriver_options_capability_wrapper(self._webdriver_name, key_and_vale_dict)
+        return self.current_webdriver
 
     # web element
-
-    def find_element(self, test_object: TestObject):
+    def find_element(self, test_object: TestObject) -> WebElement:
         if self.current_webdriver is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
         web_element_wrapper.current_web_element = self.current_webdriver.find_element(
             test_object.test_object_type, test_object.test_object_name)
         return web_element_wrapper.current_web_element
 
-    def find_elements(self, test_object: TestObject):
+    def find_elements(self, test_object: TestObject) -> List[WebElement]:
         if self.current_webdriver is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
         web_element_wrapper.current_web_element_list = self.current_webdriver.find_elements(
             test_object.test_object_type, test_object.test_object_name)
         return web_element_wrapper.current_web_element_list
 
-    def find_element_with_test_object_record(self, element_name: str):
+    def find_element_with_test_object_record(self, element_name: str) -> WebElement:
         if self.current_webdriver is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
         web_element_wrapper.current_web_element = self.current_webdriver.find_element(
@@ -120,7 +138,7 @@ class WebDriverWrapper(object):
         )
         return web_element_wrapper.current_web_element
 
-    def find_elements_with_test_object_record(self, element_name: str):
+    def find_elements_with_test_object_record(self, element_name: str) -> List[WebElement]:
         if self.current_webdriver is None:
             raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
         web_element_wrapper.current_web_element_list = self.current_webdriver.find_elements(
@@ -131,7 +149,7 @@ class WebDriverWrapper(object):
 
     # wait
 
-    def implicitly_wait(self, time_to_wait: int):
+    def implicitly_wait(self, time_to_wait: int) -> None:
         self.current_webdriver.implicitly_wait(time_to_wait)
 
     def explict_wait(self, wait_time: int, statement: bool, until_type: bool = True):
@@ -142,16 +160,16 @@ class WebDriverWrapper(object):
 
     # webdriver url redirect
 
-    def to_url(self, url: str):
+    def to_url(self, url: str) -> None:
         self.current_webdriver.get(url)
 
-    def forward(self):
+    def forward(self) -> None:
         self.current_webdriver.forward()
 
-    def back(self):
+    def back(self) -> None:
         self.current_webdriver.back()
 
-    def refresh(self):
+    def refresh(self) -> None:
         self.current_webdriver.refresh()
 
     # webdriver new page

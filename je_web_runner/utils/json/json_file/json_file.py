@@ -8,7 +8,7 @@ from je_web_runner.utils.exception.exceptions import WebRunnerJsonException
 lock = Lock()
 
 
-def read_action_json(json_file_path: str):
+def read_action_json(json_file_path: str) -> str:
     """
     read the action json
     :param json_file_path json file's path to read
