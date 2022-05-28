@@ -90,7 +90,7 @@ def execute_event(action: list):
         raise WebRunnerExecuteException(executor_data_error)
 
 
-def execute_action(action_list: list) -> Tuple[str, str]:
+def execute_action(action_list: list) -> Tuple[str, list]:
     """
     :param action_list: like this structure
     [
