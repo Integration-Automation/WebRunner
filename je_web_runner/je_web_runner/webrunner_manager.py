@@ -25,10 +25,10 @@ class WebdriverManager(object):
         try:
             self.current_webdriver = webdriver_wrapper.set_driver(webdriver_name, opera_path, **kwargs)
             self._current_webdriver_list.append(self.current_webdriver)
-            record_action_to_list("new_driver", param, None)
+            record_action_to_list("web runner manager new_driver", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
-            record_action_to_list("new_driver", param, error)
+            record_action_to_list("web runner manager new_driver", param, error)
             self.quit()
 
     def change_webdriver(self, index_of_webdriver: int) -> None:
@@ -36,20 +36,19 @@ class WebdriverManager(object):
         try:
             self.current_webdriver = self._current_webdriver_list[index_of_webdriver]
             self.webdriver_wrapper.current_webdriver = self.current_webdriver
-            record_action_to_list("change_webdriver", param, None)
+            record_action_to_list("web runner manager change_webdriver", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
-            record_action_to_list("change_webdriver", param, error)
+            record_action_to_list("web runner manager change_webdriver", param, error)
 
     def close_current_webdriver(self) -> None:
         try:
             self._current_webdriver_list.remove(self.current_webdriver)
             self.current_webdriver.close()
-            record_action_to_list("close_current_webdriver", None, None)
+            record_action_to_list("web runner manager close_current_webdriver", None, None)
         except Exception as error:
             print(repr(error), file=stderr)
-            record_action_to_list("close_current_webdriver", None, error)
-            raise WebDriverException
+            record_action_to_list("web runner manager close_current_webdriver", None, error)
 
     def close_choose_webdriver(self, webdriver_index) -> None:
         param = locals()
@@ -57,11 +56,10 @@ class WebdriverManager(object):
             self.current_webdriver = self._current_webdriver_list[webdriver_index]
             self.current_webdriver.close()
             self._current_webdriver_list.remove(self._current_webdriver_list[webdriver_index])
-            record_action_to_list("close_choose_webdriver", param, None)
+            record_action_to_list("web runner manager close_choose_webdriver", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
-            record_action_to_list("close_choose_webdriver", None, error)
-            raise WebDriverException
+            record_action_to_list("web runner manager close_choose_webdriver", param, error)
 
     def quit(self) -> None:
         try:
@@ -71,10 +69,10 @@ class WebdriverManager(object):
             for not_closed_webdriver in self._current_webdriver_list:
                 not_closed_webdriver.close()
             self.current_webdriver.quit()
-            record_action_to_list("close_choose_webdriver", None, None)
+            record_action_to_list("web runner manager quit", None, None)
         except Exception as error:
             print(repr(error), file=stderr)
-            record_action_to_list("quit", None, error)
+            record_action_to_list("web runner manager quit", None, error)
             raise WebDriverException
 
 

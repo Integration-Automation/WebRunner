@@ -1,3 +1,4 @@
+from sys import stderr
 from typing import Union
 
 from selenium import webdriver
@@ -31,12 +32,18 @@ def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list
             webdriver.firefox.options.Options, webdriver.opera.options.Options,
             webdriver.edge.options.Options, webdriver.ie.options.Options
         ]:
-    webdriver_options = selenium_options_dict.get(webdriver_name)()
-    for i in range(len(argument_iterable)):
-        if type(argument_iterable[i]) != str:
-            raise ArgumentWrongTypeException(selenium_wrapper_set_argument_error)
-        webdriver_options.add_argument(argument_iterable[i])
-    return webdriver_options
+    param = locals()
+    try:
+        webdriver_options = selenium_options_dict.get(webdriver_name)()
+        for i in range(len(argument_iterable)):
+            if type(argument_iterable[i]) != str:
+                raise ArgumentWrongTypeException(selenium_wrapper_set_argument_error)
+            webdriver_options.add_argument(argument_iterable[i])
+        record_action_to_list("webdriver with options set_webdriver_options_argument", param, None)
+        return webdriver_options
+    except Exception as error:
+        print(repr(error), file=stderr)
+        record_action_to_list("webdriver with options set_webdriver_options_argument", param, error)
 
 
 def set_webdriver_options_capability_wrapper(webdriver_name: str, key_and_vale_dict: dict) -> \
@@ -45,11 +52,17 @@ def set_webdriver_options_capability_wrapper(webdriver_name: str, key_and_vale_d
             webdriver.firefox.options.Options, webdriver.opera.options.Options,
             webdriver.edge.options.Options, webdriver.ie.options.Options
         ]:
-    webdriver_options = selenium_options_dict.get(webdriver_name)()
-    if webdriver_options is None:
-        raise WebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
-    if type(key_and_vale_dict) is not dict:
-        raise OptionsWrongTypeException(selenium_wrapper_set_options_error)
-    for key, value in key_and_vale_dict.items():
-        webdriver_options.set_capability(key, value)
-    return webdriver_options
+    param = locals()
+    try:
+        webdriver_options = selenium_options_dict.get(webdriver_name)()
+        if webdriver_options is None:
+            raise WebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
+        if type(key_and_vale_dict) is not dict:
+            raise OptionsWrongTypeException(selenium_wrapper_set_options_error)
+        for key, value in key_and_vale_dict.items():
+            webdriver_options.set_capability(key, value)
+        record_action_to_list("webdriver with options set_webdriver_options_capability_wrapper", param, None)
+        return webdriver_options
+    except Exception as error:
+        print(repr(error), file=stderr)
+        record_action_to_list("webdriver with options set_webdriver_options_capability_wrapper", param, error)
