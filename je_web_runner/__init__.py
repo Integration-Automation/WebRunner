@@ -16,3 +16,5 @@ from je_web_runner.utils.executor.executor import execute_action
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_class import create_test_object
 from je_web_runner.utils.test_object.test_object_class import get_test_object_type_list
+# test record
+from je_web_runner.utils.test_record.record_test_class import test_record_instance

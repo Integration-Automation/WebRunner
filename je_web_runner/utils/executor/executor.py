@@ -5,6 +5,8 @@ from je_web_runner.utils.exception.exception_tag import executor_data_error, exe
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
+from je_web_runner.utils.html_report.html_report_generate import generate_html
+from je_web_runner.utils.test_record.record_test_class import test_record_instance
 
 event_dict = {
     # webdriver manager
@@ -73,6 +75,10 @@ event_dict = {
     "change_web_element": web_runner.webdriver_element.change_web_element,
     "check_current_web_element": web_runner.webdriver_element.check_current_web_element,
     "get_select": web_runner.webdriver_element.get_select,
+    # init test record
+    "set_record_enable": test_record_instance.set_record_enable,
+    # generate html
+    "generate_html": generate_html,
 }
 
 
