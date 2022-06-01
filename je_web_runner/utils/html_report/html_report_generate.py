@@ -1,6 +1,6 @@
 import sys
 
-from je_web_runner.utils.test_record.record_test_class import test_record_instance
+from je_web_runner.utils.test_record.test_record_class import test_record_instance
 from je_web_runner.utils.exception.exceptions import HTMLException
 from je_web_runner.utils.exception.exception_tag import html_generate_no_data_tag
 from threading import Lock

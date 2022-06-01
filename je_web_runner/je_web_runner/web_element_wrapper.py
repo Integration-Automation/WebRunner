@@ -5,7 +5,7 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import Select
 
 from je_web_runner.utils.assert_value.result_check import check_web_element
-from je_web_runner.utils.test_record.record_test_class import record_action_to_list
+from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
 
 class WebElementWrapper(object):

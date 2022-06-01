@@ -28,7 +28,7 @@ from je_web_runner.webdriver_manager.microsoft import EdgeChromiumDriverManager
 from je_web_runner.webdriver_manager.microsoft import IEDriverManager
 from je_web_runner.webdriver_manager.opera import OperaDriverManager
 from je_web_runner.webdriver_manager.utils import ChromeType
-from je_web_runner.utils.test_record.record_test_class import record_action_to_list
+from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
 _webdriver_dict = {
     "chrome": webdriver.Chrome,

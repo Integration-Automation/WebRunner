@@ -4,9 +4,9 @@ from typing import Union, Callable
 
 class TestRecord(object):
 
-    def __init__(self):
+    def __init__(self, init_record: bool = False):
         self.test_record_list: list = list()
-        self.init_record: bool = False
+        self.init_record: bool = init_record
 
     def clean_record(self) -> None:
         self.test_record_list = list()

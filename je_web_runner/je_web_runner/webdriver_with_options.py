@@ -14,7 +14,7 @@ from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_dri
 from je_web_runner.utils.exception.exceptions import ArgumentWrongTypeException
 from je_web_runner.utils.exception.exceptions import OptionsWrongTypeException
 from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
-from je_web_runner.utils.test_record.record_test_class import record_action_to_list
+from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
 selenium_options_dict = {
     "chrome": webdriver.chrome.options.Options,

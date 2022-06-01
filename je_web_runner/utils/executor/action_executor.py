@@ -1,3 +1,4 @@
+import sys
 from typing import Tuple
 
 from je_web_runner.je_web_runner.webrunner_manager import web_runner
@@ -6,7 +7,7 @@ from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.html_report.html_report_generate import generate_html
-from je_web_runner.utils.test_record.record_test_class import test_record_instance
+from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
 event_dict = {
     # webdriver manager
@@ -107,15 +108,21 @@ def execute_action(action_list: list) -> Tuple[str, list]:
     """
     execute_record_string = ""
     event_response_list = []
-
-    if len(action_list) > 0 or type(action_list) is not list:
-        for action in action_list:
+    try:
+        if len(action_list) > 0 or type(action_list) is not list:
+            pass
+        else:
+            raise WebRunnerExecuteException(executor_list_error)
+    except Exception as error:
+        print(repr(error), file=sys.stderr)
+    for action in action_list:
+        try:
             event_response = execute_event(action)
             print("execute: ", str(action))
             execute_record_string = "".join(execute_record_string)
             event_response_list.append(event_response)
-    else:
-        raise WebRunnerExecuteException(executor_list_error)
+        except Exception as error:
+            print(repr(error), file=sys.stderr)
     return execute_record_string, event_response_list
 
 
