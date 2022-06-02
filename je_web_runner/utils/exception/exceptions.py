@@ -28,3 +28,7 @@ class WebRunnerJsonException(WebDriverException):
 
 class AssertException(WebDriverException):
     pass
+
+
+class HTMLException(WebDriverException):
+    pass

@@ -1,7 +1,7 @@
 from pathlib import Path
 
 
-def _create_dir(dir_name: str):
+def _create_dir(dir_name: str) -> None:
     """
     :param dir_name: create dir use dir name
     :return: None
@@ -12,5 +12,5 @@ def _create_dir(dir_name: str):
     )
 
 
-def create_template_dir():
-    _create_dir("api_testka/template")
+def create_template_dir() -> None:
+    _create_dir("web_runner/template")

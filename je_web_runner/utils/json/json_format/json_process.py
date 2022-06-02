@@ -7,7 +7,7 @@ from je_web_runner.utils.exception.exception_tag import wrong_json_data_error, c
 from je_web_runner.utils.exception.exceptions import WebRunnerJsonException
 
 
-def __process_json(json_string: str, **kwargs):
+def __process_json(json_string: str, **kwargs) -> str:
     """
     :param json_string: full json str (not json type)
     :param kwargs: any another kwargs for dumps
@@ -25,7 +25,7 @@ def __process_json(json_string: str, **kwargs):
             raise WebRunnerJsonException(wrong_json_data_error)
 
 
-def reformat_json(json_string: str, **kwargs):
+def reformat_json(json_string: str, **kwargs) -> str:
     try:
         return __process_json(json_string, **kwargs)
     except WebRunnerJsonException:

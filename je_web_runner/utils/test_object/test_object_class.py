@@ -20,9 +20,9 @@ class TestObject(object):
             raise TypeError
 
 
-def create_test_object(object_type, test_object_name: str):
+def create_test_object(object_type, test_object_name: str) -> TestObject:
     return TestObject(object_type, test_object_name)
 
 
-def get_test_object_type_list():
+def get_test_object_type_list() -> list:
     return type_list
