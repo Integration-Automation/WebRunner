@@ -1,5 +1,5 @@
 ==================
-APITestka Example
+WebRunner Example
 ==================
 
 .. toctree::

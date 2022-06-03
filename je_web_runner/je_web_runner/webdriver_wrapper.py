@@ -68,7 +68,8 @@ class WebDriverWrapper(object):
 
     # start a new webdriver
 
-    def set_driver(self, webdriver_name: str, opera_path: str = None, **kwargs) -> \
+    def set_driver(self, webdriver_name: str, opera_path: str = None,
+                   webdriver_manager_option_dict: dict = None, **kwargs) -> \
             Union[
             webdriver.Chrome,
             webdriver.Chrome,
@@ -91,13 +92,25 @@ class WebDriverWrapper(object):
                 opera_options = webdriver.ChromeOptions()
                 opera_options.add_argument('allow-elevated-browser')
                 opera_options.binary_location = opera_path
-                self.current_webdriver = webdriver_value(
-                    executable_path=_webdriver_manager_dict.get(webdriver_name)().install(), options=opera_options, **kwargs
-                )
+                if webdriver_manager_option_dict is None:
+                    self.current_webdriver = webdriver_value(
+                        executable_path=_webdriver_manager_dict.get(webdriver_name)().install(), options=opera_options,
+                        **kwargs
+                    )
+                else:
+                    self.current_webdriver = webdriver_value(
+                        executable_path=_webdriver_manager_dict.get(webdriver_name)(**webdriver_manager_option_dict).install(), options=opera_options,
+                        **kwargs
+                    )
             else:
-                webdriver_service = _webdriver_service_dict.get(webdriver_name)(
-                    webdriver_install_manager().install(),
-                )
+                if webdriver_manager_option_dict is None:
+                    webdriver_service = _webdriver_service_dict.get(webdriver_name)(
+                        webdriver_install_manager().install(),
+                    )
+                else:
+                    webdriver_service = _webdriver_service_dict.get(webdriver_name)(
+                        webdriver_install_manager(**webdriver_manager_option_dict).install(),
+                    )
                 self.current_webdriver = webdriver_value(service=webdriver_service, **kwargs)
                 self._webdriver_name = webdriver_name
                 self._action_chain = ActionChains(self.current_webdriver)

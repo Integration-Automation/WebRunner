@@ -6,11 +6,13 @@ APITestka Argument Example
 
     """
     cd to workdir
-    python je_api_testka + action file path
+    python je_web_runner + action file path
     """
+
     import os
 
     print(os.getcwd())
 
     os.system("cd " + os.getcwd())
-    os.system("python je_api_testka --execute_file " + os.getcwd() + r"/test/unit_test/argparse/test.json")
+    os.system("python -m je_web_runner --execute_file " + os.getcwd() + r"/test/unit_test/argparse/test1.json")
+    os.system("python -m je_web_runner --execute_dir " + os.getcwd() + r"/test/unit_test/argparse")

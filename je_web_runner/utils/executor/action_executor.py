@@ -71,11 +71,21 @@ event_dict = {
     "get_log": web_runner.webdriver_wrapper.get_log,
     "single_quit": web_runner.webdriver_wrapper.quit,
     # web element
+    "element_submit": web_runner.webdriver_element.submit,
+    "element_clear": web_runner.webdriver_element.clear,
+    "element_get_property": web_runner.webdriver_element.get_property,
+    "element_get_dom_attribute": web_runner.webdriver_element.get_dom_attribute,
+    "element_get_attribute": web_runner.webdriver_element.get_attribute,
+    "element_is_selected": web_runner.webdriver_element.is_selected,
+    "element_is_enabled": web_runner.webdriver_element.is_enabled,
     "input_to_element": web_runner.webdriver_element.input_to_element,
     "click_element": web_runner.webdriver_element.click_element,
-    "change_web_element": web_runner.webdriver_element.change_web_element,
-    "check_current_web_element": web_runner.webdriver_element.check_current_web_element,
-    "get_select": web_runner.webdriver_element.get_select,
+    "element_is_displayed": web_runner.webdriver_element.is_displayed,
+    "element_value_of_css_property": web_runner.webdriver_element.value_of_css_property,
+    "element_screenshot": web_runner.webdriver_element.screenshot,
+    "element_change_web_element": web_runner.webdriver_element.change_web_element,
+    "element_check_current_web_element": web_runner.webdriver_element.check_current_web_element,
+    "element_get_select": web_runner.webdriver_element.get_select,
     # init test record
     "set_record_enable": test_record_instance.set_record_enable,
     # generate html
@@ -92,7 +102,7 @@ def execute_event(action: list):
     if len(action) == 2:
         return event(**action[1])
     elif len(action) == 1:
-        event()
+        return event()
     else:
         raise WebRunnerExecuteException(executor_data_error)
 
