@@ -1,6 +1,14 @@
 ==================
 WebRunner Doc
 ==================
+* Features
+    * Web Testing use firefox chrome ..etc Webdriver
+    * Auto install Webdriver
+    * Webdriver manager
+    * HTML report
+    * Action file and executor
+    * result compare
+    * CLI with action file
 
 .. toctree::
     :maxdepth: 4
