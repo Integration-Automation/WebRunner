@@ -19,3 +19,5 @@ WebRunner Doc
     test_object_doc/test_object_doc.rst
     test_record_doc/test_record_doc.rst
     webdriver_wrapper_doc/webdriver_wrapper_doc.rst
+    webrunner_manager_doc/webrunner_manager_doc.rst
+    webelement_wrapper_doc/webelement_wrapper_doc.rst
