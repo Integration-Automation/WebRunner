@@ -8,6 +8,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.edge.service import Service
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.ie.service import Service
+from selenium.webdriver.remote import switch_to
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.safari.service import Service
@@ -79,6 +80,13 @@ class WebDriverWrapper(object):
             webdriver.Ie,
             webdriver.Safari,
             ]:
+        """
+        :param webdriver_name: which webdriver we want to use
+        :param opera_path: if you are use opera you need to set this var
+        :param webdriver_manager_option_dict: if you want to set webdriver download manager
+        :param kwargs: used to catch var
+        :return: current use webdriver
+        """
         param = locals()
         try:
             webdriver_name = str(webdriver_name).lower()
@@ -131,6 +139,10 @@ class WebDriverWrapper(object):
             webdriver.Ie,
             webdriver.Safari,
             ]:
+        """
+        :param key_and_vale_dict: use to set webdriver capability
+        :return: current webdriver
+        """
         param = locals()
         try:
             if self._webdriver_name is None:
@@ -144,6 +156,10 @@ class WebDriverWrapper(object):
 
     # web element
     def find_element(self, test_object: TestObject) -> WebElement:
+        """
+        :param test_object: use test object to find element
+        :return: fined web element
+        """
         param = locals()
         try:
             if self.current_webdriver is None:
@@ -156,6 +172,10 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper find_element", param, error)
 
     def find_elements(self, test_object: TestObject) -> List[WebElement]:
+        """
+        :param test_object: use test object to find elements
+        :return: list include fined web element
+        """
         param = locals()
         try:
             if self.current_webdriver is None:
@@ -169,6 +189,11 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper find_elements", param, error)
 
     def find_element_with_test_object_record(self, element_name: str) -> WebElement:
+        """
+        this is executor use but still can normal use
+        :param element_name: test object name
+        :return: fined web element
+        """
         param = locals()
         try:
             if self.current_webdriver is None:
@@ -184,6 +209,11 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper find_element_with_test_object_record", param, error)
 
     def find_elements_with_test_object_record(self, element_name: str) -> List[WebElement]:
+        """
+        this is executor use but still can normal use
+        :param element_name: test object name
+        :return: list include fined web element
+        """
         param = locals()
         try:
             if self.current_webdriver is None:
@@ -200,6 +230,10 @@ class WebDriverWrapper(object):
 
     # wait
     def implicitly_wait(self, time_to_wait: int) -> None:
+        """
+        :param time_to_wait: how much time we want to wait
+        :return: None
+        """
         param = locals()
         try:
             self.current_webdriver.implicitly_wait(time_to_wait)
@@ -209,6 +243,12 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper implicitly_wait", param, error)
 
     def explict_wait(self, wait_time: int, statement: bool, until_type: bool = True):
+        """
+        :param wait_time: how much time we want to wait if over-time will raise an exception
+        :param statement: a program statement should be return True or False
+        :param until_type: what type until wait True is until False is until_not
+        :return:
+        """
         param = locals()
         try:
             if until_type:
@@ -224,6 +264,10 @@ class WebDriverWrapper(object):
     # webdriver url redirect
 
     def to_url(self, url: str) -> None:
+        """
+        :param url: what url we want redirect to
+        :return: None
+        """
         param = locals()
         try:
             self.current_webdriver.get(url)
@@ -233,6 +277,10 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper to_url", param, error)
 
     def forward(self) -> None:
+        """
+        forward current page
+        :return: None
+        """
         try:
             self.current_webdriver.forward()
             record_action_to_list("webdriver wrapper forward", None, None)
@@ -241,6 +289,10 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper forward", None, error)
 
     def back(self) -> None:
+        """
+        back current page
+        :return: None
+        """
         try:
             self.current_webdriver.back()
             record_action_to_list("webdriver wrapper back", None, None)
@@ -249,6 +301,10 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper back", None, error)
 
     def refresh(self) -> None:
+        """
+        refresh current page
+        :return: None
+        """
         try:
             self.current_webdriver.refresh()
             record_action_to_list("webdriver wrapper refresh", None, None)
@@ -257,7 +313,13 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper refresh", None, error)
 
     # webdriver new page
-    def switch(self, switch_type: str, switchy_target_name: str = None):
+    def switch(self, switch_type: str, switch_target_name: str = None):
+        """
+        :param switch_type: what type switch? one of  [active_element, default_content, frame,
+        parent_frame, window, alert]
+        :param switch_target_name: what target we want to switch use name to search
+        :return: what we switch to
+        """
         param = locals()
         try:
             switch_type = switch_type.lower()
@@ -284,13 +346,18 @@ class WebDriverWrapper(object):
                 return switch_type_dict.get(switch_type)()
             else:
                 record_action_to_list("webdriver wrapper switch", param, None)
-                return switch_type_dict.get(switch_type)(switchy_target_name)
+                return switch_type_dict.get(switch_type)(switch_target_name)
         except Exception as error:
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper switch", param, error)
 
     # timeout
     def set_script_timeout(self, time_to_wait) -> None:
+        """
+        set max script execute time
+        :param time_to_wait: how much time we want to wait if over-time will raise an exception
+        :return: None
+        """
         param = locals()
         try:
             self.current_webdriver.set_script_timeout(time_to_wait)
@@ -300,6 +367,11 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper set_script_timeout", param, error)
 
     def set_page_load_timeout(self, time_to_wait) -> None:
+        """
+        set page load max wait time
+        :param time_to_wait: how much time we want to wait if over-time will raise an exception
+        :return: None
+        """
         param = locals()
         try:
             self.current_webdriver.set_page_load_timeout(time_to_wait)
@@ -310,6 +382,10 @@ class WebDriverWrapper(object):
 
     # cookie
     def get_cookies(self) -> List[dict]:
+        """
+        get current page cookies
+        :return: cookies as list
+        """
         try:
             record_action_to_list("webdriver wrapper get_cookies", None, None)
             return self.current_webdriver.get_cookies()
@@ -318,6 +394,11 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper get_cookies", None, error)
 
     def get_cookie(self, name) -> dict:
+        """
+        use to get current page cookie
+        :param name: use cookie name to find cookie
+        :return: {cookie_name: value}
+        """
         param = locals()
         try:
             record_action_to_list("webdriver wrapper get_cookie", param, None)
@@ -326,7 +407,12 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper get_cookie", param, error)
 
-    def add_cookie(self, cookie_dict: dict):
+    def add_cookie(self, cookie_dict: dict) -> None:
+        """
+        use to add cookie to current page
+        :param cookie_dict: {cookie_name: value}
+        :return: None
+        """
         param = locals()
         try:
             self.current_webdriver.add_cookie(cookie_dict)
@@ -336,6 +422,11 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper add_cookie", param, error)
 
     def delete_cookie(self, name) -> None:
+        """
+        use to delete current page cookie
+        :param name: use name to find cookie
+        :return: None
+        """
         param = locals()
         try:
             self.current_webdriver.delete_cookie(name)
@@ -344,6 +435,10 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper delete_cookie", param, error)
 
     def delete_all_cookies(self) -> None:
+        """
+        delete current page all cookies
+        :return: None
+        """
         try:
             self.current_webdriver.delete_all_cookies()
             record_action_to_list("webdriver wrapper delete_all_cookies", None, None)
@@ -353,6 +448,11 @@ class WebDriverWrapper(object):
 
     # exec selenium command
     def execute(self, driver_command: str, params: dict = None) -> dict:
+        """
+        :param driver_command: webdriver command
+        :param params: webdriver command params
+        :return: after execute dict
+        """
         param = locals()
         try:
             record_action_to_list("webdriver wrapper execute", param, None)
@@ -361,7 +461,13 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper execute", param, error)
 
-    def execute_script(self, script, *args):
+    def execute_script(self, script, *args) -> None:
+        """
+        execute script
+        :param script: script to execute
+        :param args: script args
+        :return: None
+        """
         param = locals()
         try:
             self.current_webdriver.execute_script(script, *args)
@@ -371,6 +477,12 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper execute_script", param, error)
 
     def execute_async_script(self, script: str, *args):
+        """
+        execute script async
+        :param script:script to execute
+        :param args: script args
+        :return: None
+        """
         param = locals()
         try:
             self.current_webdriver.execute_async_script(script, *args)
@@ -380,7 +492,12 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper execute_async_script", param, error)
 
     # ActionChains
-    def move_to_element(self, targe_element: WebElement):
+    def move_to_element(self, targe_element: WebElement) -> None:
+        """
+        move mouse to target web element
+        :param targe_element: target web element
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.move_to_element(targe_element)
@@ -390,6 +507,11 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper move_to_element", param, error)
 
     def move_to_element_with_test_object(self, element_name: str):
+        """
+        move mouse to target web element use test object
+        :param element_name: test object name
+        :return: None
+        """
         param = locals()
         try:
             element = self.current_webdriver.find_element(
@@ -402,16 +524,30 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper move_to_element_with_test_object", param, error)
 
-    def move_to_element_with_offset(self, target_element: WebElement, x: int, y: int):
+    def move_to_element_with_offset(self, target_element: WebElement, offset_x: int, offset_y: int) -> None:
+        """
+        move to target element with offset
+        :param target_element: what target web element we want to move to
+        :param offset_x: offset x
+        :param offset_y: offset y
+        :return: None
+        """
         param = locals()
         try:
-            self._action_chain.move_to_element_with_offset(target_element, x, y)
+            self._action_chain.move_to_element_with_offset(target_element, offset_x, offset_y)
             record_action_to_list("webdriver wrapper move_to_element_with_offset", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper move_to_element_with_offset", param, error)
 
-    def move_to_element_with_offset_and_test_object(self, element_name: str, x: int, y: int):
+    def move_to_element_with_offset_and_test_object(self, element_name: str, x: int, y: int) -> None:
+        """
+        move to target element with offset use test object
+        :param element_name: test object name
+        :param x: offset x
+        :param y: offset y
+        :return: None
+        """
         param = locals()
         try:
             element = self.current_webdriver.find_element(
@@ -424,7 +560,13 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper move_to_element_with_offset_and_test_object", param, error)
 
-    def drag_and_drop(self, web_element: WebElement, targe_element: WebElement):
+    def drag_and_drop(self, web_element: WebElement, targe_element: WebElement) -> None:
+        """
+        drag web element to target element then drop
+        :param web_element: which web element we want to drag and drop
+        :param targe_element: target web element to drop
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.drag_and_drop(web_element, targe_element)
@@ -434,6 +576,12 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper drag_and_drop", param, error)
 
     def drag_and_drop_with_test_object(self, element_name: str, target_element_name: str):
+        """
+        drag web element to target element then drop use testobject
+        :param element_name: which web element we want to drag and drop use name to find
+        :param target_element_name: target web element to drop use name to find
+        :return: None
+        """
         param = locals()
         try:
             element = self.current_webdriver.find_element(
@@ -450,29 +598,47 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper drag_and_drop_with_test_object", param, error)
 
-    def drag_and_drop_offset(self, web_element: WebElement, target_x: int, target_y: int):
+    def drag_and_drop_offset(self, web_element: WebElement, offset_x: int, offset_y: int) -> None:
+        """
+        drag web element to target element then drop with offset
+        :param web_element: which web element we want to drag and drop with offset
+        :param offset_x: offset x
+        :param offset_y: offset y
+        :return: None
+        """
         param = locals()
         try:
-            self._action_chain.drag_and_drop_by_offset(web_element, target_x, target_y)
+            self._action_chain.drag_and_drop_by_offset(web_element, offset_x, offset_y)
             record_action_to_list("webdriver wrapper drag_and_drop_offset", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper drag_and_drop_offset", param, error)
 
-    def drag_and_drop_offset_with_test_object(self, element_name: str, target_x: int, target_y: int):
+    def drag_and_drop_offset_with_test_object(self, element_name: str, offset_x: int, offset_y: int) -> None:
+        """
+        drag web element to target element then drop with offset and test object
+        :param element_name: test object name
+        :param offset_x: offset x
+        :param offset_y: offset y
+        :return: None
+        """
         param = locals()
         try:
             element = self.current_webdriver.find_element(
                 test_object_record.test_object_record_dict.get(element_name).test_object_type,
                 test_object_record.test_object_record_dict.get(element_name).test_object_name
             )
-            self._action_chain.drag_and_drop_by_offset(element, target_x, target_y)
+            self._action_chain.drag_and_drop_by_offset(element, offset_x, offset_y)
             record_action_to_list("webdriver wrapper drag_and_drop_offset_with_test_object", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper drag_and_drop_offset_with_test_object", param, error)
 
-    def perform(self):
+    def perform(self) -> None:
+        """
+        perform actions
+        :return: None
+        """
         try:
             self._action_chain.perform()
             record_action_to_list("webdriver wrapper perform", None, None)
@@ -480,7 +646,11 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper perform", None, error)
 
-    def reset_actions(self):
+    def reset_actions(self) -> None:
+        """
+        clear actions
+        :return: None
+        """
         try:
             self._action_chain.reset_actions()
             record_action_to_list("webdriver wrapper reset_actions", None, None)
@@ -488,7 +658,12 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper reset_actions", None, error)
 
-    def left_click(self, on_element: WebElement = None):
+    def left_click(self, on_element: WebElement = None) -> None:
+        """
+        left click mouse on current mouse position or click on web element
+        :param on_element: can be None or web element
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.click(on_element)
@@ -497,7 +672,13 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper left_click", param, error)
 
-    def left_click_with_test_object(self, element_name: str = None):
+    def left_click_with_test_object(self, element_name: str = None) -> None:
+        """
+        left click mouse on current mouse position or click on web element
+        find use test object name
+        :param element_name: test object name
+        :return: None
+        """
         param = locals()
         try:
             if element_name is None:
@@ -513,7 +694,12 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper left_click_with_test_object", param, error)
 
-    def left_click_and_hold(self, on_element: WebElement = None):
+    def left_click_and_hold(self, on_element: WebElement = None) -> None:
+        """
+        left click and hold on current mouse position or left click and hold on web element
+        :param on_element: can be None or web element
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.click_and_hold(on_element)
@@ -522,7 +708,13 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper left_click_and_hold", param, error)
 
-    def left_click_and_hold_with_test_object(self, element_name: str = None):
+    def left_click_and_hold_with_test_object(self, element_name: str = None) -> None:
+        """
+        left click and hold on current mouse position or left click and hold on web element
+        find use test object name
+        :param element_name: test object name
+        :return: None
+        """
         param = locals()
         try:
             if element_name is None:
@@ -538,7 +730,12 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper left_click_and_hold_with_test_object", param, error)
 
-    def right_click(self, on_element: WebElement = None):
+    def right_click(self, on_element: WebElement = None) -> None:
+        """
+        right click mouse on current mouse position or click on web element
+        :param on_element: can be None or web element
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.context_click(on_element)
@@ -547,7 +744,13 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper right_click", param, error)
 
-    def right_click_with_test_object(self, element_name: str = None):
+    def right_click_with_test_object(self, element_name: str = None) -> None:
+        """
+        right click mouse on current mouse position or click on web element
+        find use test object name
+        :param element_name: test object name
+        :return: None
+        """
         param = locals()
         try:
             if element_name is None:
@@ -563,7 +766,12 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper right_click_with_test_object", param, error)
 
-    def left_double_click(self, on_element: WebElement = None):
+    def left_double_click(self, on_element: WebElement = None) -> None:
+        """
+        double left click mouse on current mouse position or double click on web element
+        :param on_element: can be None or web element
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.double_click(on_element)
@@ -572,7 +780,13 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper left_double_click", param, error)
 
-    def left_double_click_with_test_object(self, element_name: str = None):
+    def left_double_click_with_test_object(self, element_name: str = None) -> None:
+        """
+        double left click mouse on current mouse position or double click on web element
+        find use test object name
+        :param element_name: test object name
+        :return: None
+        """
         param = locals()
         try:
             if element_name is None:
@@ -588,7 +802,12 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper left_double_click_with_test_object", param, error)
 
-    def release(self, on_element: WebElement = None):
+    def release(self, on_element: WebElement = None) -> None:
+        """
+        release mouse or web element
+        :param on_element: can be None or web element
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.release(on_element)
@@ -597,7 +816,12 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper release", param, error)
 
-    def release_with_test_object(self, element_name: str = None):
+    def release_with_test_object(self, element_name: str = None) -> None:
+        """
+        release mouse or web element find use test object name
+        :param element_name: test object name
+        :return: None
+        """
         param = locals()
         try:
             if element_name is None:
@@ -613,7 +837,13 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper release_with_test_object", param, error)
 
-    def press_key(self, keycode_on_key_class, on_element: WebElement = None):
+    def press_key(self, keycode_on_key_class, on_element: WebElement = None) -> None:
+        """
+        press key or press key on web element key should be in Key
+        :param keycode_on_key_class: which key code to press
+        :param on_element: can be None or web element
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.key_down(keycode_on_key_class, on_element)
@@ -622,7 +852,13 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper press_key", param, error)
 
-    def press_key_with_test_object(self, keycode_on_key_class, element_name: str = None):
+    def press_key_with_test_object(self, keycode_on_key_class, element_name: str = None) -> None:
+        """
+        press key or press key on web element key should be in Key find web element use test object name
+        :param keycode_on_key_class: which key code to press
+        :param element_name: test object name
+        :return: None
+        """
         param = locals()
         try:
             if element_name is None:
@@ -638,7 +874,13 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper press_key_with_test_object", param, error)
 
-    def release_key(self, keycode_on_key_class, on_element: WebElement = None):
+    def release_key(self, keycode_on_key_class, on_element: WebElement = None) -> None:
+        """
+        release key or release key on web element key should be in Key
+        :param keycode_on_key_class: which key code to release
+        :param on_element: can be None or web element
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.key_up(keycode_on_key_class, on_element)
@@ -647,7 +889,14 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper release_key", param, error)
 
-    def release_key_with_test_object(self, keycode_on_key_class, element_name: str = None):
+    def release_key_with_test_object(self, keycode_on_key_class, element_name: str = None) -> None:
+        """
+        release key or release key on web element key should be in Key
+        find use test object
+        :param keycode_on_key_class: which key code to release
+        :param element_name: test object name
+        :return: None
+        """
         param = locals()
         try:
             if element_name is None:
@@ -663,16 +912,27 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper release_key_with_test_object", param, error)
 
-    def move_by_offset(self, x: int, y: int):
+    def move_by_offset(self, offset_x: int, offset_y: int) -> None:
+        """
+        move mouse use offset
+        :param offset_x: offset x
+        :param offset_y: offset y
+        :return: None
+        """
         param = locals()
         try:
-            self._action_chain.move_by_offset(x, y)
+            self._action_chain.move_by_offset(offset_x, offset_y)
             record_action_to_list("webdriver wrapper move_by_offset", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper move_by_offset", param, error)
 
-    def pause(self, seconds: int):
+    def pause(self, seconds: int) -> None:
+        """
+        pause seconds time (this many be let selenium raise some exception)
+        :param seconds: seconds to pause
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.pause(seconds)
@@ -681,7 +941,12 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper pause", param, error)
 
-    def send_keys(self, keys_to_send):
+    def send_keys(self, keys_to_send) -> None:
+        """
+        send(press and release) keyboard key
+        :param keys_to_send: which key on keyboard we want to send
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.send_keys(*keys_to_send)
@@ -690,7 +955,12 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper send_keys", param, error)
 
-    def send_keys_to_element(self, element: WebElement, keys_to_send):
+    def send_keys_to_element(self, element: WebElement, keys_to_send) -> None:
+        """
+        :param element: which element we want send key to
+        :param keys_to_send:  which key on keyboard we want to send
+        :return: None
+        """
         param = locals()
         try:
             self._action_chain.send_keys_to_element(element, *keys_to_send)
@@ -699,7 +969,12 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper send_keys_to_element", param, error)
 
-    def send_keys_to_element_with_test_object(self, element_name: str, keys_to_send):
+    def send_keys_to_element_with_test_object(self, element_name: str, keys_to_send) -> None:
+        """
+        :param element_name: test object name
+        :param keys_to_send:  which key on keyboard we want to send find use test object
+        :return: None
+        """
         param = locals()
         try:
             web_element_wrapper.current_web_element = self.current_webdriver.find_element(
@@ -712,10 +987,20 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper send_keys_to_element_with_test_object", param, error)
 
-    def scroll(self, x: int, y: int, delta_x: int, delta_y: int, duration: int = 0, origin: str = "viewport"):
+    def scroll(self, scroll_x: int, scroll_y: int, delta_x: int, delta_y: int,
+               duration: int = 0, origin: str = "viewport") -> None:
+        """
+        :param scroll_x: starting x coordinate
+        :param scroll_y: starting y coordinate
+        :param delta_x: the distance the mouse will scroll on the x axis
+        :param delta_y: the distance the mouse will scroll on the y axis
+        :param duration: delay to wheel
+        :param origin: what is origin to scroll
+        :return:
+        """
         param = locals()
         try:
-            self._action_chain.scroll(x, y, delta_x, delta_y, duration, origin)
+            self._action_chain.scroll(scroll_x, scroll_y, delta_x, delta_y, duration, origin)
             record_action_to_list("webdriver wrapper scroll", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
@@ -723,6 +1008,10 @@ class WebDriverWrapper(object):
 
     # window
     def maximize_window(self) -> None:
+        """
+        maximize current window
+        :return: None
+        """
         try:
             self.current_webdriver.maximize_window()
             record_action_to_list("webdriver wrapper maximize_window", None, None)
@@ -731,6 +1020,10 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper maximize_window", None, error)
 
     def fullscreen_window(self) -> None:
+        """
+        fullscreen current window
+        :return: None
+        """
         try:
             self.current_webdriver.fullscreen_window()
             record_action_to_list("webdriver wrapper fullscreen_window", None, None)
@@ -739,6 +1032,10 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper fullscreen_window", None, error)
 
     def minimize_window(self) -> None:
+        """
+        minimize current window
+        :return: None
+        """
         try:
             self.current_webdriver.minimize_window()
             record_action_to_list("webdriver wrapper minimize_window", None, None)
@@ -747,6 +1044,12 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper minimize_window", None, error)
 
     def set_window_size(self, width, height, window_handle='current') -> dict:
+        """
+        :param width: window width (pixel)
+        :param height: window height (pixel)
+        :param window_handle: normally is "current" (w3c)  if not "current" will make exception
+        :return: size
+        """
         param = locals()
         try:
             record_action_to_list("webdriver wrapper set_window_size", param, None)
@@ -756,6 +1059,13 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper set_window_size", param, error)
 
     def set_window_position(self, x, y, window_handle='current') -> dict:
+        """
+        :param x: position x
+        :param y: position y
+        :param window_handle: normally is "current" (w3c)  if not "current" will make exception
+        :return: execute(Command.SET_WINDOW_RECT,
+        {"x": x, "y": y, "width": width, "height": height})['value']
+        """
         param = locals()
         try:
             record_action_to_list("webdriver wrapper set_window_position", param, None)
@@ -765,6 +1075,10 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper set_window_position", param, error)
 
     def get_window_position(self, window_handle='current') -> dict:
+        """
+        :param window_handle: normally is "current" (w3c)  if not "current" will make exception
+        :return: window position dict
+        """
         param = locals()
         try:
             record_action_to_list("webdriver wrapper get_window_position", param, None)
@@ -774,6 +1088,9 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper get_window_position", param, error)
 
     def get_window_rect(self) -> dict:
+        """
+        :return: execute(Command.GET_WINDOW_RECT)['value']
+        """
         try:
             record_action_to_list("webdriver wrapper get_window_position", None, None)
             return self.current_webdriver.get_window_rect()
@@ -782,6 +1099,15 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper get_window_position", None, error)
 
     def set_window_rect(self, x=None, y=None, width=None, height=None) -> dict:
+        """
+        only supported for w3c compatible another browsers need use set_window_position or set_window_size
+        :param x: set x coordinates
+        :param y: set y coordinates
+        :param width: set window width
+        :param height: set window height
+        :return: execute(Command.SET_WINDOW_RECT,
+        {"x": x, "y": y, "width": width, "height": height})['value']
+        """
         param = locals()
         try:
             record_action_to_list("webdriver wrapper set_window_rect", param, None)
@@ -792,6 +1118,10 @@ class WebDriverWrapper(object):
 
     # save as file
     def get_screenshot_as_png(self) -> bytes:
+        """
+        get current page screenshot as png
+        :return: screenshot as bytes
+        """
         try:
             record_action_to_list("webdriver wrapper get_screenshot_as_png", None, None)
             return self.current_webdriver.get_screenshot_as_png()
@@ -800,6 +1130,10 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper get_screenshot_as_png", None, error)
 
     def get_screenshot_as_base64(self) -> str:
+        """
+        get current page screenshot as base64 str
+        :return: screenshot as str
+        """
         try:
             record_action_to_list("webdriver wrapper get_screenshot_as_base64", None, None)
             return self.current_webdriver.get_screenshot_as_base64()
@@ -808,16 +1142,25 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper get_screenshot_as_base64", None, error)
 
     # log
-    def get_log(self, log_type):
+    def get_log(self, log_type: str):
+        """
+        :param log_type: ["browser", "driver", client", "server]
+        :return: execute(Command.GET_LOG, {'type': log_type})['value']
+        """
         try:
             record_action_to_list("webdriver wrapper get_log", None, None)
-            return self.current_webdriver.get_log
+            return self.current_webdriver.get_log(log_type)
         except Exception as error:
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper get_log", None, error)
 
     # webdriver wrapper add function
-    def check_current_webdriver(self, check_dict: dict):
+    def check_current_webdriver(self, check_dict: dict) -> None:
+        """
+        if check failure will raise an exception
+        :param check_dict: use to check current webdriver state
+        :return: None
+        """
         param = locals()
         try:
             check_webdriver(self.current_webdriver, check_dict)
@@ -827,7 +1170,11 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper check_current_webdriver", param, error)
 
     # close event
-    def quit(self):
+    def quit(self) -> None:
+        """
+        quit this webdriver
+        :return: None
+        """
         try:
             test_object_record.clean_record()
             self._action_chain = None
