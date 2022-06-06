@@ -7,8 +7,8 @@ import sys
 
 import requests
 
-from je_web_runner.webdriver_manager.archive import Archive
-from je_web_runner.webdriver_manager.logger import log
+from je_web_runner.webdriver_download_manager.archive import Archive
+from je_web_runner.webdriver_download_manager.logger import log
 
 
 class File(object):

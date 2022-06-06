@@ -23,12 +23,12 @@ from je_web_runner.utils.exception.exceptions import WebDriverException, WebDriv
 from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
-from je_web_runner.webdriver_manager.chrome import ChromeDriverManager
-from je_web_runner.webdriver_manager.firefox import GeckoDriverManager
-from je_web_runner.webdriver_manager.microsoft import EdgeChromiumDriverManager
-from je_web_runner.webdriver_manager.microsoft import IEDriverManager
-from je_web_runner.webdriver_manager.opera import OperaDriverManager
-from je_web_runner.webdriver_manager.utils import ChromeType
+from je_web_runner.webdriver_download_manager.chrome import ChromeDriverManager
+from je_web_runner.webdriver_download_manager.firefox import GeckoDriverManager
+from je_web_runner.webdriver_download_manager.microsoft import EdgeChromiumDriverManager
+from je_web_runner.webdriver_download_manager.microsoft import IEDriverManager
+from je_web_runner.webdriver_download_manager.opera import OperaDriverManager
+from je_web_runner.webdriver_download_manager.utils import ChromeType
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
 _webdriver_dict = {

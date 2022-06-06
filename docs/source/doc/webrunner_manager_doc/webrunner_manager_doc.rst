@@ -8,7 +8,7 @@ Webrunner Manager Doc
         """
         use to create new webdriver instance
         :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, opera, edge, ie]
-        :param opera_path: if use opera need set opera path
+        :param opera_path: if you are use opera need set opera path
         :param kwargs: webdriver download manager param
         :return: None
         """

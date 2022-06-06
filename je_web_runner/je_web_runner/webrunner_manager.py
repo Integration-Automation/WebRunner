@@ -24,7 +24,7 @@ class WebdriverManager(object):
         """
         use to create new webdriver instance
         :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, opera, edge, ie]
-        :param opera_path: if use opera need set opera path
+        :param opera_path:  if we are use opera we need to set opera path
         :param kwargs: webdriver download manager param
         :return: None
         """
@@ -103,7 +103,7 @@ def get_webdriver_manager(webdriver_name: str, opera_path: str = None, **kwargs)
     """
     use to get webdriver instance
     :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, opera, edge, ie]
-    :param opera_path: if use opera need set opera path
+    :param opera_path: if we are use opera we need to set opera path
     :param kwargs: webdriver download manager param
     :return: Webdriver manager instance
     """

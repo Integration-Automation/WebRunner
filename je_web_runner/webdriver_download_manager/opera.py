@@ -1,9 +1,9 @@
 import logging
 import os
 
-from je_web_runner.webdriver_manager import utils
-from je_web_runner.webdriver_manager.driver import OperaDriver
-from je_web_runner.webdriver_manager.manager import DriverManager
+from je_web_runner.webdriver_download_manager import utils
+from je_web_runner.webdriver_download_manager.driver import OperaDriver
+from je_web_runner.webdriver_download_manager.manager import DriverManager
 
 
 class OperaDriverManager(DriverManager):

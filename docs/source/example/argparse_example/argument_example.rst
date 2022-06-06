@@ -1,5 +1,5 @@
 ==================
-APITestka Argument Example
+WebRunner command Example
 ==================
 
 .. code-block:: python

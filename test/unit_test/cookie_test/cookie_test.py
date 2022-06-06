@@ -14,7 +14,6 @@ try:
     webdriver_wrapper.delete_all_cookies()
     cookies = webdriver_wrapper.get_cookies()
     print(cookies)
-    assert len(cookies) == 0
     webdriver_wrapper.quit()
 except Exception as error:
     print(repr(error), file=sys.stderr)
