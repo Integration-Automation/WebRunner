@@ -1,8 +1,8 @@
 import os
 
-from je_web_runner.webdriver_manager.driver_cache import DriverCache
-from je_web_runner.webdriver_manager.logger import log
-from je_web_runner.webdriver_manager.utils import download_file
+from je_web_runner.webdriver_download_manager.driver_cache import DriverCache
+from je_web_runner.webdriver_download_manager.logger import log
+from je_web_runner.webdriver_download_manager.utils import download_file
 
 
 class DriverManager(object):

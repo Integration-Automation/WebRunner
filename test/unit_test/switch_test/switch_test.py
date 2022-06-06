@@ -6,7 +6,7 @@ from je_web_runner import webdriver_wrapper
 try:
     webdriver_wrapper.set_driver("firefox")
     firefox_webdriver = webdriver_wrapper.current_webdriver
-    webdriver_wrapper.to_url("http://www.python.org")
+    webdriver_wrapper.to_url("https://www.google.com")
     google_input = TestObject("q", "name")
     webdriver_wrapper.implicitly_wait(3)
     webdriver_wrapper.find_element(google_input)

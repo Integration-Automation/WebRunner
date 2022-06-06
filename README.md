@@ -16,6 +16,8 @@
 
 ### Documentation
 
+[![Documentation Status](https://readthedocs.org/projects/webrunner-dev/badge/?version=latest)](https://webrunner-dev.readthedocs.io/en/latest/?badge=latest)
+
 ---
 
 ## install

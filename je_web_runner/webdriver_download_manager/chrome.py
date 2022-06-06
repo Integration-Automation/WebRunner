@@ -1,10 +1,10 @@
 import logging
 import os
 
-from je_web_runner.webdriver_manager import utils
-from je_web_runner.webdriver_manager.driver import ChromeDriver
-from je_web_runner.webdriver_manager.manager import DriverManager
-from je_web_runner.webdriver_manager.utils import ChromeType
+from je_web_runner.webdriver_download_manager import utils
+from je_web_runner.webdriver_download_manager.driver import ChromeDriver
+from je_web_runner.webdriver_download_manager.manager import DriverManager
+from je_web_runner.webdriver_download_manager.utils import ChromeType
 
 
 class ChromeDriverManager(DriverManager):

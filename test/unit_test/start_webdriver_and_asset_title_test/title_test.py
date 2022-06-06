@@ -1,10 +1,9 @@
 import sys
 
-from je_web_runner import get_webdriver_manager
 from je_web_runner import webdriver_wrapper
 
 try:
-    web_manager = get_webdriver_manager("firefox")
+    web_manager = webdriver_wrapper.set_driver("firefox")
 
     firefox_webdriver = webdriver_wrapper.current_webdriver
 
@@ -17,4 +16,6 @@ try:
     web_manager.quit()
 except Exception as error:
     print(repr(error), file=sys.stderr)
+    firefox_webdriver = webdriver_wrapper.current_webdriver.quit()
     sys.exit(1)
+

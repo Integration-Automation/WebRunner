@@ -21,6 +21,13 @@ class WebdriverManager(object):
         self.current_webdriver: [WebDriver, None] = None
 
     def new_driver(self, webdriver_name: str, opera_path: str = None, **kwargs) -> None:
+        """
+        use to create new webdriver instance
+        :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, opera, edge, ie]
+        :param opera_path:  if we are use opera we need to set opera path
+        :param kwargs: webdriver download manager param
+        :return: None
+        """
         param = locals()
         try:
             self.current_webdriver = webdriver_wrapper.set_driver(webdriver_name, opera_path, **kwargs)
@@ -32,6 +39,10 @@ class WebdriverManager(object):
             self.quit()
 
     def change_webdriver(self, index_of_webdriver: int) -> None:
+        """
+        :param index_of_webdriver: change current webdriver to choose index webdriver
+        :return: None
+        """
         param = locals()
         try:
             self.current_webdriver = self._current_webdriver_list[index_of_webdriver]
@@ -42,6 +53,10 @@ class WebdriverManager(object):
             record_action_to_list("web runner manager change_webdriver", param, error)
 
     def close_current_webdriver(self) -> None:
+        """
+        close current webdriver
+        :return: None
+        """
         try:
             self._current_webdriver_list.remove(self.current_webdriver)
             self.current_webdriver.close()
@@ -50,7 +65,11 @@ class WebdriverManager(object):
             print(repr(error), file=stderr)
             record_action_to_list("web runner manager close_current_webdriver", None, error)
 
-    def close_choose_webdriver(self, webdriver_index) -> None:
+    def close_choose_webdriver(self, webdriver_index: int) -> None:
+        """
+        :param webdriver_index: close choose webdriver on current webdriver list
+        :return: None
+        """
         param = locals()
         try:
             self.current_webdriver = self._current_webdriver_list[webdriver_index]
@@ -62,6 +81,10 @@ class WebdriverManager(object):
             record_action_to_list("web runner manager close_choose_webdriver", param, error)
 
     def quit(self) -> None:
+        """
+        close and quit all webdriver instance
+        :return: None
+        """
         try:
             if self._current_webdriver_list is None:
                 raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
@@ -77,6 +100,13 @@ class WebdriverManager(object):
 
 
 def get_webdriver_manager(webdriver_name: str, opera_path: str = None, **kwargs) -> WebdriverManager:
+    """
+    use to get webdriver instance
+    :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, opera, edge, ie]
+    :param opera_path: if we are use opera we need to set opera path
+    :param kwargs: webdriver download manager param
+    :return: Webdriver manager instance
+    """
     web_runner.new_driver(webdriver_name, opera_path)
     return web_runner
 
