@@ -14,6 +14,10 @@
 
 [![CircleCI](https://circleci.com/gh/JE-Chen/WebRunner/tree/main.svg?style=svg)](https://circleci.com/gh/JE-Chen/WebRunner/tree/main)
 
+[![WebRunner GitHub Actions Dev](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_dev.yml/badge.svg)](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_dev.yml)
+
+[![WebRunner GitHub Actions Stable](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_stable.yml/badge.svg)](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_stable.yml)
+
 ### Documentation
 
 [![Documentation Status](https://readthedocs.org/projects/webrunner-dev/badge/?version=latest)](https://webrunner-dev.readthedocs.io/en/latest/?badge=latest)
