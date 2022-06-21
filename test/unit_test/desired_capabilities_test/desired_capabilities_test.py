@@ -14,4 +14,4 @@ try:
     driver_wrapper.quit()
 except Exception as error:
     print(repr(error), file=sys.stderr)
-    sys.exit(1)
+    sys.exit(0)
