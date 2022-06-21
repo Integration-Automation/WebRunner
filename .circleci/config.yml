@@ -27,82 +27,82 @@ jobs:
             Start-Process -FilePath $Installer -Args "/s" -Verb RunAs -Wait;
             Remove-Item $Installer;
           name: install firefox
-      # desired_capabilities test
+      # desired_capabilities_test
       - run:
           command: python ./test/unit_test/desired_capabilities_test/desired_capabilities_test.py
           name: desired_capabilities_test
-      # find_and_click test
+      # find_and_click_test
       - run:
           command: python ./test/unit_test/find_and_click_test/find_and_click_test.py
           name: find_and_click_test
-      # multi_driver test
+      # multi_driver_test
       - run:
           command: python ./test/unit_test/multi_driver_test/multi_driver_test.py
-          name: multi_driver test
-      # start_webdriver_and_asset_title test
+          name: multi_driver_test
+      # start_webdriver_and_asset_title_test
       - run:
           command: python ./test/unit_test/start_webdriver_and_asset_title_test/title_test.py
-          name: start_webdriver_and_asset_title test
-      # get_webdriver test
+          name: start_webdriver_and_asset_title_test
+      # get_webdriver_test
       - run:
           command: python ./test/unit_test/start_webdriver_test/get_webdriver.py
           name: get_webdriver
-      # start_webdriver_with_options test
+      # start_webdriver_with_options_test
       - run:
           command: python ./test/unit_test/start_webdriver_with_options/webdriver_with_options.py
           name: start_webdriver_with_options
-      # test_object test
+      # test_object_test
       - run:
           command: python ./test/unit_test/test_object_test/test_object_test.py
           name: test_object_test
       - run:
           command: python ./test/unit_test/test_record_class_test/test_record_class_test.py
           name: test_record_class_test
-      # check_value test
+      # check_value_test
       - run:
           command: python ./test/unit_test/check_value_test/check_value_test.py
           name: check_value_test
-      # switch test
+      # switch_test
       - run:
           command: python ./test/unit_test/switch_test/switch_test.py
           name: switch_test
-      # close_choose_webdriver test
+      # close_choose_webdriver_test
       - run:
           command: python ./test/unit_test/close_choose_webdriver_test/close_choose_webdriver_test.py
           name: close_choose_webdriver_test
-      # redirect test
+      # redirect_test
       - run:
           command: python ./test/unit_test/redirect_test/redirect_test.py
           name: redirect_test
-      # cookie test
+      # cookie_test
       - run:
           command: python ./test/unit_test/cookie_test/cookie_test.py
           name: cookie_test
-      # set_timeout test
+      # set_timeout_test
       - run:
           command: python ./test/unit_test/set_timeout_test/set_timeout_test.py
           name: set_timeout_test
-      # action_chains test
+      # action_chains_test
       - run:
           command: python ./test/unit_test/action_chains_test/action_chains_test.py
           name: action_chains_test
-      # window test
+      # window_test
       - run:
           command: python ./test/unit_test/window_test/window_test.py
           name: window_test
-      # screenshot test
+      # screenshot_test
       - run:
           command: python ./test/unit_test/screenshot_test/screenshot_test.py
           name: screenshot_test
-      # executor test
+      # executor_test
       - run:
           command: python ./test/unit_test/executor_test/executor_test.py
           name: executor_test
-      # argparse test
+      # argparse_test
       - run:
           command: python ./test/unit_test/argparse/argparse_test.py
-          name: screenshot_test
-      # html report test
+          name: argparse_test
+      # html_report_test
       - run:
           command: python ./test/unit_test/html_report_test/html_report_test.py
           name: html_report_test
