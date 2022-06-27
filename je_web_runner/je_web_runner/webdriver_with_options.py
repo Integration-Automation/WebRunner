@@ -6,7 +6,6 @@ from selenium.webdriver.chrome import options
 from selenium.webdriver.edge import options
 from selenium.webdriver.firefox import options
 from selenium.webdriver.ie import options
-from selenium.webdriver.opera import options
 
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_set_argument_error
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_set_options_error
@@ -20,7 +19,6 @@ selenium_options_dict = {
     "chrome": webdriver.chrome.options.Options,
     "chromium": webdriver.chrome.options.Options,
     "firefox": webdriver.firefox.options.Options,
-    "opera": webdriver.opera.options.Options,
     "edge": webdriver.edge.options.Options,
     "ie": webdriver.ie.options.Options,
 }
@@ -29,7 +27,6 @@ selenium_options_dict = {
 def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list, set]) -> \
         Union[
             webdriver.chrome.options.Options, webdriver.chrome.options.Options,
-            webdriver.firefox.options.Options, webdriver.opera.options.Options,
             webdriver.edge.options.Options, webdriver.ie.options.Options
         ]:
     param = locals()
@@ -49,7 +46,6 @@ def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list
 def set_webdriver_options_capability_wrapper(webdriver_name: str, key_and_vale_dict: dict) -> \
         Union[
             webdriver.chrome.options.Options, webdriver.chrome.options.Options,
-            webdriver.firefox.options.Options, webdriver.opera.options.Options,
             webdriver.edge.options.Options, webdriver.ie.options.Options
         ]:
     param = locals()

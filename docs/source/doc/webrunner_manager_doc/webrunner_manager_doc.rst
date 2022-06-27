@@ -4,11 +4,10 @@ Webrunner Manager Doc
 
 .. code-block:: python
 
-    def new_driver(self, webdriver_name: str, opera_path: str = None, **kwargs) -> None:
+    def new_driver(self, webdriver_name: str, **kwargs) -> None:
         """
         use to create new webdriver instance
-        :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, opera, edge, ie]
-        :param opera_path: if you are use opera need set opera path
+        :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, edge, ie]
         :param kwargs: webdriver download manager param
         :return: None
         """
@@ -37,11 +36,10 @@ Webrunner Manager Doc
     :return: None
     """
 
-    def get_webdriver_manager(webdriver_name: str, opera_path: str = None, **kwargs) -> WebdriverManager:
+    def get_webdriver_manager(webdriver_name: str, **kwargs) -> WebdriverManager:
     """
     use to get webdriver instance
-    :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, opera, edge, ie]
-    :param opera_path: if use opera need set opera path
+    :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, edge, ie]
     :param kwargs: webdriver download manager param
     :return: Webdriver manager instance
     """

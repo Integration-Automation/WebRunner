@@ -234,57 +234,6 @@ class IEDriver(Driver):
             )
 
 
-class OperaDriver(Driver):
-    def __init__(self, name,
-                 version,
-                 os_type,
-                 url,
-                 latest_release_url,
-                 opera_release_tag):
-        super(OperaDriver, self).__init__(name, version, os_type, url,
-                                          latest_release_url)
-        self.opera_release_tag = opera_release_tag
-        self._os_token = os.getenv("GH_TOKEN", None)
-        self.auth_header = None
-        self.browser_version = ""
-        if self._os_token:
-            log("GH_TOKEN will be used to perform requests")
-            self.auth_header = {'Authorization': f'token {self._os_token}'}
-
-    def get_latest_release_version(self) -> str:
-        resp = requests.get(
-            url=self.latest_release_url,
-            headers=self.auth_header,
-            verify=self.ssl_verify,
-        )
-        validate_response(resp)
-        self._version = resp.json()["tag_name"]
-        return self._version
-
-    def get_url(self) -> str:
-        # https://github.com/operasoftware/operachromiumdriver/releases/download/v.2.45/operadriver_linux64.zip
-        version = self.get_version()
-        log(f"Getting latest opera release info for {version}")
-        resp = requests.get(
-            url=self.tagged_release_url(version),
-            headers=self.auth_header,
-            verify=self.ssl_verify,
-        )
-        validate_response(resp)
-        assets = resp.json()["assets"]
-        name = "{0}_{1}".format(self.get_name(), self.get_os_type())
-        output_dict = [asset for asset in assets if
-                       asset['name'].startswith(name)]
-        return output_dict[0]['browser_download_url']
-
-    @property
-    def latest_release_url(self):
-        return self._latest_release_url
-
-    def tagged_release_url(self, version):
-        return self.opera_release_tag.format(version)
-
-
 class EdgeChromiumDriver(Driver):
     def __init__(
             self,

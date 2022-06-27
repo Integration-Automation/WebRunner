@@ -4,20 +4,18 @@ Webrunner WebDriver Wrapper Doc
 
 .. code-block:: python
 
-     def set_driver(self, webdriver_name: str, opera_path: str = None,
+     def set_driver(self, webdriver_name: str,
                    webdriver_manager_option_dict: dict = None, **kwargs) -> \
             Union[
             webdriver.Chrome,
             webdriver.Chrome,
             webdriver.Firefox,
-            webdriver.Opera,
             webdriver.Edge,
             webdriver.Ie,
             webdriver.Safari,
             ]:
         """
         :param webdriver_name: which webdriver we want to use
-        :param opera_path: if you are use opera you need to set this var
         :param webdriver_manager_option_dict: if you want to set webdriver download manager
         :param kwargs: used to catch var
         :return: current use webdriver
@@ -28,7 +26,6 @@ Webrunner WebDriver Wrapper Doc
         webdriver.Chrome,
         webdriver.Chrome,
         webdriver.Firefox,
-        webdriver.Opera,
         webdriver.Edge,
         webdriver.Ie,
         webdriver.Safari,

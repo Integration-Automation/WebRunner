@@ -20,17 +20,16 @@ class WebdriverManager(object):
         self.webdriver_element = web_element_wrapper
         self.current_webdriver: [WebDriver, None] = None
 
-    def new_driver(self, webdriver_name: str, opera_path: str = None, **kwargs) -> None:
+    def new_driver(self, webdriver_name: str, **kwargs) -> None:
         """
         use to create new webdriver instance
-        :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, opera, edge, ie]
-        :param opera_path:  if we are use opera we need to set opera path
+        :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, edge, ie]
         :param kwargs: webdriver download manager param
         :return: None
         """
         param = locals()
         try:
-            self.current_webdriver = webdriver_wrapper.set_driver(webdriver_name, opera_path, **kwargs)
+            self.current_webdriver = webdriver_wrapper.set_driver(webdriver_name, **kwargs)
             self._current_webdriver_list.append(self.current_webdriver)
             record_action_to_list("web runner manager new_driver", param, None)
         except Exception as error:
@@ -99,15 +98,14 @@ class WebdriverManager(object):
             raise WebDriverException
 
 
-def get_webdriver_manager(webdriver_name: str, opera_path: str = None, **kwargs) -> WebdriverManager:
+def get_webdriver_manager(webdriver_name: str, **kwargs) -> WebdriverManager:
     """
     use to get webdriver instance
-    :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, opera, edge, ie]
-    :param opera_path: if we are use opera we need to set opera path
+    :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, edge, ie]
     :param kwargs: webdriver download manager param
     :return: Webdriver manager instance
     """
-    web_runner.new_driver(webdriver_name, opera_path)
+    web_runner.new_driver(webdriver_name)
     return web_runner
 
 
