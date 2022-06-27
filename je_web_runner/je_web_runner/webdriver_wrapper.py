@@ -8,7 +8,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.edge.service import Service
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.ie.service import Service
-from selenium.webdriver.remote import switch_to
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.safari.service import Service
@@ -17,7 +16,6 @@ from selenium.webdriver.support.wait import WebDriverWait
 from je_web_runner.je_web_runner.web_element_wrapper import web_element_wrapper
 from je_web_runner.je_web_runner.webdriver_with_options import set_webdriver_options_capability_wrapper
 from je_web_runner.utils.assert_value.result_check import check_webdriver
-from je_web_runner.utils.exception.exception_tag import selenium_wrapper_opera_path_error
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebDriverException, WebDriverIsNoneException
 from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
@@ -27,7 +25,6 @@ from je_web_runner.webdriver_download_manager.chrome import ChromeDriverManager
 from je_web_runner.webdriver_download_manager.firefox import GeckoDriverManager
 from je_web_runner.webdriver_download_manager.microsoft import EdgeChromiumDriverManager
 from je_web_runner.webdriver_download_manager.microsoft import IEDriverManager
-from je_web_runner.webdriver_download_manager.opera import OperaDriverManager
 from je_web_runner.webdriver_download_manager.utils import ChromeType
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
@@ -35,7 +32,6 @@ _webdriver_dict = {
     "chrome": webdriver.Chrome,
     "chromium": webdriver.Chrome,
     "firefox": webdriver.Firefox,
-    "opera": webdriver.Opera,
     "edge": webdriver.Edge,
     "ie": webdriver.Ie,
     "safari": webdriver.Safari,
@@ -45,7 +41,6 @@ _webdriver_manager_dict = {
     "chrome": ChromeDriverManager,
     "chromium": ChromeDriverManager(chrome_type=ChromeType.CHROMIUM),
     "firefox": GeckoDriverManager,
-    "opera": OperaDriverManager,
     "edge": EdgeChromiumDriverManager,
     "ie": IEDriverManager,
 }
@@ -69,20 +64,18 @@ class WebDriverWrapper(object):
 
     # start a new webdriver
 
-    def set_driver(self, webdriver_name: str, opera_path: str = None,
+    def set_driver(self, webdriver_name: str,
                    webdriver_manager_option_dict: dict = None, **kwargs) -> \
             Union[
             webdriver.Chrome,
             webdriver.Chrome,
             webdriver.Firefox,
-            webdriver.Opera,
             webdriver.Edge,
             webdriver.Ie,
             webdriver.Safari,
             ]:
         """
         :param webdriver_name: which webdriver we want to use
-        :param opera_path: if you are use opera you need to set this var
         :param webdriver_manager_option_dict: if you want to set webdriver download manager
         :param kwargs: used to catch var
         :return: current use webdriver
@@ -94,35 +87,18 @@ class WebDriverWrapper(object):
             if webdriver_value is None:
                 raise WebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
             webdriver_install_manager = _webdriver_manager_dict.get(webdriver_name)
-            if webdriver_name in ["opera"]:
-                if opera_path is None:
-                    raise WebDriverException(selenium_wrapper_opera_path_error)
-                opera_options = webdriver.ChromeOptions()
-                opera_options.add_argument('allow-elevated-browser')
-                opera_options.binary_location = opera_path
-                if webdriver_manager_option_dict is None:
-                    self.current_webdriver = webdriver_value(
-                        executable_path=_webdriver_manager_dict.get(webdriver_name)().install(), options=opera_options,
-                        **kwargs
-                    )
-                else:
-                    self.current_webdriver = webdriver_value(
-                        executable_path=_webdriver_manager_dict.get(webdriver_name)(**webdriver_manager_option_dict).install(), options=opera_options,
-                        **kwargs
-                    )
+            if webdriver_manager_option_dict is None:
+                webdriver_service = _webdriver_service_dict.get(webdriver_name)(
+                    webdriver_install_manager().install(),
+                )
             else:
-                if webdriver_manager_option_dict is None:
-                    webdriver_service = _webdriver_service_dict.get(webdriver_name)(
-                        webdriver_install_manager().install(),
-                    )
-                else:
-                    webdriver_service = _webdriver_service_dict.get(webdriver_name)(
-                        webdriver_install_manager(**webdriver_manager_option_dict).install(),
-                    )
-                self.current_webdriver = webdriver_value(service=webdriver_service, **kwargs)
-                self._webdriver_name = webdriver_name
-                self._action_chain = ActionChains(self.current_webdriver)
-                record_action_to_list("webdriver wrapper set_driver", param, None)
+                webdriver_service = _webdriver_service_dict.get(webdriver_name)(
+                    webdriver_install_manager(**webdriver_manager_option_dict).install(),
+                )
+            self.current_webdriver = webdriver_value(service=webdriver_service, **kwargs)
+            self._webdriver_name = webdriver_name
+            self._action_chain = ActionChains(self.current_webdriver)
+            record_action_to_list("webdriver wrapper set_driver", param, None)
             return self.current_webdriver
         except Exception as error:
             print(repr(error), file=stderr)
@@ -134,7 +110,6 @@ class WebDriverWrapper(object):
             webdriver.Chrome,
             webdriver.Chrome,
             webdriver.Firefox,
-            webdriver.Opera,
             webdriver.Edge,
             webdriver.Ie,
             webdriver.Safari,

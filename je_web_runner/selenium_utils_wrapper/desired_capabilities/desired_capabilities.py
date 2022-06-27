@@ -9,7 +9,6 @@ desired_capabilities_dict = {
     "firefox": DesiredCapabilities.FIREFOX,
     "chrome": DesiredCapabilities.CHROME,
     "edge": DesiredCapabilities.EDGE,
-    "opera": DesiredCapabilities.OPERA,
     "safari": DesiredCapabilities.SAFARI,
 }
 
@@ -23,7 +22,6 @@ def get_desired_capabilities(webdriver_name: str) -> \
             DesiredCapabilities.FIREFOX.copy(),
             DesiredCapabilities.CHROME.copy(),
             DesiredCapabilities.EDGE.copy(),
-            DesiredCapabilities.OPERA.copy(),
             DesiredCapabilities.SAFARI.copy(),
         ]:
     desired_capabilities = desired_capabilities_dict.get(webdriver_name)
