@@ -1,34 +1,38 @@
-class WebDriverException(Exception):
+class WebRunnerException(Exception):
     pass
 
 
-class WebDriverNotFoundException(WebDriverException):
+class WebRunnerWebDriverNotFoundException(WebRunnerException):
     pass
 
 
-class OptionsWrongTypeException(WebDriverException):
+class WebRunnerOptionsWrongTypeException(WebRunnerException):
     pass
 
 
-class ArgumentWrongTypeException(WebDriverException):
+class WebRunnerArgumentWrongTypeException(WebRunnerException):
     pass
 
 
-class WebDriverIsNoneException(WebDriverException):
+class WebRunnerWebDriverIsNoneException(WebRunnerException):
     pass
 
 
-class WebRunnerExecuteException(WebDriverException):
+class WebRunnerExecuteException(WebRunnerException):
     pass
 
 
-class WebRunnerJsonException(WebDriverException):
+class WebRunnerJsonException(WebRunnerException):
     pass
 
 
-class AssertException(WebDriverException):
+class WebRunnerAssertException(WebRunnerException):
     pass
 
 
-class HTMLException(WebDriverException):
+class WebRunnerHTMLException(WebRunnerException):
+    pass
+
+
+class WebRunnerAddCommandException(WebRunnerException):
     pass

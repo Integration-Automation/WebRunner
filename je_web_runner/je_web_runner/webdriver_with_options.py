@@ -10,9 +10,9 @@ from selenium.webdriver.ie import options
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_set_argument_error
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_set_options_error
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
-from je_web_runner.utils.exception.exceptions import ArgumentWrongTypeException
-from je_web_runner.utils.exception.exceptions import OptionsWrongTypeException
-from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
+from je_web_runner.utils.exception.exceptions import WebRunnerArgumentWrongTypeException
+from je_web_runner.utils.exception.exceptions import WebRunnerOptionsWrongTypeException
+from je_web_runner.utils.exception.exceptions import WebRunnerWebDriverNotFoundException
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
 selenium_options_dict = {
@@ -34,7 +34,7 @@ def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list
         webdriver_options = selenium_options_dict.get(webdriver_name)()
         for i in range(len(argument_iterable)):
             if type(argument_iterable[i]) != str:
-                raise ArgumentWrongTypeException(selenium_wrapper_set_argument_error)
+                raise WebRunnerArgumentWrongTypeException(selenium_wrapper_set_argument_error)
             webdriver_options.add_argument(argument_iterable[i])
         record_action_to_list("webdriver with options set_webdriver_options_argument", param, None)
         return webdriver_options
@@ -52,9 +52,9 @@ def set_webdriver_options_capability_wrapper(webdriver_name: str, key_and_vale_d
     try:
         webdriver_options = selenium_options_dict.get(webdriver_name)()
         if webdriver_options is None:
-            raise WebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
+            raise WebRunnerWebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
         if type(key_and_vale_dict) is not dict:
-            raise OptionsWrongTypeException(selenium_wrapper_set_options_error)
+            raise WebRunnerOptionsWrongTypeException(selenium_wrapper_set_options_error)
         for key, value in key_and_vale_dict.items():
             webdriver_options.set_capability(key, value)
         record_action_to_list("webdriver with options set_webdriver_options_capability_wrapper", param, None)

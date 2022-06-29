@@ -17,8 +17,8 @@ from je_web_runner.je_web_runner.web_element_wrapper import web_element_wrapper
 from je_web_runner.je_web_runner.webdriver_with_options import set_webdriver_options_capability_wrapper
 from je_web_runner.utils.assert_value.result_check import check_webdriver
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
-from je_web_runner.utils.exception.exceptions import WebDriverException, WebDriverIsNoneException
-from je_web_runner.utils.exception.exceptions import WebDriverNotFoundException
+from je_web_runner.utils.exception.exceptions import WebRunnerException, WebRunnerWebDriverIsNoneException
+from je_web_runner.utils.exception.exceptions import WebRunnerWebDriverNotFoundException
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.webdriver_download_manager.chrome import ChromeDriverManager
@@ -85,7 +85,7 @@ class WebDriverWrapper(object):
             webdriver_name = str(webdriver_name).lower()
             webdriver_value = _webdriver_dict.get(webdriver_name)
             if webdriver_value is None:
-                raise WebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
+                raise WebRunnerWebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
             webdriver_install_manager = _webdriver_manager_dict.get(webdriver_name)
             if webdriver_manager_option_dict is None:
                 webdriver_service = _webdriver_service_dict.get(webdriver_name)(
@@ -103,7 +103,7 @@ class WebDriverWrapper(object):
         except Exception as error:
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper set_driver", param, error)
-            raise WebDriverException
+            raise WebRunnerException
 
     def set_webdriver_options_capability(self, key_and_vale_dict: dict) -> \
             Union[
@@ -121,13 +121,13 @@ class WebDriverWrapper(object):
         param = locals()
         try:
             if self._webdriver_name is None:
-                raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
+                raise WebRunnerWebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
             record_action_to_list("webdriver wrapper set_webdriver_options_capability", param, None)
             return set_webdriver_options_capability_wrapper(self._webdriver_name, key_and_vale_dict)
         except Exception as error:
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper set_webdriver_options_capability", param, error)
-            raise WebDriverException
+            raise WebRunnerException
 
     # web element
     def find_element(self, test_object: TestObject) -> WebElement:
@@ -138,7 +138,7 @@ class WebDriverWrapper(object):
         param = locals()
         try:
             if self.current_webdriver is None:
-                raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
+                raise WebRunnerWebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
             web_element_wrapper.current_web_element = self.current_webdriver.find_element(
                 test_object.test_object_type, test_object.test_object_name)
             return web_element_wrapper.current_web_element
@@ -154,7 +154,7 @@ class WebDriverWrapper(object):
         param = locals()
         try:
             if self.current_webdriver is None:
-                raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
+                raise WebRunnerWebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
             web_element_wrapper.current_web_element_list = self.current_webdriver.find_elements(
                 test_object.test_object_type, test_object.test_object_name)
             record_action_to_list("webdriver wrapper find_elements", param, None)
@@ -172,7 +172,7 @@ class WebDriverWrapper(object):
         param = locals()
         try:
             if self.current_webdriver is None:
-                raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
+                raise WebRunnerWebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
             web_element_wrapper.current_web_element = self.current_webdriver.find_element(
                 test_object_record.test_object_record_dict.get(element_name).test_object_type,
                 test_object_record.test_object_record_dict.get(element_name).test_object_name
@@ -192,7 +192,7 @@ class WebDriverWrapper(object):
         param = locals()
         try:
             if self.current_webdriver is None:
-                raise WebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
+                raise WebRunnerWebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
             web_element_wrapper.current_web_element_list = self.current_webdriver.find_elements(
                 test_object_record.test_object_record_dict.get(element_name).test_object_type,
                 test_object_record.test_object_record_dict.get(element_name).test_object_name
@@ -1158,7 +1158,7 @@ class WebDriverWrapper(object):
         except Exception as error:
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper quit", None, error)
-            raise WebDriverException
+            raise WebRunnerException
 
 
 webdriver_wrapper = WebDriverWrapper()

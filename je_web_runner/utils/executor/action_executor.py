@@ -1,9 +1,11 @@
 import sys
+import types
 from typing import Tuple
 
 from je_web_runner.je_web_runner.webrunner_manager import web_runner
+from je_web_runner.utils.exception.exception_tag import add_command_exception_tag
 from je_web_runner.utils.exception.exception_tag import executor_data_error, executor_list_error
-from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
+from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException, WebRunnerAddCommandException
 from je_web_runner.utils.html_report.html_report_generate import generate_html
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
@@ -149,6 +151,14 @@ class Executor(object):
 
 
 executor = Executor()
+
+
+def add_command_to_executor(command_dict: dict):
+    for command_name, command in command_dict.items():
+        if isinstance(command, (types.MethodType, types.FunctionType)):
+            executor.event_dict.update({command_name: command})
+        else:
+            raise WebRunnerAddCommandException(add_command_exception_tag)
 
 
 def execute_action(action_list: list) -> Tuple[str, list]:
