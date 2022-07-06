@@ -14,6 +14,7 @@ from je_web_runner.selenium_utils_wrapper.keys.selenium_keys import Keys
 from je_web_runner.utils.executor.action_executor import execute_action
 from je_web_runner.utils.executor.action_executor import execute_files
 from je_web_runner.utils.executor.action_executor import executor
+from je_web_runner.utils.executor.action_executor import add_command_to_executor
 # test object
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_class import create_test_object

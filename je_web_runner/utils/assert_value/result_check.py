@@ -1,7 +1,7 @@
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
-from je_web_runner.utils.exception.exceptions import AssertException
+from je_web_runner.utils.exception.exceptions import WebRunnerAssertException
 
 
 def _make_webdriver_check_dict(webdriver_to_check: WebDriver) -> dict:
@@ -58,7 +58,7 @@ def check_value(check_dict: dict, result_check_dict: dict) -> None:
     """
     for key, value in result_check_dict.items():
         if check_dict.get(key) != value:
-            raise AssertException(
+            raise WebRunnerAssertException(
                 "value should be {right_value} but value was {wrong_value}".format(
                     right_value=value, wrong_value=check_dict.get(key)
                 )

@@ -5,7 +5,7 @@ with open("README.md", "r") as README:
 
 setuptools.setup(
     name="je_web_runner",
-    version="0.0.18",
+    version="0.0.20",
     author="JE-Chen",
     author_email="zenmailman@gmail.com",
     description="selenium get_webdriver_wrapper",
