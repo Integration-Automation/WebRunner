@@ -1,5 +1,5 @@
 import datetime
-from typing import Union, Callable
+from typing import Union
 
 
 class TestRecord(object):
