@@ -88,9 +88,9 @@ class WebdriverManager(object):
             if self._current_webdriver_list is None:
                 raise WebRunnerWebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
             test_object_record.clean_record()
-            for not_closed_webdriver in self._current_webdriver_list:
-                not_closed_webdriver.close()
-            self.current_webdriver.quit()
+            for webdriver in self._current_webdriver_list:
+                webdriver.quit()
+            self._current_webdriver_list = list()
             record_action_to_list("web runner manager quit", None, None)
         except Exception as error:
             print(repr(error), file=stderr)

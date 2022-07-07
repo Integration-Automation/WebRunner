@@ -515,12 +515,12 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper move_to_element_with_offset", param, error)
 
-    def move_to_element_with_offset_and_test_object(self, element_name: str, x: int, y: int) -> None:
+    def move_to_element_with_offset_and_test_object(self, element_name: str, offset_x: int, offset_y: int) -> None:
         """
         move to target element with offset use test object
         :param element_name: test object name
-        :param x: offset x
-        :param y: offset y
+        :param offset_x: offset x
+        :param offset_y: offset y
         :return: None
         """
         param = locals()
@@ -529,7 +529,7 @@ class WebDriverWrapper(object):
                 test_object_record.test_object_record_dict.get(element_name).test_object_type,
                 test_object_record.test_object_record_dict.get(element_name).test_object_name
             )
-            self._action_chain.move_to_element_with_offset(element, x, y)
+            self._action_chain.move_to_element_with_offset(element, offset_x, offset_y)
             record_action_to_list("webdriver wrapper move_to_element_with_offset_and_test_object", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
@@ -573,28 +573,28 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper drag_and_drop_with_test_object", param, error)
 
-    def drag_and_drop_offset(self, web_element: WebElement, offset_x: int, offset_y: int) -> None:
+    def drag_and_drop_offset(self, web_element: WebElement, target_x: int, target_y: int) -> None:
         """
         drag web element to target element then drop with offset
         :param web_element: which web element we want to drag and drop with offset
-        :param offset_x: offset x
-        :param offset_y: offset y
+        :param target_x: offset x
+        :param target_y: offset y
         :return: None
         """
         param = locals()
         try:
-            self._action_chain.drag_and_drop_by_offset(web_element, offset_x, offset_y)
+            self._action_chain.drag_and_drop_by_offset(web_element, target_x, target_y)
             record_action_to_list("webdriver wrapper drag_and_drop_offset", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper drag_and_drop_offset", param, error)
 
-    def drag_and_drop_offset_with_test_object(self, element_name: str, offset_x: int, offset_y: int) -> None:
+    def drag_and_drop_offset_with_test_object(self, element_name: str, target_x: int, target_y: int) -> None:
         """
         drag web element to target element then drop with offset and test object
         :param element_name: test object name
-        :param offset_x: offset x
-        :param offset_y: offset y
+        :param target_x: offset x
+        :param target_y: offset y
         :return: None
         """
         param = locals()
@@ -603,7 +603,7 @@ class WebDriverWrapper(object):
                 test_object_record.test_object_record_dict.get(element_name).test_object_type,
                 test_object_record.test_object_record_dict.get(element_name).test_object_name
             )
-            self._action_chain.drag_and_drop_by_offset(element, offset_x, offset_y)
+            self._action_chain.drag_and_drop_by_offset(element, target_x, target_y)
             record_action_to_list("webdriver wrapper drag_and_drop_offset_with_test_object", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
