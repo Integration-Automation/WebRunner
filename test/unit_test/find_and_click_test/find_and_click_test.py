@@ -14,8 +14,8 @@ try:
     driver_wrapper.webdriver_wrapper.to_url("https://www.google.com")
     """test object type: "name" name: "q" """
     google_input = TestObject("q", "name")
-    "implicitly_wait 5sec"
-    driver_wrapper.webdriver_wrapper.implicitly_wait(5)
+    "implicitly_wait 2sec"
+    driver_wrapper.webdriver_wrapper.implicitly_wait(2)
     """current web element is google input type: "name" name: "q" """
     webdriver_wrapper.find_element(google_input)
     "click current web element"
