@@ -56,8 +56,8 @@
     "drag_and_drop_offset",
     {
       "element_name": "q",
-      "target_x": 10,
-      "target_y": 10
+      "offset_x": 10,
+      "offset_y": 10
     }
   ],
   [
