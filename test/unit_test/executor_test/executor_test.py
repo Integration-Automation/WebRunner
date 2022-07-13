@@ -39,7 +39,6 @@ test_execute_list = [
     ["perform"],
     ["pause", {"seconds": "3"}],
 ]
-execute_action(test_execute_list)
 
 try:
     test_execute_list = [
