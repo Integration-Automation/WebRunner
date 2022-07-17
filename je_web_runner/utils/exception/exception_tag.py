@@ -16,3 +16,5 @@ wrong_json_data_error = "can't parser json"
 html_generate_no_data_tag = "can't make html report, data is null?"
 # add command
 add_command_exception_tag = "command value type should be as method or function"
+# argparse
+argparse_get_wrong_data = "argparse receive wrong data"
