@@ -140,6 +140,9 @@ class Executor(object):
             except Exception as error:
                 print(repr(error), file=sys.stderr)
                 print(action, file=sys.stderr)
+        for key, value in execute_record_dict.items():
+            print(key)
+            print(value)
         return execute_record_dict
 
     def execute_files(self, execute_files_list: list) -> list:
