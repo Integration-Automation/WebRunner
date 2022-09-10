@@ -11,11 +11,6 @@ test_execute_list = [
     ["click_element"],
     ["implicitly_wait", {"time_to_wait": 3}],
     ["input_to_element", {"input_value": "test 123 test do you read"}],
-]
-
-execute_action(test_execute_list)
-
-test_execute_list = [
     ["to_url", {"url": "https://www.google.com"}],
     ["move_to_element", {"element_name": "q"}],
     ["implicitly_wait", {"time_to_wait": 3}],
@@ -37,7 +32,7 @@ test_execute_list = [
     ["send_keys", {"keys_to_send": "\ue031"}],
     ["send_keys_to_element", {"element_name": "q", "keys_to_send": "\ue031"}],
     ["perform"],
-    ["pause", {"seconds": "3"}],
+    ["pause", {"seconds": "3"}]
 ]
 
 try:
