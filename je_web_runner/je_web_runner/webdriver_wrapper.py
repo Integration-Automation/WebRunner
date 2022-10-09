@@ -67,12 +67,12 @@ class WebDriverWrapper(object):
     def set_driver(self, webdriver_name: str,
                    webdriver_manager_option_dict: dict = None, **kwargs) -> \
             Union[
-            webdriver.Chrome,
-            webdriver.Chrome,
-            webdriver.Firefox,
-            webdriver.Edge,
-            webdriver.Ie,
-            webdriver.Safari,
+                webdriver.Chrome,
+                webdriver.Chrome,
+                webdriver.Firefox,
+                webdriver.Edge,
+                webdriver.Ie,
+                webdriver.Safari,
             ]:
         """
         :param webdriver_name: which webdriver we want to use
@@ -107,12 +107,12 @@ class WebDriverWrapper(object):
 
     def set_webdriver_options_capability(self, key_and_vale_dict: dict) -> \
             Union[
-            webdriver.Chrome,
-            webdriver.Chrome,
-            webdriver.Firefox,
-            webdriver.Edge,
-            webdriver.Ie,
-            webdriver.Safari,
+                webdriver.Chrome,
+                webdriver.Chrome,
+                webdriver.Firefox,
+                webdriver.Edge,
+                webdriver.Ie,
+                webdriver.Safari,
             ]:
         """
         :param key_and_vale_dict: use to set webdriver capability
@@ -165,7 +165,7 @@ class WebDriverWrapper(object):
 
     def find_element_with_test_object_record(self, element_name: str) -> WebElement:
         """
-        this is executor use but still can normal use
+        this is executor use but still can normally use
         :param element_name: test object name
         :return: fined web element
         """
@@ -185,7 +185,7 @@ class WebDriverWrapper(object):
 
     def find_elements_with_test_object_record(self, element_name: str) -> List[WebElement]:
         """
-        this is executor use but still can normal use
+        this is executor use but still can normally use
         :param element_name: test object name
         :return: list include fined web element
         """
@@ -206,6 +206,7 @@ class WebDriverWrapper(object):
     # wait
     def implicitly_wait(self, time_to_wait: int) -> None:
         """
+        selenium implicitly_wait
         :param time_to_wait: how much time we want to wait
         :return: None
         """
@@ -219,6 +220,7 @@ class WebDriverWrapper(object):
 
     def explict_wait(self, wait_time: int, statement: bool, until_type: bool = True):
         """
+        selenium explict_wait
         :param wait_time: how much time we want to wait if over-time will raise an exception
         :param statement: a program statement should be return True or False
         :param until_type: what type until wait True is until False is until_not
@@ -240,6 +242,7 @@ class WebDriverWrapper(object):
 
     def to_url(self, url: str) -> None:
         """
+        to url
         :param url: what url we want redirect to
         :return: None
         """
@@ -290,6 +293,7 @@ class WebDriverWrapper(object):
     # webdriver new page
     def switch(self, switch_type: str, switch_target_name: str = None):
         """
+        switch to target element
         :param switch_type: what type switch? one of  [active_element, default_content, frame,
         parent_frame, window, alert]
         :param switch_target_name: what target we want to switch use name to search
@@ -327,7 +331,7 @@ class WebDriverWrapper(object):
             record_action_to_list("webdriver wrapper switch", param, error)
 
     # timeout
-    def set_script_timeout(self, time_to_wait) -> None:
+    def set_script_timeout(self, time_to_wait: int) -> None:
         """
         set max script execute time
         :param time_to_wait: how much time we want to wait if over-time will raise an exception
@@ -341,7 +345,7 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper set_script_timeout", param, error)
 
-    def set_page_load_timeout(self, time_to_wait) -> None:
+    def set_page_load_timeout(self, time_to_wait: int) -> None:
         """
         set page load max wait time
         :param time_to_wait: how much time we want to wait if over-time will raise an exception
@@ -368,7 +372,7 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper get_cookies", None, error)
 
-    def get_cookie(self, name) -> dict:
+    def get_cookie(self, name: str) -> dict:
         """
         use to get current page cookie
         :param name: use cookie name to find cookie
@@ -436,7 +440,7 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper execute", param, error)
 
-    def execute_script(self, script, *args) -> None:
+    def execute_script(self, script: str, *args) -> None:
         """
         execute script
         :param script: script to execute
@@ -1073,7 +1077,7 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper get_window_position", None, error)
 
-    def set_window_rect(self, x=None, y=None, width=None, height=None) -> dict:
+    def set_window_rect(self, x: int = None, y: int = None, width: int = None, height: int = None) -> dict:
         """
         only supported for w3c compatible another browsers need use set_window_position or set_window_size
         :param x: set x coordinates

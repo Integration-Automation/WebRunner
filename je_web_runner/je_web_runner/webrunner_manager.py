@@ -39,6 +39,7 @@ class WebdriverManager(object):
 
     def change_webdriver(self, index_of_webdriver: int) -> None:
         """
+        change to target webdriver
         :param index_of_webdriver: change current webdriver to choose index webdriver
         :return: None
         """
@@ -66,6 +67,7 @@ class WebdriverManager(object):
 
     def close_choose_webdriver(self, webdriver_index: int) -> None:
         """
+        close choose webdriver
         :param webdriver_index: close choose webdriver on current webdriver list
         :return: None
         """

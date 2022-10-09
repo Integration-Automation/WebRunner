@@ -14,6 +14,9 @@ desired_capabilities_dict = {
 
 
 def get_desired_capabilities_keys() -> Union[str, Any]:
+    """
+    :return: return all webdriver you can get desired capabilities
+    """
     return desired_capabilities_dict.keys()
 
 
@@ -24,6 +27,11 @@ def get_desired_capabilities(webdriver_name: str) -> \
             DesiredCapabilities.EDGE.copy(),
             DesiredCapabilities.SAFARI.copy(),
         ]:
+    """
+    choose webdriver to get desired capabilities
+    :param webdriver_name: name to get desired capabilities
+    :return: desired capabilities
+    """
     desired_capabilities = desired_capabilities_dict.get(webdriver_name)
     if desired_capabilities is None:
         raise WebRunnerException(selenium_wrapper_web_driver_not_found_error)
