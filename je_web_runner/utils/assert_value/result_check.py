@@ -6,6 +6,7 @@ from je_web_runner.utils.exception.exceptions import WebRunnerAssertException
 
 def _make_webdriver_check_dict(webdriver_to_check: WebDriver) -> dict:
     """
+    use to check webdriver current info
     :param webdriver_to_check: what webdriver we want to check
     :return: webdriver detail dict
     """
@@ -32,6 +33,7 @@ def _make_webdriver_check_dict(webdriver_to_check: WebDriver) -> dict:
 
 def _make_web_element_check_dict(web_element_to_check: WebElement) -> dict:
     """
+    use to check web element current info
     :param web_element_to_check: what web element we want to check
     :return: web element detail dict
     """

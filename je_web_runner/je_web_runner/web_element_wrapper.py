@@ -38,7 +38,7 @@ class WebElementWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("Web element clear", None, error)
 
-    def get_property(self, name) -> str:
+    def get_property(self, name: str) -> str:
         """
         :param name: name of property
         :return: property value as str
@@ -51,7 +51,7 @@ class WebElementWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("Web element get_property", param, error)
 
-    def get_dom_attribute(self, name) -> str:
+    def get_dom_attribute(self, name: str) -> str:
         """
         :param name: name of dom
         :return: dom attribute value as str
@@ -64,7 +64,7 @@ class WebElementWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("Web element get_dom_attribute", param, error)
 
-    def get_attribute(self, name) -> str:
+    def get_attribute(self, name: str) -> str:
         """
         :param name: name of web element
         :return:web element attribute value as str
@@ -101,7 +101,7 @@ class WebElementWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("Web element is_enabled", None, error)
 
-    def input_to_element(self, input_value) -> None:
+    def input_to_element(self, input_value: str) -> None:
         """
         input value to current web element
         :param input_value: what value we want to input to current web element
@@ -139,7 +139,7 @@ class WebElementWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("Web element is_displayed", None, error)
 
-    def value_of_css_property(self, property_name) -> str:
+    def value_of_css_property(self, property_name: str) -> str:
         """
         :param property_name: name of property
         :return: css property value as str
@@ -152,7 +152,7 @@ class WebElementWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("Web element value_of_css_property", param, error)
 
-    def screenshot(self, filename) -> bool:
+    def screenshot(self, filename: str) -> bool:
         """
         :param filename: full file name not need .png extension
         :return: Save True or not
@@ -205,4 +205,5 @@ class WebElementWrapper(object):
             record_action_to_list("Web element get_select", None, error)
 
 
+# use this wrapper to use web element
 web_element_wrapper = WebElementWrapper()

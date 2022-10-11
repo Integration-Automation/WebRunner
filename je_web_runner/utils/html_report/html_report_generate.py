@@ -113,6 +113,13 @@ _event_table = \
 
 
 def make_html_table(event_str: str, record_data: dict, table_head: str) -> str:
+    """
+    use to add record to html
+    :param event_str: what event trigger
+    :param record_data: what date need to recode
+    :param table_head: table head text
+    :return: whole current str
+    """
     event_str = "".join(
         [
             event_str,

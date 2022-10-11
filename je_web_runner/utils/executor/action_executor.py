@@ -113,9 +113,12 @@ class Executor(object):
 
     def execute_action(self, action_list: [list, dict]) -> dict:
         """
+        use to execute action on list
         :param action_list: like this structure
         [
-
+            ["get_webdriver_manager", {"webdriver_name": "firefox"}],
+            ["to_url", {"url": "https://www.google.com"}],
+            ["quit"]
         ]
         for loop and use execute_event function to execute
         :return: recode string, response as list
@@ -160,6 +163,10 @@ executor = Executor()
 
 
 def add_command_to_executor(command_dict: dict):
+    """
+    :param command_dict: command dict to add into executor command dict
+    :return:None
+    """
     for command_name, command in command_dict.items():
         if isinstance(command, (types.MethodType, types.FunctionType)):
             executor.event_dict.update({command_name: command})

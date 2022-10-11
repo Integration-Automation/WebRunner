@@ -29,6 +29,11 @@ def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list
             webdriver.chrome.options.Options, webdriver.chrome.options.Options,
             webdriver.edge.options.Options, webdriver.ie.options.Options
         ]:
+    """
+    :param webdriver_name: use name to open webdriver manager and download webdriver
+    :param argument_iterable: start webdriver argument
+    :return: webdriver
+    """
     param = locals()
     try:
         webdriver_options = selenium_options_dict.get(webdriver_name)()
@@ -48,6 +53,11 @@ def set_webdriver_options_capability_wrapper(webdriver_name: str, key_and_vale_d
             webdriver.chrome.options.Options, webdriver.chrome.options.Options,
             webdriver.edge.options.Options, webdriver.ie.options.Options
         ]:
+    """
+    :param webdriver_name:  use name to open webdriver manager and download webdriver
+    :param key_and_vale_dict: set webdriver options capability
+    :return: webdriver
+    """
     param = locals()
     try:
         webdriver_options = selenium_options_dict.get(webdriver_name)()
