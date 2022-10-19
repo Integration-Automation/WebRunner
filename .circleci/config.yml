@@ -161,7 +161,7 @@ jobs:
       - run:
           command: python ./test/unit_test/test_record_class_test/test_record_class_test.py
           name: test_record_class_test
-      # check_value test
+      # element_value test
       - run:
           command: python ./test/unit_test/check_value_test/check_value_test.py
           name: check_value_test

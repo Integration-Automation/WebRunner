@@ -4,7 +4,7 @@ from typing import List
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import Select
 
-from je_web_runner.utils.assert_value.result_check import check_web_element
+from je_web_runner.utils.assert_value.result_check import check_web_element_details
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
 
@@ -186,7 +186,7 @@ class WebElementWrapper(object):
         """
         param = locals()
         try:
-            check_web_element(self.current_web_element, check_dict)
+            check_web_element_details(self.current_web_element, check_dict)
             record_action_to_list("Web element check_current_web_element", param, None)
         except Exception as error:
             print(repr(error), file=stderr)
