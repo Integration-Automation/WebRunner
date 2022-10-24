@@ -1,5 +1,6 @@
 import json
 import socketserver
+import sys
 import threading
 
 from je_web_runner.utils.executor.action_executor import execute_action
@@ -24,7 +25,13 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
                 socket.sendto("Return_Data_Over_JE".encode("utf-8"), self.client_address)
                 socket.sendto("\n".encode("utf-8"), self.client_address)
             except Exception as error:
-                print(repr(error))
+                try:
+                    socket.sendto(str(error).encode("utf-8"), self.client_address)
+                    socket.sendto("\n".encode("utf-8"), self.client_address)
+                    socket.sendto("Return_Data_Over_JE".encode("utf-8"), self.client_address)
+                    socket.sendto("\n".encode("utf-8"), self.client_address)
+                except Exception as error:
+                    print(repr(error))
 
 
 class TCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
@@ -34,15 +41,15 @@ class TCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
         self.close_flag: bool = False
 
 
-def start_autocontrol_socket_server(host: str = "localhost", port: int = 9938):
+def start_web_runner_socket_server(host: str = "localhost", port: int = 9941):
+    if len(sys.argv) == 2:
+        host = sys.argv[1]
+    elif len(sys.argv) == 3:
+        host = sys.argv[1]
+        port = int(sys.argv[2])
     server = TCPServer((host, port), TCPServerHandler)
     server_thread = threading.Thread(target=server.serve_forever)
     server_thread.daemon = True
     server_thread.start()
     return server
 
-
-if __name__ == "__main__":
-    start_autocontrol_socket_server()
-    while True:
-        pass
