@@ -11,7 +11,7 @@ class TestObjectRecord(object):
     def clean_record(self) -> None:
         self.test_object_record_dict = dict()
 
-    def save_test_object(self, test_object_name: str, object_type=None, **kwargs) -> None:
+    def save_test_object(self, test_object_name: str, object_type: str = None, **kwargs) -> None:
         test_object = TestObject(test_object_name, object_type)
         self.test_object_record_dict.update({test_object.test_object_name: test_object})
 

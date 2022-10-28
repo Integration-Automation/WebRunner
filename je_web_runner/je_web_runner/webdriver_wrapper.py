@@ -15,7 +15,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 
 from je_web_runner.je_web_runner.web_element_wrapper import web_element_wrapper
 from je_web_runner.je_web_runner.webdriver_with_options import set_webdriver_options_capability_wrapper
-from je_web_runner.utils.assert_value.result_check import check_webdriver
+from je_web_runner.utils.assert_value.result_check import check_webdriver_details
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebRunnerException, WebRunnerWebDriverIsNoneException
 from je_web_runner.utils.exception.exceptions import WebRunnerWebDriverNotFoundException
@@ -1142,7 +1142,7 @@ class WebDriverWrapper(object):
         """
         param = locals()
         try:
-            check_webdriver(self.current_webdriver, check_dict)
+            check_webdriver_details(self.current_webdriver, check_dict)
             record_action_to_list("webdriver wrapper check_current_webdriver", param, None)
         except Exception as error:
             print(repr(error), file=stderr)

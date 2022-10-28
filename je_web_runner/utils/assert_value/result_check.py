@@ -1,3 +1,5 @@
+import typing
+
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -52,7 +54,23 @@ def _make_web_element_check_dict(web_element_to_check: WebElement) -> dict:
     return web_element_detail_dict
 
 
-def check_value(check_dict: dict, result_check_dict: dict) -> None:
+def check_value(element_name: str, element_value: typing.Any, result_check_dict: dict) -> None:
+    """
+    use to check state
+    :param element_name: the name of element we want to check
+    :param element_value: what value element should be
+    :param result_check_dict: the dict include data name and value to check check_dict is valid or not
+    :return: None
+    """
+    if result_check_dict.get(element_name) != element_value:
+        raise WebRunnerAssertException(
+            "value should be {right_value} but value was {wrong_value}".format(
+                right_value=element_value, wrong_value=result_check_dict.get(element_name)
+            )
+        )
+
+
+def check_values(check_dict: dict, result_check_dict: dict) -> None:
     """
     :param check_dict: dict include data name and value to check
     :param result_check_dict: the dict include data name and value to check check_dict is valid or not
@@ -67,21 +85,43 @@ def check_value(check_dict: dict, result_check_dict: dict) -> None:
             )
 
 
-def check_webdriver(webdriver_to_check: WebDriver, result_check_dict: dict) -> None:
+def check_webdriver_value(element_name: str, element_value: typing.Any, webdriver_to_check: WebDriver) -> None:
+    """
+    :param element_name: the name of element we want to check
+    :param element_value: what value element should be
+    :param webdriver_to_check: the dict include data name and value to check result_dict is valid or not
+    :return: None
+    """
+    check_dict = _make_webdriver_check_dict(webdriver_to_check)
+    check_value(element_name, element_value, check_dict)
+
+
+def check_webdriver_details(webdriver_to_check: WebDriver, result_check_dict: dict) -> None:
     """
     :param webdriver_to_check: what webdriver we want to check
     :param result_check_dict: the dict include data name and value to check result_dict is valid or not
     :return: None
     """
     check_dict = _make_webdriver_check_dict(webdriver_to_check)
-    check_value(check_dict, result_check_dict)
+    check_values(check_dict, result_check_dict)
 
 
-def check_web_element(web_element_to_check: WebElement, result_check_dict: dict) -> None:
+def check_web_element_value(element_name: str, element_value: typing.Any, web_element_to_check: WebElement) -> None:
+    """
+    :param element_name: the name of element we want to check
+    :param element_value: what value element should be
+    :param web_element_to_check: the dict include data name and value to check result_dict is valid or not
+    :return: None
+    """
+    check_dict = _make_web_element_check_dict(web_element_to_check)
+    check_value(element_name, element_value, check_dict)
+
+
+def check_web_element_details(web_element_to_check: WebElement, result_check_dict: dict) -> None:
     """
     :param web_element_to_check: what web element we want to check
     :param result_check_dict: the dict include data name and value to check result_dict is valid or not
     :return: None
     """
     check_dict = _make_web_element_check_dict(web_element_to_check)
-    check_value(check_dict, result_check_dict)
+    check_values(check_dict, result_check_dict)
