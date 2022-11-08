@@ -23,3 +23,5 @@ from je_web_runner.utils.test_object.test_object_class import get_test_object_ty
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 # generate html
 from je_web_runner.utils.html_report.html_report_generate import generate_html
+# server
+from je_web_runner.utils.socket_server.web_runner_socket_server import start_web_runner_socket_server
