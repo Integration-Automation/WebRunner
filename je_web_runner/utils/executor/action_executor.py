@@ -1,6 +1,5 @@
 import sys
 import types
-from typing import Tuple
 
 from je_web_runner.je_web_runner.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tag import add_command_exception_tag

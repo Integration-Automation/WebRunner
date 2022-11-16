@@ -1,4 +1,3 @@
-import sys
 from sys import stderr
 
 from selenium.common.exceptions import WebDriverException
