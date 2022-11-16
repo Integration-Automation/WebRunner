@@ -317,6 +317,7 @@ class WebDriverWrapper(object):
                 switch_type_dict.update(
                     {"alert": None}
                 )
+                print(repr(error), file=stderr)
             if switch_type in ["active_element", "alert"]:
                 record_action_to_list("webdriver wrapper switch", param, None)
                 return switch_type_dict.get(switch_type)
