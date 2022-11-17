@@ -37,10 +37,10 @@ def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list
     param = locals()
     try:
         webdriver_options = selenium_options_dict.get(webdriver_name)()
-        for i in range(len(argument_iterable)):
-            if type(argument_iterable[i]) != str:
+        for index, value in enumerate(argument_iterable):
+            if isinstance(value, str) is False:
                 raise WebRunnerArgumentWrongTypeException(selenium_wrapper_set_argument_error)
-            webdriver_options.add_argument(argument_iterable[i])
+            webdriver_options.add_argument(value)
         record_action_to_list("webdriver with options set_webdriver_options_argument", param, None)
         return webdriver_options
     except Exception as error:
@@ -63,7 +63,7 @@ def set_webdriver_options_capability_wrapper(webdriver_name: str, key_and_vale_d
         webdriver_options = selenium_options_dict.get(webdriver_name)()
         if webdriver_options is None:
             raise WebRunnerWebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
-        if type(key_and_vale_dict) is not dict:
+        if isinstance(key_and_vale_dict, dict) is False:
             raise WebRunnerOptionsWrongTypeException(selenium_wrapper_set_options_error)
         for key, value in key_and_vale_dict.items():
             webdriver_options.set_capability(key, value)

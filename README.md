@@ -4,6 +4,7 @@
 
 * Selenium wrapper, include a manager to manage selenium instance
 * Auto download needed webdriver
+
 ---
 
 [![CircleCI](https://circleci.com/gh/JE-Chen/WebRunner/tree/main.svg?style=svg)](https://circleci.com/gh/JE-Chen/WebRunner/tree/main)

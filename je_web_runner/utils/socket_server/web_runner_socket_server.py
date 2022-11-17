@@ -52,4 +52,3 @@ def start_web_runner_socket_server(host: str = "localhost", port: int = 9941):
     server_thread.daemon = True
     server_thread.start()
     return server
-
