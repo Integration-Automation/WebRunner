@@ -3,10 +3,10 @@
 from je_web_runner.je_web_runner.element.web_element_wrapper import web_element_wrapper
 from je_web_runner.je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_argument
 # webdriver wrapper
-from je_web_runner.je_web_runner.webrunner_manager import get_webdriver_manager
+from je_web_runner.je_web_runner.manager.webrunner_manager import get_webdriver_manager
+from je_web_runner.je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper
 # selenium utils
 from je_web_runner.utils.executor.action_executor import add_command_to_executor
-# Keys
 # utils
 from je_web_runner.utils.executor.action_executor import execute_action
 from je_web_runner.utils.executor.action_executor import execute_files
@@ -22,6 +22,10 @@ from je_web_runner.utils.test_object.test_object_class import get_test_object_ty
 # test record
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 # Keys
+from je_web_runner.je_web_runner.utils.selenium_utils_wrapper.keys.selenium_keys import Keys
+# desired_capabilities
+from je_web_runner.je_web_runner.utils.selenium_utils_wrapper.desired_capabilities.desired_capabilities import get_desired_capabilities
+from je_web_runner.je_web_runner.utils.selenium_utils_wrapper.desired_capabilities.desired_capabilities import get_desired_capabilities_keys
 
 __all__ = [
     "web_element_wrapper", "set_webdriver_options_argument",
