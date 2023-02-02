@@ -1,3 +1,4 @@
+import typing
 from sys import stderr
 from typing import List, Union
 
@@ -13,8 +14,8 @@ from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.safari.service import Service
 from selenium.webdriver.support.wait import WebDriverWait
 
-from je_web_runner.je_web_runner.web_element_wrapper import web_element_wrapper
-from je_web_runner.je_web_runner.webdriver_with_options import set_webdriver_options_capability_wrapper
+from je_web_runner.je_web_runner.element.web_element_wrapper import web_element_wrapper
+from je_web_runner.je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_capability_wrapper
 from je_web_runner.utils.assert_value.result_check import check_webdriver_details
 from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebRunnerException, WebRunnerWebDriverIsNoneException
@@ -218,11 +219,11 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper implicitly_wait", param, error)
 
-    def explict_wait(self, wait_time: int, statement: bool, until_type: bool = True):
+    def explict_wait(self, wait_time: int, method: typing.Callable, until_type: bool = True):
         """
         selenium explict_wait
         :param wait_time: how much time we want to wait if over-time will raise an exception
-        :param statement: a program statement should be return True or False
+        :param method: a program statement should be return True or False
         :param until_type: what type until wait True is until False is until_not
         :return:
         """
@@ -230,10 +231,10 @@ class WebDriverWrapper(object):
         try:
             if until_type:
                 record_action_to_list("webdriver wrapper explict_wait", param, None)
-                return WebDriverWait(self.current_webdriver, wait_time).until(statement)
+                return WebDriverWait(self.current_webdriver, wait_time).until(method)
             else:
                 record_action_to_list("webdriver wrapper explict_wait", param, None)
-                return WebDriverWait(self.current_webdriver, wait_time).until_not(statement)
+                return WebDriverWait(self.current_webdriver, wait_time).until_not(method)
         except Exception as error:
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper explict_wait", param, error)

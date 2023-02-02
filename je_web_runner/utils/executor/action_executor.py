@@ -1,7 +1,7 @@
 import sys
 import types
 
-from je_web_runner.je_web_runner.webrunner_manager import web_runner
+from je_web_runner.je_web_runner.manager.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tag import add_command_exception_tag
 from je_web_runner.utils.exception.exception_tag import executor_data_error, executor_list_error
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException, WebRunnerAddCommandException
