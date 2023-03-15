@@ -3,7 +3,7 @@ import sys
 from json import dumps
 from json import loads
 
-from je_web_runner.utils.exception.exception_tag import wrong_json_data_error, cant_reformat_json_error
+from je_web_runner.utils.exception.exception_tags import wrong_json_data_error, cant_reformat_json_error
 from je_web_runner.utils.exception.exceptions import WebRunnerJsonException
 
 

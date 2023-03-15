@@ -2,7 +2,7 @@ from typing import Any, Union
 
 from selenium.webdriver import DesiredCapabilities
 
-from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
+from je_web_runner.utils.exception.exception_tags import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
 desired_capabilities_dict = {

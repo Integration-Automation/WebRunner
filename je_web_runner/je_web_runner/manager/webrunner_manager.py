@@ -5,7 +5,7 @@ from selenium.webdriver.remote.webdriver import WebDriver
 
 from je_web_runner.je_web_runner.element.web_element_wrapper import web_element_wrapper
 from je_web_runner.je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper
-from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
+from je_web_runner.utils.exception.exception_tags import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebRunnerWebDriverIsNoneException
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list

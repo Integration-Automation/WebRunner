@@ -7,9 +7,9 @@ from selenium.webdriver.edge import options
 from selenium.webdriver.firefox import options
 from selenium.webdriver.ie import options
 
-from je_web_runner.utils.exception.exception_tag import selenium_wrapper_set_argument_error
-from je_web_runner.utils.exception.exception_tag import selenium_wrapper_set_options_error
-from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
+from je_web_runner.utils.exception.exception_tags import selenium_wrapper_set_argument_error
+from je_web_runner.utils.exception.exception_tags import selenium_wrapper_set_options_error
+from je_web_runner.utils.exception.exception_tags import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebRunnerArgumentWrongTypeException
 from je_web_runner.utils.exception.exceptions import WebRunnerOptionsWrongTypeException
 from je_web_runner.utils.exception.exceptions import WebRunnerWebDriverNotFoundException

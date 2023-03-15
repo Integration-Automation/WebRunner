@@ -36,3 +36,13 @@ class WebRunnerHTMLException(WebRunnerException):
 
 class WebRunnerAddCommandException(WebRunnerException):
     pass
+
+
+# XML
+
+class XMLException(WebRunnerException):
+    pass
+
+
+class XMLTypeException(XMLException):
+    pass

@@ -17,7 +17,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from je_web_runner.je_web_runner.element.web_element_wrapper import web_element_wrapper
 from je_web_runner.je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_capability_wrapper
 from je_web_runner.utils.assert_value.result_check import check_webdriver_details
-from je_web_runner.utils.exception.exception_tag import selenium_wrapper_web_driver_not_found_error
+from je_web_runner.utils.exception.exception_tags import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebRunnerException, WebRunnerWebDriverIsNoneException
 from je_web_runner.utils.exception.exceptions import WebRunnerWebDriverNotFoundException
 from je_web_runner.utils.test_object.test_object_class import TestObject
