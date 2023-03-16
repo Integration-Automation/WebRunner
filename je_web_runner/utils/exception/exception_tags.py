@@ -18,3 +18,6 @@ html_generate_no_data_tag = "can't make html report, data is null?"
 add_command_exception_tag = "command value type should be as method or function"
 # argparse
 argparse_get_wrong_data = "argparse receive wrong data"
+# XML
+cant_read_xml_error: str = "can't read xml"
+xml_type_error: str = "xml type error"
