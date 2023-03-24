@@ -1,4 +1,5 @@
 import sys
+import time
 import types
 
 from je_web_runner.je_web_runner.manager.webrunner_manager import web_runner
@@ -95,6 +96,7 @@ class Executor(object):
             "set_record_enable": test_record_instance.set_record_enable,
             # generate html
             "generate_html": generate_html,
+            "sleep": time.sleep
         }
 
     def _execute_event(self, action: list):
