@@ -102,10 +102,16 @@ jobs:
       - run:
           command: python ./test/unit_test/argparse/argparse_test.py
           name: argparse_test
-      # html_report_test
+      # report_test
       - run:
-          command: python ./test/unit_test/html_report_test/html_report_test.py
+          command: python ./test/unit_test/report_test/html_report_test.py
           name: html_report_test
+      - run:
+          command: python ./test/unit_test/report_test/json_report_test.py
+          name: json_report_test
+      - run:
+          command: python ./test/unit_test/report_test/xml_report_test.py
+          name: xml_report_test
 
   build-and-test-windows-stable:
     executor:
@@ -205,10 +211,17 @@ jobs:
       - run:
           command: python ./test/unit_test/argparse/argparse_test.py
           name: screenshot_test
-      # html report test
+      # report test
       - run:
-          command: python ./test/unit_test/html_report_test/html_report_test.py
+          command: python ./test/unit_test/report_test/html_report_test.py
           name: html_report_test
+      - run:
+          command: python ./test/unit_test/report_test/json_report_test.py
+          name: json_report_test
+      - run:
+          command: python ./test/unit_test/report_test/xml_report_test.py
+          name: xml_report_test
+
 workflows:
   main:
     jobs:

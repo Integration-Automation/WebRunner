@@ -1,4 +1,6 @@
 ## Webrunner
+> Project Kanban \
+> https://github.com/users/JE-Chen/projects/35 \
 > Multiton Selenium Instance testing \
 > The WEB Testing component is a web automation testing solution based on Selenium. \
 > It wraps Selenium and therefore has all the functionality of Selenium. \

@@ -125,17 +125,17 @@ def make_html_table(event_str: str, record_data: dict, table_head: str) -> str:
             event_str,
             _event_table.format(
                 table_head_class=table_head,
-                function_name=record_data.get("function_name"),
-                param=record_data.get("local_param"),
-                time=record_data.get("time"),
-                exception=record_data.get("program_exception"),
+                function_name=str(record_data.get("function_name")),
+                param=str(record_data.get("local_param")),
+                time=str(record_data.get("time")),
+                exception=str(record_data.get("program_exception")),
             )
         ]
     )
     return event_str
 
 
-def generate_html(html_name: str = "default_name") -> str:
+def generate_html() -> str:
     """
     this function will create and save html report on current folder
     :param html_name: save html file name
@@ -152,14 +152,18 @@ def generate_html(html_name: str = "default_name") -> str:
             else:
                 event_str = make_html_table(event_str, record_data, "failure_table_head")
         new_html_string = _html_string.format(event_table=event_str)
-        try:
-            _lock.acquire()
-            with open(html_name + ".html", "w+") as file_to_write:
-                file_to_write.write(
-                    new_html_string
-                )
-        except Exception as error:
-            print(repr(error), file=sys.stderr)
-        finally:
-            _lock.release()
     return new_html_string
+
+
+def generate_html_report(html_name: str = "default_name"):
+    new_html_string = generate_html()
+    try:
+        _lock.acquire()
+        with open(html_name + ".html", "w+") as file_to_write:
+            file_to_write.write(
+                new_html_string
+            )
+    except Exception as error:
+        print(repr(error), file=sys.stderr)
+    finally:
+        _lock.release()
