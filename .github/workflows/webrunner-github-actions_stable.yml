@@ -86,6 +86,10 @@ jobs:
       # argparse_test
     - name: argparse_test
       run: python ./test/unit_test/argparse/argparse_test.py
-      # html_report_test
+      # report_test
     - name: html_report_test
-      run: python ./test/unit_test/html_report_test/html_report_test.py
+      run: python ./test/unit_test/report_test/html_report_test.py
+    - name: json_report_test
+      run: python ./test/unit_test/report_test/json_report_test.py
+    - name: xml_report_test
+      run: python ./test/unit_test/report_test/xml_report_test.py

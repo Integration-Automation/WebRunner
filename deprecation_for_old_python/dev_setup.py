@@ -1,6 +1,6 @@
 import setuptools
 
-with open("README.md", "r") as README:
+with open("../README.md", "r") as README:
     long_description = README.read()
 
 setuptools.setup(
@@ -8,7 +8,7 @@ setuptools.setup(
     version="0.0.61",
     author="JE-Chen",
     author_email="zenmailman@gmail.com",
-    description="selenium get_webdriver_wrapper",
+    description="WEB Testing Automation Framework",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/JE-Chen/WebRunner",

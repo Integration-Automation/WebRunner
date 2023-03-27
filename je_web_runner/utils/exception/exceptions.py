@@ -22,7 +22,13 @@ class WebRunnerExecuteException(WebRunnerException):
     pass
 
 
+# Json
+
 class WebRunnerJsonException(WebRunnerException):
+    pass
+
+
+class WebRunnerGenerateJsonReportException(WebRunnerJsonException):
     pass
 
 

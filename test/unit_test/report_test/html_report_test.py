@@ -39,6 +39,7 @@ test_execute_list = [
     ["send_keys_to_element", {"element_name": "q", "keys_to_send": "\ue031"}],
     ["perform"],
     ["pause", {"seconds": "3"}],
+    ["pause", {"seconds": "dwadawdwaddwa"}]
 ]
 execute_action(test_execute_list)
 
@@ -52,6 +53,6 @@ except Exception as error:
 finally:
     test_execute_list = [
         ["quit"],
-        ["generate_html"]
+        ["generate_html_report"]
     ]
     execute_action(test_execute_list)

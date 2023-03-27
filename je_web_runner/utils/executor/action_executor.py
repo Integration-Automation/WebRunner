@@ -1,11 +1,17 @@
 import sys
+import time
 import types
 
 from je_web_runner.je_web_runner.manager.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
 from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException, WebRunnerAddCommandException
-from je_web_runner.utils.html_report.html_report_generate import generate_html
+from je_web_runner.utils.generate_report.generate_html_report import generate_html_report
+from je_web_runner.utils.generate_report.generate_html_report import generate_html
+from je_web_runner.utils.generate_report.generate_json_report import generate_json
+from je_web_runner.utils.generate_report.generate_json_report import generate_json_report
+from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
+from je_web_runner.utils.generate_report.generate_xml_report import generate_xml_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
@@ -93,8 +99,14 @@ class Executor(object):
             "element_get_select": web_runner.webdriver_element.get_select,
             # init test record
             "set_record_enable": test_record_instance.set_record_enable,
-            # generate html
+            # generate report
             "generate_html": generate_html,
+            "generate_html_report": generate_html_report,
+            "generate_json": generate_json,
+            "generate_json_report": generate_json_report,
+            "generate_xml": generate_xml,
+            "generate_xml_report": generate_xml_report,
+            "sleep": time.sleep
         }
 
     def _execute_event(self, action: list):
