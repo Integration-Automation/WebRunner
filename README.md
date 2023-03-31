@@ -15,7 +15,7 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/cc97412a6f3e4c5592ce45dd7b9db946)](https://www.codacy.com/gh/JE-Chen/WebRunner/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=JE-Chen/WebRunner&amp;utm_campaign=Badge_Grade)
 
-[![CircleCI](https://circleci.com/gh/JE-Chen/WebRunner/tree/main.svg?style=svg)](https://circleci.com/gh/JE-Chen/WebRunner/tree/main)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/Integrated-Testing-Environment/WebRunner/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/Integrated-Testing-Environment/WebRunner/tree/main)
 
 [![WebRunner GitHub Actions Dev](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_dev.yml/badge.svg)](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_dev.yml)
 
