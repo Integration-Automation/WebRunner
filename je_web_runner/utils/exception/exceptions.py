@@ -52,3 +52,7 @@ class XMLException(WebRunnerException):
 
 class XMLTypeException(XMLException):
     pass
+
+
+class CallbackExecutorException(WebRunnerException):
+    pass
