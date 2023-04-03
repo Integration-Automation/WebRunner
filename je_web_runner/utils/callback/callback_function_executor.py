@@ -1,26 +1,22 @@
-import sys
-import time
-import types
+import typing
+from sys import stderr
 
-from je_web_runner.je_web_runner.manager.webrunner_manager import web_runner
-from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
-from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
-from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException, WebRunnerAddCommandException
-from je_web_runner.utils.generate_report.generate_html_report import generate_html_report
-from je_web_runner.utils.generate_report.generate_html_report import generate_html
-from je_web_runner.utils.generate_report.generate_json_report import generate_json
-from je_web_runner.utils.generate_report.generate_json_report import generate_json_report
-from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
-from je_web_runner.utils.generate_report.generate_xml_report import generate_xml_report
-from je_web_runner.utils.json.json_file.json_file import read_action_json
-from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
+from je_web_runner.utils.generate_report.generate_html_report import generate_html, generate_html_report
+from je_web_runner.utils.generate_report.generate_xml_report import generate_xml, generate_xml_report
+from je_web_runner.utils.generate_report.generate_json_report import generate_json, generate_json_report
+
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
+from je_web_runner.je_web_runner.manager.webrunner_manager import web_runner
+from je_web_runner.utils.exception.exception_tags import get_bad_trigger_function, get_bad_trigger_method
+from je_web_runner.utils.exception.exceptions import CallbackExecutorException
+from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 
-class Executor(object):
+
+class CallbackFunctionExecutor(object):
 
     def __init__(self):
-        self.event_dict = {
+        self.event_dict: dict = {
             # webdriver manager
             "get_webdriver_manager": web_runner.new_driver,
             "change_index_of_webdriver": web_runner.change_webdriver,
@@ -108,87 +104,38 @@ class Executor(object):
             "generate_xml_report": generate_xml_report,
         }
 
-    def _execute_event(self, action: list):
+    def callback_function(
+            self,
+            trigger_function_name: str,
+            callback_function: typing.Callable,
+            callback_function_param: [dict, None] = None,
+            callback_param_method: str = "kwargs",
+            **kwargs
+    ):
         """
-        :param action: execute action
-        :return: what event return
+        :param trigger_function_name: what function we want to trigger only accept function in event_dict
+        :param callback_function: what function we want to callback
+        :param callback_function_param: callback function's param only accept dict
+        :param callback_param_method: what type param will use on callback function only accept kwargs and args
+        :param kwargs: trigger_function's param
+        :return:
         """
-        event = self.event_dict.get(action[0])
-        if len(action) == 2:
-            return event(**action[1])
-        elif len(action) == 1:
-            return event()
-        else:
-            raise WebRunnerExecuteException(executor_data_error + " " + str(action))
-
-    def execute_action(self, action_list: [list, dict]) -> dict:
-        """
-        use to execute action on list
-        :param action_list: like this structure
-        [
-            ["get_webdriver_manager", {"webdriver_name": "firefox"}],
-            ["to_url", {"url": "https://www.google.com"}],
-            ["quit"]
-        ]
-        for loop and use execute_event function to execute
-        :return: recode string, response as list
-        """
-        if type(action_list) is dict:
-            action_list = action_list.get("web_runner", None)
-            if action_list is None:
-                raise WebRunnerExecuteException(executor_list_error)
-        execute_record_dict = dict()
         try:
-            if len(action_list) > 0 or type(action_list) is not list:
-                pass
+            if trigger_function_name not in self.event_dict.keys():
+                raise CallbackExecutorException(get_bad_trigger_function)
+            execute_return_value = self.event_dict.get(trigger_function_name)(**kwargs)
+            if callback_function_param is not None:
+                if callback_param_method not in ["kwargs", "args"]:
+                    raise CallbackExecutorException(get_bad_trigger_method)
+                if callback_param_method == "kwargs":
+                    callback_function(**callback_function_param)
+                else:
+                    callback_function(*callback_function_param.values())
             else:
-                raise WebRunnerExecuteException(executor_list_error)
+                callback_function()
+            return execute_return_value
         except Exception as error:
-            print(repr(error), file=sys.stderr)
-        for action in action_list:
-            try:
-                event_response = self._execute_event(action)
-                execute_record = "execute: " + str(action)
-                execute_record_dict.update({execute_record: event_response})
-            except Exception as error:
-                print(repr(error), file=sys.stderr)
-                print(action, file=sys.stderr)
-                execute_record = "execute: " + str(action)
-                execute_record_dict.update({execute_record: repr(error)})
-        for key, value in execute_record_dict.items():
-            print(key)
-            print(value)
-        return execute_record_dict
-
-    def execute_files(self, execute_files_list: list) -> list:
-        """
-        :param execute_files_list: list include execute files path
-        :return: every execute detail as list
-        """
-        execute_detail_list = list()
-        for file in execute_files_list:
-            execute_detail_list.append(self.execute_action(read_action_json(file)))
-        return execute_detail_list
+            print(repr(error), file=stderr)
 
 
-executor = Executor()
-
-
-def add_command_to_executor(command_dict: dict):
-    """
-    :param command_dict: command dict to add into executor command dict
-    :return:None
-    """
-    for command_name, command in command_dict.items():
-        if isinstance(command, (types.MethodType, types.FunctionType)):
-            executor.event_dict.update({command_name: command})
-        else:
-            raise WebRunnerAddCommandException(add_command_exception_tag)
-
-
-def execute_action(action_list: list) -> dict:
-    return executor.execute_action(action_list)
-
-
-def execute_files(execute_files_list: list) -> list:
-    return executor.execute_files(execute_files_list)
+callback_executor = CallbackFunctionExecutor()

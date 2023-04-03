@@ -93,3 +93,6 @@ jobs:
       run: python ./test/unit_test/report_test/json_report_test.py
     - name: xml_report_test
       run: python ./test/unit_test/report_test/xml_report_test.py
+      # callback
+    - name: xml_report_test
+      run: python ./test/unit_test/callback/callback_test.py

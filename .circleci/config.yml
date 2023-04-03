@@ -112,6 +112,10 @@ jobs:
       - run:
           command: python ./test/unit_test/report_test/xml_report_test.py
           name: xml_report_test
+      # callback
+      - run:
+          command: python ./test/unit_test/callback/callback_test.py
+          name: callback_test
 
   build-and-test-windows-stable:
     executor:
@@ -221,6 +225,10 @@ jobs:
       - run:
           command: python ./test/unit_test/report_test/xml_report_test.py
           name: xml_report_test
+      # callback
+      - run:
+          command: python ./test/unit_test/callback/callback_test.py
+          name: callback_test
 
 workflows:
   main:

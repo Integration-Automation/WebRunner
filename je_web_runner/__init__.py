@@ -35,6 +35,8 @@ from je_web_runner.utils.test_object.test_object_class import create_test_object
 from je_web_runner.utils.test_object.test_object_class import get_test_object_type_list
 # test record
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
+# Callback
+from je_web_runner.utils.callback.callback_function_executor import callback_executor
 
 __all__ = [
     "web_element_wrapper", "set_webdriver_options_argument",
@@ -47,5 +49,6 @@ __all__ = [
     "start_web_runner_socket_server",
     "TestObject", "create_test_object", "get_test_object_type_list",
     "test_record_instance",
-    "Keys"
+    "Keys",
+    "callback_executor"
 ]
