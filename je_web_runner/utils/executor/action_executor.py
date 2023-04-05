@@ -1,6 +1,7 @@
 import sys
 import time
 import types
+from inspect import getmembers, isbuiltin
 
 from je_web_runner.je_web_runner.manager.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
@@ -106,7 +107,13 @@ class Executor(object):
             "generate_json_report": generate_json_report,
             "generate_xml": generate_xml,
             "generate_xml_report": generate_xml_report,
+            # execute
+            "execute_action": self.execute_action,
+            "execute_files": self.execute_files,
         }
+        # get all time module builtin function and add to event dict
+        for function in getmembers(time, isbuiltin):
+            self.event_dict.update({str(function): function})
 
     def _execute_event(self, action: list):
         """
