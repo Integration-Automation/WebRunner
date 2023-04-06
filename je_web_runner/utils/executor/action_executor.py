@@ -14,6 +14,7 @@ from je_web_runner.utils.generate_report.generate_json_report import generate_js
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
+from je_web_runner.utils.package_manager.package_manager_class import package_manager
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
@@ -110,6 +111,7 @@ class Executor(object):
             # execute
             "execute_action": self.execute_action,
             "execute_files": self.execute_files,
+            "add_package_to_executor": package_manager.add_package_to_executor,
         }
         # get all time module builtin function and add to event dict
         for function in getmembers(time, isbuiltin):
@@ -179,6 +181,7 @@ class Executor(object):
 
 
 executor = Executor()
+package_manager.executor = executor
 
 
 def add_command_to_executor(command_dict: dict):
