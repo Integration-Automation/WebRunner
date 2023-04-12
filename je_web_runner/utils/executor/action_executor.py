@@ -124,7 +124,10 @@ class Executor(object):
         """
         event = self.event_dict.get(action[0])
         if len(action) == 2:
-            return event(**action[1])
+            if isinstance(action[1], dict):
+                return event(**action[1])
+            else:
+                return event(*action[1])
         elif len(action) == 1:
             return event()
         else:
