@@ -1,0 +1,157 @@
+[
+    [
+        "get_webdriver_manager",
+        {
+            "webdriver_name": "firefox"
+        }
+    ],
+    [
+        "maximize_window"
+    ],
+    [
+        "add_package_to_executor",
+        [
+            "time"
+        ]
+    ],
+    [
+        "SaveTestObject",
+        {
+            "test_object_name": "q",
+            "object_type": "name"
+        }
+    ],
+    [
+        "find_element",
+        {
+            "element_name": "q"
+        }
+    ],
+    [
+        "click_element"
+    ],
+    [
+        "input_to_element",
+        {
+            "input_value": "test 123 test"
+        }
+    ],
+    [
+        "time_sleep",
+        [
+            3
+        ]
+    ],
+    [
+        "to_url",
+        {
+            "url": "https://www.google.com"
+        }
+    ],
+    [
+        "find_element",
+        {
+            "element_name": "q"
+        }
+    ],
+    [
+        "move_to_element",
+        {
+            "element_name": "q"
+        }
+    ],
+    [
+        "press_key",
+        {
+            "keycode_on_key_class": "\ue031"
+        }
+    ],
+    [
+        "release_key",
+        {
+            "keycode_on_key_class": "\ue031"
+        }
+    ],
+    [
+        "send_keys",
+        {
+            "keys_to_send": "\ue031"
+        }
+    ],
+    [
+        "send_keys_to_element",
+        {
+            "element_name": "q",
+            "keys_to_send": "\ue031"
+        }
+    ],
+    [
+        "time_sleep",
+        [
+            3
+        ]
+    ],
+    [
+        "find_element",
+        {
+            "element_name": "q"
+        }
+    ],
+    [
+        "to_url",
+        {
+            "url": "https://www.google.com"
+        }
+    ],
+    [
+        "input_to_element",
+        {
+            "input_value": "test input1"
+        }
+    ],
+    [
+        "time_sleep",
+        [
+            3
+        ]
+    ],
+    [
+        "to_url",
+        {
+            "url": "https://www.google.com"
+        }
+    ],
+    [
+        "input_to_element",
+        {
+            "input_value": "test input again"
+        }
+    ],
+    [
+        "time_sleep",
+        [
+            3
+        ]
+    ],
+    [
+        "to_url",
+        {
+            "url": "https://www.google.com"
+        }
+    ],
+    [
+        "input_to_element",
+        {
+            "input_value": "12345678"
+        }
+    ],
+    [
+        "time_sleep",
+        [
+            3
+        ]
+    ],
+    [
+        "quit"
+    ]
+]

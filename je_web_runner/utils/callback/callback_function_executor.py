@@ -1,9 +1,12 @@
 import typing
 from sys import stderr
 
+from je_web_runner.utils.executor.action_executor import execute_action, execute_files
+
 from je_web_runner.utils.generate_report.generate_html_report import generate_html, generate_html_report
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml, generate_xml_report
 from je_web_runner.utils.generate_report.generate_json_report import generate_json, generate_json_report
+from je_web_runner.utils.package_manager.package_manager_class import package_manager
 
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
@@ -102,6 +105,12 @@ class CallbackFunctionExecutor(object):
             "generate_json_report": generate_json_report,
             "generate_xml": generate_xml,
             "generate_xml_report": generate_xml_report,
+            # execute
+            "execute_action": execute_action,
+            "execute_files": execute_files,
+            # Add package
+            "add_package_to_executor": package_manager.add_package_to_executor,
+            "add_package_to_callback_executor": package_manager.add_package_to_callback_executor,
         }
 
     def callback_function(

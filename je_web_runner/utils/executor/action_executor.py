@@ -112,7 +112,9 @@ class Executor(object):
             # execute
             "execute_action": self.execute_action,
             "execute_files": self.execute_files,
+            # Add package
             "add_package_to_executor": package_manager.add_package_to_executor,
+            "add_package_to_callback_executor": package_manager.add_package_to_callback_executor,
         }
         # get all builtin function and add to event dict
         for function in getmembers(builtins, isbuiltin):
