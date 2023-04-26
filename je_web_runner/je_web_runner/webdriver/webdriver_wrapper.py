@@ -23,11 +23,11 @@ from je_web_runner.utils.exception.exceptions import WebRunnerWebDriverNotFoundE
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
-from je_web_runner.webdriver_download_manager.chrome import ChromeDriverManager
-from je_web_runner.webdriver_download_manager.firefox import GeckoDriverManager
-from je_web_runner.webdriver_download_manager.microsoft import EdgeChromiumDriverManager
-from je_web_runner.webdriver_download_manager.microsoft import IEDriverManager
-from je_web_runner.webdriver_download_manager.utils import ChromeType
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from webdriver_manager.microsoft import IEDriverManager
+from webdriver_manager.chrome import ChromeType
 
 _webdriver_dict = {
     "chrome": webdriver.Chrome,
@@ -1002,7 +1002,7 @@ class WebDriverWrapper(object):
 
     def fullscreen_window(self) -> None:
         """
-        fullscreen current window
+        full-screen current window
         :return: None
         """
         try:

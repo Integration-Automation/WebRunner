@@ -8,7 +8,7 @@ from je_web_runner.utils.xml.change_xml_structure.change_xml_structure import di
 
 def generate_xml():
     """
-    :return:
+    :return: success test dict and failure test dict
     """
     success_dict, failure_dict = generate_json()
     success_dict = dict({"xml_data": success_dict})
@@ -20,7 +20,7 @@ def generate_xml():
 
 def generate_xml_report(xml_file_name: str = "default_name"):
     """
-    :param xml_file_name:
+    :param xml_file_name: save xml use xml_file_name
     """
     success_xml, failure_xml = generate_xml()
     success_xml = parseString(success_xml)

@@ -137,8 +137,6 @@ def make_html_table(event_str: str, record_data: dict, table_head: str) -> str:
 
 def generate_html() -> str:
     """
-    this function will create and save html report on current folder
-    :param html_name: save html file name
     :return: html_string
     """
     if len(test_record_instance.test_record_list) == 0:
@@ -156,6 +154,10 @@ def generate_html() -> str:
 
 
 def generate_html_report(html_name: str = "default_name"):
+    """
+    this function will create and save html report on current folder
+    :param html_name: save html file name
+    """
     new_html_string = generate_html()
     try:
         _lock.acquire()

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "je_web_runner_dev"
-version = "0.0.68"
+version = "0.0.69"
 authors = [
     { name = "JE-Chen", email = "zenmailman@gmail.com" },
 ]
@@ -15,9 +15,10 @@ readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.7"
 license = { text = "MIT" }
 dependencies = [
-        "selenium>=4.0.0",
-        'requests',
-        'python-dotenv'
+    "selenium>=4.0.0",
+    'requests',
+    'python-dotenv',
+    "webdriver-manager"
 ]
 classifiers = [
     "Programming Language :: Python :: 3.7",
