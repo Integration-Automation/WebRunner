@@ -1000,13 +1000,13 @@ class WebDriverWrapper(object):
             print(repr(error), file=stderr)
             record_action_to_list("webdriver wrapper maximize_window", None, error)
 
-    def full_screen_window(self) -> None:
+    def fullscreen_window(self) -> None:
         """
         full-screen current window
         :return: None
         """
         try:
-            self.current_webdriver.full_screen_window()
+            self.current_webdriver.fullscreen_window()
             record_action_to_list("webdriver wrapper fullscreen_window", None, None)
         except Exception as error:
             print(repr(error), file=stderr)
