@@ -8,6 +8,9 @@ from je_web_runner.utils.test_record.test_record_class import test_record_instan
 
 
 def generate_json():
+    """
+    :return: success test dict and failure test dict
+    """
     if len(test_record_instance.test_record_list) == 0 and len(test_record_instance.error_record_list) == 0:
         raise WebRunnerGenerateJsonReportException(cant_generate_json_report)
     else:

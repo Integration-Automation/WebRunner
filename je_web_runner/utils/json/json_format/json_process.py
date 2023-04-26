@@ -26,6 +26,11 @@ def __process_json(json_string: str, **kwargs) -> str:
 
 
 def reformat_json(json_string: str, **kwargs) -> str:
+    """
+    :param json_string: Valid json string
+    :param kwargs: __process_json params
+    :return: reformat json string
+    """
     try:
         return __process_json(json_string, **kwargs)
     except WebRunnerJsonException:

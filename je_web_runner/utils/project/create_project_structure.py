@@ -21,6 +21,12 @@ def create_dir(dir_name: str) -> None:
 
 
 def create_template(parent_name: str, project_path: str = None) -> None:
+    """
+    create template ob project dir
+    :param parent_name: project name
+    :param project_path: project create path
+    :return: None
+    """
     if project_path is None:
         project_path = getcwd()
     keyword_dir_path = Path(project_path + "/" + parent_name + "/keyword")
@@ -59,6 +65,11 @@ def create_template(parent_name: str, project_path: str = None) -> None:
 
 
 def create_project_dir(project_path: str = None, parent_name: str = "WebRunner") -> None:
+    """
+    :param parent_name: project name
+    :param project_path: project create path
+    :return: None
+    """
     if project_path is None:
         project_path = getcwd()
     create_dir(project_path + "/" + parent_name + "/keyword")

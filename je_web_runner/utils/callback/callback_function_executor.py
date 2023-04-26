@@ -69,7 +69,7 @@ class CallbackFunctionExecutor(object):
             "scroll": web_runner.webdriver_wrapper.scroll,
             "check_current_webdriver": web_runner.webdriver_wrapper.check_current_webdriver,
             "maximize_window": web_runner.webdriver_wrapper.maximize_window,
-            "fullscreen_window": web_runner.webdriver_wrapper.fullscreen_window,
+            "fullscreen_window": web_runner.webdriver_wrapper.full_screen_window,
             "minimize_window": web_runner.webdriver_wrapper.minimize_window,
             "set_window_size": web_runner.webdriver_wrapper.set_window_size,
             "set_window_position": web_runner.webdriver_wrapper.set_window_position,
@@ -127,7 +127,7 @@ class CallbackFunctionExecutor(object):
         :param callback_function_param: callback function's param only accept dict
         :param callback_param_method: what type param will use on callback function only accept kwargs and args
         :param kwargs: trigger_function's param
-        :return:
+        :return: trigger_function_name return value
         """
         try:
             if trigger_function_name not in self.event_dict.keys():

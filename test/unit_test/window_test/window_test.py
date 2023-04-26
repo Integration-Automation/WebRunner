@@ -6,7 +6,7 @@ try:
     webdriver_wrapper.set_driver("firefox")
     webdriver_wrapper.minimize_window()
     webdriver_wrapper.maximize_window()
-    webdriver_wrapper.fullscreen_window()
+    webdriver_wrapper.full_screen_window()
     webdriver_wrapper.set_window_size(500, 500)
     webdriver_wrapper.set_window_position(100, 100)
     webdriver_wrapper.get_window_position()
