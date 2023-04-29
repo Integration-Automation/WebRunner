@@ -1,8 +1,8 @@
 ## Webrunner
 > Project Kanban \
-> https://github.com/users/JE-Chen/projects/35 \
-> Multiton Selenium Instance testing \
-> The WEB Testing component is a web automation testing solution based on Selenium. \
+> https://github.com/orgs/Intergration-Automation-Testing/projects/2/views/1 \
+> Multiton Selenium Instance  \
+> The WEB Testing component is a web automation solution based on Selenium. \
 > It wraps Selenium and therefore has all the functionality of Selenium. \
 > What problems does it solve? 
 >> * Automatically downloads and updates the required web driver, so users no longer need to install it manually.
@@ -10,7 +10,7 @@
 >> * Provides a keyword-based testing approach that Selenium does not have.
 >> * Can produce test reports that record actions taken during the test.
 >> * Can execute tests remotely through TCP/IP.
->> * Offers a CLI mode for Web Testing.
+>> * Offers a CLI mode for Web automation.
 ---
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/cc97412a6f3e4c5592ce45dd7b9db946)](https://www.codacy.com/gh/JE-Chen/WebRunner/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=JE-Chen/WebRunner&amp;utm_campaign=Badge_Grade)
@@ -36,7 +36,7 @@ pip install je_web_runner
 ## Requires
 
 ```
-python 3.7 or later
+python 3.8 or later
 ```
 
 >* Test on
