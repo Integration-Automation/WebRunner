@@ -1,17 +1,16 @@
-# Rename to build stable version
-# This is stable version
+# Rename to build dev version
+# This is dev version
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "je_web_runner"
-version = "0.0.41"
+name = "je_web_runner_dev"
+version = "0.0.71"
 authors = [
-    { name = "JE-Chen", email = "zenmailman@gmail.com" },
+    { name = "JE-Chen", email = "jechenmailman@gmail.com" },
 ]
-description = "WEB Testing Automation Framework"
-readme = { file = "README.md", content-type = "text/markdown" }
+description = "WEB Automation Framework"
 requires-python = ">=3.8"
 license = { text = "MIT" }
 dependencies = [
@@ -31,7 +30,16 @@ classifiers = [
 ]
 
 [project.urls]
-"Homepage" = "https://github.com/JE-Chen/WebRunner"
+Homepage = "https://github.com/Intergration-Automation-Testing/WebRunner"
+Documentation = "https://webrunner.readthedocs.io/en/latest/"
+Code = "https://github.com/Intergration-Automation-Testing/WebRunner"
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[tool.setuptools]
+license-files = ["LICENSE"]
 
 [tool.setuptools.packages]
 find = { namespaces = false }
