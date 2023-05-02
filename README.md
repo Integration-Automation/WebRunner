@@ -1,4 +1,18 @@
 ## Webrunner
+[![Downloads](https://static.pepy.tech/badge/je-web-runner)](https://pepy.tech/project/je-web-runner)
+
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/cc97412a6f3e4c5592ce45dd7b9db946)](https://www.codacy.com/gh/JE-Chen/WebRunner/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=JE-Chen/WebRunner&amp;utm_campaign=Badge_Grade)
+
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/Intergration-Automation-Testing/WebRunner/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/Intergration-Automation-Testing/WebRunner/tree/main)
+
+[![WebRunner GitHub Actions Dev](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_dev.yml/badge.svg)](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_dev.yml)
+
+[![WebRunner GitHub Actions Stable](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_stable.yml/badge.svg)](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_stable.yml)
+
+### Documentation
+
+[![Documentation Status](https://readthedocs.org/projects/webrunner/badge/?version=latest)](https://webrunner.readthedocs.io/en/latest/?badge=latest)
+---
 > Project Kanban \
 > https://github.com/orgs/Intergration-Automation-Testing/projects/2/views/1 \
 > Multiton Selenium Instance  \
@@ -11,20 +25,6 @@
 >> * Can produce test reports that record actions taken during the test.
 >> * Can execute tests remotely through TCP/IP.
 >> * Offers a CLI mode for Web automation.
----
-
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/cc97412a6f3e4c5592ce45dd7b9db946)](https://www.codacy.com/gh/JE-Chen/WebRunner/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=JE-Chen/WebRunner&amp;utm_campaign=Badge_Grade)
-
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/Integrated-Testing-Environment/WebRunner/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/Integrated-Testing-Environment/WebRunner/tree/main)
-
-[![WebRunner GitHub Actions Dev](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_dev.yml/badge.svg)](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_dev.yml)
-
-[![WebRunner GitHub Actions Stable](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_stable.yml/badge.svg)](https://github.com/JE-Chen/WebRunner/actions/workflows/webrunner-github-actions_stable.yml)
-
-### Documentation
-
-[![Documentation Status](https://readthedocs.org/projects/webrunner-dev/badge/?version=latest)](https://webrunner-dev.readthedocs.io/en/latest/?badge=latest)
-
 ---
 
 ## install
