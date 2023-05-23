@@ -1,4 +1,4 @@
-name: WebRunner GitHub Actions Dev
+name: WebRunner Dev Python3.8
 
 on:
   push:
@@ -15,84 +15,64 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.7
+    - name: Set up Python 3.8
       uses: actions/setup-python@v3
       with:
-        python-version: "3.7"
+        python-version: "3.8"
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip wheel
         pip install -r dev_requirements.txt
-    - name: install firefox
+    - name: Install firefox
       run: |
             $SourceURL = "https://download.mozilla.org/?product=firefox-latest&os=win&lang=en-US";
             $Installer = $env:TEMP + "\firefox.exe";
             Invoke-WebRequest $SourceURL -OutFile $Installer;
             Start-Process -FilePath $Installer -Args "/s" -Verb RunAs -Wait;
             Remove-Item $Installer;
-      # desired_capabilities_test
-    - name: desired_capabilities_test
+    - name: Test Desired Capabilities
       run: python ./test/unit_test/desired_capabilities_test/desired_capabilities_test.py
-      # find_and_click_test
-    - name: find_and_click_test
+    - name: Test Find And Click
       run: python ./test/unit_test/find_and_click_test/find_and_click_test.py
-      # multi_driver_test
-    - name: multi_driver_test
+    - name: Test Multi Webdriver
       run: python ./test/unit_test/multi_driver_test/multi_driver_test.py
-      # start_webdriver_and_asset_title test
-    - name: start_webdriver_and_asset_title_test
+    - name: Test Start Webdriver And Assert Title
       run: python ./test/unit_test/start_webdriver_and_asset_title_test/title_test.py
-      # get_webdriver_test
-    - name: get_webdriver
+    - name: Test Get Webdriver
       run: python ./test/unit_test/start_webdriver_test/get_webdriver.py
-      # start_webdriver_with_options test
-    - name: start_webdriver_with_options
+    - name: Test Start Webdriver With Options
       run: python ./test/unit_test/start_webdriver_with_options/webdriver_with_options.py
-      # test_object_test
-    - name: test_object_test
+    - name: Test test_object
       run: python ./test/unit_test/test_object_test/test_object_test.py
-    - name: test_record_class_test
+    - name: Test Record Class
       run: python ./test/unit_test/test_record_class_test/test_record_class_test.py
-      # check_value_test
-    - name: check_value_test
+    - name: Test Check Value
       run: python ./test/unit_test/check_value_test/check_value_test.py
-      # switch_test
-    - name: switch_test
+    - name: Test Switch
       run: python ./test/unit_test/switch_test/switch_test.py
-      # close_choose_webdriver_test
-    - name: close_choose_webdriver_test
+    - name: Test Close Choose Webdriver
       run: python ./test/unit_test/close_choose_webdriver_test/close_choose_webdriver_test.py
-      # redirect_test
-    - name: redirect_test
+    - name: Test Redirect
       run: python ./test/unit_test/redirect_test/redirect_test.py
-      # cookie_test
-    - name: cookie_test
+    - name: Test Cookie
       run: python ./test/unit_test/cookie_test/cookie_test.py
-      # set_timeout_test
-    - name: set_timeout_test
+    - name: Test Set Timeout
       run: python ./test/unit_test/set_timeout_test/set_timeout_test.py
-      # action_chains_test
-    - name: action_chains_test
+    - name: Test Action Chain
       run: python ./test/unit_test/action_chains_test/action_chains_test.py
-      # window_test
-    - name: window_test
+    - name: Test Window
       run: python ./test/unit_test/window_test/window_test.py
-      # screenshot_test
-    - name: screenshot_test
+    - name: Test Screenshot
       run: python ./test/unit_test/screenshot_test/screenshot_test.py
-      # executor_test
-    - name: executor_test
+    - name: Test Executor
       run: python ./test/unit_test/executor_test/executor_test.py
-      # argparse_test
-    - name: argparse_test
+    - name: Test Argparse
       run: python ./test/unit_test/argparse/argparse_test.py
-      # report_test
-    - name: html_report_test
+    - name: Test Generate HTML Report
       run: python ./test/unit_test/report_test/html_report_test.py
-    - name: json_report_test
+    - name: Test Generate JSON Report
       run: python ./test/unit_test/report_test/json_report_test.py
-    - name: xml_report_test
+    - name: Test Generate XML Report
       run: python ./test/unit_test/report_test/xml_report_test.py
-      # callback
-    - name: xml_report_test
+    - name: Test Callback
       run: python ./test/unit_test/callback/callback_test.py
