@@ -1,4 +1,4 @@
-name: WebRunner Dev Python3.8
+name: WebRunner Dev Python3.10
 
 on:
   push:
