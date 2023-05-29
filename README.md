@@ -16,7 +16,7 @@
 [![Documentation Status](https://readthedocs.org/projects/webrunner/badge/?version=latest)](https://webrunner.readthedocs.io/en/latest/?badge=latest)
 ---
 > Project Kanban \
-> https://github.com/orgs/Intergration-Automation-Testing/projects/2/views/1 \
+> https://github.com/orgs/Integration-Automation/projects/2/views/1 \
 > Multiton Selenium Instance  \
 > The WEB automation component is a web automation solution based on Selenium. \
 > It wraps Selenium and therefore has all the functionality of Selenium. \
