@@ -17,16 +17,21 @@
 ---
 > Project Kanban \
 > https://github.com/orgs/Integration-Automation/projects/2/views/1 \
-> Multiton Selenium Instance  \
-> The WEB automation component is a web automation solution based on Selenium. \
-> It wraps Selenium and therefore has all the functionality of Selenium. \
-> What problems does it solve? 
->> * Automatically downloads and updates the required web driver, so users no longer need to install it manually.
->> * Provides the ability to simultaneously run and monitor multiple Selenium instances.
->> * Provides a keyword-based automation approach that Selenium does not have.
->> * Can produce test reports that record actions taken during the test.
->> * Can execute tests remotely through TCP/IP.
->> * Offers a CLI mode for Web automation.
+> * WEB Automation.
+> * Multi WEB Automation instance at same time.
+> * Generate JSON/HTML/XML report.
+> * Multi browser support like chrome, edge, safari.
+> * Auto webdriver download.
+> * Web screenshot.
+> * Web window automation.
+> * Web input automation.
+> * Web element locate.
+> * Execute any web script.
+> * Cookie support.
+> * WebRunner script.
+> * OS Independent.
+> * Remote automation support.
+> * Project & Template support.
 ---
 
 ## install
