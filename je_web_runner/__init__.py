@@ -41,9 +41,10 @@ from je_web_runner.utils.test_record.test_record_class import test_record_instan
 from je_web_runner.utils.callback.callback_function_executor import callback_executor
 # Project
 from je_web_runner.utils.project.create_project_structure import create_project_dir
-
+# Scheduler
+from je_web_runner.utils.scheduler.extend_apscheduler import SchedulerManager
 __all__ = [
-    "web_element_wrapper", "set_webdriver_options_argument",
+    "web_element_wrapper", "set_webdriver_options_argument", "SchedulerManager",
     "webdriver_wrapper", "get_webdriver_manager",
     "get_desired_capabilities", "get_desired_capabilities_keys", "add_command_to_executor",
     "execute_action", "execute_files", "executor",
