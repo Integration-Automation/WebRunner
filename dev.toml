@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "je_web_runner_dev"
-version = "0.0.71"
+version = "0.0.72"
 authors = [
     { name = "JE-Chen", email = "jechenmailman@gmail.com" },
 ]
@@ -17,7 +17,8 @@ dependencies = [
     "selenium>=4.0.0",
     'requests',
     'python-dotenv',
-    "webdriver-manager"
+    "webdriver-manager",
+    "APScheduler",
 ]
 classifiers = [
     "Programming Language :: Python :: 3.7",

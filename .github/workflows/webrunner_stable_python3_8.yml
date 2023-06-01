@@ -76,3 +76,7 @@ jobs:
       run: python ./test/unit_test/report_test/xml_report_test.py
     - name: Test Callback
       run: python ./test/unit_test/callback/callback_test.py
+    - name: Test Interval Scheduler
+      run: python ./test/unit_test/scheduler_test/sec_interval_test.py
+    - name: Test Cron Scheduler
+      run: python ./test/unit_test/scheduler_test/sec_cron_test.py
