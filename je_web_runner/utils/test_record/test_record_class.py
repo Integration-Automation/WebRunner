@@ -1,6 +1,8 @@
 import datetime
 from typing import Union
 
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+
 
 class TestRecord(object):
 
@@ -12,6 +14,7 @@ class TestRecord(object):
         self.test_record_list = list()
 
     def set_record_enable(self, set_enable: bool = True):
+        web_runner_logger.info(f"set_record_enable, set_enable: {set_enable}")
         self.init_record = set_enable
 
 

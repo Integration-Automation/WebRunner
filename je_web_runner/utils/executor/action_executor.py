@@ -15,6 +15,7 @@ from je_web_runner.utils.generate_report.generate_json_report import generate_js
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.package_manager.package_manager_class import package_manager
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
@@ -148,26 +149,36 @@ class Executor(object):
         for loop and use execute_event function to execute
         :return: recode string, response as list
         """
+        web_runner_logger.info(f"execute_action, action_list: {action_list}")
         if type(action_list) is dict:
             action_list = action_list.get("web_runner", None)
             if action_list is None:
+                web_runner_logger.error(
+                    f"execute_action, action_list: {action_list}, "
+                    f"failed: {WebRunnerExecuteException(executor_list_error)}")
                 raise WebRunnerExecuteException(executor_list_error)
         execute_record_dict = dict()
         try:
             if len(action_list) > 0 or type(action_list) is not list:
                 pass
             else:
+                web_runner_logger.error(
+                    f"execute_action, action_list: {action_list}, "
+                    f"failed: {WebRunnerExecuteException(executor_list_error)}")
                 raise WebRunnerExecuteException(executor_list_error)
         except Exception as error:
-            print(repr(error), file=sys.stderr)
+            web_runner_logger.error(
+                f"execute_action, action_list: {action_list}, "
+                f"failed: {repr(error)}")
         for action in action_list:
             try:
                 event_response = self._execute_event(action)
                 execute_record = "execute: " + str(action)
                 execute_record_dict.update({execute_record: event_response})
             except Exception as error:
-                print(repr(error), file=sys.stderr)
-                print(action, file=sys.stderr)
+                web_runner_logger.error(
+                    f"execute_action, action_list: {action_list}, "
+                    f"action: {action}, failed: {repr(error)}")
                 execute_record = "execute: " + str(action)
                 execute_record_dict.update({execute_record: repr(error)})
         for key, value in execute_record_dict.items():
@@ -180,6 +191,7 @@ class Executor(object):
         :param execute_files_list: list include execute files path
         :return: every execute detail as list
         """
+        web_runner_logger.info(f"execute_files, execute_files_list: {execute_files_list}")
         execute_detail_list = list()
         for file in execute_files_list:
             execute_detail_list.append(self.execute_action(read_action_json(file)))

@@ -13,6 +13,7 @@ from je_web_runner.utils.exception.exception_tags import selenium_wrapper_web_dr
 from je_web_runner.utils.exception.exceptions import WebRunnerArgumentWrongTypeException
 from je_web_runner.utils.exception.exceptions import WebRunnerOptionsWrongTypeException
 from je_web_runner.utils.exception.exceptions import WebRunnerWebDriverNotFoundException
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
 selenium_options_dict = {
@@ -34,6 +35,9 @@ def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list
     :param argument_iterable: start webdriver argument
     :return: webdriver
     """
+    web_runner_logger.info(
+        f"set_webdriver_options_argument, webdriver_name: {webdriver_name}, argument_iterable: {argument_iterable}"
+    )
     param = locals()
     try:
         webdriver_options = selenium_options_dict.get(webdriver_name)()
@@ -44,7 +48,10 @@ def set_webdriver_options_argument(webdriver_name: str, argument_iterable: [list
         record_action_to_list("webdriver with options set_webdriver_options_argument", param, None)
         return webdriver_options
     except Exception as error:
-        print(repr(error), file=stderr)
+        web_runner_logger.error(
+            f"set_webdriver_options_argument, webdriver_name: {webdriver_name}, "
+            f"argument_iterable: {argument_iterable}, failed: {repr(error)}"
+        )
         record_action_to_list("webdriver with options set_webdriver_options_argument", param, error)
 
 
@@ -58,6 +65,10 @@ def set_webdriver_options_capability_wrapper(webdriver_name: str, key_and_vale_d
     :param key_and_vale_dict: set webdriver options capability
     :return: webdriver
     """
+    web_runner_logger.info(
+        f"set_webdriver_options_capability_wrapper, webdriver_name: {webdriver_name}, "
+        f"key_and_vale_dict: {key_and_vale_dict}"
+    )
     param = locals()
     try:
         webdriver_options = selenium_options_dict.get(webdriver_name)()
@@ -70,5 +81,8 @@ def set_webdriver_options_capability_wrapper(webdriver_name: str, key_and_vale_d
         record_action_to_list("webdriver with options set_webdriver_options_capability_wrapper", param, None)
         return webdriver_options
     except Exception as error:
-        print(repr(error), file=stderr)
+        web_runner_logger.error(
+            f"set_webdriver_options_capability_wrapper, webdriver_name: {webdriver_name}, "
+            f"key_and_vale_dict: {key_and_vale_dict}, failed: {repr(error)}"
+        )
         record_action_to_list("webdriver with options set_webdriver_options_capability_wrapper", param, error)
