@@ -10,7 +10,7 @@ Below is a simple example of using the Callback Executor:
     # trigger_function will first to execute, but return value need to wait everything done
     # so this test will first print("test") then print(size_function_return_value)
     callback_executor.callback_function(
-        trigger_function_name="get_webdriver_manager",
+        trigger_function_name="WR_get_webdriver_manager",
         callback_function=print,
         callback_param_method="args",
         callback_function_param={"": "open driver"},
