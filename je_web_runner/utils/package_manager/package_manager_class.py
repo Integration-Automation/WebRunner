@@ -3,6 +3,8 @@ from importlib.util import find_spec
 from inspect import getmembers, isfunction, isbuiltin, isclass
 from sys import stderr
 
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+
 
 class PackageManager(object):
 
@@ -32,6 +34,7 @@ class PackageManager(object):
         """
         :param package: package's function will add to executor
         """
+        web_runner_logger.info(f"add_package_to_executor, package: {package}")
         self.add_package_to_target(
             package=package,
             target=self.executor
@@ -41,6 +44,7 @@ class PackageManager(object):
         """
         :param package: package's function will add to callback_executor
         """
+        web_runner_logger.info(f"add_package_to_callback_executor, package: {package}")
         self.add_package_to_target(
             package=package,
             target=self.callback_executor

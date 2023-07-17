@@ -1,21 +1,22 @@
 import builtins
-import sys
-import time
 import types
 from inspect import getmembers, isbuiltin
+from typing import Union, Any
 
 from je_web_runner.je_web_runner.manager.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
 from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException, WebRunnerAddCommandException
-from je_web_runner.utils.generate_report.generate_html_report import generate_html_report
 from je_web_runner.utils.generate_report.generate_html_report import generate_html
+from je_web_runner.utils.generate_report.generate_html_report import generate_html_report
 from je_web_runner.utils.generate_report.generate_json_report import generate_json
 from je_web_runner.utils.generate_report.generate_json_report import generate_json_report
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.package_manager.package_manager_class import package_manager
+from je_web_runner.utils.scheduler.extend_apscheduler import scheduler_manager
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
@@ -115,6 +116,15 @@ class Executor(object):
             # Add package
             "add_package_to_executor": package_manager.add_package_to_executor,
             "add_package_to_callback_executor": package_manager.add_package_to_callback_executor,
+            # Scheduler
+            "scheduler_event_trigger": self.scheduler_event_trigger,
+            "remove_blocking_scheduler_job": scheduler_manager.remove_blocking_job,
+            "remove_nonblocking_scheduler_job": scheduler_manager.remove_nonblocking_job,
+            "start_blocking_scheduler": scheduler_manager.start_block_scheduler,
+            "start_nonblocking_scheduler": scheduler_manager.start_nonblocking_scheduler,
+            "start_all_scheduler": scheduler_manager.start_all_scheduler,
+            "shutdown_blocking_scheduler": scheduler_manager.shutdown_blocking_scheduler,
+            "shutdown_nonblocking_scheduler": scheduler_manager.shutdown_nonblocking_scheduler,
         }
         # get all builtin function and add to event dict
         for function in getmembers(builtins, isbuiltin):
@@ -148,26 +158,36 @@ class Executor(object):
         for loop and use execute_event function to execute
         :return: recode string, response as list
         """
+        web_runner_logger.info(f"execute_action, action_list: {action_list}")
         if type(action_list) is dict:
             action_list = action_list.get("web_runner", None)
             if action_list is None:
+                web_runner_logger.error(
+                    f"execute_action, action_list: {action_list}, "
+                    f"failed: {WebRunnerExecuteException(executor_list_error)}")
                 raise WebRunnerExecuteException(executor_list_error)
         execute_record_dict = dict()
         try:
             if len(action_list) > 0 or type(action_list) is not list:
                 pass
             else:
+                web_runner_logger.error(
+                    f"execute_action, action_list: {action_list}, "
+                    f"failed: {WebRunnerExecuteException(executor_list_error)}")
                 raise WebRunnerExecuteException(executor_list_error)
         except Exception as error:
-            print(repr(error), file=sys.stderr)
+            web_runner_logger.error(
+                f"execute_action, action_list: {action_list}, "
+                f"failed: {repr(error)}")
         for action in action_list:
             try:
                 event_response = self._execute_event(action)
                 execute_record = "execute: " + str(action)
                 execute_record_dict.update({execute_record: event_response})
             except Exception as error:
-                print(repr(error), file=sys.stderr)
-                print(action, file=sys.stderr)
+                web_runner_logger.error(
+                    f"execute_action, action_list: {action_list}, "
+                    f"action: {action}, failed: {repr(error)}")
                 execute_record = "execute: " + str(action)
                 execute_record_dict.update({execute_record: repr(error)})
         for key, value in execute_record_dict.items():
@@ -180,10 +200,21 @@ class Executor(object):
         :param execute_files_list: list include execute files path
         :return: every execute detail as list
         """
+        web_runner_logger.info(f"execute_files, execute_files_list: {execute_files_list}")
         execute_detail_list = list()
         for file in execute_files_list:
             execute_detail_list.append(self.execute_action(read_action_json(file)))
         return execute_detail_list
+
+    def scheduler_event_trigger(
+            self, function: str, id: str = None, args: Union[list, tuple] = None,
+            kwargs: dict = None, scheduler_type: str = "nonblocking", wait_type: str = "secondly",
+            wait_value: int = 1, **trigger_args: Any) -> None:
+        if scheduler_type == "nonblocking":
+            scheduler_event = scheduler_manager.nonblocking_scheduler_event_dict.get(wait_type)
+        else:
+            scheduler_event = scheduler_manager.blocking_scheduler_event_dict.get(wait_type)
+        scheduler_event(self.event_dict.get(function), id, args, kwargs, wait_value, **trigger_args)
 
 
 executor = Executor()

@@ -3,6 +3,7 @@ from threading import Lock
 
 from je_web_runner.utils.exception.exception_tags import html_generate_no_data_tag
 from je_web_runner.utils.exception.exceptions import WebRunnerHTMLException
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
 _lock = Lock()
@@ -139,6 +140,7 @@ def generate_html() -> str:
     """
     :return: html_string
     """
+    web_runner_logger.info(f"generate_html")
     if len(test_record_instance.test_record_list) == 0:
         raise WebRunnerHTMLException(html_generate_no_data_tag)
     else:
@@ -158,6 +160,7 @@ def generate_html_report(html_name: str = "default_name"):
     this function will create and save html report on current folder
     :param html_name: save html file name
     """
+    web_runner_logger.info(f"generate_html_report, html_name: {html_name}")
     new_html_string = generate_html()
     try:
         _lock.acquire()
