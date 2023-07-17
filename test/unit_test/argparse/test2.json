@@ -1,37 +1,37 @@
 [
   [
-    "get_webdriver_manager",
+    "WR_get_webdriver_manager",
     {
       "webdriver_name": "firefox"
     }
   ],
   [
-    "to_url",
+    "WR_to_url",
     {
       "url": "https://www.google.com"
     }
   ],
   [
-    "SaveTestObject",
+    "WR_SaveTestObject",
     {
       "test_object_name": "q",
       "object_type": "name"
     }
   ],
   [
-    "implicitly_wait",
+    "WR_implicitly_wait",
     {
       "time_to_wait": 3
     }
   ],
   [
-    "move_to_element",
+    "WR_move_to_element",
     {
       "element_name": "q"
     }
   ],
   [
-    "move_to_element_with_offset",
+    "WR_move_to_element_with_offset",
     {
       "element_name": "q",
       "offset_x": 10,
@@ -39,21 +39,21 @@
     }
   ],
   [
-    "move_by_offset",
+    "WR_move_by_offset",
     {
       "offset_x": 10,
       "offset_y": 10
     }
   ],
   [
-    "drag_and_drop",
+    "WR_drag_and_drop",
     {
       "element_name": "q",
       "target_element_name": "q"
     }
   ],
   [
-    "drag_and_drop_offset",
+    "WR_drag_and_drop_offset",
     {
       "element_name": "q",
       "offset_x": 10,
@@ -61,73 +61,73 @@
     }
   ],
   [
-    "perform"
+    "WR_perform"
   ],
   [
-    "left_click",
+    "WR_left_click",
     {
       "element_name": "q"
     }
   ],
   [
-    "release",
+    "WR_release",
     {
       "element_name": "q"
     }
   ],
   [
-    "left_click"
+    "WR_left_click"
   ],
   [
-    "release"
+    "WR_release"
   ],
   [
-    "left_double_click"
+    "WR_left_double_click"
   ],
   [
-    "release"
+    "WR_release"
   ],
   [
-    "left_double_click"
+    "WR_left_double_click"
   ],
   [
-    "left_click_and_hold"
+    "WR_left_click_and_hold"
   ],
   [
-    "press_key",
+    "WR_press_key",
     {
       "keycode_on_key_class": "\ue031"
     }
   ],
   [
-    "release_key",
+    "WR_release_key",
     {
       "keycode_on_key_class": "\ue031"
     }
   ],
   [
-    "send_keys",
+    "WR_send_keys",
     {
       "keys_to_send": "\ue031"
     }
   ],
   [
-    "send_keys_to_element",
+    "WR_send_keys_to_element",
     {
       "element_name": "q",
       "keys_to_send": "\ue031"
     }
   ],
   [
-    "perform"
+    "WR_perform"
   ],
   [
-    "pause",
+    "WR_pause",
     {
       "seconds": "3"
     }
   ],
   [
-    "quit"
+    "WR_quit"
   ]
 ]

@@ -1,7 +1,7 @@
 from je_web_runner import callback_executor
 
 callback_executor.callback_function(
-    trigger_function_name="get_webdriver_manager",
+    trigger_function_name="WR_get_webdriver_manager",
     callback_function=print,
     callback_param_method="args",
     callback_function_param={"": "open driver"},
@@ -11,7 +11,7 @@ callback_executor.callback_function(
 )
 
 callback_executor.callback_function(
-    trigger_function_name="quit",
+    trigger_function_name="WR_quit",
     callback_function=print,
     callback_param_method="args",
     callback_function_param={"": "quit  driver"},
