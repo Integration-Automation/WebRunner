@@ -1,5 +1,4 @@
 import typing
-from sys import stderr
 from typing import List, Union
 
 from selenium import webdriver
