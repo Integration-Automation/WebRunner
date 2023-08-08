@@ -2,7 +2,10 @@ from je_web_runner import execute_action
 
 test_execute_list = [
     ["WR_get_webdriver_manager", {"webdriver_name": "firefox"}],
+    ["WR_add_package_to_executor", {"package": "time"}],
+    ["WR_implicitly_wait", {"time_to_wait": 5}],
     ["WR_to_url", {"url": "https://www.google.com"}],
+    ["time_sleep", [3]],
     ["WR_SaveTestObject", {"test_object_name": "q", "object_type": "name"}],
     ["WR_find_element", {"element_name": "q"}],
     ["WR_click_element"],
@@ -22,18 +25,21 @@ test_execute_list = [
     ["WR_release"],
     ["WR_left_double_click"],
     ["WR_left_click_and_hold"],
-    ["WR_press_key", {"keycode_on_key_class": "\ue031"}],
-    ["WR_release_key", {"keycode_on_key_class": "\ue031"}],
-    ["WR_send_keys", {"keys_to_send": "\ue031"}],
-    ["WR_send_keys_to_element", {"element_name": "q", "keys_to_send": "\ue031"}],
-    ["WR_perform"],
-    ["WR_pause", {"seconds": "3"}],
     ["WR_to_url", {"url": "https://www.google.com"}],
+    ["time_sleep", [3]],
+    ["WR_find_element", {"element_name": "q"}],
     ["WR_input_to_element", {"input_value": "test input1"}],
+    ["time_sleep", [3]],
     ["WR_to_url", {"url": "https://www.google.com"}],
+    ["time_sleep", [3]],
+    ["WR_find_element", {"element_name": "q"}],
     ["WR_input_to_element", {"input_value": "test input again"}],
+    ["time_sleep", [3]],
     ["WR_to_url", {"url": "https://www.google.com"}],
+    ["time_sleep", [3]],
+    ["WR_find_element", {"element_name": "q"}],
     ["WR_input_to_element", {"input_value": "12345678"}],
+    ["time_sleep", [3]],
     ["WR_quit"]
 ]
 

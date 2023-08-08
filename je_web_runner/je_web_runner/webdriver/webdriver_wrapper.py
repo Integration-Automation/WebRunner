@@ -1,4 +1,5 @@
 import typing
+from pathlib import Path
 from typing import List, Union
 
 from selenium import webdriver
@@ -17,6 +18,7 @@ from webdriver_manager.chrome import ChromeType
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriver_manager.microsoft import IEDriverManager
+from webdriver_manager.core.driver_cache import DriverCacheManager
 
 from je_web_runner.je_web_runner.element.web_element_wrapper import web_element_wrapper
 from je_web_runner.je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_capability_wrapper
@@ -86,19 +88,23 @@ class WebDriverWrapper(object):
             f"webdriver_manager_option_dict: {webdriver_manager_option_dict}"
         )
         param = locals()
+        install_path: str = str(Path.cwd())
+        cache_manager = DriverCacheManager(install_path)
         try:
             webdriver_name = str(webdriver_name).lower()
             webdriver_value = _webdriver_dict.get(webdriver_name)
             if webdriver_value is None:
                 raise WebRunnerWebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
             webdriver_install_manager = _webdriver_manager_dict.get(webdriver_name)
+            webdriver_install_manager().install()
             if webdriver_manager_option_dict is None:
                 webdriver_service = _webdriver_service_dict.get(webdriver_name)(
-                    webdriver_install_manager().install(),
+                    webdriver_install_manager(cache_manager=cache_manager).install(),
                 )
             else:
                 webdriver_service = _webdriver_service_dict.get(webdriver_name)(
-                    webdriver_install_manager(**webdriver_manager_option_dict).install(),
+                    webdriver_install_manager(
+                        cache_manager=cache_manager, **webdriver_manager_option_dict).install(),
                 )
             self.current_webdriver = webdriver_value(service=webdriver_service, **kwargs)
             self._webdriver_name = webdriver_name
