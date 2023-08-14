@@ -14,6 +14,9 @@
 ### Documentation
 
 [![Documentation Status](https://readthedocs.org/projects/webrunner/badge/?version=latest)](https://webrunner.readthedocs.io/en/latest/?badge=latest)
+
+[WebRunner Doc Click Here!](https://webrunner.readthedocs.io/en/latest/)
+
 ---
 > Project Kanban \
 > https://github.com/orgs/Integration-Automation/projects/2/views/1 \
