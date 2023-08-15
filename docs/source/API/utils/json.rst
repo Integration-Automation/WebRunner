@@ -9,6 +9,8 @@ Json File API
         :param json_file_path json file's path to read
         """
 
+.. code-block:: python
+
     def write_action_json(json_save_path: str, action_json: list):
         """
         write action json
@@ -16,12 +18,16 @@ Json File API
         :param action_json the json str include action to write
         """
 
+.. code-block:: python
+
     def __process_json(json_string: str, **kwargs) -> str:
         """
         :param json_string: full json str (not json type)
         :param kwargs: any another kwargs for dumps
         :return: reformat str
         """
+
+.. code-block:: python
 
     def reformat_json(json_string: str, **kwargs) -> str:
         """

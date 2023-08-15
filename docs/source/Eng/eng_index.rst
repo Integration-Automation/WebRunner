@@ -10,4 +10,5 @@ WebRunner English Documentation
     doc/generate_report/generate_report_doc.rst
     doc/callback_function/callback_function_doc.rst
     doc/cli/cli_doc.rst
+    doc/scheduler/scheduler_doc.rst
     doc/socket_driver/socket_driver_doc.rst

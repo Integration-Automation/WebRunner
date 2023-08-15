@@ -16,6 +16,7 @@ WebRunner API Documentation
     utils/test_object.rst
     utils/test_reocrd.rst
     utils/xml.rst
+    utils/scheduler.rst
     wrapper/element.rst
     wrapper/manager.rst
     wrapper/utils.rst
