@@ -13,6 +13,8 @@ Project API
             exist_ok=True
         )
 
+.. code-block:: python
+
     def create_template(parent_name: str, project_path: str = None) -> None:
         """
         create template ob project dir
@@ -20,6 +22,8 @@ Project API
         :param project_path: project create path
         :return: None
         """
+
+.. code-block:: python
 
     def create_project_dir(project_path: str = None, parent_name: str = "WebRunner") -> None:
         """

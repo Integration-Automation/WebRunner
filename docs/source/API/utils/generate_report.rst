@@ -8,6 +8,8 @@ Generate report API
         :return: html_string
         """
 
+.. code-block:: python
+
     def generate_html_report(html_name: str = "default_name"):
         """
         this function will create and save html report on current folder
@@ -21,6 +23,8 @@ Generate report API
         :return: success test dict and failure test dict
         """
 
+.. code-block:: python
+
     def generate_json_report(json_file_name: str = "default_name"):
         """
         :param json_file_name: save json file's name
@@ -32,6 +36,8 @@ Generate report API
         """
         :return: success test dict and failure test dict
         """
+
+.. code-block:: python
 
     def generate_xml_report(xml_file_name: str = "default_name"):
         """
