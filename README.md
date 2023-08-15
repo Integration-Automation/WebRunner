@@ -46,7 +46,7 @@ pip install je_web_runner
 ## Requires
 
 ```
-python 3.8 or later
+python 3.9 or later
 ```
 
 >* Test on
@@ -56,3 +56,6 @@ python 3.8 or later
 >>    * raspberry pi 3B+
 
 | All test in test dir
+
+### Architecture Diagram
+![Architecture Diagram](architecture_diagram/WebRunner_ArchitectureDiagram.drawio.png)
