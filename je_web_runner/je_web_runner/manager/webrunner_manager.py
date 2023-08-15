@@ -1,5 +1,3 @@
-from sys import stderr
-
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webdriver import WebDriver
 
