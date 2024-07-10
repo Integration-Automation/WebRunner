@@ -3,7 +3,6 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/cc97412a6f3e4c5592ce45dd7b9db946)](https://www.codacy.com/gh/JE-Chen/WebRunner/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=JE-Chen/WebRunner&amp;utm_campaign=Badge_Grade)
 
-
 [![WebRunner Stable Python3.9](https://github.com/Intergration-Automation-Testing/WebRunner/actions/workflows/webrunner_stable_python3_9.yml/badge.svg)](https://github.com/Intergration-Automation-Testing/WebRunner/actions/workflows/webrunner_stable_python3_9.yml)
 
 [![WebRunner Stable Python3.10](https://github.com/Intergration-Automation-Testing/WebRunner/actions/workflows/webrunner_stable_python3_10.yml/badge.svg)](https://github.com/Intergration-Automation-Testing/WebRunner/actions/workflows/webrunner_stable_python3_10.yml)
