@@ -140,7 +140,7 @@ def generate_html() -> str:
     """
     :return: html_string
     """
-    web_runner_logger.info(f"generate_html")
+    web_runner_logger.info("generate_html")
     if len(test_record_instance.test_record_list) == 0:
         raise WebRunnerHTMLException(html_generate_no_data_tag)
     else:

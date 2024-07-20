@@ -19,7 +19,7 @@ class WebElementWrapper(object):
         current web element submit
         :return: None
         """
-        web_runner_logger.info(f"WebElementWrapper submit")
+        web_runner_logger.info("WebElementWrapper submit")
         try:
             self.current_web_element.submit()
             record_action_to_list("Web element submit", None, None)
@@ -32,7 +32,7 @@ class WebElementWrapper(object):
         current web element clear
         :return: None
         """
-        web_runner_logger.info(f"WebElementWrapper clear")
+        web_runner_logger.info("WebElementWrapper clear")
         try:
             self.current_web_element.clear()
             record_action_to_list("Web element clear", None, None)
@@ -87,7 +87,7 @@ class WebElementWrapper(object):
         check current web element is selected or not
         :return: True or False
         """
-        web_runner_logger.info(f"WebElementWrapper is_selected")
+        web_runner_logger.info("WebElementWrapper is_selected")
         try:
             record_action_to_list("Web element is_selected", None, None)
             return self.current_web_element.is_selected()
@@ -100,7 +100,7 @@ class WebElementWrapper(object):
         check current web element is enable or not
         :return: True or False
         """
-        web_runner_logger.info(f"WebElementWrapper is_enabled")
+        web_runner_logger.info("WebElementWrapper is_enabled")
         try:
             record_action_to_list("Web element is_enabled", None, None)
             return self.current_web_element.is_enabled()
@@ -130,7 +130,7 @@ class WebElementWrapper(object):
         click current web element
         :return: None
         """
-        web_runner_logger.info(f"WebElementWrapper click_element")
+        web_runner_logger.info("WebElementWrapper click_element")
         try:
             self.current_web_element.click()
             record_action_to_list("Web element click_element", None, None)
@@ -143,7 +143,7 @@ class WebElementWrapper(object):
         check current web element is displayed or not
         :return: True or False
         """
-        web_runner_logger.info(f"WebElementWrapper is_displayed")
+        web_runner_logger.info("WebElementWrapper is_displayed")
         try:
             record_action_to_list("Web element is_displayed", None, None)
             return self.current_web_element.is_displayed()
@@ -217,7 +217,7 @@ class WebElementWrapper(object):
         get Select(current web element)
         :return: Select(current web element)
         """
-        web_runner_logger.info(f"WebElementWrapper get_select")
+        web_runner_logger.info("WebElementWrapper get_select")
         try:
             record_action_to_list("Web element get_select", None, None)
             return Select(self.current_web_element)
