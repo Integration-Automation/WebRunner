@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "je_web_runner"
-version = "0.0.55"
+version = "0.0.57"
 authors = [
     { name = "JE-Chen", email = "jechenmailman@gmail.com" },
 ]

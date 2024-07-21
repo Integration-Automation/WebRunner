@@ -11,7 +11,7 @@ def generate_xml():
     """
     :return: success test dict and failure test dict
     """
-    web_runner_logger.info(f"generate_xml")
+    web_runner_logger.info("generate_xml")
     success_dict, failure_dict = generate_json()
     success_dict = dict({"xml_data": success_dict})
     failure_dict = dict({"xml_data": failure_dict})
@@ -43,7 +43,6 @@ def generate_xml_report(xml_file_name: str = "default_name"):
         lock.acquire()
         with open(xml_file_name + "_success.xml", "w+") as file_to_write:
             file_to_write.write(success_xml)
-            pass
     except Exception as error:
         web_runner_logger.error(f"generate_xml_report, xml_file_name: {xml_file_name}, failed: {repr(error)}")
     finally:

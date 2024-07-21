@@ -317,7 +317,7 @@ class WebDriverWrapper(object):
         forward current page
         :return: None
         """
-        web_runner_logger.info(f"WebDriverWrapper forward")
+        web_runner_logger.info("WebDriverWrapper forward")
         try:
             self.current_webdriver.forward()
             record_action_to_list("webdriver wrapper forward", None, None)
@@ -330,7 +330,7 @@ class WebDriverWrapper(object):
         back current page
         :return: None
         """
-        web_runner_logger.info(f"WebDriverWrapper back")
+        web_runner_logger.info("WebDriverWrapper back")
         try:
             self.current_webdriver.back()
             record_action_to_list("webdriver wrapper back", None, None)
@@ -343,7 +343,7 @@ class WebDriverWrapper(object):
         refresh current page
         :return: None
         """
-        web_runner_logger.info(f"WebDriverWrapper refresh")
+        web_runner_logger.info("WebDriverWrapper refresh")
         try:
             self.current_webdriver.refresh()
             record_action_to_list("webdriver wrapper refresh", None, None)
@@ -437,7 +437,7 @@ class WebDriverWrapper(object):
         get current page cookies
         :return: cookies as list
         """
-        web_runner_logger.info(f"WebDriverWrapper get_cookies")
+        web_runner_logger.info("WebDriverWrapper get_cookies")
         try:
             record_action_to_list("webdriver wrapper get_cookies", None, None)
             return self.current_webdriver.get_cookies()
@@ -495,7 +495,7 @@ class WebDriverWrapper(object):
         delete current page all cookies
         :return: None
         """
-        web_runner_logger.info(f"WebDriverWrapper delete_all_cookies")
+        web_runner_logger.info("WebDriverWrapper delete_all_cookies")
         try:
             self.current_webdriver.delete_all_cookies()
             record_action_to_list("webdriver wrapper delete_all_cookies", None, None)
@@ -736,7 +736,7 @@ class WebDriverWrapper(object):
         perform actions
         :return: None
         """
-        web_runner_logger.info(f"WebDriverWrapper perform")
+        web_runner_logger.info("WebDriverWrapper perform")
         try:
             self._action_chain.perform()
             record_action_to_list("webdriver wrapper perform", None, None)
@@ -749,7 +749,7 @@ class WebDriverWrapper(object):
         clear actions
         :return: None
         """
-        web_runner_logger.info(f"WebDriverWrapper reset_actions")
+        web_runner_logger.info("WebDriverWrapper reset_actions")
         try:
             self._action_chain.reset_actions()
             record_action_to_list("webdriver wrapper reset_actions", None, None)
@@ -1175,7 +1175,7 @@ class WebDriverWrapper(object):
         maximize current window
         :return: None
         """
-        web_runner_logger.info(f"WebDriverWrapper maximize_window")
+        web_runner_logger.info("WebDriverWrapper maximize_window")
         try:
             self.current_webdriver.maximize_window()
             record_action_to_list("webdriver wrapper maximize_window", None, None)
@@ -1188,7 +1188,7 @@ class WebDriverWrapper(object):
         full-screen current window
         :return: None
         """
-        web_runner_logger.info(f"WebDriverWrapper fullscreen_window")
+        web_runner_logger.info("WebDriverWrapper fullscreen_window")
         try:
             self.current_webdriver.fullscreen_window()
             record_action_to_list("webdriver wrapper fullscreen_window", None, None)
@@ -1201,7 +1201,7 @@ class WebDriverWrapper(object):
         minimize current window
         :return: None
         """
-        web_runner_logger.info(f"WebDriverWrapper minimize_window")
+        web_runner_logger.info("WebDriverWrapper minimize_window")
         try:
             self.current_webdriver.minimize_window()
             record_action_to_list("webdriver wrapper minimize_window", None, None)
@@ -1269,7 +1269,7 @@ class WebDriverWrapper(object):
         """
         :return: execute(Command.GET_WINDOW_RECT)['value']
         """
-        web_runner_logger.info(f"WebDriverWrapper get_window_rect")
+        web_runner_logger.info("WebDriverWrapper get_window_rect")
         try:
             record_action_to_list("webdriver wrapper get_window_position", None, None)
             return self.current_webdriver.get_window_rect()
@@ -1305,7 +1305,7 @@ class WebDriverWrapper(object):
         get current page screenshot as png
         :return: screenshot as bytes
         """
-        web_runner_logger.info(f"WebDriverWrapper get_screenshot_as_png")
+        web_runner_logger.info("WebDriverWrapper get_screenshot_as_png")
         try:
             record_action_to_list("webdriver wrapper get_screenshot_as_png", None, None)
             return self.current_webdriver.get_screenshot_as_png()
@@ -1318,7 +1318,7 @@ class WebDriverWrapper(object):
         get current page screenshot as base64 str
         :return: screenshot as str
         """
-        web_runner_logger.info(f"WebDriverWrapper get_screenshot_as_base64")
+        web_runner_logger.info("WebDriverWrapper get_screenshot_as_base64")
         try:
             record_action_to_list("webdriver wrapper get_screenshot_as_base64", None, None)
             return self.current_webdriver.get_screenshot_as_base64()
@@ -1363,7 +1363,7 @@ class WebDriverWrapper(object):
         quit this webdriver
         :return: None
         """
-        web_runner_logger.info(f"WebDriverWrapper quit")
+        web_runner_logger.info("WebDriverWrapper quit")
         try:
             test_object_record.clean_record()
             self._action_chain = None

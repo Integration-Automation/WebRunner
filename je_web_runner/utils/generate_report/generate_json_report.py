@@ -12,7 +12,7 @@ def generate_json():
     """
     :return: success test dict and failure test dict
     """
-    web_runner_logger.info(f"generate_json")
+    web_runner_logger.info("generate_json")
     if len(test_record_instance.test_record_list) == 0 and len(test_record_instance.error_record_list) == 0:
         raise WebRunnerGenerateJsonReportException(cant_generate_json_report)
     else:
