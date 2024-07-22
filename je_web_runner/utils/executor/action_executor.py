@@ -168,7 +168,7 @@ class Executor(object):
                 raise WebRunnerExecuteException(executor_list_error)
         execute_record_dict = dict()
         try:
-            if len(action_list) < 0 or isinstance(action_list, list) is False:
+            if len(action_list) == 0 or isinstance(action_list, list) is False:
                 web_runner_logger.error(
                     f"execute_action, action_list: {action_list}, "
                     f"failed: {WebRunnerExecuteException(executor_list_error)}")
