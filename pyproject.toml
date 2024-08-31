@@ -15,10 +15,11 @@ requires-python = ">=3.9"
 license = { text = "MIT" }
 dependencies = [
     "selenium>=4.0.0",
-    'requests',
-    'python-dotenv',
-    "webdriver-manager==3.9.1",
+    "requests",
+    "python-dotenv",
     "APScheduler",
+    "Pyside6",
+    "webdriver-manager==3.9.1",
 ]
 classifiers = [
     "Programming Language :: Python :: 3.9",
