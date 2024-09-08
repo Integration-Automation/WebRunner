@@ -20,8 +20,8 @@ from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriver_manager.microsoft import IEDriverManager
 from webdriver_manager.core.driver_cache import DriverCacheManager
 
-from je_web_runner.je_web_runner.element.web_element_wrapper import web_element_wrapper
-from je_web_runner.je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_capability_wrapper
+from je_web_runner.element.web_element_wrapper import web_element_wrapper
+from je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_capability_wrapper
 from je_web_runner.utils.assert_value.result_check import check_webdriver_details
 from je_web_runner.utils.exception.exception_tags import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebRunnerException, WebRunnerWebDriverIsNoneException
@@ -1114,7 +1114,7 @@ class WebDriverWrapper(object):
             f"WebDriverWrapper send_keys_to_element, element: {element}, keys_to_send: {keys_to_send}")
         param = locals()
         try:
-            self._action_chain.send_keys_to_element(element, *keys_to_send)
+            self._action_chain.send_keys_to_element(element, keys_to_send)
             record_action_to_list("webdriver wrapper send_keys_to_element", param, None)
         except Exception as error:
             web_runner_logger.error(

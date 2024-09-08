@@ -1,8 +1,8 @@
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webdriver import WebDriver
 
-from je_web_runner.je_web_runner.element.web_element_wrapper import web_element_wrapper
-from je_web_runner.je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper
+from je_web_runner.element.web_element_wrapper import web_element_wrapper
+from je_web_runner.webdriver import webdriver_wrapper
 from je_web_runner.utils.exception.exception_tags import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebRunnerWebDriverIsNoneException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
