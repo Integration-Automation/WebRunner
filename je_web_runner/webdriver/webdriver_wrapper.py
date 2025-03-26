@@ -5,23 +5,17 @@ from typing import List, Union
 from selenium import webdriver
 from selenium.common.exceptions import NoAlertPresentException
 from selenium.webdriver import ActionChains
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.edge.service import Service
-from selenium.webdriver.firefox.service import Service
-from selenium.webdriver.ie.service import Service
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.remote.webelement import WebElement
-from selenium.webdriver.safari.service import Service
 from selenium.webdriver.support.wait import WebDriverWait
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.chrome import ChromeType
+from webdriver_manager.core.driver_cache import DriverCacheManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from webdriver_manager.microsoft import IEDriverManager
-from webdriver_manager.core.driver_cache import DriverCacheManager
 
 from je_web_runner.element.web_element_wrapper import web_element_wrapper
-from je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_capability_wrapper
 from je_web_runner.utils.assert_value.result_check import check_webdriver_details
 from je_web_runner.utils.exception.exception_tags import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebRunnerException, WebRunnerWebDriverIsNoneException
@@ -30,6 +24,7 @@ from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_capability_wrapper
 
 _webdriver_dict = {
     "chrome": webdriver.Chrome,
@@ -46,15 +41,6 @@ _webdriver_manager_dict = {
     "firefox": GeckoDriverManager,
     "edge": EdgeChromiumDriverManager,
     "ie": IEDriverManager,
-}
-
-_webdriver_service_dict = {
-    "chrome": webdriver.chrome.service.Service,
-    "chromium": webdriver.chrome.service.Service,
-    "firefox": webdriver.firefox.service.Service,
-    "edge": webdriver.edge.service.Service,
-    "ie": webdriver.ie.service.Service,
-    "safari": webdriver.safari.service.Service,
 }
 
 
@@ -97,16 +83,7 @@ class WebDriverWrapper(object):
                 raise WebRunnerWebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
             webdriver_install_manager = _webdriver_manager_dict.get(webdriver_name)
             webdriver_install_manager().install()
-            if webdriver_manager_option_dict is None:
-                webdriver_service = _webdriver_service_dict.get(webdriver_name)(
-                    webdriver_install_manager(cache_manager=cache_manager).install(),
-                )
-            else:
-                webdriver_service = _webdriver_service_dict.get(webdriver_name)(
-                    webdriver_install_manager(
-                        cache_manager=cache_manager, **webdriver_manager_option_dict).install(),
-                )
-            self.current_webdriver = webdriver_value(service=webdriver_service, **kwargs)
+            self.current_webdriver = webdriver_value(**kwargs)
             self._webdriver_name = webdriver_name
             self._action_chain = ActionChains(self.current_webdriver)
             record_action_to_list("webdriver wrapper set_driver", param, None)
@@ -1375,4 +1352,4 @@ class WebDriverWrapper(object):
             raise WebRunnerException
 
 
-webdriver_wrapper = WebDriverWrapper()
+webdriver_wrapper_instance = WebDriverWrapper()

@@ -1,5 +1,5 @@
 from je_web_runner.element.web_element_wrapper import web_element_wrapper
-from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper
+from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 from je_web_runner.manager.webrunner_manager import get_webdriver_manager
 from je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_argument
 from je_web_runner.utils.selenium_utils_wrapper.desired_capabilities.desired_capabilities import \
@@ -24,10 +24,9 @@ from je_web_runner.utils.test_object.test_object_class import get_test_object_ty
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 from je_web_runner.utils.callback.callback_function_executor import callback_executor
 from je_web_runner.utils.project.create_project_structure import create_project_dir
-from je_web_runner.utils.scheduler.extend_apscheduler import SchedulerManager
 __all__ = [
-    "web_element_wrapper", "set_webdriver_options_argument", "SchedulerManager",
-    "webdriver_wrapper", "get_webdriver_manager",
+    "web_element_wrapper", "set_webdriver_options_argument",
+    "webdriver_wrapper_instance", "get_webdriver_manager",
     "get_desired_capabilities", "get_desired_capabilities_keys", "add_command_to_executor",
     "execute_action", "execute_files", "executor",
     "generate_html", "generate_html_report",

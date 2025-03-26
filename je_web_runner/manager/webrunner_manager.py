@@ -2,7 +2,7 @@ from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webdriver import WebDriver
 
 from je_web_runner.element.web_element_wrapper import web_element_wrapper
-from je_web_runner.webdriver import webdriver_wrapper
+from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 from je_web_runner.utils.exception.exception_tags import selenium_wrapper_web_driver_not_found_error
 from je_web_runner.utils.exception.exceptions import WebRunnerWebDriverIsNoneException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -14,7 +14,7 @@ class WebdriverManager(object):
 
     def __init__(self, **kwargs):
         self._current_webdriver_list = list()
-        self.webdriver_wrapper = webdriver_wrapper
+        self.webdriver_wrapper = webdriver_wrapper_instance
         self.webdriver_element = web_element_wrapper
         self.current_webdriver: [WebDriver, None] = None
 
@@ -28,7 +28,7 @@ class WebdriverManager(object):
         web_runner_logger.info(f"WebdriverManager new_driver, webdriver_name: {webdriver_name}, params: {kwargs}")
         param = locals()
         try:
-            self.current_webdriver = webdriver_wrapper.set_driver(webdriver_name, **kwargs)
+            self.current_webdriver = webdriver_wrapper_instance.set_driver(webdriver_name, **kwargs)
             self._current_webdriver_list.append(self.current_webdriver)
             record_action_to_list("web runner manager new_driver", param, None)
         except Exception as error:

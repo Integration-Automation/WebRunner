@@ -1,25 +1,23 @@
-# Rename to build dev version
-# This is dev version
+# Rename to build stable version
+# This is stable version
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "je_web_runner_dev"
-version = "0.0.87"
+name = "je_web_runner"
+version = "0.0.61"
 authors = [
     { name = "JE-Chen", email = "jechenmailman@gmail.com" },
 ]
 description = "WEB Automation Framework"
 requires-python = ">=3.9"
-license = { text = "MIT" }
+license-files = ["LICENSE"]
 dependencies = [
     "selenium>=4.0.0",
-    "requests",
-    "python-dotenv",
-    "APScheduler",
-    "Pyside6",
-    "webdriver-manager==3.9.1",
+    'requests',
+    'python-dotenv',
+    "webdriver-manager",
 ]
 classifiers = [
     "Programming Language :: Python :: 3.9",
@@ -27,7 +25,6 @@ classifiers = [
     "Environment :: Win32 (MS Windows)",
     "Environment :: MacOS X",
     "Environment :: X11 Applications",
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
 
@@ -40,8 +37,6 @@ Code = "https://github.com/Intergration-Automation-Testing/WebRunner"
 file = "README.md"
 content-type = "text/markdown"
 
-[tool.setuptools]
-license-files = ["LICENSE"]
 
 [tool.setuptools.packages]
 find = { namespaces = false }
