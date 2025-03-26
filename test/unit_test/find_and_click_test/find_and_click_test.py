@@ -3,7 +3,7 @@ import sys
 from je_web_runner import TestObject
 from je_web_runner import get_webdriver_manager
 from je_web_runner import web_element_wrapper
-from je_web_runner import webdriver_wrapper
+from je_web_runner import webdriver_wrapper_instance
 
 try:
     # get webdriver manager
@@ -15,7 +15,7 @@ try:
     # implicitly_wait 2sec
     driver_wrapper.webdriver_wrapper.implicitly_wait(2)
     # current web element is google input type: "name" name: "q"
-    webdriver_wrapper.find_element(google_input)
+    webdriver_wrapper_instance.find_element(google_input)
     # click current web element
     web_element_wrapper.click_element()
     # input to current web element
@@ -25,17 +25,17 @@ try:
     # change to first instance
     driver_wrapper.change_webdriver(0)
     # current web element is google input type: "name" name: "q"
-    webdriver_wrapper.find_element(google_input)
+    webdriver_wrapper_instance.find_element(google_input)
     # input to current web element
     web_element_wrapper.input_to_element("123")
     # change to second instance
     driver_wrapper.change_webdriver(1)
     # to google main page
-    webdriver_wrapper.to_url("https://www.google.com")
+    webdriver_wrapper_instance.to_url("https://www.google.com")
     # implicitly_wait 5sec
-    webdriver_wrapper.implicitly_wait(5)
+    webdriver_wrapper_instance.implicitly_wait(5)
     # current web element is google input type: "name" name: "q"
-    webdriver_wrapper.find_element(google_input)
+    webdriver_wrapper_instance.find_element(google_input)
     # input to current web element
     web_element_wrapper.input_to_element("123")
     # quit

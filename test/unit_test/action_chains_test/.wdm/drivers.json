@@ -1,0 +1,10 @@
+{
+    "win64_geckodriver_latest_for_129.0": {
+        "timestamp": "08/09/2024",
+        "binary_path": "C:\\CodeWorkspace\\Python\\WebRunner\\test\\unit_test\\action_chains_test\\.wdm\\drivers\\geckodriver\\win64\\v0.35.0\\geckodriver.exe"
+    },
+    "win64_geckodriver_latest_for_130.0": {
+        "timestamp": "08/09/2024",
+        "binary_path": "C:\\CodeWorkspace\\Python\\WebRunner\\test\\unit_test\\action_chains_test\\.wdm\\drivers\\geckodriver\\win64\\v0.35.0\\geckodriver.exe"
+    }
+}

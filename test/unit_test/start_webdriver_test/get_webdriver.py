@@ -1,15 +1,15 @@
 import sys
 
 from je_web_runner import get_webdriver_manager
-from je_web_runner import webdriver_wrapper
+from je_web_runner import webdriver_wrapper_instance
 
 try:
     if __name__ == "__main__":
         webdriver_manager = get_webdriver_manager(
             "firefox"
         )
-        webdriver_wrapper.set_webdriver_options_capability({"test": "test"})
-        webdriver_wrapper.to_url("http://www.python.org")
+        webdriver_wrapper_instance.set_webdriver_options_capability({"test": "test"})
+        webdriver_wrapper_instance.to_url("http://www.python.org")
         print(webdriver_manager.webdriver_wrapper.current_webdriver.title)
         webdriver_manager.quit()
 except Exception as error:

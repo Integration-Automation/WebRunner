@@ -1,9 +1,8 @@
 import builtins
 import types
 from inspect import getmembers, isbuiltin
-from typing import Union, Any
 
-from je_web_runner.je_web_runner.manager.webrunner_manager import web_runner
+from je_web_runner.manager.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
 from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException, WebRunnerAddCommandException
@@ -16,9 +15,9 @@ from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.package_manager.package_manager_class import package_manager
-from je_web_runner.utils.scheduler.extend_apscheduler import scheduler_manager
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
+from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 
 class Executor(object):
@@ -33,58 +32,58 @@ class Executor(object):
             "WR_SaveTestObject": test_object_record.save_test_object,
             "WR_CleanTestObject": test_object_record.clean_record,
             # webdriver wrapper
-            "WR_set_driver": web_runner.webdriver_wrapper.set_driver,
-            "WR_set_webdriver_options_capability": web_runner.webdriver_wrapper.set_driver,
-            "WR_find_element": web_runner.webdriver_wrapper.find_element_with_test_object_record,
-            "WR_find_elements": web_runner.webdriver_wrapper.find_elements_with_test_object_record,
-            "WR_implicitly_wait": web_runner.webdriver_wrapper.implicitly_wait,
-            "WR_explict_wait": web_runner.webdriver_wrapper.explict_wait,
-            "WR_to_url": web_runner.webdriver_wrapper.to_url,
-            "WR_forward": web_runner.webdriver_wrapper.forward,
-            "WR_back": web_runner.webdriver_wrapper.back,
-            "WR_refresh": web_runner.webdriver_wrapper.refresh,
-            "WR_switch": web_runner.webdriver_wrapper.switch,
-            "WR_set_script_timeout": web_runner.webdriver_wrapper.set_script_timeout,
-            "WR_set_page_load_timeout": web_runner.webdriver_wrapper.set_page_load_timeout,
-            "WR_get_cookies": web_runner.webdriver_wrapper.get_cookies,
-            "WR_get_cookie": web_runner.webdriver_wrapper.get_cookie,
-            "WR_add_cookie": web_runner.webdriver_wrapper.add_cookie,
-            "WR_delete_cookie": web_runner.webdriver_wrapper.delete_cookie,
-            "WR_delete_all_cookies": web_runner.webdriver_wrapper.delete_all_cookies,
-            "WR_execute": web_runner.webdriver_wrapper.execute,
-            "WR_execute_script": web_runner.webdriver_wrapper.execute_script,
-            "WR_execute_async_script": web_runner.webdriver_wrapper.execute_async_script,
-            "WR_move_to_element": web_runner.webdriver_wrapper.move_to_element_with_test_object,
-            "WR_move_to_element_with_offset": web_runner.webdriver_wrapper.move_to_element_with_offset_and_test_object,
-            "WR_drag_and_drop": web_runner.webdriver_wrapper.drag_and_drop_with_test_object,
-            "WR_drag_and_drop_offset": web_runner.webdriver_wrapper.drag_and_drop_offset_with_test_object,
-            "WR_perform": web_runner.webdriver_wrapper.perform,
-            "WR_reset_actions": web_runner.webdriver_wrapper.reset_actions,
-            "WR_left_click": web_runner.webdriver_wrapper.left_click_with_test_object,
-            "WR_left_click_and_hold": web_runner.webdriver_wrapper.left_click_and_hold_with_test_object,
-            "WR_right_click": web_runner.webdriver_wrapper.right_click_with_test_object,
-            "WR_left_double_click": web_runner.webdriver_wrapper.left_double_click_with_test_object,
-            "WR_release": web_runner.webdriver_wrapper.release_with_test_object,
-            "WR_press_key": web_runner.webdriver_wrapper.press_key_with_test_object,
-            "WR_release_key": web_runner.webdriver_wrapper.release_key_with_test_object,
-            "WR_move_by_offset": web_runner.webdriver_wrapper.move_by_offset,
-            "WR_pause": web_runner.webdriver_wrapper.pause,
-            "WR_send_keys": web_runner.webdriver_wrapper.send_keys,
-            "WR_send_keys_to_element": web_runner.webdriver_wrapper.send_keys_to_element_with_test_object,
-            "WR_scroll": web_runner.webdriver_wrapper.scroll,
-            "WR_check_current_webdriver": web_runner.webdriver_wrapper.check_current_webdriver,
-            "WR_maximize_window": web_runner.webdriver_wrapper.maximize_window,
-            "WR_fullscreen_window": web_runner.webdriver_wrapper.fullscreen_window,
-            "WR_minimize_window": web_runner.webdriver_wrapper.minimize_window,
-            "WR_set_window_size": web_runner.webdriver_wrapper.set_window_size,
-            "WR_set_window_position": web_runner.webdriver_wrapper.set_window_position,
-            "WR_get_window_position": web_runner.webdriver_wrapper.get_window_position,
-            "WR_get_window_rect": web_runner.webdriver_wrapper.get_window_rect,
-            "WR_set_window_rect": web_runner.webdriver_wrapper.set_window_rect,
-            "WR_get_screenshot_as_png": web_runner.webdriver_wrapper.get_screenshot_as_png,
-            "WR_get_screenshot_as_base64": web_runner.webdriver_wrapper.get_screenshot_as_base64,
-            "WR_get_log": web_runner.webdriver_wrapper.get_log,
-            "WR_single_quit": web_runner.webdriver_wrapper.quit,
+            "WR_set_driver": webdriver_wrapper_instance.set_driver,
+            "WR_set_webdriver_options_capability": webdriver_wrapper_instance.set_driver,
+            "WR_find_element": webdriver_wrapper_instance.find_element_with_test_object_record,
+            "WR_find_elements": webdriver_wrapper_instance.find_elements_with_test_object_record,
+            "WR_implicitly_wait": webdriver_wrapper_instance.implicitly_wait,
+            "WR_explict_wait": webdriver_wrapper_instance.explict_wait,
+            "WR_to_url": webdriver_wrapper_instance.to_url,
+            "WR_forward": webdriver_wrapper_instance.forward,
+            "WR_back": webdriver_wrapper_instance.back,
+            "WR_refresh": webdriver_wrapper_instance.refresh,
+            "WR_switch": webdriver_wrapper_instance.switch,
+            "WR_set_script_timeout": webdriver_wrapper_instance.set_script_timeout,
+            "WR_set_page_load_timeout": webdriver_wrapper_instance.set_page_load_timeout,
+            "WR_get_cookies": webdriver_wrapper_instance.get_cookies,
+            "WR_get_cookie": webdriver_wrapper_instance.get_cookie,
+            "WR_add_cookie": webdriver_wrapper_instance.add_cookie,
+            "WR_delete_cookie": webdriver_wrapper_instance.delete_cookie,
+            "WR_delete_all_cookies": webdriver_wrapper_instance.delete_all_cookies,
+            "WR_execute": webdriver_wrapper_instance.execute,
+            "WR_execute_script": webdriver_wrapper_instance.execute_script,
+            "WR_execute_async_script": webdriver_wrapper_instance.execute_async_script,
+            "WR_move_to_element": webdriver_wrapper_instance.move_to_element_with_test_object,
+            "WR_move_to_element_with_offset": webdriver_wrapper_instance.move_to_element_with_offset_and_test_object,
+            "WR_drag_and_drop": webdriver_wrapper_instance.drag_and_drop_with_test_object,
+            "WR_drag_and_drop_offset": webdriver_wrapper_instance.drag_and_drop_offset_with_test_object,
+            "WR_perform": webdriver_wrapper_instance.perform,
+            "WR_reset_actions": webdriver_wrapper_instance.reset_actions,
+            "WR_left_click": webdriver_wrapper_instance.left_click_with_test_object,
+            "WR_left_click_and_hold": webdriver_wrapper_instance.left_click_and_hold_with_test_object,
+            "WR_right_click": webdriver_wrapper_instance.right_click_with_test_object,
+            "WR_left_double_click": webdriver_wrapper_instance.left_double_click_with_test_object,
+            "WR_release": webdriver_wrapper_instance.release_with_test_object,
+            "WR_press_key": webdriver_wrapper_instance.press_key_with_test_object,
+            "WR_release_key": webdriver_wrapper_instance.release_key_with_test_object,
+            "WR_move_by_offset": webdriver_wrapper_instance.move_by_offset,
+            "WR_pause": webdriver_wrapper_instance.pause,
+            "WR_send_keys": webdriver_wrapper_instance.send_keys,
+            "WR_send_keys_to_element": webdriver_wrapper_instance.send_keys_to_element_with_test_object,
+            "WR_scroll": webdriver_wrapper_instance.scroll,
+            "WR_check_current_webdriver": webdriver_wrapper_instance.check_current_webdriver,
+            "WR_maximize_window": webdriver_wrapper_instance.maximize_window,
+            "WR_fullscreen_window": webdriver_wrapper_instance.fullscreen_window,
+            "WR_minimize_window": webdriver_wrapper_instance.minimize_window,
+            "WR_set_window_size": webdriver_wrapper_instance.set_window_size,
+            "WR_set_window_position": webdriver_wrapper_instance.set_window_position,
+            "WR_get_window_position": webdriver_wrapper_instance.get_window_position,
+            "WR_get_window_rect": webdriver_wrapper_instance.get_window_rect,
+            "WR_set_window_rect": webdriver_wrapper_instance.set_window_rect,
+            "WR_get_screenshot_as_png": webdriver_wrapper_instance.get_screenshot_as_png,
+            "WR_get_screenshot_as_base64": webdriver_wrapper_instance.get_screenshot_as_base64,
+            "WR_get_log": webdriver_wrapper_instance.get_log,
+            "WR_single_quit": webdriver_wrapper_instance.quit,
             # web element
             "WR_element_submit": web_runner.webdriver_element.submit,
             "WR_element_clear": web_runner.webdriver_element.clear,
@@ -116,15 +115,6 @@ class Executor(object):
             # Add package
             "WR_add_package_to_executor": package_manager.add_package_to_executor,
             "WR_add_package_to_callback_executor": package_manager.add_package_to_callback_executor,
-            # Scheduler
-            "WR_scheduler_event_trigger": self.scheduler_event_trigger,
-            "WR_remove_blocking_scheduler_job": scheduler_manager.remove_blocking_job,
-            "WR_remove_nonblocking_scheduler_job": scheduler_manager.remove_nonblocking_job,
-            "WR_start_blocking_scheduler": scheduler_manager.start_block_scheduler,
-            "WR_start_nonblocking_scheduler": scheduler_manager.start_nonblocking_scheduler,
-            "WR_start_all_scheduler": scheduler_manager.start_all_scheduler,
-            "WR_shutdown_blocking_scheduler": scheduler_manager.shutdown_blocking_scheduler,
-            "WR_shutdown_nonblocking_scheduler": scheduler_manager.shutdown_nonblocking_scheduler,
         }
         # get all builtin function and add to event dict
         for function in getmembers(builtins, isbuiltin):
@@ -160,7 +150,7 @@ class Executor(object):
         """
         web_runner_logger.info(f"execute_action, action_list: {action_list}")
         if type(action_list) is dict:
-            action_list = action_list.get("web_runner", None)
+            action_list = action_list.get("webdriver_wrapper", None)
             if action_list is None:
                 web_runner_logger.error(
                     f"execute_action, action_list: {action_list}, "
@@ -203,16 +193,6 @@ class Executor(object):
         for file in execute_files_list:
             execute_detail_list.append(self.execute_action(read_action_json(file)))
         return execute_detail_list
-
-    def scheduler_event_trigger(
-            self, function: str, id: str = None, args: Union[list, tuple] = None,
-            kwargs: dict = None, scheduler_type: str = "nonblocking", wait_type: str = "secondly",
-            wait_value: int = 1, **trigger_args: Any) -> None:
-        if scheduler_type == "nonblocking":
-            scheduler_event = scheduler_manager.nonblocking_scheduler_event_dict.get(wait_type)
-        else:
-            scheduler_event = scheduler_manager.blocking_scheduler_event_dict.get(wait_type)
-        scheduler_event(self.event_dict.get(function), id, args, kwargs, wait_value, **trigger_args)
 
 
 executor = Executor()

@@ -1,6 +1,5 @@
 build
 twine
 sphinx
-selenium
 je_web_runner_dev
 sphinx-rtd-theme
