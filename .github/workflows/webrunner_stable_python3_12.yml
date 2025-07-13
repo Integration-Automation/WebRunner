@@ -1,4 +1,4 @@
-name: WebRunner Stable Python3.9
+name: WebRunner Stable Python3.12
 
 on:
   push:
