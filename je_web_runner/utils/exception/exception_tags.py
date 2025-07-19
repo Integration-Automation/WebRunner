@@ -1,27 +1,32 @@
-selenium_wrapper_web_driver_not_found_error = "Web Driver not found"
+selenium_wrapper_web_driver_not_found_error = "WebDriver not found"
 
-selenium_wrapper_set_options_error = "only accept dict type"
-selenium_wrapper_set_argument_error = "only accept str type"
+selenium_wrapper_set_options_error = "options must be a dict"
+selenium_wrapper_set_argument_error = "argument must be a string"
 
-executor_data_error = "executor receive wrong data"
-executor_list_error = "executor receive wrong data list is none or wrong type"
+executor_data_error = "executor received invalid data"
+executor_list_error = "executor received invalid data: list is empty or of wrong type"
+
 # json
-cant_find_json_error = "can't find json"
-cant_save_json_error = "can't save json"
-cant_reformat_json_error = "can't reformat json is type right?"
-cant_find_element_in_json_error = "can't find element in json"
-json_type_error = "json type error"
-wrong_json_data_error = "can't parser json"
-cant_generate_json_report: str = "can't generate json report"
+cant_find_json_error = "can't find JSON file"
+cant_save_json_error = "can't save JSON file"
+cant_reformat_json_error = "can't reformat JSON: is the type correct?"
+cant_find_element_in_json_error = "can't find element in JSON"
+json_type_error = "JSON type error"
+wrong_json_data_error = "can't parse JSON"
+cant_generate_json_report: str = "can't generate JSON report"
 
-html_generate_no_data_tag = "can't make html report, data is null?"
+html_generate_no_data_tag = "can't generate HTML report: data is null"
+
 # add command
-add_command_exception_tag = "command value type should be as method or function"
+add_command_exception_tag = "command value type must be a method or function"
+
 # argparse
-argparse_get_wrong_data = "argparse receive wrong data"
+argparse_get_wrong_data = "argparse received invalid data"
+
 # XML
-cant_read_xml_error: str = "can't read xml"
-xml_type_error: str = "xml type error"
+cant_read_xml_error: str = "can't read XML"
+xml_type_error = "XML type error"
+
 # Callback executor
-get_bad_trigger_method: str = "get bad trigger method, only accept kwargs and args"
-get_bad_trigger_function: str = "get bad trigger function only accept function in event_dict"
+get_bad_trigger_method: str = "invalid trigger method: only kwargs and args accepted"
+get_bad_trigger_function: str = "invalid trigger function: only functions in event_dict accepted"
