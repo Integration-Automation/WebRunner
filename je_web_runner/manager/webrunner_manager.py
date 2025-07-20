@@ -1,3 +1,5 @@
+from typing import List
+
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webdriver import WebDriver
 
@@ -18,9 +20,10 @@ class WebdriverManager(object):
         self.webdriver_element = web_element_wrapper
         self.current_webdriver: [WebDriver, None] = None
 
-    def new_driver(self, webdriver_name: str, **kwargs) -> None:
+    def new_driver(self, webdriver_name: str, options: List[str] = None, **kwargs) -> None:
         """
         use to create new webdriver instance
+        :param options:
         :param webdriver_name: which webdriver we want to use [chrome, chromium, firefox, edge, ie]
         :param kwargs: webdriver download manager param
         :return: None
@@ -28,7 +31,7 @@ class WebdriverManager(object):
         web_runner_logger.info(f"WebdriverManager new_driver, webdriver_name: {webdriver_name}, params: {kwargs}")
         param = locals()
         try:
-            self.current_webdriver = webdriver_wrapper_instance.set_driver(webdriver_name, **kwargs)
+            self.current_webdriver = webdriver_wrapper_instance.set_driver(webdriver_name, options=options, **kwargs)
             self._current_webdriver_list.append(self.current_webdriver)
             record_action_to_list("web runner manager new_driver", param, None)
         except Exception as error:

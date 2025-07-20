@@ -26,6 +26,15 @@ from je_web_runner.utils.test_object.test_object_record.test_object_record_class
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 from je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_capability_wrapper
 
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chromium.options import ArgOptions as ChromiumOptions
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
+from selenium.webdriver.edge.options import Options as EdgeOptions
+from selenium.webdriver.ie.options import Options as IEOptions
+from selenium.webdriver.safari.options import Options as SafariOptions
+
+
+
 _webdriver_dict = {
     "chrome": webdriver.Chrome,
     "chromium": webdriver.Chrome,
@@ -41,6 +50,16 @@ _webdriver_manager_dict = {
     "firefox": GeckoDriverManager,
     "edge": EdgeChromiumDriverManager,
     "ie": IEDriverManager,
+
+}
+
+_options_dict = {
+    "chrome": ChromeOptions,
+    "chromium": ChromiumOptions,
+    "firefox": FirefoxOptions,
+    "edge": EdgeOptions,
+    "ie": IEOptions,
+    "safari": SafariOptions,
 }
 
 
@@ -54,7 +73,7 @@ class WebDriverWrapper(object):
     # start a new webdriver
 
     def set_driver(self, webdriver_name: str,
-                   webdriver_manager_option_dict: dict = None, **kwargs) -> \
+                   webdriver_manager_option_dict: dict = None, options: List[str] = None, **kwargs) -> \
             Union[
                 webdriver.Chrome,
                 webdriver.Chrome,
@@ -64,6 +83,7 @@ class WebDriverWrapper(object):
                 webdriver.Safari,
             ]:
         """
+        :param options:
         :param webdriver_name: which webdriver we want to use
         :param webdriver_manager_option_dict: if you want to set webdriver download manager
         :param kwargs: used to catch var
@@ -83,7 +103,14 @@ class WebDriverWrapper(object):
                 raise WebRunnerWebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
             webdriver_install_manager = _webdriver_manager_dict.get(webdriver_name)
             webdriver_install_manager().install()
-            self.current_webdriver = webdriver_value(**kwargs)
+            if options and len(options) > 0:
+                driver_options = _options_dict.get(webdriver_name)()
+                if driver_options:
+                    for option in options:
+                        driver_options.add_argument(argument=option)
+                    self.current_webdriver = webdriver_value(options=driver_options, **kwargs)
+            else:
+                self.current_webdriver = webdriver_value(**kwargs)
             self._webdriver_name = webdriver_name
             self._action_chain = ActionChains(self.current_webdriver)
             record_action_to_list("webdriver wrapper set_driver", param, None)
