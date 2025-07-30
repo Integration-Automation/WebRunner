@@ -1,7 +1,7 @@
 from je_web_runner import execute_action
 
 test_execute_list = [
-    ["WR_get_webdriver_manager", {"webdriver_name": "firefox"}],
+    ["WR_get_webdriver_manager", {"webdriver_name": "firefox", "options": ["--headless"]}],
     ["WR_add_package_to_executor", {"package": "time"}],
     ["WR_implicitly_wait", {"time_to_wait": 5}],
     ["WR_to_url", {"url": "https://www.google.com"}],
