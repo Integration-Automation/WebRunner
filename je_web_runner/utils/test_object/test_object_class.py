@@ -11,7 +11,7 @@ class TestObject(object):
     TestObject class, used to encapsulate locator information
     """
 
-    def __init__(self, object_type: str, test_object_name: str):
+    def __init__(self, test_object_name: str, object_type: str):
         # 測試物件的定位方式 (必須在 type_list 中)
         # Locator type of the test object (must be in type_list)
         self.test_object_type: str = object_type
@@ -22,7 +22,7 @@ class TestObject(object):
 
         # 驗證定位方式是否合法
         # Validate locator type
-        if self.test_object_type not in type_list:
+        if self.test_object_type not in type_list and self.test_object_type.upper() not in type_list:
             raise TypeError(f"Invalid locator type: {self.test_object_type}")
 
 

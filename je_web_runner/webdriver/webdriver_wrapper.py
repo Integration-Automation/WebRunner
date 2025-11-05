@@ -295,7 +295,7 @@ class WebDriverWrapper(object):
             )
             record_action_to_list("webdriver wrapper implicitly_wait", param, error)
 
-    def explict_wait(self, wait_time: int, method: typing.Callable, until_type: bool = True):
+    def explict_wait(self, wait_time: int, method: typing.Callable = None, until_type: bool = True):
         """
         Selenium 顯式等待
         Selenium explicit wait
@@ -311,10 +311,12 @@ class WebDriverWrapper(object):
         param = locals()
         try:
             record_action_to_list("webdriver wrapper explict_wait", param, None)
-            if until_type:
+            if until_type and method:
                 return WebDriverWait(self.current_webdriver, wait_time).until(method)
-            else:
+            elif until_type is False and method:
                 return WebDriverWait(self.current_webdriver, wait_time).until_not(method)
+            else:
+                return WebDriverWait(self.current_webdriver, wait_time)
         except Exception as error:
             web_runner_logger.error(
                 f"WebDriverWrapper explict_wait failed: {repr(error)}"

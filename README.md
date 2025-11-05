@@ -1,41 +1,22 @@
-## Webrunner
-[![Downloads](https://static.pepy.tech/badge/je-web-runner)](https://pepy.tech/project/je-web-runner)
+# Webrunner
+WebRunner is a cross‑platform web automation framework designed to simplify browser automation.
+It supports multiple browsers, parallel execution, automatic driver management, 
+and generates detailed reports. 
+Built on top of Selenium with additional abstractions, WebRunner helps developers write, run, 
+and manage automation scripts with ease.
 
-[![Codacy Badge](https://app.codacy.com/project/badge/Grade/cc97412a6f3e4c5592ce45dd7b9db946)](https://www.codacy.com/gh/JE-Chen/WebRunner/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=JE-Chen/WebRunner&amp;utm_campaign=Badge_Grade)
+## Key Features
 
-[![WebRunner Stable Python3.9](https://github.com/Intergration-Automation-Testing/WebRunner/actions/workflows/webrunner_stable_python3_9.yml/badge.svg)](https://github.com/Intergration-Automation-Testing/WebRunner/actions/workflows/webrunner_stable_python3_9.yml)
+- Multi‑browser support: Chrome, Edge, Safari
+- Report generation: JSON / HTML / XML
+- Automatic screenshots and window handling
+- Element interaction: locate, input, click, and more
+- Automatic WebDriver download
+- Cross‑platform: Windows, macOS, Ubuntu, Raspberry Pi
+- Remote automation and project template
 
-[![WebRunner Stable Python3.10](https://github.com/Intergration-Automation-Testing/WebRunner/actions/workflows/webrunner_stable_python3_10.yml/badge.svg)](https://github.com/Intergration-Automation-Testing/WebRunner/actions/workflows/webrunner_stable_python3_10.yml)
 
-[![WebRunner Stable Python3.11](https://github.com/Intergration-Automation-Testing/WebRunner/actions/workflows/webrunner_stable_python3_11.yml/badge.svg)](https://github.com/Intergration-Automation-Testing/WebRunner/actions/workflows/webrunner_stable_python3_11.yml)
-
-### Documentation
-
-[![Documentation Status](https://readthedocs.org/projects/webrunner/badge/?version=latest)](https://webrunner.readthedocs.io/en/latest/?badge=latest)
-
-[WebRunner Doc Click Here!](https://webrunner.readthedocs.io/en/latest/)
-
----
-> Project Kanban \
-> https://github.com/orgs/Integration-Automation/projects/2/views/1 \
-> * WEB Automation.
-> * Multi WEB Automation instance at same time.
-> * Generate JSON/HTML/XML report.
-> * Multi browser support like chrome, edge, safari.
-> * Auto webdriver download.
-> * Web screenshot.
-> * Web window automation.
-> * Web input automation.
-> * Web element locate.
-> * Execute any web script.
-> * Cookie support.
-> * WebRunner script.
-> * OS Independent.
-> * Remote automation support.
-> * Project & Template support.
----
-
-## install
+## Installation
 
 ```
 pip install je_web_runner
@@ -47,13 +28,37 @@ pip install je_web_runner
 python 3.9 or later
 ```
 
->* Test on
->>    * Windows 10 ~ 11
->>    * osx 10.5 ~ 11 big sur
->>    * ubuntu 20.0.4
->>    * raspberry pi 3B+
-
 | All test in test dir
 
-### Architecture Diagram
-![Architecture Diagram](architecture_diagram/WebRunner_ArchitectureDiagram.drawio.png)
+# Quick Start
+```python
+from je_web_runner import webdriver_wrapper_instance, TestObject
+
+# Create a WebRunner instance
+runner = webdriver_wrapper_instance.set_driver(webdriver_name="chrome")
+
+# Open a webpage
+runner.get("https://google.com")
+
+# Google search input element
+google_input = TestObject("q", "name")
+
+# Find element
+google_input_element = webdriver_wrapper_instance.find_element(google_input)
+
+# Print element property
+print(google_input_element)
+
+# Click input
+webdriver_wrapper_instance.left_click(google_input_element)
+
+# Send keys to element
+webdriver_wrapper_instance.send_keys_to_element(google_input_element, "HELLO")
+
+# Take a screenshot
+runner.save_screenshot("example.png")
+
+# Close the browser
+runner.quit()
+
+```
