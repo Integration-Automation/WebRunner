@@ -1,6 +1,7 @@
 import builtins
 import types
 from inspect import getmembers, isbuiltin
+from typing import Union
 
 from je_web_runner.manager.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
@@ -23,14 +24,18 @@ from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 class Executor(object):
 
     def __init__(self):
+        # 事件字典：將字串名稱對應到實際可執行的函式
+        # Event dictionary: map string keys to actual callable functions
         self.event_dict = {
             # webdriver manager
             "WR_get_webdriver_manager": web_runner.new_driver,
             "WR_change_index_of_webdriver": web_runner.change_webdriver,
             "WR_quit": web_runner.quit,
+
             # test object
             "WR_SaveTestObject": test_object_record.save_test_object,
             "WR_CleanTestObject": test_object_record.clean_record,
+
             # webdriver wrapper
             "WR_set_driver": webdriver_wrapper_instance.set_driver,
             "WR_set_webdriver_options_capability": webdriver_wrapper_instance.set_driver,
@@ -84,6 +89,7 @@ class Executor(object):
             "WR_get_screenshot_as_base64": webdriver_wrapper_instance.get_screenshot_as_base64,
             "WR_get_log": webdriver_wrapper_instance.get_log,
             "WR_single_quit": webdriver_wrapper_instance.quit,
+
             # web element
             "WR_element_submit": web_runner.webdriver_element.submit,
             "WR_element_clear": web_runner.webdriver_element.clear,
@@ -100,8 +106,10 @@ class Executor(object):
             "WR_element_change_web_element": web_runner.webdriver_element.change_web_element,
             "WR_element_check_current_web_element": web_runner.webdriver_element.check_current_web_element,
             "WR_element_get_select": web_runner.webdriver_element.get_select,
+
             # init test record
             "WR_set_record_enable": test_record_instance.set_record_enable,
+
             # generate report
             "WR_generate_html": generate_html,
             "WR_generate_html_report": generate_html_report,
@@ -109,46 +117,68 @@ class Executor(object):
             "WR_generate_json_report": generate_json_report,
             "WR_generate_xml": generate_xml,
             "WR_generate_xml_report": generate_xml_report,
+
             # execute
             "WR_execute_action": self.execute_action,
             "WR_execute_files": self.execute_files,
+
             # Add package
             "WR_add_package_to_executor": package_manager.add_package_to_executor,
             "WR_add_package_to_callback_executor": package_manager.add_package_to_callback_executor,
         }
-        # get all builtin function and add to event dict
+
+        # 將所有 Python 內建函式加入事件字典
+        # Add all Python built-in functions into event_dict
         for function in getmembers(builtins, isbuiltin):
             self.event_dict.update({str(function[0]): function[1]})
 
     def _execute_event(self, action: list):
         """
-        :param action: execute action
-        :return: what event return
+        執行事件字典中的函式
+        Execute a function from event_dict
+
+        :param action: 指令清單，例如 ["函式名稱", {參數}] 或 ["函式名稱"]
+                       Action list, e.g., ["function_name", {params}] or ["function_name"]
+        :return: 執行結果 / return value of the executed function
         """
         event = self.event_dict.get(action[0])
         if len(action) == 2:
             if isinstance(action[1], dict):
+                # 使用關鍵字參數呼叫
+                # Call with keyword arguments
                 return event(**action[1])
             else:
+                # 使用位置參數呼叫
+                # Call with positional arguments
                 return event(*action[1])
         elif len(action) == 1:
+            # 無參數呼叫
+            # Call without arguments
             return event()
         else:
+            # 格式錯誤，拋出例外
+            # Invalid format, raise exception
             raise WebRunnerExecuteException(executor_data_error + " " + str(action))
 
-    def execute_action(self, action_list: [list, dict]) -> dict:
+    def execute_action(self, action_list: Union[list, dict]) -> dict:
         """
-        use to execute action on list
-        :param action_list: like this structure
-        [
-            ["WR_get_webdriver_manager", {"webdriver_name": "firefox"}],
-            ["WR_to_url", {"url": "https://www.google.com"}],
-            ["WR_quit"]
-        ]
-        for loop and use execute_event function to execute
-        :return: recode string, response as list
+        執行一系列動作
+        Execute a list of actions
+
+        :param action_list: 動作清單，例如：
+           Action list, e.g.:
+           [
+               ["WR_get_webdriver_manager", {"webdriver_name": "firefox"}],
+               ["WR_to_url", {"url": "https://www.google.com"}],
+               ["WR_quit"]
+           ]
+        :return: 執行紀錄字典 {動作描述: 回傳值}
+                 Execution record dict {action: response}
         """
         web_runner_logger.info(f"execute_action, action_list: {action_list}")
+
+        # 如果傳入的是 dict，則嘗試取出 "webdriver_wrapper" 的動作清單
+        # If input is dict, extract "webdriver_wrapper" action list
         if type(action_list) is dict:
             action_list = action_list.get("webdriver_wrapper", None)
             if action_list is None:
@@ -156,7 +186,11 @@ class Executor(object):
                     f"execute_action, action_list: {action_list}, "
                     f"failed: {WebRunnerExecuteException(executor_list_error)}")
                 raise WebRunnerExecuteException(executor_list_error)
+
         execute_record_dict = dict()
+
+        # 檢查 action_list 是否為合法的 list
+        # Validate action_list
         try:
             if len(action_list) == 0 or isinstance(action_list, list) is False:
                 web_runner_logger.error(
@@ -167,6 +201,9 @@ class Executor(object):
             web_runner_logger.error(
                 f"execute_action, action_list: {action_list}, "
                 f"failed: {repr(error)}")
+
+        # 逐一執行動作
+        # Execute each action in the list
         for action in action_list:
             try:
                 event_response = self._execute_event(action)
@@ -178,31 +215,43 @@ class Executor(object):
                     f"action: {action}, failed: {repr(error)}")
                 execute_record = "execute: " + str(action)
                 execute_record_dict.update({execute_record: repr(error)})
+
+        # 輸出執行結果
+        # Print execution results
         for key, value in execute_record_dict.items():
             print(key)
             print(value)
+
         return execute_record_dict
 
     def execute_files(self, execute_files_list: list) -> list:
         """
-        :param execute_files_list: list include execute files path
-        :return: every execute detail as list
+        從檔案載入並執行動作
+        Execute actions from files
+
+        :param execute_files_list: 檔案路徑清單 / list of file paths
+        :return: 每個檔案的執行結果清單 / list of execution results
         """
         web_runner_logger.info(f"execute_files, execute_files_list: {execute_files_list}")
         execute_detail_list = list()
         for file in execute_files_list:
+            # 讀取 JSON 檔案並執行
+            # Read JSON file and execute
             execute_detail_list.append(self.execute_action(read_action_json(file)))
         return execute_detail_list
 
 
+# 建立全域 Executor 實例
+# Create global Executor instance
 executor = Executor()
 package_manager.executor = executor
 
-
 def add_command_to_executor(command_dict: dict):
     """
-    :param command_dict: command dict to add into executor command dict
-    :return:None
+    動態新增指令到 Executor
+    Dynamically add commands to Executor
+
+    :param command_dict: {指令名稱: 函式} / {command_name: function}
     """
     for command_name, command in command_dict.items():
         if isinstance(command, (types.MethodType, types.FunctionType)):
@@ -210,10 +259,16 @@ def add_command_to_executor(command_dict: dict):
         else:
             raise WebRunnerAddCommandException(add_command_exception_tag)
 
-
 def execute_action(action_list: list) -> dict:
+    """
+    全域方法：執行動作清單
+    Global method: execute action list
+    """
     return executor.execute_action(action_list)
 
-
 def execute_files(execute_files_list: list) -> list:
+    """
+    全域方法：執行檔案中的動作
+    Global method: execute actions from files
+    """
     return executor.execute_files(execute_files_list)

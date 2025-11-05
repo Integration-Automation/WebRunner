@@ -6,8 +6,12 @@ from je_web_runner.utils.exception.exceptions import WebRunnerHTMLException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
+# 使用 Lock 確保多執行緒寫檔安全
+# Use Lock to ensure thread-safe file writing
 _lock = Lock()
 
+# HTML 主體模板
+# Main HTML template
 _html_string = \
     r"""
 <!DOCTYPE html>
@@ -17,37 +21,31 @@ _html_string = \
     <title>AutoControl Report</title>
 
     <style>
-
-        body{{
+        body{
             font-size: 100%;
-        }}
-
-        h1{{
+        }
+        h1{
             font-size: 2em;
-        }}
-
-        .main_table {{
+        }
+        .main_table {
             margin: 0 auto;
             border-collapse: collapse;
             width: 75%;
             font-size: 1.5em;
-        }}
-
-        .event_table_head {{
+        }
+        .event_table_head {
             border: 3px solid #262626;
             background-color: aqua;
             font-family: "Times New Roman", sans-serif;
             text-align: center;
-        }}
-
-        .failure_table_head {{
+        }
+        .failure_table_head {
             border: 3px solid #262626;
             background-color: #f84c5f;
             font-family: "Times New Roman", sans-serif;
             text-align: center;
-        }}
-
-        .table_data_field_title {{
+        }
+        .table_data_field_title {
             border: 3px solid #262626;
             padding: 0;
             margin: 0;
@@ -55,9 +53,8 @@ _html_string = \
             font-family: "Times New Roman", sans-serif;
             text-align: center;
             width: 25%;
-        }}
-
-        .table_data_field_text {{
+        }
+        .table_data_field_text {
             border: 3px solid #262626;
             padding: 0;
             margin: 0;
@@ -65,12 +62,11 @@ _html_string = \
             font-family: "Times New Roman", sans-serif;
             text-align: left;
             width: 75%;
-        }}
-
-        .text {{
+        }
+        .text {
             text-align: center;
             font-family: "Times New Roman", sans-serif;
-        }}
+        }
     </style>
 </head>
 <body>
@@ -82,6 +78,8 @@ _html_string = \
 </html>
 """.strip()
 
+# 單一事件表格模板
+# Template for a single event table
 _event_table = \
     r"""
     <table class="main_table">
@@ -115,11 +113,13 @@ _event_table = \
 
 def make_html_table(event_str: str, record_data: dict, table_head: str) -> str:
     """
-    use to add record to html
-    :param event_str: what event trigger
-    :param record_data: what date need to recode
-    :param table_head: table head text
-    :return: whole current str
+    將單筆測試紀錄轉換成 HTML 表格並附加到 event_str
+    Convert a single test record into an HTML table and append to event_str
+
+    :param event_str: 已累積的 HTML 事件字串 / accumulated HTML event string
+    :param record_data: 測試紀錄資料 / test record data
+    :param table_head: 表格標題樣式 (成功或失敗) / table head style (success or failure)
+    :return: 更新後的 HTML 字串 / updated HTML string
     """
     event_str = "".join(
         [
@@ -138,15 +138,21 @@ def make_html_table(event_str: str, record_data: dict, table_head: str) -> str:
 
 def generate_html() -> str:
     """
-    :return: html_string
+    產生完整 HTML 報告字串
+    Generate the complete HTML report string
+
+    :return: HTML 字串 / HTML string
     """
     web_runner_logger.info("generate_html")
     if len(test_record_instance.test_record_list) == 0:
+        # 若沒有測試紀錄，拋出例外
+        # Raise exception if no test records
         raise WebRunnerHTMLException(html_generate_no_data_tag)
     else:
         event_str = ""
         for record_data in test_record_instance.test_record_list:
-            # because data on record_data all is str
+            # 根據是否有 exception 決定表格樣式
+            # Choose table style based on exception presence
             if record_data.get("program_exception") == "None":
                 event_str = make_html_table(event_str, record_data, "event_table_head")
             else:
@@ -157,17 +163,17 @@ def generate_html() -> str:
 
 def generate_html_report(html_name: str = "default_name"):
     """
-    this function will create and save html report on current folder
-    :param html_name: save html file name
+    產生並輸出 HTML 報告檔案
+    Generate and save the HTML report file
+
+    :param html_name: 輸出檔案名稱 (不含副檔名) / output file name (without extension)
     """
     web_runner_logger.info(f"generate_html_report, html_name: {html_name}")
     new_html_string = generate_html()
     try:
-        _lock.acquire()
+        _lock.acquire()  # 確保多執行緒安全 / ensure thread safety
         with open(html_name + ".html", "w+") as file_to_write:
-            file_to_write.write(
-                new_html_string
-            )
+            file_to_write.write(new_html_string)
     except Exception as error:
         print(repr(error), file=sys.stderr)
     finally:

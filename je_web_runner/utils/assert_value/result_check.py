@@ -8,9 +8,11 @@ from je_web_runner.utils.exception.exceptions import WebRunnerAssertException
 
 def _make_webdriver_check_dict(webdriver_to_check: WebDriver) -> dict:
     """
-    use to check webdriver current info
-    :param webdriver_to_check: what webdriver we want to check
-    :return: webdriver detail dict
+    建立 WebDriver 狀態字典
+    Create a dictionary of WebDriver details
+
+    :param webdriver_to_check: 要檢查的 WebDriver / WebDriver to check
+    :return: WebDriver 詳細資訊字典 / WebDriver detail dictionary
     """
     webdriver_detail_dict = dict()
     webdriver_detail_dict.update(
@@ -35,9 +37,11 @@ def _make_webdriver_check_dict(webdriver_to_check: WebDriver) -> dict:
 
 def _make_web_element_check_dict(web_element_to_check: WebElement) -> dict:
     """
-    use to check web element current info
-    :param web_element_to_check: what web element we want to check
-    :return: web element detail dict
+    建立 WebElement 狀態字典
+    Create a dictionary of WebElement details
+
+    :param web_element_to_check: 要檢查的 WebElement / WebElement to check
+    :return: WebElement 詳細資訊字典 / WebElement detail dictionary
     """
     web_element_detail_dict = dict()
     web_element_detail_dict.update(
@@ -56,11 +60,12 @@ def _make_web_element_check_dict(web_element_to_check: WebElement) -> dict:
 
 def check_value(element_name: str, element_value: typing.Any, result_check_dict: dict) -> None:
     """
-    use to check state
-    :param element_name: the name of element we want to check
-    :param element_value: what value element should be
-    :param result_check_dict: the dict include data name and value to check check_dict is valid or not
-    :return: None
+    驗證單一屬性值是否正確
+    Check if a single attribute value is correct
+
+    :param element_name: 屬性名稱 / attribute name
+    :param element_value: 預期值 / expected value
+    :param result_check_dict: 實際檢查結果字典 / dictionary of actual values
     """
     if result_check_dict.get(element_name) != element_value:
         raise WebRunnerAssertException(
@@ -72,9 +77,11 @@ def check_value(element_name: str, element_value: typing.Any, result_check_dict:
 
 def check_values(check_dict: dict, result_check_dict: dict) -> None:
     """
-    :param check_dict: dict include data name and value to check
-    :param result_check_dict: the dict include data name and value to check check_dict is valid or not
-    :return: None
+    驗證多個屬性值是否正確
+    Check if multiple attribute values are correct
+
+    :param check_dict: 預期值字典 / dictionary of expected values
+    :param result_check_dict: 實際檢查結果字典 / dictionary of actual values
     """
     for key, value in result_check_dict.items():
         if check_dict.get(key) != value:
@@ -87,10 +94,12 @@ def check_values(check_dict: dict, result_check_dict: dict) -> None:
 
 def check_webdriver_value(element_name: str, element_value: typing.Any, webdriver_to_check: WebDriver) -> None:
     """
-    :param element_name: the name of element we want to check
-    :param element_value: what value element should be
-    :param webdriver_to_check: the dict include data name and value to check result_dict is valid or not
-    :return: None
+    驗證 WebDriver 單一屬性值
+    Check a single WebDriver attribute value
+
+    :param element_name: 屬性名稱 / attribute name
+    :param element_value: 預期值 / expected value
+    :param webdriver_to_check: 要檢查的 WebDriver / WebDriver to check
     """
     check_dict = _make_webdriver_check_dict(webdriver_to_check)
     check_value(element_name, element_value, check_dict)
@@ -98,9 +107,11 @@ def check_webdriver_value(element_name: str, element_value: typing.Any, webdrive
 
 def check_webdriver_details(webdriver_to_check: WebDriver, result_check_dict: dict) -> None:
     """
-    :param webdriver_to_check: what webdriver we want to check
-    :param result_check_dict: the dict include data name and value to check result_dict is valid or not
-    :return: None
+    驗證 WebDriver 多個屬性值
+    Check multiple WebDriver attribute values
+
+    :param webdriver_to_check: 要檢查的 WebDriver / WebDriver to check
+    :param result_check_dict: 預期值字典 / dictionary of expected values
     """
     check_dict = _make_webdriver_check_dict(webdriver_to_check)
     check_values(check_dict, result_check_dict)
@@ -108,10 +119,12 @@ def check_webdriver_details(webdriver_to_check: WebDriver, result_check_dict: di
 
 def check_web_element_value(element_name: str, element_value: typing.Any, web_element_to_check: WebElement) -> None:
     """
-    :param element_name: the name of element we want to check
-    :param element_value: what value element should be
-    :param web_element_to_check: the dict include data name and value to check result_dict is valid or not
-    :return: None
+    驗證 WebElement 單一屬性值
+    Check a single WebElement attribute value
+
+    :param element_name: 屬性名稱 / attribute name
+    :param element_value: 預期值 / expected value
+    :param web_element_to_check: 要檢查的 WebElement / WebElement to check
     """
     check_dict = _make_web_element_check_dict(web_element_to_check)
     check_value(element_name, element_value, check_dict)
@@ -119,9 +132,11 @@ def check_web_element_value(element_name: str, element_value: typing.Any, web_el
 
 def check_web_element_details(web_element_to_check: WebElement, result_check_dict: dict) -> None:
     """
-    :param web_element_to_check: what web element we want to check
-    :param result_check_dict: the dict include data name and value to check result_dict is valid or not
-    :return: None
+    驗證 WebElement 多個屬性值
+    Check multiple WebElement attribute values
+
+    :param web_element_to_check: 要檢查的 WebElement / WebElement to check
+    :param result_check_dict: 預期值字典 / dictionary of expected values
     """
     check_dict = _make_web_element_check_dict(web_element_to_check)
     check_values(check_dict, result_check_dict)
