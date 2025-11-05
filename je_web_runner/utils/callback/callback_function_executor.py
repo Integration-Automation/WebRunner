@@ -1,33 +1,34 @@
 import typing
 from sys import stderr
 
-from je_web_runner.utils.executor.action_executor import execute_action, execute_files
-
-from je_web_runner.utils.generate_report.generate_html_report import generate_html, generate_html_report
-from je_web_runner.utils.generate_report.generate_xml_report import generate_xml, generate_xml_report
-from je_web_runner.utils.generate_report.generate_json_report import generate_json, generate_json_report
-from je_web_runner.utils.package_manager.package_manager_class import package_manager
-
-from je_web_runner.utils.test_record.test_record_class import test_record_instance
-
 from je_web_runner.manager.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tags import get_bad_trigger_function, get_bad_trigger_method
 from je_web_runner.utils.exception.exceptions import CallbackExecutorException
+from je_web_runner.utils.executor.action_executor import execute_action, execute_files
+from je_web_runner.utils.generate_report.generate_html_report import generate_html, generate_html_report
+from je_web_runner.utils.generate_report.generate_json_report import generate_json, generate_json_report
+from je_web_runner.utils.generate_report.generate_xml_report import generate_xml, generate_xml_report
+from je_web_runner.utils.package_manager.package_manager_class import package_manager
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
+from je_web_runner.utils.test_record.test_record_class import test_record_instance
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 
 class CallbackFunctionExecutor(object):
 
     def __init__(self):
+        # 事件字典：將字串名稱對應到實際可執行的函式
+        # Event dictionary: map string keys to actual callable functions
         self.event_dict: dict = {
             # webdriver manager
             "WR_get_webdriver_manager": web_runner.new_driver,
             "WR_change_index_of_webdriver": web_runner.change_webdriver,
             "WR_quit": web_runner.quit,
+
             # test object
             "WR_SaveTestObject": test_object_record.save_test_object,
             "WR_CleanTestObject": test_object_record.clean_record,
+
             # webdriver wrapper
             "WR_set_driver": webdriver_wrapper_instance.set_driver,
             "WR_set_webdriver_options_capability": webdriver_wrapper_instance.set_driver,
@@ -81,6 +82,7 @@ class CallbackFunctionExecutor(object):
             "WR_get_screenshot_as_base64": webdriver_wrapper_instance.get_screenshot_as_base64,
             "WR_get_log": webdriver_wrapper_instance.get_log,
             "WR_single_quit": webdriver_wrapper_instance.quit,
+
             # web element
             "WR_element_submit": web_runner.webdriver_element.submit,
             "WR_element_clear": web_runner.webdriver_element.clear,
@@ -97,8 +99,10 @@ class CallbackFunctionExecutor(object):
             "WR_element_change_web_element": web_runner.webdriver_element.change_web_element,
             "WR_element_check_current_web_element": web_runner.webdriver_element.check_current_web_element,
             "WR_element_get_select": web_runner.webdriver_element.get_select,
+
             # init test record
             "WR_set_record_enable": test_record_instance.set_record_enable,
+
             # generate report
             "WR_generate_html": generate_html,
             "WR_generate_html_report": generate_html_report,
@@ -106,9 +110,11 @@ class CallbackFunctionExecutor(object):
             "WR_generate_json_report": generate_json_report,
             "WR_generate_xml": generate_xml,
             "WR_generate_xml_report": generate_xml_report,
+
             # execute
             "WR_execute_action": execute_action,
             "WR_execute_files": execute_files,
+
             # Add package
             "WR_add_package_to_executor": package_manager.add_package_to_executor,
             "WR_add_package_to_callback_executor": package_manager.add_package_to_callback_executor,
@@ -118,22 +124,34 @@ class CallbackFunctionExecutor(object):
             self,
             trigger_function_name: str,
             callback_function: typing.Callable,
-            callback_function_param: [dict, None] = None,
+            callback_function_param: typing.Union[dict, None] = None,
             callback_param_method: str = "kwargs",
             **kwargs
     ):
         """
-        :param trigger_function_name: what function we want to trigger only accept function in event_dict
-        :param callback_function: what function we want to callback
-        :param callback_function_param: callback function's param only accept dict
-        :param callback_param_method: what type param will use on callback function only accept kwargs and args
-        :param kwargs: trigger_function's param
-        :return: trigger_function_name return value
+        執行指定的觸發函式，並在完成後執行回呼函式
+        Execute a trigger function, then execute a callback function
+
+        :param trigger_function_name: 要觸發的函式名稱 (必須存在於 event_dict)
+                                      The function name to trigger (must exist in event_dict)
+        :param callback_function: 要執行的回呼函式 / callback function to execute
+        :param callback_function_param: 回呼函式的參數 (dict 或 list)
+                                        Parameters for callback function (dict or list)
+        :param callback_param_method: 回呼函式參數傳遞方式 ["kwargs", "args"]
+                                      How to pass callback params ["kwargs", "args"]
+        :param kwargs: 傳遞給觸發函式的參數 / parameters for the trigger function
+        :return: 觸發函式的回傳值 / return value of the trigger function
         """
         try:
             if trigger_function_name not in self.event_dict.keys():
                 raise CallbackExecutorException(get_bad_trigger_function)
+
+            # 執行觸發函式
+            # Execute trigger function
             execute_return_value = self.event_dict.get(trigger_function_name)(**kwargs)
+
+            # 執行回呼函式
+            # Execute callback function
             if callback_function_param is not None:
                 if callback_param_method not in ["kwargs", "args"]:
                     raise CallbackExecutorException(get_bad_trigger_method)
@@ -143,9 +161,12 @@ class CallbackFunctionExecutor(object):
                     callback_function(*callback_function_param)
             else:
                 callback_function()
+
             return execute_return_value
         except Exception as error:
             print(repr(error), file=stderr)
 
 
+# 全域回呼執行器實例
+# Global callback executor instance
 callback_executor = CallbackFunctionExecutor()
