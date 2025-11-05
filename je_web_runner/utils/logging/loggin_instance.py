@@ -20,17 +20,17 @@ formatter = logging.Formatter('%(asctime)s | %(name)s | %(levelname)s | %(messag
 
 class WebRunnerLoggingHandler(RotatingFileHandler):
     def __init__(self, filename: str = "WEBRunner.log", mode="w",
-                 maxBytes: int = 1073741824, backupCount: int = 0):
+                 max_bytes: int = 1073741824, backup_count: int = 0):
         """
         自訂日誌處理器，繼承 RotatingFileHandler
         Custom logging handler, inherits from RotatingFileHandler
 
         :param filename: 日誌檔案名稱 / log file name
         :param mode: 檔案開啟模式 (預設覆寫) / file open mode (default overwrite)
-        :param maxBytes: 單一檔案最大大小 (預設 1GB) / max file size (default 1GB)
-        :param backupCount: 保留的備份檔案數量 / number of backup files to keep
+        :param max_bytes: 單一檔案最大大小 (預設 1GB) / max file size (default 1GB)
+        :param backup_count: 保留的備份檔案數量 / number of backup files to keep
         """
-        super().__init__(filename=filename, mode=mode, maxBytes=maxBytes, backupCount=backupCount)
+        super().__init__(filename=filename, mode=mode, maxBytes=max_bytes, backupCount=backup_count)
         self.formatter = formatter  # 設定日誌格式 / set log formatter
         self.setLevel(logging.DEBUG)  # 設定 handler 層級為 DEBUG / set handler level to DEBUG
 
