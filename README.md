@@ -32,33 +32,40 @@ python 3.9 or later
 
 # Quick Start
 ```python
-from je_web_runner import webdriver_wrapper_instance, TestObject
+from je_web_runner import TestObject
+from je_web_runner import get_webdriver_manager
+from je_web_runner import web_element_wrapper
+from je_web_runner import webdriver_wrapper_instance
 
-# Create a WebRunner instance
-runner = webdriver_wrapper_instance.set_driver(webdriver_name="chrome")
+# 取得 WebDriver 管理器 (這裡使用 Firefox)
+# Get webdriver manager (using Firefox here)
+driver_wrapper = get_webdriver_manager("firefox")
 
-# Open a webpage
-runner.get("https://google.com")
+# 前往 Google 首頁
+# Navigate to Google main page
+driver_wrapper.webdriver_wrapper.to_url("https://www.google.com")
 
-# Google search input element
+# 建立測試物件，定位方式為 "name"，名稱為 "q" (Google 搜尋框)
+# Create a test object, locate by "name", value "q" (Google search box)
 google_input = TestObject("q", "name")
 
-# Find element
-google_input_element = webdriver_wrapper_instance.find_element(google_input)
+# 設定隱式等待 2 秒
+# Set implicit wait to 2 seconds
+driver_wrapper.webdriver_wrapper.implicitly_wait(2)
 
-# Print element property
-print(google_input_element)
+# 尋找目前的網頁元素 (Google 搜尋框)
+# Find the current web element (Google search box)
+webdriver_wrapper_instance.find_element(google_input)
 
-# Click input
-webdriver_wrapper_instance.left_click(google_input_element)
+# 點擊目前的網頁元素
+# Click the current web element
+web_element_wrapper.click_element()
 
-# Send keys to element
-webdriver_wrapper_instance.send_keys_to_element(google_input_element, "HELLO")
+# 在目前的網頁元素中輸入文字 "abc_test"
+# Input text "abc_test" into the current web element
+web_element_wrapper.input_to_element("abc_test")
 
-# Take a screenshot
-runner.save_screenshot("example.png")
-
+# 關閉瀏覽器
 # Close the browser
-runner.quit()
-
+driver_wrapper.quit()
 ```
