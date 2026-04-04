@@ -1,95 +1,74 @@
 Element API
-----
+===========
+
+``je_web_runner.element.web_element_wrapper``
+
+Class: WebElementWrapper
+------------------------
+
+Wraps Selenium WebElement with convenience methods for interaction and validation.
+
+**Attributes:**
+
+- ``current_web_element`` (``WebElement | None``): currently active element
+- ``current_web_element_list`` (``List[WebElement] | None``): list of found elements
+
+**Methods:**
 
 .. code-block:: python
 
-    def submit(self) -> None:
-        """
-        current web element submit
-        :return: None
-        """
-
-    def clear(self) -> None:
-        """
-        current web element clear
-        :return: None
-        """
-
-    def get_property(self, name: str) -> str:
-        """
-        :param name: name of property
-        :return: property value as str
-        """
-
-    def get_dom_attribute(self, name: str) -> str:
-        """
-        :param name: name of dom
-        :return: dom attribute value as str
-        """
-
-    def get_attribute(self, name: str) -> str:
-        """
-        :param name: name of web element
-        :return:web element attribute value as str
-        """
-
-    def is_selected(self) -> bool:
-        """
-        check current web element is selected or not
-        :return: True or False
-        """
-
-    def is_enabled(self) -> bool:
-        """
-        check current web element is enable or not
-        :return: True or False
-        """
+    def click_element(self) -> None:
+        """Click the current WebElement."""
 
     def input_to_element(self, input_value: str) -> None:
-        """
-        input value to current web element
-        :param input_value: what value we want to input to current web element
-        :return: None
-        """
+        """Type text into the current WebElement via send_keys."""
 
-    def click_element(self) -> None:
-        """
-        click current web element
-        :return: None
-        """
+    def clear(self) -> None:
+        """Clear the content of the current WebElement."""
 
-    def is_displayed(self) -> bool:
-        """
-        check current web element is displayed or not
-        :return: True or False
-        """
+    def submit(self) -> None:
+        """Submit the current WebElement's form."""
 
-    def value_of_css_property(self, property_name: str) -> str:
-        """
-        :param property_name: name of property
-        :return: css property value as str
-        """
+    def get_attribute(self, name: str) -> str | None:
+        """Get an HTML attribute value."""
 
-    def screenshot(self, filename: str) -> bool:
-        """
-        :param filename: full file name not need .png extension
-        :return: Save True or not
-        """
+    def get_property(self, name: str) -> None | str | bool | WebElement | dict:
+        """Get a JavaScript property value."""
+
+    def get_dom_attribute(self, name: str) -> str | None:
+        """Get a DOM attribute value."""
+
+    def is_displayed(self) -> bool | None:
+        """Check if the element is visible."""
+
+    def is_enabled(self) -> bool | None:
+        """Check if the element is enabled."""
+
+    def is_selected(self) -> bool | None:
+        """Check if the element is selected (checkbox/radio)."""
+
+    def value_of_css_property(self, property_name: str) -> str | None:
+        """Get a CSS property value."""
+
+    def screenshot(self, filename: str) -> bool | None:
+        """Take a screenshot of the element. Saves as {filename}.png."""
 
     def change_web_element(self, element_index: int) -> None:
-        """
-        :param element_index: change to web element index
-        :return: web element list [element_index]
-        """
+        """Switch active element to one from current_web_element_list by index."""
 
     def check_current_web_element(self, check_dict: dict) -> None:
         """
-        :param check_dict: check web element dict {name: should be value}
-        :return: None
+        Validate the current WebElement's properties.
+        :param check_dict: {property_name: expected_value}
+        :raises WebRunnerAssertException: if validation fails
         """
 
-    def get_select(self) -> Select:
-        """
-        get Select(current web element)
-        :return: Select(current web element)
-        """
+    def get_select(self) -> Select | None:
+        """Get a Selenium Select wrapper for dropdown elements."""
+
+Global Instance
+---------------
+
+.. code-block:: python
+
+    web_element_wrapper = WebElementWrapper()

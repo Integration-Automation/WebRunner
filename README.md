@@ -8,7 +8,7 @@
   <a href="https://pypi.org/project/je-web-runner/"><img src="https://img.shields.io/pypi/v/je_web_runner" alt="PyPI Version"></a>
   <a href="https://pypi.org/project/je-web-runner/"><img src="https://img.shields.io/pypi/pyversions/je_web_runner" alt="Python Version"></a>
   <a href="https://github.com/Intergration-Automation-Testing/WebRunner/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Intergration-Automation-Testing/WebRunner" alt="License"></a>
-  <a href="https://webrunner.readthedocs.io/en/latest/"><img src="https://img.shields.io/badge/docs-readthedocs-blue" alt="Documentation"></a>
+  <a href="https://webrunner.readthedocs.io/en/latest/"><img src="https://readthedocs.org/projects/webrunner/badge/?version=latest" alt="Documentation Status"></a>
 </p>
 
 <p align="center">
@@ -701,4 +701,3 @@ WebRunner uses a rotating file handler for logging.
 
 This project is licensed under the [MIT License](LICENSE).
 
-Copyright (c) 2021~2023 JE-Chen

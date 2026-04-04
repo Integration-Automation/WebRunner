@@ -1,23 +1,80 @@
 Create Project
-----
+==============
 
-In WebRunner, you can create a project which will automatically generate sample files once the project is created.
-These sample files include a Python executor file and a keyword.json file.
+Overview
+--------
 
-To create a project, you can use the following method:
+WebRunner can generate a quick-start project structure with sample files,
+including example JSON keyword files and Python executor scripts.
+
+Usage
+-----
 
 .. code-block:: python
 
     from je_web_runner import create_project_dir
-    # create on current workdir
+
+    # Create on current working directory
     create_project_dir()
-    # create project on project_path
-    create_project_dir("project_path")
-    # create project on project_path and dir name is My First Project
-    create_project_dir("project_path", "My First Project")
 
-Or using CLI, this will generate a project at the project_path location.
+    # Create at a specific path
+    create_project_dir(project_path="./my_project")
 
-.. code-block:: console
+    # Create with a custom parent name
+    create_project_dir(project_path="./my_project", parent_name="MyTest")
 
-    python -m je_web_runner --create_project project_path
+CLI Method
+----------
+
+.. code-block:: bash
+
+    python -m je_web_runner --create_project ./my_project
+
+Generated Structure
+-------------------
+
+.. code-block:: text
+
+    my_project/WebRunner/
+    ├── keyword/
+    │   ├── keyword1.json          # Sample action file (success case)
+    │   ├── keyword2.json          # Sample action file (success case)
+    │   └── bad_keyword_1.json     # Sample action file (failure case)
+    └── executor/
+        ├── executor_one_file.py   # Execute a single JSON file
+        ├── executor_folder.py     # Execute all JSON files in a folder
+        └── executor_bad_file.py   # Execute failure case file
+
+Template Details
+----------------
+
+**keyword1.json / keyword2.json**: Sample action lists that demonstrate correct usage
+of WebRunner commands (launching a browser, navigating, quitting).
+
+**bad_keyword_1.json**: An intentionally broken action list to demonstrate error handling.
+
+**executor_one_file.py**: Reads and executes a single keyword JSON file using
+``execute_action(read_action_json(path))``.
+
+**executor_folder.py**: Uses ``execute_files(get_dir_files_as_list(path))`` to
+execute all ``.json`` files in the ``keyword/`` directory.
+
+**executor_bad_file.py**: Executes the bad keyword file to demonstrate
+how errors are captured and reported.
+
+Parameters
+----------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 25 50
+
+   * - Parameter
+     - Default
+     - Description
+   * - ``project_path``
+     - Current working directory
+     - Path where the project will be created
+   * - ``parent_name``
+     - ``"WebRunner"``
+     - Name of the top-level project directory

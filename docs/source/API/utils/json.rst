@@ -1,37 +1,45 @@
-Json File API
-----
+JSON Utilities API
+==================
+
+JSON File Operations
+--------------------
+
+``je_web_runner.utils.json.json_file.json_file``
 
 .. code-block:: python
 
     def read_action_json(json_file_path: str) -> list:
         """
-        read the action json
-        :param json_file_path json file's path to read
+        Read an action JSON file and return its contents.
+        Thread-safe (uses threading.Lock).
+
+        :param json_file_path: path to the JSON file
+        :return: list of actions parsed from the file
+        :raises WebRunnerJsonException: if reading or parsing fails
         """
 
-.. code-block:: python
+    def write_action_json(json_save_path: str, action_json: list) -> None:
+        """
+        Write an action list to a JSON file with indentation.
+        Thread-safe (uses threading.Lock).
 
-    def write_action_json(json_save_path: str, action_json: list):
-        """
-        write action json
-        :param json_save_path  json save path
-        :param action_json the json str include action to write
+        :param json_save_path: path to save the JSON file
+        :param action_json: list of actions to write
         """
 
-.. code-block:: python
+JSON Formatting
+---------------
 
-    def __process_json(json_string: str, **kwargs) -> str:
-        """
-        :param json_string: full json str (not json type)
-        :param kwargs: any another kwargs for dumps
-        :return: reformat str
-        """
+``je_web_runner.utils.json.json_format.json_process``
 
 .. code-block:: python
 
     def reformat_json(json_string: str, **kwargs) -> str:
         """
-        :param json_string: Valid json string
-        :param kwargs: __process_json params
-        :return: reformat json string
+        Reformat a JSON string with indentation (pretty-print).
+
+        :param json_string: valid JSON string to reformat
+        :param kwargs: additional kwargs passed to json.dumps
+        :return: reformatted JSON string
+        :raises WebRunnerJsonException: if the string is not valid JSON
         """

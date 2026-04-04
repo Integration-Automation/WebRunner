@@ -1,51 +1,83 @@
-回調函數
+回調執行器
+==========
+
+概述
 ----
 
-在 AutoControl 裡，Callback function 是由 Callback Executor 提供支援，
-以下是簡易的使用 Callback Executor 的範例，
+回調執行器允許您執行自動化指令，並在完成後觸發回調函式。
+它包裝了標準執行器的事件字典，提供事件驅動的執行模型。
+
+全域實例 ``callback_executor`` 從 ``je_web_runner`` 匯入。
+
+基本用法
+--------
 
 .. code-block:: python
 
     from je_web_runner import callback_executor
-    # trigger_function will first to execute, but return value need to wait everything done
-    # so this test will first print("test") then print(size_function_return_value)
+
+    def on_complete():
+        print("導航完成！")
+
     callback_executor.callback_function(
-        trigger_function_name="WR_get_webdriver_manager",
-        callback_function=print,
-        callback_param_method="args",
-        callback_function_param={"": "open driver"},
-        **{
-            "webdriver_name": "edge"
-        }
+        trigger_function_name="WR_to_url",
+        callback_function=on_complete,
+        url="https://example.com"
     )
 
-* ( 注意!，如果 callback_executor event_dict 裡面包含的 name: function 需與 executor 一樣，不一樣則是 Bug)
-* (當然跟 executor 一樣可以藉由添加外部 function 來擴充，請看下面例子)
-
-在這個範例裡，我們使用 callback_executor 執行定義在 AutoControl 的 size function，
-然後執行完 size function 後，會去執行傳遞給 callback_function 的 function，
-可以由 callback_param_method 參數來決定要使用的傳遞方法，
-如果是 "args" 請傳入 {"value1", "value2", ...} 這裡 ... 代表可以複數傳入，
-如果是 "kwargs" 請傳入 {"actually_param_name": value, ...} 這裡 ... 代表可以複數傳入，
-然後如果要使用回傳值的話，由於回傳值會在所有 function 執行完後才回傳，
-實際上 size -> print 順序沒錯，但此例會先看到 print 之後才是 print(size_function_return_value)，
-因為 size function 只有回傳值本身沒有 print 的動作。
-
-如果我們想要在 callback_executor 裡面添加 function，可以使用如下:
-這段程式碼會把所有 time module 的 builtin, function, method, class
-載入到 callback executor，然後要使用被載入的 function 需要使用 package_function 名稱，
-例如 time.sleep 會變成 time_sleep
-
-這段程式碼會把 time 所有的 function 加入 executor(直譯器裡)。
+使用 kwargs 的回調
+-------------------
 
 .. code-block:: python
 
-    from je_web_runner import package_manager
-    package_manager.add_package_to_callback_executor("time")
+    def on_element_found(result=None):
+        print(f"找到元素: {result}")
 
-如果你需要查看被更新的 event_dict 可以使用
+    callback_executor.callback_function(
+        trigger_function_name="WR_find_element",
+        callback_function=on_element_found,
+        callback_function_param={"result": "search_box"},
+        callback_param_method="kwargs",
+        element_name="search_box"
+    )
+
+使用 args 的回調
+-----------------
 
 .. code-block:: python
 
-    from je_web_runner import callback_executor
-    print(callback_executor.event_dict)
+    def on_done(msg):
+        print(f"完成: {msg}")
+
+    callback_executor.callback_function(
+        trigger_function_name="WR_quit",
+        callback_function=on_done,
+        callback_function_param=["所有瀏覽器已關閉"],
+        callback_param_method="args"
+    )
+
+參數
+----
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 20 55
+
+   * - 參數
+     - 型別
+     - 說明
+   * - ``trigger_function_name``
+     - ``str``
+     - 要觸發的函式名稱（必須存在於 ``event_dict``）
+   * - ``callback_function``
+     - ``Callable``
+     - 觸發後要執行的回調函式
+   * - ``callback_function_param``
+     - ``dict | list | None``
+     - 傳遞給回調的參數
+   * - ``callback_param_method``
+     - ``str``
+     - 回調參數傳遞方式：``"kwargs"`` 或 ``"args"``
+   * - ``**kwargs``
+     -
+     - 傳遞給觸發函式的參數

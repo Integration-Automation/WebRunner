@@ -1,19 +1,74 @@
-CLI
-----
+CLI Usage
+=========
 
-We can use the CLI mode to execute the keyword.
-json file or execute the folder containing the Keyword.json files.
+Overview
+--------
 
-The following example is to execute the specified path of the keyword JSON file.
+WebRunner can be executed directly from the command line using the ``je_web_runner`` module.
 
-.. code-block::
+Commands
+--------
 
-    python je_web_runner --execute_file "your_file_path"
+**Execute a single JSON action file:**
 
+.. code-block:: bash
 
+    python -m je_web_runner -e actions.json
+    python -m je_web_runner --execute_file actions.json
 
-The following example is to run all keyword JSON files in a specified folder:
+**Execute all JSON files in a directory:**
 
-.. code-block::
+.. code-block:: bash
 
-    python je_web_runner --execute_dir "your_dir_path"
+    python -m je_web_runner -d ./actions/
+    python -m je_web_runner --execute_dir ./actions/
+
+**Execute a JSON action string directly:**
+
+.. code-block:: bash
+
+    python -m je_web_runner --execute_str '[["WR_get_webdriver_manager", {"webdriver_name": "chrome"}], ["WR_quit"]]'
+
+Command Reference
+-----------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 15 60
+
+   * - Flag
+     - Short
+     - Description
+   * - ``--execute_file``
+     - ``-e``
+     - Execute a single JSON action file
+   * - ``--execute_dir``
+     - ``-d``
+     - Execute all JSON files in a directory
+   * - ``--execute_str``
+     -
+     - Execute a JSON action string directly
+
+JSON File Format
+----------------
+
+The JSON file should contain an array of action lists:
+
+.. code-block:: json
+
+    [
+        ["WR_get_webdriver_manager", {"webdriver_name": "chrome"}],
+        ["WR_to_url", {"url": "https://example.com"}],
+        ["WR_quit"]
+    ]
+
+.. note::
+
+   On Windows, the ``--execute_str`` option may require double JSON parsing
+   due to shell escaping. WebRunner handles this automatically.
+
+Error Handling
+--------------
+
+If no arguments are provided, WebRunner raises a ``WebRunnerExecuteException``.
+All errors are printed to stderr and the process exits with code 1.
