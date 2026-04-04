@@ -12,8 +12,7 @@ _lock = Lock()
 
 # HTML 主體模板
 # Main HTML template
-_html_string = \
-    r"""
+_html_string = """
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,31 +20,31 @@ _html_string = \
     <title>AutoControl Report</title>
 
     <style>
-        body{
+        body{{
             font-size: 100%;
-        }
-        h1{
+        }}
+        h1{{
             font-size: 2em;
-        }
-        .main_table {
+        }}
+        .main_table {{
             margin: 0 auto;
             border-collapse: collapse;
             width: 75%;
             font-size: 1.5em;
-        }
-        .event_table_head {
+        }}
+        .event_table_head {{
             border: 3px solid #262626;
             background-color: aqua;
             font-family: "Times New Roman", sans-serif;
             text-align: center;
-        }
-        .failure_table_head {
+        }}
+        .failure_table_head {{
             border: 3px solid #262626;
             background-color: #f84c5f;
             font-family: "Times New Roman", sans-serif;
             text-align: center;
-        }
-        .table_data_field_title {
+        }}
+        .table_data_field_title {{
             border: 3px solid #262626;
             padding: 0;
             margin: 0;
@@ -53,8 +52,8 @@ _html_string = \
             font-family: "Times New Roman", sans-serif;
             text-align: center;
             width: 25%;
-        }
-        .table_data_field_text {
+        }}
+        .table_data_field_text {{
             border: 3px solid #262626;
             padding: 0;
             margin: 0;
@@ -62,11 +61,11 @@ _html_string = \
             font-family: "Times New Roman", sans-serif;
             text-align: left;
             width: 75%;
-        }
-        .text {
+        }}
+        .text {{
             text-align: center;
             font-family: "Times New Roman", sans-serif;
-        }
+        }}
     </style>
 </head>
 <body>

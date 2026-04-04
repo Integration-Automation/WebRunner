@@ -35,7 +35,7 @@ jobs:
         pip install pytest
 
     - name: Run unit tests
-      run: pytest test/unit_test/test_*.py -v
+      run: python -m pytest test/unit_test/test_*.py -v
 
   integration-test:
     name: Integration Tests (Python ${{ matrix.python-version }})

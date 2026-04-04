@@ -100,4 +100,4 @@ def create_project_dir(project_path: str = None, parent_name: str = "WebRunner")
 
     # 建立範本檔案
     # Create template files
-    create_template(parent_name)
+    create_template(parent_name, project_path)

@@ -60,9 +60,10 @@ class TestExecutorMapping(unittest.TestCase):
         with self.assertRaises(WebRunnerExecuteException):
             self.executor._execute_event(["print", "arg1", "extra"])
 
-    def test_execute_action_empty_list_raises(self):
-        with self.assertRaises(WebRunnerExecuteException):
-            self.executor.execute_action([])
+    def test_execute_action_empty_list_returns_empty(self):
+        result = self.executor.execute_action([])
+        self.assertIsInstance(result, dict)
+        self.assertEqual(len(result), 0)
 
     def test_execute_action_with_dict_missing_key_raises(self):
         with self.assertRaises(WebRunnerExecuteException):
