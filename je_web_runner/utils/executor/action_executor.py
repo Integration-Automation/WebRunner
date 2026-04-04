@@ -38,7 +38,7 @@ class Executor(object):
 
             # webdriver wrapper
             "WR_set_driver": webdriver_wrapper_instance.set_driver,
-            "WR_set_webdriver_options_capability": webdriver_wrapper_instance.set_driver,
+            "WR_set_webdriver_options_capability": webdriver_wrapper_instance.set_webdriver_options_capability,
             "WR_find_element": webdriver_wrapper_instance.find_element_with_test_object_record,
             "WR_find_elements": webdriver_wrapper_instance.find_elements_with_test_object_record,
             "WR_implicitly_wait": webdriver_wrapper_instance.implicitly_wait,
@@ -142,6 +142,8 @@ class Executor(object):
         :return: 執行結果 / return value of the executed function
         """
         event = self.event_dict.get(action[0])
+        if event is None:
+            raise WebRunnerExecuteException(executor_data_error + " unknown command: " + str(action[0]))
         if len(action) == 2:
             if isinstance(action[1], dict):
                 # 使用關鍵字參數呼叫

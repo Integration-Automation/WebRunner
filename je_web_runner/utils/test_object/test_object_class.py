@@ -2,7 +2,7 @@ from selenium.webdriver.common.by import By
 
 # 可用的定位方式清單
 # List of available locator strategies
-type_list = dir(By)
+type_list = [attr for attr in dir(By) if not attr.startswith('_')]
 
 
 class TestObject(object):

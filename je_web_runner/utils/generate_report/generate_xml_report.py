@@ -5,6 +5,8 @@ from je_web_runner.utils.generate_report.generate_json_report import generate_js
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.xml.change_xml_structure.change_xml_structure import dict_to_elements_tree
 
+_lock = Lock()
+
 
 def generate_xml():
     """
@@ -53,26 +55,24 @@ def generate_xml_report(xml_file_name: str = "default_name"):
     success_xml = parseString(success_xml).toprettyxml()
     failure_xml = parseString(failure_xml).toprettyxml()
 
-    lock = Lock()
-
     # 輸出失敗報告
     # Write failure report
     try:
-        lock.acquire()
+        _lock.acquire()
         with open(xml_file_name + "_failure.xml", "w+") as file_to_write:
             file_to_write.write(failure_xml)
     except Exception as error:
         web_runner_logger.error(f"generate_xml_report, xml_file_name: {xml_file_name}, failed: {repr(error)}")
     finally:
-        lock.release()
+        _lock.release()
 
     # 輸出成功報告
     # Write success report
     try:
-        lock.acquire()
+        _lock.acquire()
         with open(xml_file_name + "_success.xml", "w+") as file_to_write:
             file_to_write.write(success_xml)
     except Exception as error:
         web_runner_logger.error(f"generate_xml_report, xml_file_name: {xml_file_name}, failed: {repr(error)}")
     finally:
-        lock.release()
+        _lock.release()

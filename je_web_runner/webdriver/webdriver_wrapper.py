@@ -190,9 +190,10 @@ class WebDriverWrapper(object):
             web_element_wrapper.current_web_element = self.current_webdriver.find_element(
                 test_object.test_object_type, test_object.test_object_name
             )
+            record_action_to_list("webdriver wrapper find_element", param, None)
             return web_element_wrapper.current_web_element
         except Exception as error:
-            web_runner_logger.info(
+            web_runner_logger.error(
                 f"WebDriverWrapper find_element, test_object: {test_object}, failed: {repr(error)}"
             )
             record_action_to_list("webdriver wrapper find_element", param, error)
@@ -238,6 +239,8 @@ class WebDriverWrapper(object):
             if self.current_webdriver is None:
                 raise WebRunnerWebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
             record = test_object_record.test_object_record_dict.get(element_name)
+            if record is None:
+                raise WebRunnerException(f"TestObject '{element_name}' not found in record")
             web_element_wrapper.current_web_element = self.current_webdriver.find_element(
                 record.test_object_type, record.test_object_name
             )
@@ -265,6 +268,8 @@ class WebDriverWrapper(object):
             if self.current_webdriver is None:
                 raise WebRunnerWebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
             record = test_object_record.test_object_record_dict.get(element_name)
+            if record is None:
+                raise WebRunnerException(f"TestObject '{element_name}' not found in record")
             web_element_wrapper.current_web_element_list = self.current_webdriver.find_elements(
                 record.test_object_type, record.test_object_name
             )

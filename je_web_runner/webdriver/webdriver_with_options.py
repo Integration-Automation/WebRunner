@@ -1,10 +1,6 @@
 from typing import Union, List, Set
 
 from selenium import webdriver
-from selenium.webdriver.chrome import options
-from selenium.webdriver.edge import options
-from selenium.webdriver.firefox import options
-from selenium.webdriver.ie import options
 from selenium.webdriver.ie.options import Options
 
 from je_web_runner.utils.exception.exception_tags import (

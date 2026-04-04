@@ -96,7 +96,7 @@ def create_project_dir(project_path: str = None, parent_name: str = "WebRunner")
     # 建立 keyword 與 executor 資料夾
     # Create keyword and executor directories
     create_dir(project_path + "/" + parent_name + "/keyword")
-    create_dir(project_path + "/" + parent_name + "executor")
+    create_dir(project_path + "/" + parent_name + "/executor")
 
     # 建立範本檔案
     # Create template files

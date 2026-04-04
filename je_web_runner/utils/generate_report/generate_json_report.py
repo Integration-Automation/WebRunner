@@ -6,6 +6,8 @@ from je_web_runner.utils.exception.exceptions import WebRunnerGenerateJsonReport
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
+_lock = Lock()
+
 
 def generate_json():
     """
@@ -20,7 +22,7 @@ def generate_json():
 
     # 如果沒有任何測試紀錄與錯誤紀錄，拋出例外
     # Raise exception if no test or error records exist
-    if len(test_record_instance.test_record_list) == 0 and len(test_record_instance.error_record_list) == 0:
+    if len(test_record_instance.test_record_list) == 0:
         raise WebRunnerGenerateJsonReportException(cant_generate_json_report)
     else:
         success_dict = dict()
@@ -77,8 +79,6 @@ def generate_json_report(json_file_name: str = "default_name"):
                            Output file name (without extension)
     """
     web_runner_logger.info(f"generate_json_report, json_file_name: {json_file_name}")
-    lock = Lock()
-
     # 取得成功與失敗紀錄
     # Get success and failure records
     success_dict, failure_dict = generate_json()
@@ -86,21 +86,21 @@ def generate_json_report(json_file_name: str = "default_name"):
     # 輸出成功紀錄
     # Write success records
     try:
-        lock.acquire()
+        _lock.acquire()
         with open(json_file_name + "_success.json", "w+") as file_to_write:
             json.dump(dict(success_dict), file_to_write, indent=4)
     except Exception as error:
         web_runner_logger.error(f"generate_json_report, json_file_name: {json_file_name}, failed: {repr(error)}")
     finally:
-        lock.release()
+        _lock.release()
 
     # 輸出失敗紀錄
     # Write failure records
     try:
-        lock.acquire()
+        _lock.acquire()
         with open(json_file_name + "_failure.json", "w+") as file_to_write:
             json.dump(dict(failure_dict), file_to_write, indent=4)
     except Exception as error:
         web_runner_logger.error(f"generate_json_report, json_file_name: {json_file_name}, failed: {repr(error)}")
     finally:
-        lock.release()
+        _lock.release()
