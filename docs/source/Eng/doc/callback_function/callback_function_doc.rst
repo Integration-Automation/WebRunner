@@ -1,57 +1,109 @@
-Callback Function
-----
+Callback Executor
+=================
 
-In AutoControl, callback functions are supported by the Callback Executor.
-Below is a simple example of using the Callback Executor:
+Overview
+--------
+
+The Callback Executor allows you to execute automation commands with callback functions
+triggered on completion. It wraps the standard executor's event dictionary and provides
+an event-driven execution model.
+
+The global instance ``callback_executor`` is imported from ``je_web_runner``.
+
+Basic Usage
+-----------
 
 .. code-block:: python
 
     from je_web_runner import callback_executor
-    # trigger_function will first to execute, but return value need to wait everything done
-    # so this test will first print("test") then print(size_function_return_value)
+
+    def on_complete():
+        print("Navigation complete!")
+
     callback_executor.callback_function(
-        trigger_function_name="WR_get_webdriver_manager",
-        callback_function=print,
-        callback_param_method="args",
-        callback_function_param={"": "open driver"},
-        **{
-            "webdriver_name": "edge"
-        }
+        trigger_function_name="WR_to_url",
+        callback_function=on_complete,
+        url="https://example.com"
     )
 
-* Note that if the "name: function" pair in the callback_executor event_dict is different from the executor, it is a bug.
-* Of course, like the executor, it can be expanded by adding external functions. Please see the example below.
+The trigger function (``WR_to_url``) executes first, then the callback (``on_complete``) runs.
 
-In this example, we use callback_executor to execute the "size" function defined in AutoControl.
-After executing the "size" function, the function passed to callback_function will be executed.
-The delivery method can be determined by the callback_param_method parameter.
-If it is "args", please pass in {"value1", "value2", ...}.
-Here, the ellipsis (...) represents multiple inputs.
- If it is "kwargs", please pass in {"actually_param_name": value, ...}.
-Here, the ellipsis (...) again represents multiple inputs.
- If you want to use the return value,
-since the return value will only be returned after all functions are executed,
-you will actually see the "print" statement
-before the "print(size_function_return_value)" statement in this example,
-even though the order of size -> print is correct.
-This is because the "size" function only returns the value itself without printing it.
+Callback with kwargs
+--------------------
 
-This code will load all built-in functions, methods, and classes of the time module into the callback executor.
-To use the loaded functions, we need to use the package_function name,
-for example, time.sleep will become time_sleep.
-
-If we want to add functions in the callback_executor, we can use the following code:
-
-This code will add all the functions of the time module to the executor (interpreter).
+Pass keyword arguments to the callback using ``callback_param_method="kwargs"``:
 
 .. code-block:: python
 
-    from je_web_runner import package_manager
+    def on_element_found(result=None):
+        print(f"Element found: {result}")
+
+    callback_executor.callback_function(
+        trigger_function_name="WR_find_element",
+        callback_function=on_element_found,
+        callback_function_param={"result": "search_box"},
+        callback_param_method="kwargs",
+        element_name="search_box"
+    )
+
+Callback with args
+------------------
+
+Pass positional arguments using ``callback_param_method="args"``:
+
+.. code-block:: python
+
+    def on_done(msg):
+        print(f"Done: {msg}")
+
+    callback_executor.callback_function(
+        trigger_function_name="WR_quit",
+        callback_function=on_done,
+        callback_function_param=["All browsers closed"],
+        callback_param_method="args"
+    )
+
+Parameters
+----------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 20 55
+
+   * - Parameter
+     - Type
+     - Description
+   * - ``trigger_function_name``
+     - ``str``
+     - Name of the function to trigger (must exist in ``event_dict``)
+   * - ``callback_function``
+     - ``Callable``
+     - The callback function to execute after the trigger
+   * - ``callback_function_param``
+     - ``dict | list | None``
+     - Parameters to pass to the callback
+   * - ``callback_param_method``
+     - ``str``
+     - How to pass callback params: ``"kwargs"`` or ``"args"``
+   * - ``**kwargs``
+     -
+     - Parameters passed to the trigger function
+
+Return Value
+------------
+
+The ``callback_function()`` method returns the return value of the **trigger function**
+(not the callback).
+
+Adding Packages
+---------------
+
+You can add external packages to the callback executor:
+
+.. code-block:: python
+
+    from je_web_runner.utils.package_manager.package_manager_class import package_manager
+
     package_manager.add_package_to_callback_executor("time")
 
-If you need to check the updated event_dict, you can use:
-
-.. code-block:: python
-
-    from je_web_runner import callback_executor
-    print(callback_executor.event_dict)
+    # Now "time_sleep" is available as a trigger function name

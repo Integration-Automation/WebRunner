@@ -1,101 +1,70 @@
 Package Manager API
-----
+===================
+
+``je_web_runner.utils.package_manager.package_manager_class``
+
+Class: PackageManager
+---------------------
+
+Dynamically imports Python packages and registers their functions/classes
+into the Executor or CallbackExecutor event dictionaries.
 
 .. code-block:: python
 
-    from importlib import import_module
-    from importlib.util import find_spec
-    from inspect import getmembers, isfunction, isbuiltin, isclass
-    from sys import stderr
+    class PackageManager:
 
+        installed_package_dict: dict
+            # Cache of imported packages {name: module}
 
-    class PackageManager(object):
+        executor: Executor
+            # Reference to the global Executor instance
 
-        def __init__(self):
-            self.installed_package_dict = {
-            }
-            self.executor = None
-            self.callback_executor = None
+        callback_executor: CallbackFunctionExecutor
+            # Reference to the global CallbackFunctionExecutor instance
 
         def check_package(self, package: str):
             """
-            :param package: package to check exists or not
-            :return: package if find else None
-            """
-            if self.installed_package_dict.get(package, None) is None:
-                found_spec = find_spec(package)
-                if found_spec is not None:
-                    try:
-                        installed_package = import_module(found_spec.name)
-                        self.installed_package_dict.update(
-                            {found_spec.name: installed_package})
-                    except ModuleNotFoundError as error:
-                        print(repr(error), file=stderr)
-            return self.installed_package_dict.get(package, None)
+            Check if a package exists and import it.
 
-        def add_package_to_executor(self, package):
+            :param package: package name to check
+            :return: imported module if found, None otherwise
             """
-            :param package: package's function will add to executor
-            """
-            self.add_package_to_target(
-                package=package,
-                target=self.executor
-            )
 
-        def add_package_to_callback_executor(self, package):
+        def add_package_to_executor(self, package: str) -> None:
             """
-            :param package: package's function will add to callback_executor
-            """
-            self.add_package_to_target(
-                package=package,
-                target=self.callback_executor
-            )
+            Add all functions and classes from a package to the Executor's event_dict.
+            Functions are registered as "{package}_{function_name}".
 
-        def get_member(self, package, predicate, target):
+            :param package: package name to import and register
             """
-            :param package: package we want to get member
-            :param predicate: predicate
-            :param target: which event_dict will be added
-            """
-            installed_package = self.check_package(package)
-            if installed_package is not None and target is not None:
-                for member in getmembers(installed_package, predicate):
-                    target.event_dict.update(
-                        {str(package) + "_" + str(member[0]): member[1]})
-            elif installed_package is None:
-                print(repr(ModuleNotFoundError(f"Can't find package {package}")),
-                      file=stderr)
-            else:
-                print(f"Executor error {self.executor}", file=stderr)
 
-        def add_package_to_target(self, package, target):
+        def add_package_to_callback_executor(self, package: str) -> None:
             """
-            :param package: package we want to get member
-            :param target: which event_dict will be added
+            Add all functions and classes from a package to the CallbackExecutor's event_dict.
+
+            :param package: package name to import and register
             """
-            try:
-                self.get_member(
-                    package=package,
-                    predicate=isfunction,
-                    target=target
-                )
-                self.get_member(
-                    package=package,
-                    predicate=isbuiltin,
-                    target=target
-                )
-                self.get_member(
-                    package=package,
-                    predicate=isfunction,
-                    target=target
-                )
-                self.get_member(
-                    package=package,
-                    predicate=isclass,
-                    target=target
-                )
-            except Exception as error:
-                print(repr(error), file=stderr)
 
+        def get_member(self, package: str, predicate, target) -> None:
+            """
+            Extract members matching a predicate and add them to a target executor.
 
-    package_manager: PackageManager = PackageManager()
+            :param package: package name
+            :param predicate: inspect predicate (isfunction, isbuiltin, isclass)
+            :param target: executor instance with event_dict attribute
+            """
+
+        def add_package_to_target(self, package: str, target) -> None:
+            """
+            Add functions, builtins, and classes from a package to a target executor.
+
+            :param package: package name
+            :param target: executor instance with event_dict attribute
+            """
+
+Global Instance
+---------------
+
+.. code-block:: python
+
+    package_manager = PackageManager()

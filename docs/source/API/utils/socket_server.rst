@@ -1,56 +1,54 @@
+Socket Server API
+=================
+
+``je_web_runner.utils.socket_server.web_runner_socket_server``
+
+Class: TCPServerHandler
+-----------------------
+
 .. code-block:: python
 
-    import json
-    import socketserver
-    import sys
-    import threading
-
-    from je_web_runner.utils.executor.action_executor import execute_action
-
-
     class TCPServerHandler(socketserver.BaseRequestHandler):
+        """
+        Request handler for the WebRunner TCP server.
 
-        def handle(self):
-            command_string = str(self.request.recv(8192).strip(), encoding="utf-8")
-            socket = self.request
-            print("command is: " + command_string, flush=True)
-            if command_string == "quit_server":
-                self.server.shutdown()
-                self.server.close_flag = True
-                print("Now quit server", flush=True)
-            else:
-                try:
-                    execute_str = json.loads(command_string)
-                    for execute_function, execute_return in execute_action(execute_str).items():
-                        socket.sendto(str(execute_return).encode("utf-8"), self.client_address)
-                        socket.sendto("\n".encode("utf-8"), self.client_address)
-                    socket.sendto("Return_Data_Over_JE".encode("utf-8"), self.client_address)
-                    socket.sendto("\n".encode("utf-8"), self.client_address)
-                except Exception as error:
-                    try:
-                        socket.sendto(str(error).encode("utf-8"), self.client_address)
-                        socket.sendto("\n".encode("utf-8"), self.client_address)
-                        socket.sendto("Return_Data_Over_JE".encode("utf-8"), self.client_address)
-                        socket.sendto("\n".encode("utf-8"), self.client_address)
-                    except Exception as error:
-                        print(repr(error))
+        Receives UTF-8 encoded JSON action strings (max 8192 bytes),
+        executes them via execute_action(), and returns results.
 
+        Special command: "quit_server" shuts down the server.
+
+        Response protocol:
+        - Each result is sent as UTF-8 followed by newline
+        - Final message: "Return_Data_Over_JE\n"
+        """
+
+Class: TCPServer
+----------------
+
+.. code-block:: python
 
     class TCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
+        """
+        Multi-threaded TCP server.
 
-        def __init__(self, server_address, RequestHandlerClass):
-            super().__init__(server_address, RequestHandlerClass)
-            self.close_flag: bool = False
+        Attributes:
+            close_flag (bool): Set to True when server receives shutdown command.
+        """
 
+Function: start_web_runner_socket_server
+----------------------------------------
 
-    def start_web_runner_socket_server(host: str = "localhost", port: int = 9941):
-        if len(sys.argv) == 2:
-            host = sys.argv[1]
-        elif len(sys.argv) == 3:
-            host = sys.argv[1]
-            port = int(sys.argv[2])
-        server = TCPServer((host, port), TCPServerHandler)
-        server_thread = threading.Thread(target=server.serve_forever)
-        server_thread.daemon = True
-        server_thread.start()
-        return server
+.. code-block:: python
+
+    def start_web_runner_socket_server(host: str = "localhost", port: int = 9941) -> TCPServer:
+        """
+        Start the WebRunner TCP Socket Server in a background daemon thread.
+
+        Host and port can be overridden via sys.argv:
+        - 1 arg: host
+        - 2 args: host, port
+
+        :param host: server host (default: "localhost")
+        :param port: server port (default: 9941)
+        :return: TCPServer instance (already serving)
+        """

@@ -12,11 +12,11 @@ WebRunner API Documentation
     utils/generate_report.rst
     utils/json.rst
     utils/package_manager.rst
+    utils/project.rst
     utils/socket_server.rst
     utils/test_object.rst
-    utils/test_reocrd.rst
+    utils/test_record.rst
     utils/xml.rst
-    utils/scheduler.rst
     wrapper/element.rst
     wrapper/manager.rst
     wrapper/utils.rst
