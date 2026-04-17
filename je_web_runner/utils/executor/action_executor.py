@@ -3,6 +3,17 @@ import types
 from inspect import getmembers, isbuiltin
 from typing import Union
 
+# 禁止暴露於 JSON 動作執行器的內建函式，避免任意程式碼執行
+# Builtins that must never be callable from user-supplied JSON actions,
+# per CLAUDE.md: "Action executor must only call registered commands;
+# never use eval()/exec() on user input."
+_UNSAFE_BUILTINS = frozenset({
+    "eval", "exec", "compile", "__import__", "__build_class__",
+    "open", "input", "breakpoint",
+    "globals", "locals", "vars",
+    "getattr", "setattr", "delattr",
+})
+
 from je_web_runner.manager.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
 from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
@@ -127,10 +138,13 @@ class Executor(object):
             "WR_add_package_to_callback_executor": package_manager.add_package_to_callback_executor,
         }
 
-        # 將所有 Python 內建函式加入事件字典
-        # Add all Python built-in functions into event_dict
-        for function in getmembers(builtins, isbuiltin):
-            self.event_dict.update({str(function[0]): function[1]})
+        # 將安全的 Python 內建函式加入事件字典，過濾可執行任意程式碼者
+        # Register safe Python builtins only; skip those that enable arbitrary
+        # code execution or unrestricted I/O.
+        for name, function in getmembers(builtins, isbuiltin):
+            if name in _UNSAFE_BUILTINS:
+                continue
+            self.event_dict[name] = function
 
     def _execute_event(self, action: list):
         """
