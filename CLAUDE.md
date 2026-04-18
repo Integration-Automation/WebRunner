@@ -95,6 +95,81 @@ je_web_runner/
 - Type hints on all public API functions
 - Logging at WARNING+ level via the rotating file handler (`WEBRunner.log`)
 
+### Static Analysis Compliance (SonarQube & Codacy)
+
+All code MUST pass SonarQube and Codacy static analysis without introducing new issues. Follow these rules proactively:
+
+#### Complexity & Maintainability
+
+- **Cognitive complexity ≤ 15** per function (SonarQube `python:S3776`); extract helpers when nesting grows
+- **Cyclomatic complexity ≤ 10** per function; split branchy logic into smaller units
+- **Function length ≤ 75 lines**; **file length ≤ 750 lines**; **parameters ≤ 7** per function (`python:S107`)
+- **Max nesting depth = 4** (`python:S134`); use early returns / guard clauses to flatten
+- **No duplicated code blocks ≥ 3 lines** (`common-py:DuplicatedBlocks`); extract shared logic
+- **No dead stores** — never assign a value that is immediately overwritten or unused (`python:S1854`)
+
+#### Naming & Style (PEP 8 enforced)
+
+- Modules / functions / variables: `snake_case`; classes: `PascalCase`; constants: `UPPER_SNAKE_CASE` (`python:S116`, `python:S117`)
+- No single-letter names except loop indices `i`, `j`, `k` and comprehension vars
+- Line length ≤ 120 chars; 4-space indentation; no tabs
+- No wildcard imports (`from x import *`) — `python:S2208`
+- One statement per line; no semicolons
+
+#### Bug Prevention
+
+- **Never use mutable default arguments** (`def f(x=[])`) — use `None` and initialize inside (`python:S5797`)
+- **Never use bare `except:`** — catch specific exceptions (`python:S5754`); never `except Exception` without re-raise/log
+- **Never silently swallow exceptions** — `pass` inside `except` is forbidden unless justified by a `# noqa` comment (`python:S2486`)
+- **Always close resources** — use `with` for files, sockets, drivers (`python:S5042`)
+- **No `==` comparison with `None`, `True`, `False`** — use `is` / `is not` (`python:S5727`)
+- **No identical expressions on both sides** of `==`, `!=`, `and`, `or` (`python:S1764`)
+- **Self-assignment forbidden** (`x = x`) — `python:S1656`
+- **No unreachable code after `return` / `raise` / `break` / `continue`** (`python:S1763`)
+
+#### Security (SonarQube hotspots / Codacy bandit)
+
+- **Never use `eval`, `exec`, `compile`, `__import__`** on untrusted input (`python:S1523`)
+- **Never use `pickle`, `marshal`, `shelve`** to deserialize untrusted data (`python:S5135`)
+- **Never use `subprocess` with `shell=True`** on user input (`python:S4721`)
+- **Never use `assert` for security checks** — assertions are stripped with `-O` (`python:S5915`)
+- **Never hard-code credentials, tokens, IPs, or URLs with secrets** (`python:S2068`, `python:S1313`)
+- **No insecure hash algorithms** (MD5, SHA-1) for security purposes — use SHA-256+ (`python:S4790`)
+- **No insecure TLS/SSL** — never disable certificate verification (`verify=False`) — `python:S4830`
+- **No predictable random** for security tokens — use `secrets`, not `random` (`python:S2245`)
+- **XML parsing must disable entity expansion** to prevent XXE — use `defusedxml` (`python:S2755`)
+
+#### Documentation & Typing
+
+- Public modules, classes, and functions require docstrings (Codacy `pylint:missing-docstring`)
+- Type hints on every public function signature; prefer `from __future__ import annotations` for forward refs
+- No `# TODO` / `# FIXME` without an associated issue link (`python:S1135`)
+
+#### Testing Quality
+
+- Test functions must contain at least one assertion (`python:S2699`)
+- Never use `assert True` / `assert 1 == 1` as placeholders (`python:S2187`)
+- Disabled tests (`@pytest.mark.skip` without reason) are flagged — always provide `reason="..."`
+
+### Pre-Commit Verification
+
+Before committing, run the following checks locally and ensure they pass cleanly:
+
+```bash
+# Lint with project tools (add as needed)
+python -m pylint je_web_runner/
+python -m flake8 je_web_runner/ --max-line-length=120 --max-complexity=10
+python -m bandit -r je_web_runner/ -ll
+
+# Type check
+python -m mypy je_web_runner/
+
+# Tests
+python -m pytest test/
+```
+
+If SonarQube or Codacy is wired into CI, fix any new issues in the same PR — do not defer them with suppressions unless a justified `# noqa: <rule>` comment explains why.
+
 ## Git & Commit Conventions
 
 - Branch model: `main` (stable) / `dev` (development)
