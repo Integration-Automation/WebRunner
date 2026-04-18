@@ -1,3 +1,4 @@
+import html
 import sys
 from threading import Lock
 
@@ -120,15 +121,18 @@ def make_html_table(event_str: str, record_data: dict, table_head: str) -> str:
     :param table_head: 表格標題樣式 (成功或失敗) / table head style (success or failure)
     :return: 更新後的 HTML 字串 / updated HTML string
     """
+    # 所有動態欄位皆需 HTML 逸出，避免測試資料中的標籤/腳本被注入報告
+    # Escape all dynamic fields so tags/scripts embedded in recorded test
+    # data cannot execute when the report is opened (CLAUDE.md XSS rule).
     event_str = "".join(
         [
             event_str,
             _event_table.format(
-                table_head_class=table_head,
-                function_name=str(record_data.get("function_name")),
-                param=str(record_data.get("local_param")),
-                time=str(record_data.get("time")),
-                exception=str(record_data.get("program_exception")),
+                table_head_class=html.escape(table_head, quote=True),
+                function_name=html.escape(str(record_data.get("function_name")), quote=True),
+                param=html.escape(str(record_data.get("local_param")), quote=True),
+                time=html.escape(str(record_data.get("time")), quote=True),
+                exception=html.escape(str(record_data.get("program_exception")), quote=True),
             )
         ]
     )
