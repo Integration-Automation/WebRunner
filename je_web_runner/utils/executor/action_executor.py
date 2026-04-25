@@ -88,6 +88,7 @@ from je_web_runner.utils.linter import action_linter as _linter
 from je_web_runner.utils.linter import migration as _migration
 from je_web_runner.utils.schema import action_schema as _schema
 from je_web_runner.utils.docs import command_reference as _docs
+from je_web_runner.utils.database import db_validate as _db
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -391,6 +392,13 @@ class Executor(object):
 
             # OpenTelemetry tracing
             "WR_set_action_span_factory": self.set_action_span_factory,
+
+            # database validation
+            "WR_db_query": _db.db_query,
+            "WR_db_assert_count": _db.db_assert_count,
+            "WR_db_assert_value": _db.db_assert_value,
+            "WR_db_assert_exists": _db.db_assert_exists,
+            "WR_db_assert_empty": _db.db_assert_empty,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
