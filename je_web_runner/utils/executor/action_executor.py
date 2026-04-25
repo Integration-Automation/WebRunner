@@ -33,15 +33,8 @@ from je_web_runner.utils.package_manager.package_manager_class import package_ma
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as _visual_capture_baseline
 from je_web_runner.utils.visual_regression.visual_diff import compare_with_baseline as _visual_compare
-from je_web_runner.webdriver.playwright_wrapper import (
-    pw_click as _pw_click,
-    pw_fill as _pw_fill,
-    pw_find_element as _pw_find_element,
-    pw_launch as _pw_launch,
-    pw_quit as _pw_quit,
-    pw_screenshot as _pw_screenshot,
-    pw_to_url as _pw_to_url,
-)
+from je_web_runner.webdriver import playwright_wrapper as _pw
+from je_web_runner.webdriver.playwright_element_wrapper import playwright_element_wrapper as _pw_element
 from je_web_runner.utils.recorder.browser_recorder import pull_events as _recorder_pull_events
 from je_web_runner.utils.recorder.browser_recorder import save_recording as _recorder_save_recording
 from je_web_runner.utils.recorder.browser_recorder import start_recording as _recorder_start
@@ -169,14 +162,87 @@ class Executor(object):
                 webdriver_wrapper_instance, output_path, raw_events_path
             ),
 
-            # playwright backend (opt-in; runs alongside selenium)
-            "WR_pw_launch": _pw_launch,
-            "WR_pw_to_url": _pw_to_url,
-            "WR_pw_click": _pw_click,
-            "WR_pw_fill": _pw_fill,
-            "WR_pw_screenshot": _pw_screenshot,
-            "WR_pw_quit": _pw_quit,
-            "WR_pw_find_element": _pw_find_element,
+            # playwright backend — page-level operations
+            "WR_pw_launch": _pw.pw_launch,
+            "WR_pw_quit": _pw.pw_quit,
+            "WR_pw_to_url": _pw.pw_to_url,
+            "WR_pw_forward": _pw.pw_forward,
+            "WR_pw_back": _pw.pw_back,
+            "WR_pw_refresh": _pw.pw_refresh,
+            "WR_pw_url": _pw.pw_url,
+            "WR_pw_title": _pw.pw_title,
+            "WR_pw_content": _pw.pw_content,
+            "WR_pw_set_default_timeout": _pw.pw_set_default_timeout,
+            "WR_pw_set_default_navigation_timeout": _pw.pw_set_default_navigation_timeout,
+            # pages / tabs
+            "WR_pw_new_page": _pw.pw_new_page,
+            "WR_pw_switch_to_page": _pw.pw_switch_to_page,
+            "WR_pw_close_page": _pw.pw_close_page,
+            "WR_pw_page_count": _pw.pw_page_count,
+            # finding
+            "WR_pw_find_element": _pw.pw_find_element,
+            "WR_pw_find_elements": _pw.pw_find_elements,
+            "WR_pw_find_element_with_test_object_record": _pw.pw_find_element_with_test_object_record,
+            "WR_pw_find_elements_with_test_object_record": _pw.pw_find_elements_with_test_object_record,
+            "WR_pw_save_test_object_to_selector": _pw.pw_save_test_object_to_selector,
+            # direct page-level shortcuts
+            "WR_pw_click": _pw.pw_click,
+            "WR_pw_dblclick": _pw.pw_dblclick,
+            "WR_pw_hover": _pw.pw_hover,
+            "WR_pw_fill": _pw.pw_fill,
+            "WR_pw_type_text": _pw.pw_type_text,
+            "WR_pw_press": _pw.pw_press,
+            "WR_pw_check": _pw.pw_check,
+            "WR_pw_uncheck": _pw.pw_uncheck,
+            "WR_pw_select_option": _pw.pw_select_option,
+            "WR_pw_drag_and_drop": _pw.pw_drag_and_drop,
+            # script
+            "WR_pw_evaluate": _pw.pw_evaluate,
+            # cookies
+            "WR_pw_get_cookies": _pw.pw_get_cookies,
+            "WR_pw_add_cookies": _pw.pw_add_cookies,
+            "WR_pw_clear_cookies": _pw.pw_clear_cookies,
+            # screenshots
+            "WR_pw_screenshot": _pw.pw_screenshot,
+            "WR_pw_screenshot_bytes": _pw.pw_screenshot_bytes,
+            # waits
+            "WR_pw_wait_for_selector": _pw.pw_wait_for_selector,
+            "WR_pw_wait_for_load_state": _pw.pw_wait_for_load_state,
+            "WR_pw_wait_for_timeout": _pw.pw_wait_for_timeout,
+            "WR_pw_wait_for_url": _pw.pw_wait_for_url,
+            # viewport
+            "WR_pw_set_viewport_size": _pw.pw_set_viewport_size,
+            "WR_pw_viewport_size": _pw.pw_viewport_size,
+            # mouse / keyboard
+            "WR_pw_mouse_click": _pw.pw_mouse_click,
+            "WR_pw_mouse_move": _pw.pw_mouse_move,
+            "WR_pw_mouse_down": _pw.pw_mouse_down,
+            "WR_pw_mouse_up": _pw.pw_mouse_up,
+            "WR_pw_keyboard_press": _pw.pw_keyboard_press,
+            "WR_pw_keyboard_type": _pw.pw_keyboard_type,
+            "WR_pw_keyboard_down": _pw.pw_keyboard_down,
+            "WR_pw_keyboard_up": _pw.pw_keyboard_up,
+            # element-level (operates on captured current element)
+            "WR_pw_element_click": _pw_element.click,
+            "WR_pw_element_dblclick": _pw_element.dblclick,
+            "WR_pw_element_hover": _pw_element.hover,
+            "WR_pw_element_fill": _pw_element.fill,
+            "WR_pw_element_type_text": _pw_element.type_text,
+            "WR_pw_element_press": _pw_element.press,
+            "WR_pw_element_clear": _pw_element.clear,
+            "WR_pw_element_check": _pw_element.check,
+            "WR_pw_element_uncheck": _pw_element.uncheck,
+            "WR_pw_element_select_option": _pw_element.select_option,
+            "WR_pw_element_get_attribute": _pw_element.get_attribute,
+            "WR_pw_element_get_property": _pw_element.get_property,
+            "WR_pw_element_inner_text": _pw_element.inner_text,
+            "WR_pw_element_inner_html": _pw_element.inner_html,
+            "WR_pw_element_is_visible": _pw_element.is_visible,
+            "WR_pw_element_is_enabled": _pw_element.is_enabled,
+            "WR_pw_element_is_checked": _pw_element.is_checked,
+            "WR_pw_element_scroll_into_view": _pw_element.scroll_into_view,
+            "WR_pw_element_screenshot": _pw_element.screenshot,
+            "WR_pw_element_change": _pw_element.change_element,
 
             # Add package
             "WR_add_package_to_executor": package_manager.add_package_to_executor,

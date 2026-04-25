@@ -31,10 +31,65 @@ from je_web_runner.utils.callback.callback_function_executor import callback_exe
 from je_web_runner.utils.project.create_project_structure import create_project_dir
 from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as visual_capture_baseline
 from je_web_runner.utils.visual_regression.visual_diff import compare_with_baseline as visual_compare_with_baseline
-from je_web_runner.webdriver.playwright_wrapper import playwright_wrapper_instance
-from je_web_runner.webdriver.playwright_wrapper import pw_click, pw_fill, pw_find_element
-from je_web_runner.webdriver.playwright_wrapper import pw_launch, pw_quit
-from je_web_runner.webdriver.playwright_wrapper import pw_screenshot, pw_to_url
+from je_web_runner.webdriver.playwright_wrapper import (
+    PlaywrightBackendError,
+    PlaywrightWrapper,
+    playwright_wrapper_instance,
+    pw_add_cookies,
+    pw_back,
+    pw_check,
+    pw_clear_cookies,
+    pw_click,
+    pw_close_page,
+    pw_content,
+    pw_dblclick,
+    pw_drag_and_drop,
+    pw_evaluate,
+    pw_fill,
+    pw_find_element,
+    pw_find_element_with_test_object_record,
+    pw_find_elements,
+    pw_find_elements_with_test_object_record,
+    pw_forward,
+    pw_get_cookies,
+    pw_hover,
+    pw_keyboard_down,
+    pw_keyboard_press,
+    pw_keyboard_type,
+    pw_keyboard_up,
+    pw_launch,
+    pw_mouse_click,
+    pw_mouse_down,
+    pw_mouse_move,
+    pw_mouse_up,
+    pw_new_page,
+    pw_page_count,
+    pw_press,
+    pw_quit,
+    pw_refresh,
+    pw_save_test_object_to_selector,
+    pw_screenshot,
+    pw_screenshot_bytes,
+    pw_select_option,
+    pw_set_default_navigation_timeout,
+    pw_set_default_timeout,
+    pw_set_viewport_size,
+    pw_switch_to_page,
+    pw_title,
+    pw_to_url,
+    pw_type_text,
+    pw_uncheck,
+    pw_url,
+    pw_viewport_size,
+    pw_wait_for_load_state,
+    pw_wait_for_selector,
+    pw_wait_for_timeout,
+    pw_wait_for_url,
+)
+from je_web_runner.webdriver.playwright_element_wrapper import (
+    PlaywrightElementWrapper,
+    playwright_element_wrapper,
+)
 from je_web_runner.utils.recorder.browser_recorder import events_to_actions as recorder_events_to_actions
 from je_web_runner.utils.recorder.browser_recorder import pull_events as recorder_pull_events
 from je_web_runner.utils.recorder.browser_recorder import save_recording as recorder_save_recording
@@ -56,7 +111,25 @@ __all__ = [
     "visual_capture_baseline", "visual_compare_with_baseline",
     "recorder_start", "recorder_stop", "recorder_pull_events",
     "recorder_events_to_actions", "recorder_save_recording",
-    "playwright_wrapper_instance",
-    "pw_launch", "pw_to_url", "pw_click", "pw_fill",
-    "pw_screenshot", "pw_quit", "pw_find_element"
+    "PlaywrightBackendError", "PlaywrightWrapper", "playwright_wrapper_instance",
+    "PlaywrightElementWrapper", "playwright_element_wrapper",
+    "pw_launch", "pw_quit",
+    "pw_to_url", "pw_forward", "pw_back", "pw_refresh",
+    "pw_url", "pw_title", "pw_content",
+    "pw_set_default_timeout", "pw_set_default_navigation_timeout",
+    "pw_new_page", "pw_switch_to_page", "pw_close_page", "pw_page_count",
+    "pw_find_element", "pw_find_elements",
+    "pw_find_element_with_test_object_record", "pw_find_elements_with_test_object_record",
+    "pw_save_test_object_to_selector",
+    "pw_click", "pw_dblclick", "pw_hover",
+    "pw_fill", "pw_type_text", "pw_press",
+    "pw_check", "pw_uncheck", "pw_select_option", "pw_drag_and_drop",
+    "pw_evaluate",
+    "pw_get_cookies", "pw_add_cookies", "pw_clear_cookies",
+    "pw_screenshot", "pw_screenshot_bytes",
+    "pw_wait_for_selector", "pw_wait_for_load_state",
+    "pw_wait_for_timeout", "pw_wait_for_url",
+    "pw_set_viewport_size", "pw_viewport_size",
+    "pw_mouse_click", "pw_mouse_move", "pw_mouse_down", "pw_mouse_up",
+    "pw_keyboard_press", "pw_keyboard_type", "pw_keyboard_down", "pw_keyboard_up"
 ]
