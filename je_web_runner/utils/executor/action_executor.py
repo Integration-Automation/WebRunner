@@ -89,6 +89,7 @@ from je_web_runner.utils.linter import migration as _migration
 from je_web_runner.utils.schema import action_schema as _schema
 from je_web_runner.utils.docs import command_reference as _docs
 from je_web_runner.utils.database import db_validate as _db
+from je_web_runner.utils.scheduler import cron_runner as _scheduler
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -399,6 +400,14 @@ class Executor(object):
             "WR_db_assert_value": _db.db_assert_value,
             "WR_db_assert_exists": _db.db_assert_exists,
             "WR_db_assert_empty": _db.db_assert_empty,
+
+            # scheduler
+            "WR_schedule": _scheduler.schedule,
+            "WR_run_scheduler_for": _scheduler.run_scheduler_for,
+            "WR_run_scheduler_forever": _scheduler.run_scheduler_forever,
+            "WR_stop_scheduler": _scheduler.stop_scheduler,
+            "WR_scheduler_counts": _scheduler.scheduler_counts,
+            "WR_reset_scheduler": _scheduler.reset_scheduler,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
