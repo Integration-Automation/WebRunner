@@ -4,7 +4,7 @@ import types
 from datetime import datetime
 from inspect import getmembers, isbuiltin
 from pathlib import Path
-from typing import Optional, Union
+from typing import Any, Callable, Optional, Union
 
 # 禁止暴露於 JSON 動作執行器的內建函式，避免任意程式碼執行
 # Builtins that must never be callable from user-supplied JSON actions,
@@ -172,6 +172,10 @@ class Executor(object):
         # Default True for back-compat; flip to False when action JSON comes
         # from an untrusted source.
         self.allow_arbitrary_script: bool = True
+        # Optional context-manager factory invoked once per action so an
+        # observability stack (OpenTelemetry, custom logging, …) can wrap
+        # each call without the executor depending on the SDK directly.
+        self._action_span_factory: Optional[Callable[[str], Any]] = None
         # 事件字典：將字串名稱對應到實際可執行的函式
         # Event dictionary: map string keys to actual callable functions
         self.event_dict = {
@@ -384,6 +388,9 @@ class Executor(object):
             "WR_build_command_reference": _docs.build_command_reference,
             "WR_export_command_reference": _docs.export_command_reference,
             "WR_list_commands": _docs.list_commands,
+
+            # OpenTelemetry tracing
+            "WR_set_action_span_factory": self.set_action_span_factory,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
@@ -668,8 +675,22 @@ class Executor(object):
         """
         self.retry_policy = {"retries": max(int(retries), 0), "backoff": max(float(backoff), 0.0)}
 
+    def set_action_span_factory(self, factory: Optional[Callable[[str], Any]]) -> None:
+        """
+        登錄一個 context-manager factory，每個 action 會被它包起來
+        Register an optional ``ContextManager`` factory invoked once per
+        action; pass ``None`` to disable.
+        """
+        self._action_span_factory = factory
+
     def _execute_with_retry(self, action):
         """Run ``_execute_event`` honouring the global retry policy."""
+        if self._action_span_factory is not None and isinstance(action, list) and action:
+            with self._action_span_factory(str(action[0])):
+                return self._do_with_retry(action)
+        return self._do_with_retry(action)
+
+    def _do_with_retry(self, action):
         retries = int(self.retry_policy.get("retries", 0))
         backoff = float(self.retry_policy.get("backoff", 0.0))
         for attempt in range(retries + 1):
