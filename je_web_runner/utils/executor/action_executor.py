@@ -39,6 +39,7 @@ from je_web_runner.utils.accessibility.axe_audit import (
     summarise_violations as _axe_summarise,
 )
 from je_web_runner.utils.observability import event_capture as _event_capture
+from je_web_runner.utils.secrets_scanner import scanner as _secrets
 from je_web_runner.utils.service_worker import sw_control as _sw
 from je_web_runner.utils.storage import browser_storage as _storage
 from je_web_runner.utils.cdp.cdp_commands import (
@@ -310,6 +311,11 @@ class Executor(object):
             "WR_pw_assert_no_console_errors": _event_capture.assert_no_console_errors,
             "WR_pw_assert_no_5xx": _event_capture.assert_no_5xx,
             "WR_pw_assert_no_4xx_or_5xx": _event_capture.assert_no_4xx_or_5xx,
+
+            # secrets scanner
+            "WR_scan_secrets": _secrets.scan_action,
+            "WR_scan_secrets_file": _secrets.scan_action_file,
+            "WR_assert_no_secrets": _secrets.assert_no_secrets,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
