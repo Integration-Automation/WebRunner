@@ -86,6 +86,7 @@ from je_web_runner.utils.dom_traversal import shadow_iframe as _dom
 from je_web_runner.utils.file_transfer import file_helpers as _ft
 from je_web_runner.utils.linter import action_linter as _linter
 from je_web_runner.utils.linter import migration as _migration
+from je_web_runner.utils.schema import action_schema as _schema
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -373,6 +374,10 @@ class Executor(object):
             "WR_migrate_action": _migration.migrate_action,
             "WR_migrate_action_file": _migration.migrate_action_file,
             "WR_migrate_directory": _migration.migrate_directory,
+
+            # JSON Schema export
+            "WR_build_action_schema": _schema.build_action_schema,
+            "WR_export_action_schema": _schema.export_schema,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
