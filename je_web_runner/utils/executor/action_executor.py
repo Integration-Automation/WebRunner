@@ -1,4 +1,5 @@
 import builtins
+import time
 import types
 from datetime import datetime
 from inspect import getmembers, isbuiltin
@@ -76,6 +77,10 @@ class Executor(object):
         # 失敗時自動截圖目錄；None 代表停用
         # Output directory for auto-captured failure screenshots; None disables it.
         self.failure_screenshot_dir: Optional[str] = None
+        # 全域重試策略 (預設關閉)
+        # Global retry policy. retries == 0 disables retry; backoff is in
+        # seconds and is multiplied by the (1-based) attempt number.
+        self.retry_policy = {"retries": 0, "backoff": 0.0}
         # 事件字典：將字串名稱對應到實際可執行的函式
         # Event dictionary: map string keys to actual callable functions
         self.event_dict = {
@@ -196,6 +201,9 @@ class Executor(object):
             # failure auto-screenshot
             "WR_set_failure_screenshot_dir": self.set_failure_screenshot_dir,
 
+            # retry policy
+            "WR_set_retry_policy": self.set_retry_policy,
+
             # visual regression
             "WR_visual_capture_baseline": _visual_capture_baseline,
             "WR_visual_compare": _visual_compare,
@@ -305,6 +313,33 @@ class Executor(object):
                 continue
             self.event_dict[name] = function
 
+    def set_retry_policy(self, retries: int = 0, backoff: float = 0.0) -> None:
+        """
+        設定全域重試策略
+        Configure the global retry policy. ``retries`` is the number of extra
+        attempts after the first; ``backoff`` is base seconds between attempts
+        (multiplied by the attempt index, so 0.5 → 0.5s, 1.0s, 1.5s …).
+        """
+        self.retry_policy = {"retries": max(int(retries), 0), "backoff": max(float(backoff), 0.0)}
+
+    def _execute_with_retry(self, action):
+        """Run ``_execute_event`` honouring the global retry policy."""
+        retries = int(self.retry_policy.get("retries", 0))
+        backoff = float(self.retry_policy.get("backoff", 0.0))
+        for attempt in range(retries + 1):
+            try:
+                return self._execute_event(action)
+            except Exception as error:  # noqa: BLE001 — retry layer must catch all
+                if attempt >= retries:
+                    raise
+                if backoff > 0:
+                    time.sleep(backoff * (attempt + 1))
+                web_runner_logger.warning(
+                    f"action {action!r} failed on attempt {attempt + 1}, retrying: {error!r}"
+                )
+        # Unreachable: ``range(retries + 1)`` always has at least one iteration.
+        raise WebRunnerExecuteException("retry loop exited without resolution")
+
     def set_failure_screenshot_dir(self, path: Optional[str]) -> None:
         """
         設定 (或停用) 動作失敗時的自動截圖目錄
@@ -408,7 +443,7 @@ class Executor(object):
         # Execute each action in the list
         for action in action_list:
             try:
-                event_response = self._execute_event(action)
+                event_response = self._execute_with_retry(action)
                 execute_record = "execute: " + str(action)
                 execute_record_dict.update({execute_record: event_response})
             except Exception as error:
