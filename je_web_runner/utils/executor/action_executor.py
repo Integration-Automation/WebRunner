@@ -33,6 +33,10 @@ from je_web_runner.utils.package_manager.package_manager_class import package_ma
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as _visual_capture_baseline
 from je_web_runner.utils.visual_regression.visual_diff import compare_with_baseline as _visual_compare
+from je_web_runner.utils.recorder.browser_recorder import pull_events as _recorder_pull_events
+from je_web_runner.utils.recorder.browser_recorder import save_recording as _recorder_save_recording
+from je_web_runner.utils.recorder.browser_recorder import start_recording as _recorder_start
+from je_web_runner.utils.recorder.browser_recorder import stop_recording as _recorder_stop
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
@@ -147,6 +151,14 @@ class Executor(object):
             # visual regression
             "WR_visual_capture_baseline": _visual_capture_baseline,
             "WR_visual_compare": _visual_compare,
+
+            # browser recorder (auto-binds to webdriver_wrapper_instance)
+            "WR_recorder_start": lambda: _recorder_start(webdriver_wrapper_instance),
+            "WR_recorder_stop": lambda: _recorder_stop(webdriver_wrapper_instance),
+            "WR_recorder_pull_events": lambda: _recorder_pull_events(webdriver_wrapper_instance),
+            "WR_recorder_save": lambda output_path, raw_events_path=None: _recorder_save_recording(
+                webdriver_wrapper_instance, output_path, raw_events_path
+            ),
 
             # Add package
             "WR_add_package_to_executor": package_manager.add_package_to_executor,

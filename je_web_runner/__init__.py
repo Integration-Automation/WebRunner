@@ -31,6 +31,11 @@ from je_web_runner.utils.callback.callback_function_executor import callback_exe
 from je_web_runner.utils.project.create_project_structure import create_project_dir
 from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as visual_capture_baseline
 from je_web_runner.utils.visual_regression.visual_diff import compare_with_baseline as visual_compare_with_baseline
+from je_web_runner.utils.recorder.browser_recorder import events_to_actions as recorder_events_to_actions
+from je_web_runner.utils.recorder.browser_recorder import pull_events as recorder_pull_events
+from je_web_runner.utils.recorder.browser_recorder import save_recording as recorder_save_recording
+from je_web_runner.utils.recorder.browser_recorder import start_recording as recorder_start
+from je_web_runner.utils.recorder.browser_recorder import stop_recording as recorder_stop
 __all__ = [
     "web_element_wrapper", "set_webdriver_options_argument",
     "webdriver_wrapper_instance", "get_webdriver_manager",
@@ -44,5 +49,7 @@ __all__ = [
     "TestObject", "create_test_object", "get_test_object_type_list",
     "test_record_instance", "Keys", "callback_executor", "create_project_dir",
     "validate_action_json", "validate_action_file", "validate_action_files",
-    "visual_capture_baseline", "visual_compare_with_baseline"
+    "visual_capture_baseline", "visual_compare_with_baseline",
+    "recorder_start", "recorder_stop", "recorder_pull_events",
+    "recorder_events_to_actions", "recorder_save_recording"
 ]
