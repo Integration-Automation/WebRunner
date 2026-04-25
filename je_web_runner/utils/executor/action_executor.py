@@ -93,6 +93,7 @@ from je_web_runner.utils.database import db_validate as _db
 from je_web_runner.utils.scheduler import cron_runner as _scheduler
 from je_web_runner.utils.multi_user import matrix as _matrix
 from je_web_runner.utils.replay_studio import replay_studio as _replay
+from je_web_runner.utils.auth import oauth as _oauth
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -423,6 +424,14 @@ class Executor(object):
             # replay studio (HTML timeline)
             "WR_build_replay_html": _replay.build_replay_html,
             "WR_export_replay_studio": _replay.export_replay_studio,
+
+            # OAuth2 / OIDC
+            "WR_oauth_client_credentials": _oauth.client_credentials_token,
+            "WR_oauth_password_grant": _oauth.password_grant_token,
+            "WR_oauth_refresh_token": _oauth.refresh_token_grant,
+            "WR_oauth_get_cached": _oauth.get_cached_token,
+            "WR_oauth_clear_cache": _oauth.clear_token_cache,
+            "WR_oauth_bearer_header": _oauth.bearer_header,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
