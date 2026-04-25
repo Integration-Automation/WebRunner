@@ -31,6 +31,8 @@ from je_web_runner.utils.json.json_validator import validate_action_file, valida
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.package_manager.package_manager_class import package_manager
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
+from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as _visual_capture_baseline
+from je_web_runner.utils.visual_regression.visual_diff import compare_with_baseline as _visual_compare
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
@@ -141,6 +143,10 @@ class Executor(object):
             # validate
             "WR_validate_action_json": validate_action_json,
             "WR_validate_action_file": validate_action_file,
+
+            # visual regression
+            "WR_visual_capture_baseline": _visual_capture_baseline,
+            "WR_visual_compare": _visual_compare,
 
             # Add package
             "WR_add_package_to_executor": package_manager.add_package_to_executor,

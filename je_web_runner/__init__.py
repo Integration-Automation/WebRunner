@@ -29,6 +29,8 @@ from je_web_runner.utils.test_object.test_object_class import get_test_object_ty
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 from je_web_runner.utils.callback.callback_function_executor import callback_executor
 from je_web_runner.utils.project.create_project_structure import create_project_dir
+from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as visual_capture_baseline
+from je_web_runner.utils.visual_regression.visual_diff import compare_with_baseline as visual_compare_with_baseline
 __all__ = [
     "web_element_wrapper", "set_webdriver_options_argument",
     "webdriver_wrapper_instance", "get_webdriver_manager",
@@ -41,5 +43,6 @@ __all__ = [
     "start_web_runner_socket_server", "get_dir_files_as_list",
     "TestObject", "create_test_object", "get_test_object_type_list",
     "test_record_instance", "Keys", "callback_executor", "create_project_dir",
-    "validate_action_json", "validate_action_file", "validate_action_files"
+    "validate_action_json", "validate_action_file", "validate_action_files",
+    "visual_capture_baseline", "visual_compare_with_baseline"
 ]
