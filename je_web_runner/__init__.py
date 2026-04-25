@@ -17,6 +17,8 @@ from je_web_runner.utils.generate_report.generate_json_report import generate_js
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml_report
+from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml
+from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml_report
 from je_web_runner.utils.socket_server.web_runner_socket_server import start_web_runner_socket_server
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_class import create_test_object
@@ -32,6 +34,7 @@ __all__ = [
     "generate_html", "generate_html_report",
     "generate_json", "generate_json_report", "read_action_json",
     "generate_xml", "generate_xml_report",
+    "generate_junit_xml", "generate_junit_xml_report",
     "start_web_runner_socket_server", "get_dir_files_as_list",
     "TestObject", "create_test_object", "get_test_object_type_list",
     "test_record_instance", "Keys", "callback_executor", "create_project_dir"

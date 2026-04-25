@@ -24,6 +24,8 @@ from je_web_runner.utils.generate_report.generate_json_report import generate_js
 from je_web_runner.utils.generate_report.generate_json_report import generate_json_report
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml_report
+from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml
+from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.package_manager.package_manager_class import package_manager
@@ -128,6 +130,8 @@ class Executor(object):
             "WR_generate_json_report": generate_json_report,
             "WR_generate_xml": generate_xml,
             "WR_generate_xml_report": generate_xml_report,
+            "WR_generate_junit_xml": generate_junit_xml,
+            "WR_generate_junit_xml_report": generate_junit_xml_report,
 
             # execute
             "WR_execute_action": self.execute_action,
