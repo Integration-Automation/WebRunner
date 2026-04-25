@@ -38,6 +38,7 @@ from je_web_runner.utils.accessibility.axe_audit import (
     selenium_run_audit as _axe_run_selenium,
     summarise_violations as _axe_summarise,
 )
+from je_web_runner.utils.storage import browser_storage as _storage
 from je_web_runner.utils.cdp.cdp_commands import (
     playwright_cdp as _cdp_playwright,
     reset_playwright_cdp_sessions as _cdp_reset,
@@ -268,6 +269,27 @@ class Executor(object):
             "WR_cdp": _cdp_selenium,
             "WR_pw_cdp": _cdp_playwright,
             "WR_pw_cdp_reset_sessions": _cdp_reset,
+
+            # storage (Selenium)
+            "WR_local_storage_set": _storage.selenium_local_storage_set,
+            "WR_local_storage_get": _storage.selenium_local_storage_get,
+            "WR_local_storage_remove": _storage.selenium_local_storage_remove,
+            "WR_local_storage_clear": _storage.selenium_local_storage_clear,
+            "WR_local_storage_all": _storage.selenium_local_storage_all,
+            "WR_session_storage_set": _storage.selenium_session_storage_set,
+            "WR_session_storage_get": _storage.selenium_session_storage_get,
+            "WR_session_storage_clear": _storage.selenium_session_storage_clear,
+            "WR_indexed_db_drop": _storage.selenium_indexed_db_drop,
+            # storage (Playwright)
+            "WR_pw_local_storage_set": _storage.playwright_local_storage_set,
+            "WR_pw_local_storage_get": _storage.playwright_local_storage_get,
+            "WR_pw_local_storage_remove": _storage.playwright_local_storage_remove,
+            "WR_pw_local_storage_clear": _storage.playwright_local_storage_clear,
+            "WR_pw_local_storage_all": _storage.playwright_local_storage_all,
+            "WR_pw_session_storage_set": _storage.playwright_session_storage_set,
+            "WR_pw_session_storage_get": _storage.playwright_session_storage_get,
+            "WR_pw_session_storage_clear": _storage.playwright_session_storage_clear,
+            "WR_pw_indexed_db_drop": _storage.playwright_indexed_db_drop,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
