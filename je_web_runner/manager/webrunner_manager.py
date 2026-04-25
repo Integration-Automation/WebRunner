@@ -16,7 +16,7 @@ class WebdriverManager(object):
     def __init__(self, **kwargs):
         # 當前 WebDriver 實例清單
         # List of current WebDriver instances
-        self._current_webdriver_list = list()
+        self._current_webdriver_list = []
 
         # WebDriver 包裝器
         # WebDriver wrapper
@@ -80,7 +80,7 @@ class WebdriverManager(object):
         關閉當前 WebDriver
         Close the current WebDriver
         """
-        web_runner_logger.info(f"WebdriverManager close_current_webdriver")
+        web_runner_logger.info("WebdriverManager close_current_webdriver")
         try:
             self._current_webdriver_list.remove(self.current_webdriver)
             self.current_webdriver.close()
@@ -96,7 +96,7 @@ class WebdriverManager(object):
 
         :param webdriver_index: WebDriver 清單中的索引 / index in WebDriver list
         """
-        web_runner_logger.info(f"WebdriverManager close_choose_webdriver")
+        web_runner_logger.info("WebdriverManager close_choose_webdriver")
         param = locals()
         try:
             self.current_webdriver = self._current_webdriver_list[webdriver_index]
@@ -112,7 +112,7 @@ class WebdriverManager(object):
         關閉並退出所有 WebDriver
         Close and quit all WebDriver instances
         """
-        web_runner_logger.info(f"WebdriverManager quit")
+        web_runner_logger.info("WebdriverManager quit")
         try:
             if self._current_webdriver_list is None:
                 raise WebRunnerWebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
@@ -126,7 +126,7 @@ class WebdriverManager(object):
             for webdriver in self._current_webdriver_list:
                 webdriver.quit()
 
-            self._current_webdriver_list = list()
+            self._current_webdriver_list = []
             record_action_to_list("web runner manager quit", None, None)
         except Exception as error:
             web_runner_logger.error(f"WebdriverManager quit, failed: {repr(error)}")

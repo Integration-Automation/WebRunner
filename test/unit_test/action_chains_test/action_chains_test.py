@@ -1,4 +1,4 @@
-from je_web_runner import webdriver_wrapper_instance, TestObject, Keys
+from je_web_runner import webdriver_wrapper_instance, TestObject
 
 webdriver_wrapper_instance.set_driver("firefox")
 webdriver_wrapper_instance.to_url("https://google.com")

@@ -203,7 +203,7 @@ class Executor(object):
                     f"failed: {WebRunnerExecuteException(executor_list_error)}")
                 raise WebRunnerExecuteException(executor_list_error)
 
-        execute_record_dict = dict()
+        execute_record_dict = {}
 
         # 檢查 action_list 是否為合法的 list
         # Validate action_list
@@ -249,7 +249,7 @@ class Executor(object):
         :return: 每個檔案的執行結果清單 / list of execution results
         """
         web_runner_logger.info(f"execute_files, execute_files_list: {execute_files_list}")
-        execute_detail_list = list()
+        execute_detail_list = []
         for file in execute_files_list:
             # 讀取 JSON 檔案並執行
             # Read JSON file and execute

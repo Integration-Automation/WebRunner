@@ -14,7 +14,7 @@ def _make_webdriver_check_dict(webdriver_to_check: WebDriver) -> dict:
     :param webdriver_to_check: 要檢查的 WebDriver / WebDriver to check
     :return: WebDriver 詳細資訊字典 / WebDriver detail dictionary
     """
-    webdriver_detail_dict = dict()
+    webdriver_detail_dict = {}
     webdriver_detail_dict.update(
         {
             "mobile": webdriver_to_check.mobile,
@@ -43,7 +43,7 @@ def _make_web_element_check_dict(web_element_to_check: WebElement) -> dict:
     :param web_element_to_check: 要檢查的 WebElement / WebElement to check
     :return: WebElement 詳細資訊字典 / WebElement detail dictionary
     """
-    web_element_detail_dict = dict()
+    web_element_detail_dict = {}
     web_element_detail_dict.update(
         {
             "tag_name": web_element_to_check.tag_name,

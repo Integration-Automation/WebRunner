@@ -30,7 +30,7 @@ class TestPackageManager(unittest.TestCase):
 
         self.pm.executor = MockExecutor()
         self.pm.add_package_to_executor("json")
-        self.assertTrue(len(self.pm.executor.event_dict) > 0)
+        self.assertGreater(len(self.pm.executor.event_dict), 0)
 
     def test_add_package_to_callback_executor_with_mock(self):
         class MockExecutor:
@@ -39,7 +39,7 @@ class TestPackageManager(unittest.TestCase):
 
         self.pm.callback_executor = MockExecutor()
         self.pm.add_package_to_callback_executor("os")
-        self.assertTrue(len(self.pm.callback_executor.event_dict) > 0)
+        self.assertGreater(len(self.pm.callback_executor.event_dict), 0)
 
 
 if __name__ == "__main__":

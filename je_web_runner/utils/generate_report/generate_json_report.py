@@ -25,8 +25,8 @@ def generate_json():
     if len(test_record_instance.test_record_list) == 0:
         raise WebRunnerGenerateJsonReportException(cant_generate_json_report)
     else:
-        success_dict = dict()
-        failure_dict = dict()
+        success_dict = {}
+        failure_dict = {}
 
         # 計數器與前綴字串
         # Counters and prefix strings

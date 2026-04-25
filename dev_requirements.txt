@@ -4,3 +4,4 @@ sphinx
 je_web_runner_dev
 sphinx-rtd-theme
 Pyside6
+defusedxml

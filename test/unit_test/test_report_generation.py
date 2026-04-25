@@ -62,7 +62,7 @@ class TestReportGeneration(unittest.TestCase):
 
     def test_generate_json_report_creates_files(self):
         record_action_to_list("func", {"p": 1}, None)
-        record_action_to_list("func2", {"p": 2}, Exception("err"))
+        record_action_to_list("func2", {"p": 2}, RuntimeError("err"))
         generate_json_report("test_report")
         self.assertTrue(os.path.exists("test_report_success.json"))
         self.assertTrue(os.path.exists("test_report_failure.json"))
@@ -82,7 +82,7 @@ class TestReportGeneration(unittest.TestCase):
         self.assertIn("event_table_head", html)
 
     def test_generate_html_failure_uses_failure_class(self):
-        record_action_to_list("err_func", None, Exception("err"))
+        record_action_to_list("err_func", None, RuntimeError("err"))
         html = generate_html()
         self.assertIn("failure_table_head", html)
 

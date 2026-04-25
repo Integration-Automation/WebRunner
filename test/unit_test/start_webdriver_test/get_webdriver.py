@@ -9,7 +9,7 @@ try:
             "firefox"
         )
         webdriver_wrapper_instance.set_webdriver_options_capability({"test": "test"})
-        webdriver_wrapper_instance.to_url("http://www.python.org")
+        webdriver_wrapper_instance.to_url("https://www.python.org")
         print(webdriver_manager.webdriver_wrapper.current_webdriver.title)
         webdriver_manager.quit()
 except Exception as error:

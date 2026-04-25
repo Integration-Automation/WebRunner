@@ -1,5 +1,31 @@
 from collections import defaultdict
-from xml.etree import ElementTree
+# Element/SubElement/tostring are XML builders, not parsers; defusedxml does not provide builders.
+from xml.etree.ElementTree import Element, SubElement, tostring  # nosec B405 # nosemgrep: use-defused-xml
+
+
+def _collect_children(elements_tree) -> dict:
+    """Group children by tag and unwrap single-element tags."""
+    grouped = defaultdict(list)
+    for child_dict in map(elements_tree_to_dict, list(elements_tree)):
+        for key, value in child_dict.items():
+            grouped[key].append(value)
+    return {
+        key: value[0] if len(value) == 1 else value
+        for key, value in grouped.items()
+    }
+
+
+def _attach_text(elements_dict: dict, elements_tree) -> None:
+    """Attach element text content into the dict, with @-attribute and #text rules."""
+    if not elements_tree.text:
+        return
+    text = elements_tree.text.strip()
+    has_children = bool(list(elements_tree))
+    if has_children or elements_tree.attrib:
+        if text:
+            elements_dict[elements_tree.tag]['#text'] = text
+    else:
+        elements_dict[elements_tree.tag] = text
 
 
 def elements_tree_to_dict(elements_tree) -> dict:
@@ -10,49 +36,55 @@ def elements_tree_to_dict(elements_tree) -> dict:
     :param elements_tree: XML ElementTree 的根節點 / root element of XML tree
     :return: dict 格式的資料 / data as dict
     """
-    # 初始化字典，若有屬性則用空 dict，否則為 None
-    # Initialize dict: {} if element has attributes, else None
-    elements_dict: dict = {elements_tree.tag: {} if elements_tree.attrib else None}
-
-    # 取得子節點
-    # Get children
-    children: list = list(elements_tree)
-
+    children = list(elements_tree)
     if children:
-        # 使用 defaultdict(list) 來收集相同 tag 的子節點
-        # Use defaultdict(list) to collect children with same tag
-        default_dict = defaultdict(list)
-        for dc in map(elements_tree_to_dict, children):
-            for key, value in dc.items():
-                default_dict[key].append(value)
+        elements_dict: dict = {elements_tree.tag: _collect_children(elements_tree)}
+    else:
+        elements_dict = {elements_tree.tag: {} if elements_tree.attrib else None}
 
-        # 如果某個 tag 只有一個元素，直接取值；否則保留 list
-        # If a tag has only one element, unwrap it; else keep as list
-        elements_dict: dict = {
-            elements_tree.tag: {
-                key: value[0] if len(value) == 1 else value
-                for key, value in default_dict.items()
-            }
-        }
-
-    # 處理屬性 (加上 @ 前綴)
-    # Handle attributes (prefix with @)
     if elements_tree.attrib:
         elements_dict[elements_tree.tag].update(
             ('@' + key, value) for key, value in elements_tree.attrib.items()
         )
 
-    # 處理文字內容
-    # Handle text content
-    if elements_tree.text:
-        text = elements_tree.text.strip()
-        if children or elements_tree.attrib:
-            if text:
-                elements_dict[elements_tree.tag]['#text'] = text
-        else:
-            elements_dict[elements_tree.tag] = text
-
+    _attach_text(elements_dict, elements_tree)
     return elements_dict
+
+
+def _set_text(root, value) -> None:
+    if not isinstance(value, str):
+        raise TypeError("#text value must be str")
+    root.text = value
+
+
+def _set_attribute(root, key: str, value) -> None:
+    if not isinstance(value, str):
+        raise TypeError(f"attribute value for {key!r} must be str")
+    root.set(key[1:], value)
+
+
+def _build_dict_node(json_dict: dict, root) -> None:
+    for key, value in json_dict.items():
+        if not isinstance(key, str):
+            raise TypeError("XML element keys must be str")
+        if key == '#text':
+            _set_text(root, value)
+        elif key.startswith('@'):
+            _set_attribute(root, key, value)
+        elif isinstance(value, list):
+            for item in value:
+                _to_elements_tree(item, SubElement(root, key))
+        else:
+            _to_elements_tree(value, SubElement(root, key))
+
+
+def _to_elements_tree(json_dict, root) -> None:
+    if isinstance(json_dict, str):
+        root.text = json_dict
+    elif isinstance(json_dict, dict):
+        _build_dict_node(json_dict, root)
+    else:
+        raise TypeError('invalid type: ' + str(type(json_dict)))
 
 
 def dict_to_elements_tree(json_dict: dict) -> str:
@@ -63,50 +95,12 @@ def dict_to_elements_tree(json_dict: dict) -> str:
     :param json_dict: dict 格式的資料 / data as dict
     :return: XML 字串 / XML string
     """
+    if not isinstance(json_dict, dict):
+        raise TypeError("json_dict must be a dict")
+    if len(json_dict) != 1:
+        raise ValueError("json_dict must have exactly one root element")
 
-    def _to_elements_tree(json_dict: dict, root):
-        if isinstance(json_dict, str):
-            # 如果是字串，直接設為節點文字
-            # If string, set as node text
-            root.text = json_dict
-        elif isinstance(json_dict, dict):
-            for key, value in json_dict.items():
-                assert isinstance(key, str)
-                if key.startswith('#'):
-                    # 特殊 key "#text" -> 設定文字
-                    # Special key "#text" -> set text
-                    assert key == '#text' and isinstance(value, str)
-                    root.text = value
-                elif key.startswith('@'):
-                    # 特殊 key "@attr" -> 設定屬性
-                    # Special key "@attr" -> set attribute
-                    assert isinstance(value, str)
-                    root.set(key[1:], value)
-                elif isinstance(value, list):
-                    # 如果是 list，為每個元素建立子節點
-                    # If list, create sub-element for each item
-                    for elements in value:
-                        _to_elements_tree(elements, ElementTree.SubElement(root, key))
-                else:
-                    # 一般情況，建立子節點
-                    # Normal case, create sub-element
-                    _to_elements_tree(value, ElementTree.SubElement(root, key))
-        else:
-            raise TypeError('invalid type: ' + str(type(json_dict)))
-
-    # dict 必須只有一個根節點
-    # dict must have exactly one root element
-    assert isinstance(json_dict, dict) and len(json_dict) == 1
     tag, body = next(iter(json_dict.items()))
-
-    # 建立根節點
-    # Create root element
-    node = ElementTree.Element(tag)
-
-    # 遞迴處理子節點
-    # Recursively process children
+    node = Element(tag)
     _to_elements_tree(body, node)
-
-    # 轉換成字串並回傳
-    # Convert to string and return
-    return str(ElementTree.tostring(node), encoding="utf-8")
+    return str(tostring(node), encoding="utf-8")

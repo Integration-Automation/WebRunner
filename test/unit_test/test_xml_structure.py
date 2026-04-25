@@ -1,5 +1,6 @@
 import unittest
-from xml.etree import ElementTree
+
+from defusedxml.ElementTree import fromstring
 
 from je_web_runner.utils.xml.change_xml_structure.change_xml_structure import (
     dict_to_elements_tree,
@@ -30,17 +31,17 @@ class TestXmlStructure(unittest.TestCase):
     def test_roundtrip(self):
         data = {"root": {"name": "test", "value": "123"}}
         xml_str = dict_to_elements_tree(data)
-        tree = ElementTree.fromstring(xml_str)
+        tree = fromstring(xml_str)
         result = elements_tree_to_dict(tree)
         self.assertEqual(result["root"]["name"], "test")
         self.assertEqual(result["root"]["value"], "123")
 
     def test_invalid_type_raises(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(TypeError):
             dict_to_elements_tree("not a dict")
 
     def test_multiple_root_keys_raises(self):
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             dict_to_elements_tree({"root1": {}, "root2": {}})
 
 
