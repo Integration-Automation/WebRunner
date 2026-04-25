@@ -195,16 +195,14 @@ def _run_with_dependencies(
             record_run(ledger_path, path, passed=passed)
 
 
-def _run_dir(
+def _select_files(
     directory: str,
-    parallel: int,
-    include_tags=None,
-    exclude_tags=None,
-    ledger_path: Optional[str] = None,
-    rerun_only: Optional[Sequence[str]] = None,
-    parallel_mode: str = "thread",
-    shard_spec: Optional[str] = None,
-) -> None:
+    include_tags,
+    exclude_tags,
+    rerun_only: Optional[Sequence[str]],
+    shard_spec: Optional[str],
+) -> list:
+    """Apply rerun-only / tag / shard filters to the directory listing."""
     files = get_dir_files_as_list(directory)
     if rerun_only is not None:
         rerun_set = set(rerun_only)
@@ -214,31 +212,30 @@ def _run_dir(
     if shard_spec:
         from je_web_runner.utils.sharding.shard import partition_with_spec
         files = partition_with_spec(files, shard_spec)
+    return files
 
-    has_dependencies = any(build_dependency_graph(files).get(path) for path in files)
-    if has_dependencies:
-        _run_with_dependencies(files, ledger_path)
-        return
-    if parallel <= 1 and not ledger_path:
+
+def _run_sequential(files, ledger_path: Optional[str]) -> None:
+    """Sequential execution with optional ledger recording."""
+    if not ledger_path:
         execute_files(files)
         return
-    if parallel <= 1:
-        for path in files:
-            passed = _run_one_file(path)
+    for path in files:
+        passed = _run_one_file(path)
+        record_run(ledger_path, path, passed=passed)
+
+
+def _run_with_process_pool(files, parallel: int, ledger_path: Optional[str]) -> None:
+    """ProcessPool branch — true singleton isolation, records merged back."""
+    with ProcessPoolExecutor(max_workers=parallel) as pool:
+        for path, passed, records in pool.map(_run_one_file_isolated, files):
+            test_record_instance.test_record_list.extend(records)
             if ledger_path:
                 record_run(ledger_path, path, passed=passed)
-        return
 
-    if parallel_mode == "process":
-        with ProcessPoolExecutor(max_workers=parallel) as pool:
-            for path, passed, records in pool.map(_run_one_file_isolated, files):
-                # Merge child records back into the parent's buffer so report
-                # generators still observe every step.
-                test_record_instance.test_record_list.extend(records)
-                if ledger_path:
-                    record_run(ledger_path, path, passed=passed)
-        return
 
+def _run_with_thread_pool(files, parallel: int, ledger_path: Optional[str]) -> None:
+    """ThreadPool branch — shares singletons, only safe for non-browser flows."""
     web_runner_logger.warning(
         "--parallel-mode=thread shares webdriver singletons across files; "
         "use --parallel-mode=process for browser-touching tests"
@@ -251,6 +248,29 @@ def _run_dir(
 
     with ThreadPoolExecutor(max_workers=parallel) as pool:
         list(pool.map(_run_and_record, files))
+
+
+def _run_dir(
+    directory: str,
+    parallel: int,
+    include_tags=None,
+    exclude_tags=None,
+    ledger_path: Optional[str] = None,
+    rerun_only: Optional[Sequence[str]] = None,
+    parallel_mode: str = "thread",
+    shard_spec: Optional[str] = None,
+) -> None:
+    files = _select_files(directory, include_tags, exclude_tags, rerun_only, shard_spec)
+    if any(build_dependency_graph(files).get(path) for path in files):
+        _run_with_dependencies(files, ledger_path)
+        return
+    if parallel <= 1:
+        _run_sequential(files, ledger_path)
+        return
+    if parallel_mode == "process":
+        _run_with_process_pool(files, parallel, ledger_path)
+        return
+    _run_with_thread_pool(files, parallel, ledger_path)
 
 
 def _generate_reports(base_name: str) -> None:

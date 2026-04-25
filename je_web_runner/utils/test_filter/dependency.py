@@ -84,6 +84,17 @@ def topological_order(graph: Dict[str, List[str]]) -> List[str]:
     return ordered
 
 
+def _node_should_skip(
+    node: str,
+    deps: List[str],
+    failed_set: set,
+    must_skip: set,
+) -> bool:
+    if node in failed_set or node in must_skip:
+        return False
+    return any(dep in failed_set or dep in must_skip for dep in deps)
+
+
 def skip_dependents_of_failed(
     graph: Dict[str, List[str]],
     failed: Iterable[str],
@@ -94,18 +105,10 @@ def skip_dependents_of_failed(
     """
     failed_set = set(failed)
     must_skip: set = set()
-    for node, deps in graph.items():
-        if node in failed_set:
-            continue
-        if any(dep in failed_set or dep in must_skip for dep in deps):
-            must_skip.add(node)
-    # Propagate: deps-of-deps. Iterate to a fixed point.
     while True:
         added = False
         for node, deps in graph.items():
-            if node in failed_set or node in must_skip:
-                continue
-            if any(dep in must_skip for dep in deps):
+            if _node_should_skip(node, deps, failed_set, must_skip):
                 must_skip.add(node)
                 added = True
         if not added:

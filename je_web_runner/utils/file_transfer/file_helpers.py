@@ -52,6 +52,20 @@ def playwright_upload_file(input_selector: str, file_path: str) -> None:
     playwright_wrapper_instance.page.set_input_files(input_selector, str(target))
 
 
+_PARTIAL_SUFFIXES = (".crdownload", ".part")
+
+
+def _is_completed_match(name: str, seen: set, suffix_lower: Optional[str]) -> bool:
+    """Per-file predicate extracted to keep ``wait_for_download`` simple."""
+    if name in seen:
+        return False
+    if name.endswith(_PARTIAL_SUFFIXES):
+        return False
+    if suffix_lower and not name.lower().endswith(suffix_lower):
+        return False
+    return True
+
+
 def wait_for_download(
     directory: str,
     timeout: float = 60.0,
@@ -75,14 +89,8 @@ def wait_for_download(
     suffix_lower = suffix.lower() if suffix else None
     while time.monotonic() < deadline:
         for item in base.iterdir():
-            name = item.name
-            if name in seen:
-                continue
-            if name.endswith(".crdownload") or name.endswith(".part"):
-                continue
-            if suffix_lower and not name.lower().endswith(suffix_lower):
-                continue
-            return str(item.resolve())
+            if _is_completed_match(item.name, seen, suffix_lower):
+                return str(item.resolve())
         time.sleep(poll_seconds)
     raise FileTransferError(
         f"no new download in {directory!r} within {timeout}s "
