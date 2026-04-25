@@ -131,6 +131,11 @@ class CallbackFunctionExecutor(object):
             "WR_element_input": web_runner.webdriver_element.input_to_element,
             "WR_element_click": web_runner.webdriver_element.click_element,
             "WR_element_assert": web_runner.webdriver_element.check_current_web_element,
+
+            # usable Select wrappers
+            "WR_element_select_by_value": web_runner.webdriver_element.select_by_value,
+            "WR_element_select_by_index": web_runner.webdriver_element.select_by_index,
+            "WR_element_select_by_visible_text": web_runner.webdriver_element.select_by_visible_text,
         }
 
     def callback_function(

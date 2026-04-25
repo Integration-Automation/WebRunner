@@ -568,6 +568,11 @@ class Executor(object):
             "WR_element_input": web_runner.webdriver_element.input_to_element,    # WR_element_* prefix
             "WR_element_click": web_runner.webdriver_element.click_element,       # WR_element_* prefix
             "WR_element_assert": web_runner.webdriver_element.check_current_web_element,
+
+            # ----- usable Select wrappers (replaces unreachable WR_element_get_select) -----
+            "WR_element_select_by_value": web_runner.webdriver_element.select_by_value,
+            "WR_element_select_by_index": web_runner.webdriver_element.select_by_index,
+            "WR_element_select_by_visible_text": web_runner.webdriver_element.select_by_visible_text,
         }
 
         # 將安全的 Python 內建函式加入事件字典，過濾可執行任意程式碼者
