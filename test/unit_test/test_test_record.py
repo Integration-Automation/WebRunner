@@ -59,7 +59,7 @@ class TestTestRecord(unittest.TestCase):
         test_record_instance.init_record = True
         record_action_to_list("func1", None, None)
         record_action_to_list("func2", None, None)
-        record_action_to_list("func3", None, Exception("err"))
+        record_action_to_list("func3", None, RuntimeError("err"))
         self.assertEqual(len(test_record_instance.test_record_list), 3)
 
 

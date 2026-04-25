@@ -1,9 +1,12 @@
+import re
 from importlib import import_module
 from importlib.util import find_spec
 from inspect import getmembers, isfunction, isbuiltin, isclass
 from sys import stderr
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+
+_VALID_MODULE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
 
 
 class PackageManager(object):
@@ -28,8 +31,11 @@ class PackageManager(object):
                  Package module object if found, else None
         """
         if self.installed_package_dict.get(package, None) is None:
+            if not isinstance(package, str) or not _VALID_MODULE_NAME.match(package):
+                print(repr(ValueError(f"Invalid package name: {package!r}")), file=stderr)
+                return None
             found_spec = find_spec(package)
-            if found_spec is not None:
+            if found_spec is not None and _VALID_MODULE_NAME.match(found_spec.name):
                 try:
                     installed_package = import_module(found_spec.name)
                     self.installed_package_dict.update(

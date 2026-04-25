@@ -13,7 +13,7 @@ class TestRecord(object):
     def __init__(self, init_record: bool = False):
         # 儲存所有測試紀錄的清單
         # List to store all test records
-        self.test_record_list: list = list()
+        self.test_record_list: list = []
 
         # 是否啟用紀錄功能
         # Flag to enable/disable recording
@@ -24,7 +24,7 @@ class TestRecord(object):
         清空所有測試紀錄
         Clear all test records
         """
-        self.test_record_list = list()
+        self.test_record_list = []
 
     def set_record_enable(self, set_enable: bool = True):
         """

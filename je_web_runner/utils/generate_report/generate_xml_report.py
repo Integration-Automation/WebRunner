@@ -1,5 +1,6 @@
 from threading import Lock
-from xml.dom.minidom import parseString
+
+from defusedxml.minidom import parseString
 
 from je_web_runner.utils.generate_report.generate_json_report import generate_json
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger

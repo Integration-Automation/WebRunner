@@ -13,14 +13,14 @@ class TestObjectRecord(object):
         # 用來儲存測試物件的字典
         # Dictionary to store test objects
         # key: test_object_name, value: TestObject instance
-        self.test_object_record_dict = dict()
+        self.test_object_record_dict = {}
 
     def clean_record(self) -> None:
         """
         清空所有測試物件紀錄
         Clear all test object records
         """
-        self.test_object_record_dict = dict()
+        self.test_object_record_dict = {}
 
     def save_test_object(self, test_object_name: str, object_type: str = None, **kwargs) -> None:
         """

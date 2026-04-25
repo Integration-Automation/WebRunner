@@ -7,11 +7,12 @@ try:
 
     firefox_webdriver = webdriver_wrapper_instance.current_webdriver
 
-    firefox_webdriver.get("http://www.python.org")
+    firefox_webdriver.get("https://www.python.org")
 
     firefox_webdriver.implicitly_wait(1)
 
-    assert firefox_webdriver.title == "Welcome to Python.org"
+    if firefox_webdriver.title != "Welcome to Python.org":
+        raise AssertionError(f"Unexpected title: {firefox_webdriver.title!r}")
 
     web_manager.quit()
 except Exception as error:

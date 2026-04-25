@@ -1,4 +1,5 @@
-import xml.dom.minidom
+from defusedxml import ElementTree as DefusedElementTree
+from defusedxml.minidom import parseString as defused_parse_string
 from xml.etree import ElementTree
 
 from je_web_runner.utils.exception.exception_tags import cant_read_xml_error
@@ -15,7 +16,7 @@ def reformat_xml_file(xml_string: str) -> str:
     :param xml_string: 原始 XML 字串 / raw XML string
     :return: 格式化後的 XML 字串 / pretty-printed XML string
     """
-    dom = xml.dom.minidom.parseString(xml_string)
+    dom = defused_parse_string(xml_string)
     return dom.toprettyxml()
 
 
@@ -33,7 +34,6 @@ class XMLParser(object):
         :param xml_string: XML 字串或檔案路徑 / XML string or file path
         :param xml_type: "file" 或 "string" / "file" or "string"
         """
-        self.element_tree = ElementTree
         self.tree = None
         self.xml_root = None
         self.xml_from_type = "string"
@@ -53,13 +53,13 @@ class XMLParser(object):
         從字串解析 XML
         Parse XML from string
 
-        :param kwargs: 額外參數傳給 ElementTree.fromstring
+        :param kwargs: 額外參數傳給 defusedxml.ElementTree.fromstring
         :return: XML 根節點 / XML root element
         """
         try:
-            self.xml_root = ElementTree.fromstring(self.xml_string, **kwargs)
-        except Exception:  # 原本 except XMLException 不會捕捉到 ElementTree 的錯誤
-            raise XMLException(cant_read_xml_error)
+            self.xml_root = DefusedElementTree.fromstring(self.xml_string, **kwargs)
+        except DefusedElementTree.ParseError as error:
+            raise XMLException(cant_read_xml_error) from error
         return self.xml_root
 
     def xml_parser_from_file(self, **kwargs) -> ElementTree.Element:
@@ -67,13 +67,13 @@ class XMLParser(object):
         從檔案解析 XML
         Parse XML from file
 
-        :param kwargs: 額外參數傳給 ElementTree.parse
+        :param kwargs: 額外參數傳給 defusedxml.ElementTree.parse
         :return: XML 根節點 / XML root element
         """
         try:
-            self.tree = ElementTree.parse(self.xml_string, **kwargs)
-        except Exception:
-            raise XMLException(cant_read_xml_error)
+            self.tree = DefusedElementTree.parse(self.xml_string, **kwargs)
+        except DefusedElementTree.ParseError as error:
+            raise XMLException(cant_read_xml_error) from error
         self.xml_root = self.tree.getroot()
         self.xml_from_type = "file"
         return self.xml_root
@@ -87,6 +87,6 @@ class XMLParser(object):
         :param write_content: XML 內容字串 / XML content string
         """
         write_content = write_content.strip()
-        content = self.element_tree.fromstring(write_content)
-        tree = self.element_tree.ElementTree(content)
+        content = DefusedElementTree.fromstring(write_content)
+        tree = ElementTree.ElementTree(content)
         tree.write(write_xml_filename, encoding="utf-8")

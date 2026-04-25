@@ -37,8 +37,8 @@ class TestCreateProject(unittest.TestCase):
         executor_path = os.path.join(self.test_dir, "TestProject", "executor")
         keyword_files = os.listdir(keyword_path) if os.path.isdir(keyword_path) else []
         executor_files = os.listdir(executor_path) if os.path.isdir(executor_path) else []
-        self.assertTrue(len(keyword_files) > 0, "keyword dir should have template files")
-        self.assertTrue(len(executor_files) > 0, "executor dir should have template files")
+        self.assertGreater(len(keyword_files), 0, "keyword dir should have template files")
+        self.assertGreater(len(executor_files), 0, "executor dir should have template files")
 
 
 if __name__ == "__main__":

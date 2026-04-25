@@ -7,7 +7,7 @@ from je_web_runner.utils.exception.exceptions import WebRunnerAssertException
 class TestResultCheck(unittest.TestCase):
 
     def test_check_value_pass(self):
-        result_dict = {"title": "Hello", "url": "http://example.com"}
+        result_dict = {"title": "Hello", "url": "https://example.com"}
         check_value("title", "Hello", result_dict)
 
     def test_check_value_fail_raises(self):
