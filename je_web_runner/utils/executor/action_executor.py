@@ -81,6 +81,7 @@ from je_web_runner.utils.cdp.cdp_commands import (
 )
 from je_web_runner.utils.network_emulation import throttling as _throttle
 from je_web_runner.utils.test_data import faker_integration as _fakerint
+from je_web_runner.utils.extensions import extension_loader as _ext
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -339,6 +340,10 @@ class Executor(object):
             "WR_faker_user_agent": _fakerint.fake_user_agent,
             "WR_faker_password": _fakerint.fake_password,
             "WR_faker_text": _fakerint.fake_text,
+
+            # browser extension loaders
+            "WR_chrome_options_with_extension": _ext.selenium_chrome_options_with_extension,
+            "WR_pw_extension_args": _ext.playwright_extension_launch_args,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
