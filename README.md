@@ -1,7 +1,7 @@
 # WebRunner
 
 <p align="center">
-  <strong>A cross-platform web automation framework built on Selenium</strong>
+  <strong>Cross-platform web automation: Selenium + Playwright, plus a JSON-driven action executor with batteries included.</strong>
 </p>
 
 <p align="center">
@@ -18,31 +18,38 @@
 
 ---
 
-WebRunner (`je_web_runner`) is a cross-platform web automation framework designed to simplify browser automation. It supports multiple browsers, parallel execution, automatic driver management, and generates detailed reports. Built on top of Selenium with additional abstractions, WebRunner helps developers write, run, and manage automation scripts with ease.
+WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full automation platform: a Selenium and a Playwright backend behind one JSON-driven action executor, plus modules for reporting, observability, orchestration, security, and AI assistance. Every executor command has a deterministic name (`WR_*`) and a single dispatch point, so an action JSON can mix browser, HTTP, database, and webhook calls in the same script.
+
+> **Auto-generated reference** — every registered `WR_*` command (signature + summary) is exported under [`docs/reference/command_reference.md`](docs/reference/command_reference.md), and a JSON Schema for action JSON files lives at [`docs/reference/webrunner-action-schema.json`](docs/reference/webrunner-action-schema.json).
 
 ## Table of Contents
 
-- [Key Features](#key-features)
+- [Highlights](#highlights)
 - [Installation](#installation)
-- [Requirements](#requirements)
+- [Architecture](#architecture)
+  - [System overview](#system-overview)
+  - [Action lifecycle](#action-lifecycle)
+  - [Backend dispatch](#backend-dispatch)
+  - [Module map](#module-map)
 - [Quick Start](#quick-start)
-- [Architecture Overview](#architecture-overview)
-- [Core Components](#core-components)
-  - [WebDriver Manager](#webdriver-manager)
-  - [WebDriver Wrapper](#webdriver-wrapper)
-  - [Web Element Wrapper](#web-element-wrapper)
-  - [Test Object](#test-object)
+- [Core API](#core-api)
 - [Action Executor](#action-executor)
-  - [Action Format](#action-format)
-  - [Available Commands](#available-commands)
-  - [Execute from JSON Files](#execute-from-json-files)
-- [Report Generation](#report-generation)
-- [Remote Automation (Socket Server)](#remote-automation-socket-server)
-- [Callback Executor](#callback-executor)
-- [Package Manager](#package-manager)
-- [Project Template](#project-template)
+- [Backends](#backends)
+  - [Selenium (default)](#selenium-default)
+  - [Playwright (full)](#playwright-full)
+  - [Cloud Grid](#cloud-grid)
+  - [Appium (mobile)](#appium-mobile)
+- [Reports](#reports)
+- [Observability](#observability)
+- [Test Orchestration](#test-orchestration)
+- [Quality & Security](#quality--security)
+- [Browser Internals](#browser-internals)
+- [Test Data](#test-data)
+- [Auth & APIs](#auth--apis)
+- [Recorder](#recorder)
+- [CI / Integrations](#ci--integrations)
+- [AI Assistance](#ai-assistance)
 - [CLI Usage](#cli-usage)
-- [WebDriver Options Configuration](#webdriver-options-configuration)
 - [Test Record](#test-record)
 - [Exception Handling](#exception-handling)
 - [Logging](#logging)
@@ -50,645 +57,719 @@ WebRunner (`je_web_runner`) is a cross-platform web automation framework designe
 - [Supported Platforms](#supported-platforms)
 - [License](#license)
 
-## Key Features
+## Highlights
 
-- **Multi-browser support** — Chrome, Chromium, Firefox, Edge, IE, Safari
-- **Automatic WebDriver management** — Automatic download and configuration via `webdriver-manager`
-- **Parallel execution** — Manage multiple browser instances simultaneously
-- **Action executor** — Define automation scripts as JSON action lists
-- **Report generation** — HTML, JSON, and XML test reports with success/failure highlighting
-- **Remote automation** — TCP socket server for remote command execution
-- **Callback system** — Event-driven automation with callback functions
-- **Dynamic extension** — Load external Python packages into the executor at runtime
-- **Project templates** — Quick-start project structure generation
-- **Cross-platform** — Windows, macOS, Ubuntu, Raspberry Pi
-- **CLI interface** — Execute automation scripts from the command line
-- **Screenshots** — Automatic screenshot capture (PNG, Base64)
-- **Comprehensive element interaction** — Locate, click, input, drag-and-drop, and more
+- **Two backends, one executor.** Selenium is the default; the Playwright backend mirrors the same operational surface under `WR_pw_*` and is fully opt-in.
+- **Action JSON as a contract.** Every command resolves through `Executor.event_dict`; legacy aliases stay alongside snake_case names for back-compat, and a JSON Schema is exported for IDE autocomplete.
+- **Reports in five formats.** HTML, JSON, XML, JUnit XML (CI-native), and Allure result files; a single manifest binds every output for downstream globs.
+- **Orchestration built in.** Tag filters, dependency declarations with topological order, ledger-backed re-run-only-failed, flaky detection, A/B run mode, multi-user matrix, deterministic sharding, watch mode, and a stdlib scheduler.
+- **Observability without extra plumbing.** Auto-screenshot on failure, retry policy, OpenTelemetry hook, live HTTP dashboard, replay studio (HTML timeline), HAR capture + diff.
+- **Quality & security guards.** Action linter, migration helper, hard-coded secrets scanner, HTTP security headers audit, axe-core accessibility audit, Lighthouse runner, perf metrics (FCP/LCP/CLS), visual regression, snapshot testing, network throttling, arbitrary-script gate.
+- **Browser internals.** Raw CDP, console + network event capture, localStorage / sessionStorage / IndexedDB, service worker / cache control, Shadow DOM piercing, multi-iframe, file upload / download, browser extension loaders.
+- **Test data & fixtures.** Faker integration, factory pattern, testcontainers (Postgres / Redis / generic), per-environment `.env` loader with `${ENV.X}` placeholder expansion, CSV/JSON data-driven runner with `${ROW.x}`.
+- **Auth, API, DB.** OAuth2 / OIDC client-credentials / password / refresh-token flows with token cache, HTTP API testing commands with JSON assertions, SQLAlchemy-backed database validation.
+- **Integrations.** TCP socket server with token + TLS, BrowserStack / Sauce Labs / LambdaTest cloud Grid, Appium mobile, JIRA + TestRail, Slack / generic webhook notifier, GitHub Actions inline annotations, Locust load testing.
+- **AI hooks.** Pluggable LLM callable powers self-healing locators and natural-language → action JSON drafts.
+- **Cross-platform & multi-browser.** Windows, macOS, Linux, Raspberry Pi · Chrome, Chromium, Firefox, Edge, IE, Safari · Chromium, Firefox, WebKit (Playwright).
 
 ## Installation
 
-**Stable version:**
+**Stable:**
 
 ```bash
 pip install je_web_runner
 ```
 
-**Development version:**
+**Development:**
 
 ```bash
 pip install je_web_runner_dev
 ```
 
-## Requirements
+**Optional dependencies** (each enables a slice of features; install only what you use):
 
-- Python **3.10** or later
-- Dependencies: `selenium>=4.0.0`, `requests`, `python-dotenv`, `webdriver-manager`
+```bash
+pip install playwright           # Playwright backend
+python -m playwright install     # Browser binaries for Playwright
+pip install Pillow               # Visual regression
+pip install faker                # Random test data (WR_faker_*)
+pip install sqlalchemy           # Database validation (WR_db_*)
+pip install opentelemetry-sdk    # Distributed traces (WR_set_action_span_factory)
+pip install Appium-Python-Client # Mobile native (WR_appium_*)
+pip install testcontainers       # Spin up Postgres / Redis (WR_tc_*)
+pip install locust               # Load testing (WR_locust_*)
+```
+
+Hard requirements: Python **3.10+**, `selenium>=4.0.0`, `requests`, `python-dotenv`, `webdriver-manager`, `defusedxml`, `Pillow`.
+
+## Architecture
+
+### System overview
+
+```mermaid
+flowchart LR
+  subgraph Authoring
+    A1["Action JSON files"]
+    A2["Programmatic Python API"]
+    A3["Browser recorder<br/>(JS injection)"]
+    A4["LLM NL → action draft"]
+  end
+
+  subgraph Core
+    EXE["Executor<br/>event_dict"]
+    REC["Test record<br/>singleton"]
+    LDG["Run ledger /<br/>flaky detection"]
+  end
+
+  subgraph Backends
+    SEL["Selenium<br/>WebDriverWrapper"]
+    PW["Playwright<br/>PlaywrightWrapper"]
+    APM["Appium<br/>Mobile"]
+    HTTP["HTTP API<br/>requests"]
+    DB["Database<br/>SQLAlchemy"]
+  end
+
+  subgraph Outputs
+    REP["Reports<br/>HTML/JSON/XML/JUnit/Allure"]
+    OBS["Observability<br/>OTel · dashboard · replay"]
+    NOT["Notifiers<br/>Slack · webhook · GH · JIRA · TestRail"]
+  end
+
+  A1 --> EXE
+  A2 --> EXE
+  A3 --> A1
+  A4 --> A1
+  EXE --> SEL
+  EXE --> PW
+  EXE --> APM
+  EXE --> HTTP
+  EXE --> DB
+  SEL --> REC
+  PW --> REC
+  APM --> REC
+  HTTP --> REC
+  DB --> REC
+  REC --> LDG
+  REC --> REP
+  REC --> OBS
+  REC --> NOT
+```
+
+### Action lifecycle
+
+```mermaid
+flowchart LR
+  IN["Action<br/>[cmd, args, kwargs]"] --> VAL["JSON validator<br/>(WR_validate_*)"]
+  VAL --> ENV["${ENV.X} / ${ROW.x}<br/>placeholder expansion"]
+  ENV --> SPAN["OTel span factory<br/>(optional)"]
+  SPAN --> RETRY["Retry policy<br/>retries × backoff"]
+  RETRY --> GATE["Arbitrary-script<br/>gate"]
+  GATE --> DISP["event_dict[cmd](*args, **kwargs)"]
+  DISP --> RECORD["test_record_instance<br/>append()"]
+  DISP -- failure --> SHOT["Auto-screenshot<br/>(failure dir)"]
+  RECORD --> DONE["Result dict"]
+  SHOT --> DONE
+```
+
+### Backend dispatch
+
+```mermaid
+flowchart TB
+  CMD["Action command name"] --> ROUTE{"prefix?"}
+  ROUTE -- "WR_pw_*" --> PW["Playwright backend<br/>(PlaywrightWrapper)"]
+  ROUTE -- "WR_pw_element_*" --> PWE["Playwright element<br/>(PlaywrightElementWrapper)"]
+  ROUTE -- "WR_appium_*" --> APM["Appium driver"]
+  ROUTE -- "WR_http_*" --> HTTP["requests wrapper"]
+  ROUTE -- "WR_db_*" --> DB["SQLAlchemy validator"]
+  ROUTE -- "WR_pw_a11y_* / WR_a11y_*" --> AXE["axe-core audit"]
+  ROUTE -- "WR_pw_throttle / WR_throttle" --> THR["Network throttling<br/>(CDP)"]
+  ROUTE -- "WR_pw_route_*" --> ROUTE_MOCK["Playwright route mock"]
+  ROUTE -- "WR_*<br/>(default)" --> SEL["Selenium backend<br/>(WebDriverWrapper)"]
+  ROUTE -- "WR_element_*<br/>(default)" --> SE["Selenium element<br/>(WebElementWrapper)"]
+```
+
+### Module map
+
+```
+je_web_runner/
+├── __init__.py
+├── __main__.py                    # CLI: --execute_dir / --watch / --tag / --shard / --migrate ...
+├── element/web_element_wrapper.py
+├── manager/webrunner_manager.py
+├── webdriver/
+│   ├── webdriver_wrapper.py             # Selenium core
+│   ├── webdriver_with_options.py
+│   ├── playwright_wrapper.py            # Playwright sync backend (full)
+│   ├── playwright_element_wrapper.py
+│   └── playwright_locator.py            # TestObject ↔ Playwright selector
+└── utils/
+    ├── ab_run/                  # A/B run mode (run_ab + diff_records)
+    ├── accessibility/           # axe-core audit
+    ├── ai_assist/               # Pluggable LLM scaffold
+    ├── api/                     # HTTP API testing commands
+    ├── appium_integration/      # Mobile native via Appium
+    ├── auth/                    # OAuth2 / OIDC token helpers
+    ├── callback/                # Callback executor
+    ├── cdp/                     # Raw CDP passthrough
+    ├── ci_annotations/          # GitHub Actions ::error::
+    ├── cli/                     # CLI parser, watch mode, dispatch
+    ├── cloud_grid/              # BrowserStack / Sauce Labs / LambdaTest
+    ├── dashboard/               # Live progress HTTP server
+    ├── database/                # SQL validation (SQLAlchemy)
+    ├── data_driven/             # CSV/JSON dataset + ${ROW.x}
+    ├── docs/                    # Auto-generated command reference
+    ├── dom_traversal/           # Shadow DOM / iframe helpers
+    ├── env_config/              # .env loader + ${ENV.X}
+    ├── exception/               # Exception hierarchy
+    ├── executor/                # Action executor + retry/screenshot/gate
+    ├── extensions/              # Browser extension loaders
+    ├── factories/               # Factory pattern helpers
+    ├── file_process/            # File utilities
+    ├── file_transfer/           # Upload / download helpers
+    ├── generate_report/         # HTML/JSON/XML/JUnit/Allure + manifest
+    ├── har_diff/                # HAR file diff
+    ├── json/                    # JSON I/O + validator (length 1/2/3)
+    ├── lighthouse/              # Lighthouse CLI runner
+    ├── linter/                  # action_linter + migration
+    ├── load_test/               # Locust wrapper
+    ├── logging/                 # Rotating file handler
+    ├── multi_user/              # Multi-user matrix runner
+    ├── network_emulation/       # Throttling presets via CDP
+    ├── notifier/                # Slack / generic webhooks
+    ├── observability/           # Console+network capture · OTel
+    ├── package_manager/         # Dynamic plugin loader
+    ├── perf_metrics/            # FCP / LCP / CLS / TTFB
+    ├── pom_generator/           # POM skeleton from URL/HTML
+    ├── project/                 # Project template generator
+    ├── recorder/                # JS-injection recorder + PII mask
+    ├── replay_studio/           # HTML timeline studio
+    ├── run_ledger/              # ledger · flaky · classifier
+    ├── schema/                  # Action JSON Schema export
+    ├── scheduler/               # stdlib-sched scheduled runner
+    ├── secrets_scanner/         # Hard-coded credential scanner
+    ├── security_headers/        # HTTP headers audit
+    ├── selenium_utils_wrapper/  # Keys / Capabilities
+    ├── self_healing/            # Fallback locator registry
+    ├── service_worker/          # SW unregister + cache clear
+    ├── sharding/                # Deterministic test sharding
+    ├── snapshot/                # Text/DOM snapshot testing
+    ├── socket_server/           # TCP server with token + TLS
+    ├── storage/                 # localStorage / session / IDB
+    ├── test_data/               # Faker integration
+    ├── test_filter/             # Tag filter + dependency graph
+    ├── test_management/         # JIRA + TestRail
+    ├── test_object/             # TestObject + record
+    ├── test_record/             # Action recording
+    ├── testcontainers_integration/   # Postgres / Redis / generic
+    ├── visual_regression/       # Pillow-based image diff
+    └── xml/                     # XML utilities
+```
 
 ## Quick Start
 
-### Example 1: Direct API
+### Direct API
 
 ```python
-from je_web_runner import TestObject
-from je_web_runner import get_webdriver_manager
-from je_web_runner import web_element_wrapper
+from je_web_runner import TestObject, get_webdriver_manager, web_element_wrapper
 
-# Create a WebDriver manager (using Chrome)
 manager = get_webdriver_manager("chrome")
-
-# Navigate to a URL
 manager.webdriver_wrapper.to_url("https://www.google.com")
-
-# Set implicit wait
 manager.webdriver_wrapper.implicitly_wait(2)
 
-# Create a test object to locate the search box by name
 search_box = TestObject("q", "name")
-
-# Find the element
 manager.webdriver_wrapper.find_element(search_box)
-
-# Click and type into the element
 web_element_wrapper.click_element()
 web_element_wrapper.input_to_element("WebRunner automation")
 
-# Close the browser
 manager.quit()
 ```
 
-### Example 2: JSON Action List
+### JSON action list (modern aliases)
 
 ```python
 from je_web_runner import execute_action
 
 actions = [
-    ["WR_get_webdriver_manager", {"webdriver_name": "chrome"}],
+    ["WR_new_driver", {"webdriver_name": "chrome"}],
     ["WR_to_url", {"url": "https://www.google.com"}],
     ["WR_implicitly_wait", {"time_to_wait": 2}],
-    ["WR_SaveTestObject", {"test_object_name": "q", "object_type": "name"}],
-    ["WR_find_element", {"element_name": "q"}],
-    ["WR_click_element"],
-    ["WR_input_to_element", {"input_value": "WebRunner automation"}],
-    ["WR_quit"]
+    ["WR_save_test_object", {"test_object_name": "q", "object_type": "NAME"}],
+    ["WR_find_recorded_element", {"element_name": "q"}],
+    ["WR_element_click"],
+    ["WR_element_input", {"input_value": "WebRunner automation"}],
+    ["WR_quit_all"],
 ]
-
-result = execute_action(actions)
+execute_action(actions)
 ```
 
-## Architecture Overview
+The legacy names (`WR_get_webdriver_manager`, `WR_SaveTestObject`, `WR_quit`, `WR_input_to_element`, …) still work — see [migration helper](#migration-helper) for one-shot rewriting.
 
-```
-je_web_runner/
-├── __init__.py              # Public API exports
-├── __main__.py              # CLI entry point
-├── element/
-│   └── web_element_wrapper.py   # WebElement interaction wrapper
-├── manager/
-│   └── webrunner_manager.py     # Multi-driver management
-├── webdriver/
-│   ├── webdriver_wrapper.py     # Core WebDriver wrapper
-│   └── webdriver_with_options.py # Browser options configuration
-└── utils/
-    ├── callback/                # Callback function executor
-    ├── exception/               # Custom exception classes
-    ├── executor/                # Action executor engine
-    ├── file_process/            # File utilities
-    ├── generate_report/         # HTML/JSON/XML report generators
-    ├── json/                    # JSON file operations
-    ├── logging/                 # Logging configuration
-    ├── package_manager/         # Dynamic package loading
-    ├── project/                 # Project template generator
-    ├── selenium_utils_wrapper/  # Selenium utilities (Keys, Capabilities)
-    ├── socket_server/           # TCP socket server for remote control
-    ├── test_object/             # Test object & record classes
-    ├── test_record/             # Action recording
-    └── xml/                     # XML utilities
-```
-
-## Core Components
-
-### WebDriver Manager
-
-`WebdriverManager` manages multiple WebDriver instances for parallel browser automation.
+### Mixed positional + keyword arguments
 
 ```python
-from je_web_runner import get_webdriver_manager
-
-# Create a manager with Chrome
-manager = get_webdriver_manager("chrome")
-
-# Add another browser instance
-manager.new_driver("firefox")
-
-# Switch between browser instances
-manager.change_webdriver(0)  # Switch to Chrome
-manager.change_webdriver(1)  # Switch to Firefox
-
-# Close a specific driver
-manager.close_choose_webdriver(1)  # Close Firefox
-
-# Quit all drivers
-manager.quit()
+[
+    ["WR_to_url", ["https://example.com"], {"timeout": 30}],
+]
 ```
 
-### WebDriver Wrapper
+The validator accepts length-1, length-2 (`[cmd, dict_or_list]`), and length-3 (`[cmd, [positional], {kwargs}]`) actions.
 
-`WebDriverWrapper` is the central component that wraps Selenium WebDriver with comprehensive methods.
+## Core API
 
-#### Navigation
+The original Selenium-flavoured API remains the canonical entry point for programmatic use. Sections preserved from the original README:
 
-```python
-wrapper = manager.webdriver_wrapper
+- **WebDriver Manager** — `get_webdriver_manager`, `new_driver`, `change_webdriver`, `close_choose_webdriver`, `quit`.
+- **WebDriver Wrapper** — `to_url`, `forward`, `back`, `refresh`, `find_element`, `find_elements`, `implicitly_wait`, `explict_wait` (alias `WR_explicit_wait`), `set_script_timeout`, `set_page_load_timeout`, the full ActionChains-backed mouse/keyboard surface, cookies, `execute_script`, window management, screenshots, frame/window/alert switching, `get_log`.
+- **Web Element Wrapper** — `click_element`, `input_to_element`, `clear`, `submit`, `get_attribute`, `get_property`, `get_dom_attribute`, `is_displayed`, `is_enabled`, `is_selected`, `value_of_css_property`, `screenshot`, `change_web_element`, `check_current_web_element`, plus the new `select_by_value` / `select_by_index` / `select_by_visible_text`.
+- **TestObject** — `TestObject(name, type)`, `create_test_object`, `get_test_object_type_list` (returns `['ID', 'NAME', 'XPATH', 'CSS_SELECTOR', 'CLASS_NAME', 'TAG_NAME', 'LINK_TEXT', 'PARTIAL_LINK_TEXT']`).
 
-wrapper.to_url("https://example.com")
-wrapper.forward()
-wrapper.back()
-wrapper.refresh()
-```
-
-#### Element Location
-
-```python
-from je_web_runner import TestObject
-
-# Locator strategies: id, name, xpath, css selector, class name, tag name, link text, partial link text
-element = TestObject("search-input", "id")
-wrapper.find_element(element)      # Find single element
-wrapper.find_elements(element)     # Find multiple elements
-```
-
-#### Wait Methods
-
-```python
-wrapper.implicitly_wait(5)                    # Implicit wait (seconds)
-wrapper.explict_wait(10, method=some_func)    # Explicit WebDriverWait
-wrapper.set_script_timeout(30)                # Async script timeout
-wrapper.set_page_load_timeout(60)             # Page load timeout
-```
-
-#### Mouse & Keyboard Actions
-
-```python
-wrapper.left_click()
-wrapper.right_click()
-wrapper.left_double_click()
-wrapper.left_click_and_hold()
-wrapper.release()
-wrapper.drag_and_drop(source_element, target_element)
-wrapper.drag_and_drop_offset(element, x=100, y=50)
-wrapper.move_to_element(element)              # Hover
-wrapper.move_by_offset(100, 200)
-wrapper.press_key(keycode)
-wrapper.release_key(keycode)
-wrapper.send_keys("text")
-wrapper.send_keys_to_element(element, "text")
-wrapper.perform()                             # Execute queued actions
-wrapper.reset_actions()                       # Clear action queue
-wrapper.pause(2)                              # Pause in action chain
-```
-
-#### Cookie Management
-
-```python
-wrapper.get_cookies()                          # Get all cookies
-wrapper.get_cookie("session_id")               # Get specific cookie
-wrapper.add_cookie({"name": "key", "value": "val"})
-wrapper.delete_cookie("session_id")
-wrapper.delete_all_cookies()
-```
-
-#### JavaScript Execution
-
-```python
-wrapper.execute_script("document.title")
-wrapper.execute_async_script("arguments[0]('done')", callback)
-```
-
-#### Window Management
-
-```python
-wrapper.maximize_window()
-wrapper.minimize_window()
-wrapper.fullscreen_window()
-wrapper.set_window_size(1920, 1080)
-wrapper.set_window_position(0, 0)
-wrapper.get_window_position()
-wrapper.get_window_rect()
-wrapper.set_window_rect(x=0, y=0, width=1920, height=1080)
-```
-
-#### Screenshots & Scrolling
-
-```python
-wrapper.get_screenshot_as_png()       # Returns bytes
-wrapper.get_screenshot_as_base64()    # Returns base64 string
-wrapper.scroll(0, 500)               # Scroll page
-```
-
-#### Frame / Window / Alert Switching
-
-```python
-wrapper.switch("frame", "frame_name")
-wrapper.switch("window", "window_handle")
-wrapper.switch("default_content")
-```
-
-#### Browser Logs
-
-```python
-wrapper.get_log("browser")
-```
-
-### Web Element Wrapper
-
-`WebElementWrapper` provides methods for interacting with located elements.
-
-```python
-from je_web_runner import web_element_wrapper
-
-web_element_wrapper.click_element()
-web_element_wrapper.input_to_element("Hello World")
-web_element_wrapper.clear()
-web_element_wrapper.submit()
-
-# Inspection
-web_element_wrapper.get_attribute("href")
-web_element_wrapper.get_property("checked")
-web_element_wrapper.get_dom_attribute("data-id")
-web_element_wrapper.is_displayed()
-web_element_wrapper.is_enabled()
-web_element_wrapper.is_selected()
-web_element_wrapper.value_of_css_property("color")
-
-# Select (dropdown)
-select = web_element_wrapper.get_select()
-
-# Element screenshot
-web_element_wrapper.screenshot("element.png")
-
-# Switch active element from a list
-web_element_wrapper.change_web_element(2)
-
-# Validate element properties
-web_element_wrapper.check_current_web_element({"tag_name": "input"})
-```
-
-### Test Object
-
-`TestObject` encapsulates element locator information for reusable element definitions.
-
-```python
-from je_web_runner import TestObject, create_test_object, get_test_object_type_list
-
-# Two ways to create
-obj1 = TestObject("search", "name")
-obj2 = create_test_object("id", "submit-btn")
-
-# View available locator types
-print(get_test_object_type_list())
-# ['ID', 'NAME', 'XPATH', 'CSS_SELECTOR', 'CLASS_NAME', 'TAG_NAME', 'LINK_TEXT', 'PARTIAL_LINK_TEXT']
-```
+Programmatic examples for each surface are kept identical to the previous edition; see the relevant Sphinx pages under `docs/source/Eng/doc/` for full code snippets.
 
 ## Action Executor
 
-The Action Executor is a powerful engine that maps command strings to callable functions. It allows you to define automation scripts as JSON action lists.
+The executor maps a string command name to a Python callable. Every backend, integration, and helper registers under `event_dict`.
 
-### Action Format
-
-Each action is a list with the command name and optional parameters:
+### Action shapes
 
 ```python
-["command_name"]                        # No parameters
-["command_name", {"key": "value"}]      # Keyword arguments
-["command_name", [arg1, arg2]]          # Positional arguments
+["command"]                                    # no args
+["command", {"key": "value"}]                  # kwargs
+["command", [arg1, arg2]]                      # positional
+["command", [arg1], {"key": "value"}]          # positional + kwargs (length 3)
 ```
 
-### Available Commands
-
-| Category | Commands |
-|----------|----------|
-| **Manager** | `WR_get_webdriver_manager`, `WR_change_index_of_webdriver`, `WR_quit` |
-| **Navigation** | `WR_to_url`, `WR_forward`, `WR_back`, `WR_refresh` |
-| **Elements** | `WR_find_element`, `WR_find_elements`, `WR_find_element_with_test_object_record`, `WR_find_elements_with_test_object_record` |
-| **Wait** | `WR_implicitly_wait`, `WR_explict_wait`, `WR_set_script_timeout`, `WR_set_page_load_timeout` |
-| **Click** | `WR_left_click`, `WR_right_click`, `WR_left_double_click`, `WR_left_click_and_hold`, `WR_release` |
-| **Drag** | `WR_drag_and_drop`, `WR_drag_and_drop_offset`, `WR_drag_and_drop_with_test_object`, `WR_drag_and_drop_offset_with_test_object` |
-| **Hover** | `WR_move_to_element`, `WR_move_to_element_with_offset`, `WR_move_by_offset` |
-| **Keyboard** | `WR_press_key`, `WR_release_key`, `WR_send_keys`, `WR_send_keys_to_element` |
-| **Actions** | `WR_perform`, `WR_reset_actions`, `WR_pause` |
-| **Cookies** | `WR_get_cookies`, `WR_get_cookie`, `WR_add_cookie`, `WR_delete_cookie`, `WR_delete_all_cookies` |
-| **JavaScript** | `WR_execute_script`, `WR_execute_async_script` |
-| **Window** | `WR_maximize_window`, `WR_minimize_window`, `WR_fullscreen_window`, `WR_set_window_size`, `WR_set_window_position`, `WR_set_window_rect` |
-| **Screenshot** | `WR_get_screenshot_as_png`, `WR_get_screenshot_as_base64` |
-| **Element** | `WR_click_element`, `WR_input_to_element`, `WR_element_clear`, `WR_element_submit`, `WR_element_get_attribute`, `WR_element_is_displayed`, `WR_element_is_enabled`, `WR_element_is_selected` |
-| **Test Object** | `WR_SaveTestObject`, `WR_CleanTestObject` |
-| **Report** | `WR_generate_html_report`, `WR_generate_json_report`, `WR_generate_xml_report` |
-| **Package** | `WR_add_package_to_executor` |
-| **Nested** | `WR_execute_action`, `WR_execute_files` |
-
-### Execute from JSON Files
+### Length-3 example
 
 ```python
-from je_web_runner import execute_files
-
-# Execute actions from JSON files
-results = execute_files(["actions1.json", "actions2.json"])
-```
-
-JSON file format:
-
-```json
 [
-    ["WR_get_webdriver_manager", {"webdriver_name": "chrome"}],
-    ["WR_to_url", {"url": "https://example.com"}],
-    ["WR_quit"]
+    ["WR_pw_evaluate", ["() => document.title"], {"arg": None}],
 ]
 ```
 
-### Add Custom Commands
+### Top-level shapes
+
+```python
+[ ...actions... ]                                                  # bare list
+
+{
+  "webdriver_wrapper": [ ...actions... ],
+  "meta": {"tags": ["smoke", "fast"], "depends_on": ["login"]}     # optional
+}
+```
+
+`meta.tags` and `meta.depends_on` are picked up by the CLI for filtering and topological execution.
+
+### Adding custom commands
 
 ```python
 from je_web_runner import add_command_to_executor
 
-def my_custom_function(param1, param2):
-    print(f"Custom: {param1}, {param2}")
+def my_step(name: str) -> None:
+    print(f"hello {name}")
 
-add_command_to_executor({"my_command": my_custom_function})
+add_command_to_executor({"my_command": my_step})
 ```
 
-## Report Generation
-
-WebRunner can automatically record all actions and generate reports in three formats.
-
-### Enable Recording
+### Retry, screenshots, scripts
 
 ```python
-from je_web_runner import test_record_instance
+from je_web_runner.utils.executor.action_executor import executor
 
+executor.set_retry_policy(retries=2, backoff=0.5)             # global retry
+executor.set_failure_screenshot_dir("./failures")              # auto PNG on raise
+executor.set_allow_arbitrary_script(False)                     # gate WR_execute_script / WR_pw_evaluate / WR_cdp
+```
+
+## Backends
+
+### Selenium (default)
+
+Selenium is the original backend. Every legacy command (and its modern alias) routes here unless an explicit `WR_pw_*` / `WR_appium_*` prefix is used.
+
+### Playwright (full)
+
+The Playwright backend mirrors the operational surface of the Selenium wrapper under `WR_pw_*`:
+
+- **Lifecycle / pages / navigation** — `WR_pw_launch`, `WR_pw_quit`, `WR_pw_new_page`, `WR_pw_switch_to_page`, `WR_pw_close_page`, `WR_pw_to_url`, `WR_pw_forward`, `WR_pw_back`, `WR_pw_refresh`, `WR_pw_url`, `WR_pw_title`, `WR_pw_content`.
+- **Find** — `WR_pw_find_element`, `WR_pw_find_elements`, `WR_pw_find_element_with_test_object_record`, `WR_pw_find_with_healing`.
+- **Page-level shortcuts** — `WR_pw_click`, `WR_pw_dblclick`, `WR_pw_hover`, `WR_pw_fill`, `WR_pw_type_text`, `WR_pw_press`, `WR_pw_check`, `WR_pw_uncheck`, `WR_pw_select_option`, `WR_pw_drag_and_drop`.
+- **Element-level (after `WR_pw_find_element_with_test_object_record`)** — `WR_pw_element_click`, `WR_pw_element_dblclick`, `WR_pw_element_fill`, `WR_pw_element_type_text`, `WR_pw_element_press`, `WR_pw_element_check`, `WR_pw_element_uncheck`, `WR_pw_element_select_option`, `WR_pw_element_get_attribute`, `WR_pw_element_inner_text`, `WR_pw_element_inner_html`, `WR_pw_element_is_visible`, `WR_pw_element_is_enabled`, `WR_pw_element_is_checked`, `WR_pw_element_scroll_into_view`, `WR_pw_element_screenshot`, `WR_pw_element_change`.
+- **Script / cookies / waits / viewport / mouse / keyboard / frames** — `WR_pw_evaluate`, `WR_pw_get_cookies`, `WR_pw_add_cookies`, `WR_pw_clear_cookies`, `WR_pw_screenshot`, `WR_pw_wait_for_selector`, `WR_pw_wait_for_load_state`, `WR_pw_wait_for_timeout`, `WR_pw_wait_for_url`, `WR_pw_set_viewport_size`, `WR_pw_mouse_*`, `WR_pw_keyboard_*`.
+- **Mobile emulation / locale / clock** — `WR_pw_emulate("iPhone 13")`, `WR_pw_set_locale`, `WR_pw_set_timezone`, `WR_pw_clock_install` / `_set_time` / `_run_for`, `WR_pw_set_geolocation`, `WR_pw_grant_permissions`.
+- **HAR + route mock** — `WR_pw_start_har_recording`, `WR_pw_stop_har_recording`, `WR_pw_route_mock`, `WR_pw_route_mock_json`, `WR_pw_route_unmock`, `WR_pw_route_clear`.
+
+Existing scripts can move to Playwright incrementally; `TestObject` records are translated to Playwright selectors automatically (`CSS_SELECTOR` → as-is, `XPATH` → `xpath=…`, `ID` → `#…`, `NAME` → `[name="…"]`, `LINK_TEXT` → `text=…`, `PARTIAL_LINK_TEXT` → `:has-text("…")`).
+
+### Cloud Grid
+
+```python
+from je_web_runner import (
+    connect_browserstack,
+    build_browserstack_capabilities,
+)
+
+connect_browserstack(
+    username="...",
+    access_key="...",
+    capabilities=build_browserstack_capabilities(
+        browser_name="chrome",
+        browser_version="latest",
+        os_name="Windows",
+        os_version="11",
+        project="WebRunner",
+        build="ci-2026-04-26",
+    ),
+)
+# All existing WR_* commands now run against the cloud session.
+```
+
+`connect_saucelabs` and `connect_lambdatest` follow the same shape.
+
+### Appium (mobile)
+
+```python
+from je_web_runner import (
+    start_appium_session,
+    build_android_caps,
+    build_ios_caps,
+)
+
+start_appium_session(
+    "https://appium.example/wd/hub",
+    capabilities=build_android_caps(app="/path/to/app.apk"),
+)
+# WR_* commands now drive the mobile session.
+```
+
+## Reports
+
+```python
+from je_web_runner import (
+    generate_html_report,
+    generate_json_report,
+    generate_xml_report,
+    generate_junit_xml_report,
+    generate_allure_report,
+)
+from je_web_runner.utils.generate_report.report_manifest import generate_all_reports
+
+# Run every generator + write a manifest binding all outputs:
+result = generate_all_reports("run_2026_04_26", allure_dir="allure-results")
+print(result["manifest_path"])  # → run_2026_04_26.manifest.json
+```
+
+| Format    | Output shape                                             | Spec-driven? |
+|-----------|----------------------------------------------------------|--------------|
+| JSON      | `<base>_success.json` + `<base>_failure.json`            | split        |
+| HTML      | `<base>.html`                                            | single       |
+| XML       | `<base>_success.xml` + `<base>_failure.xml`              | split        |
+| JUnit XML | `<base>_junit.xml`                                       | single       |
+| Allure    | `<allure_dir>/<uuid>-result.json` (× N)                  | directory    |
+
+The manifest captures the actual paths produced — CI globs no longer need to know the per-format conventions.
+
+## Observability
+
+```python
+from je_web_runner import (
+    test_record_instance,
+    summarise_run,
+    notify_run_summary,
+)
+from je_web_runner.utils.executor.action_executor import executor
+from je_web_runner.utils.observability.otel_tracing import install_executor_tracing
+from je_web_runner.utils.dashboard.live_dashboard import start_dashboard
+from je_web_runner.utils.replay_studio.replay_studio import export_replay_studio
+
+executor.set_failure_screenshot_dir("./failures")
+install_executor_tracing("webrunner")                 # one OTel span per action
+start_dashboard("127.0.0.1", 8080)                    # browser-friendly progress UI
 test_record_instance.set_record_enable(True)
+
+# … run actions …
+
+export_replay_studio("./run.html", screenshot_dir="./failures")
+notify_run_summary("https://hooks.slack.com/services/...")
 ```
 
-### HTML Report
+Failure screenshot, OpenTelemetry tracing, retry policy, and the live dashboard all hook into the same `Executor.event_dict` so they compose without coupling.
 
-```python
-from je_web_runner import generate_html, generate_html_report
+## Test Orchestration
 
-# Generate HTML string
-html_content = generate_html()
+```bash
+# Filter by tag, run in parallel processes, persist a ledger, fail fast on dep breaks.
+python -m je_web_runner \
+    --execute_dir ./actions \
+    --tag smoke,fast \
+    --exclude-tag slow \
+    --parallel 4 \
+    --parallel-mode process \
+    --ledger ./.run_ledger.json
 
-# Save to file (creates test_results.html)
-generate_html_report("test_results")
+# Re-run only the files that failed last time:
+python -m je_web_runner --execute_dir ./actions --rerun-failed ./.run_ledger.json
+
+# Watch a directory and re-run on file change:
+python -m je_web_runner --execute_dir ./actions --watch ./actions
+
+# Distribute across 4 runners deterministically (per machine):
+python -m je_web_runner --execute_dir ./actions --shard 1/4
+python -m je_web_runner --execute_dir ./actions --shard 2/4
+python -m je_web_runner --execute_dir ./actions --shard 3/4
+python -m je_web_runner --execute_dir ./actions --shard 4/4
 ```
 
-HTML reports include color-coded tables: **aqua** for success, **red** for failure. Each row shows the function name, parameters, timestamp, and exception (if any).
+Companion APIs — `WR_run_for_users` (multi-user matrix), `WR_run_ab` (A/B mode), `WR_flakiness_stats`, `WR_classify_failure`, `WR_schedule` + `WR_run_scheduler_for`.
 
-### JSON Report
+## Quality & Security
 
-```python
-from je_web_runner import generate_json, generate_json_report
+- **Action linter** — `WR_lint_action` / `WR_lint_action_file` flag legacy command names, hard-coded URLs, dangerous scripts, missing tags, duplicate consecutive actions.
+- **Migration helper** — `python -m je_web_runner --migrate ./actions` rewrites the eleven legacy aliases to their preferred names (`--migrate-dry-run` reports without writing).
+- **Hard-coded secrets scanner** — `WR_scan_secrets_file` / `WR_assert_no_secrets` catch AWS / GitHub / Slack / JWT / Google / private-key strings before they land in commits.
+- **Security headers audit** — `WR_audit_security_headers_url` checks HSTS / CSP / X-Frame-Options / X-Content-Type-Options / Referrer-Policy / Permissions-Policy.
+- **Accessibility audit** — `WR_a11y_run_audit` injects user-supplied axe-core (`load_axe_source`) and runs against the active session; Playwright variant `WR_pw_a11y_run_audit`.
+- **Lighthouse** — `WR_lighthouse_run` shells out to the official `lighthouse` Node CLI; `WR_lighthouse_assert_scores` enforces budgets.
+- **Page perf metrics** — `WR_perf_collect` / `WR_pw_perf_collect` snapshot FCP / LCP / CLS / TTFB / domContentLoaded / load via `PerformanceObserver`; `WR_perf_assert_within` checks thresholds.
+- **Visual regression** — `WR_visual_capture_baseline` + `WR_visual_compare` (Pillow soft-dep).
+- **Snapshot testing** — `WR_match_snapshot` / `WR_update_snapshot` (text/DOM, unified diff on mismatch).
+- **Network throttling** — `WR_throttle("slow_3g")` / `WR_pw_throttle("offline")`; presets cover Slow 3G, Fast 3G, Regular 4G, Wi-Fi, Offline, no-throttling.
+- **HAR diff** — `WR_diff_har` / `WR_diff_har_files` show added / removed / status-changed requests between two runs.
+- **Arbitrary-script gate** — `executor.set_allow_arbitrary_script(False)` blocks `WR_execute_script` / `WR_execute_async_script` / `WR_pw_evaluate` / `WR_cdp` / `WR_pw_cdp` for untrusted action JSON.
 
-# Generate dicts
-success_dict, failure_dict = generate_json()
-
-# Save to files (creates test_results_success.json and test_results_failure.json)
-generate_json_report("test_results")
-```
-
-### XML Report
-
-```python
-from je_web_runner import generate_xml, generate_xml_report
-
-# Generate XML strings
-success_xml, failure_xml = generate_xml()
-
-# Save to files (creates test_results_success.xml and test_results_failure.xml)
-generate_xml_report("test_results")
-```
-
-## Remote Automation (Socket Server)
-
-WebRunner includes a multi-threaded TCP socket server for remote automation control.
-
-### Start Server
+## Browser Internals
 
 ```python
-from je_web_runner import start_web_runner_socket_server
-
-server = start_web_runner_socket_server(host="localhost", port=9941)
-```
-
-### Client Connection
-
-```python
-import socket
-import json
-
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect(("localhost", 9941))
-
-# Send actions as JSON
-actions = [
-    ["WR_get_webdriver_manager", {"webdriver_name": "chrome"}],
-    ["WR_to_url", {"url": "https://example.com"}],
-    ["WR_quit"]
-]
-sock.send(json.dumps(actions).encode("utf-8"))
-
-# Receive results (ends with "Return_Data_Over_JE\n")
-response = sock.recv(4096).decode("utf-8")
-print(response)
-
-# Shutdown server
-sock.send("quit_server".encode("utf-8"))
-```
-
-## Callback Executor
-
-Execute automation commands with callback functions triggered on completion.
-
-```python
-from je_web_runner import callback_executor
-
-def on_complete():
-    print("Navigation complete!")
-
-callback_executor.callback_function(
-    trigger_function_name="WR_to_url",
-    callback_function=on_complete,
-    url="https://example.com"
+from je_web_runner import (
+    selenium_cdp,                 # raw CDP
+    pw_emulate, pw_set_locale,    # mobile / locale
+)
+from je_web_runner.utils.storage.browser_storage import (
+    selenium_local_storage_set,
+    selenium_indexed_db_drop,
+)
+from je_web_runner.utils.observability.event_capture import (
+    start_event_capture,
+    assert_no_console_errors,
+    assert_no_5xx,
+)
+from je_web_runner.utils.dom_traversal.shadow_iframe import (
+    selenium_query_in_shadow,
+    playwright_shadow_selector,
+    selenium_switch_iframe_chain,
+)
+from je_web_runner.utils.file_transfer.file_helpers import (
+    selenium_upload_file,
+    wait_for_download,
+)
+from je_web_runner.utils.extensions.extension_loader import (
+    selenium_chrome_options_with_extension,
+    playwright_extension_launch_args,
 )
 ```
 
-With parameters:
+Service worker / cache control, console + network event capture and assertions, file upload via element + download dir watcher, browser extension loaders for Chromium-family.
+
+## Test Data
 
 ```python
-def on_element_found(result=None):
-    print(f"Element found: {result}")
-
-callback_executor.callback_function(
-    trigger_function_name="WR_find_element",
-    callback_function=on_element_found,
-    callback_function_param={"result": "search_box"},
-    callback_param_method="kwargs",
-    element_name="search_box"
+from je_web_runner import (
+    load_env, get_env, expand_in_action,                   # .env + ${ENV.X}
+    load_dataset_csv, load_dataset_json, run_with_dataset, # data-driven + ${ROW.x}
+    fake_email, fake_name, fake_credit_card, fake_value,   # faker
+)
+from je_web_runner.utils.factories.factory import user_factory, order_factory
+from je_web_runner.utils.testcontainers_integration.containers import (
+    start_postgres,
+    start_redis,
+    cleanup_all,
 )
 ```
 
-## Package Manager
+Every helper is JSON-callable too (`WR_load_env`, `WR_load_dataset_csv`, `WR_run_with_dataset`, `WR_faker_email`, `WR_user_factory`, `WR_tc_postgres`, …).
 
-Dynamically load external Python packages into the executor at runtime.
-
-```python
-from je_web_runner import execute_action
-
-actions = [
-    # Load the 'time' package
-    ["WR_add_package_to_executor", {"package": "time"}],
-    # Now you can use time.sleep
-    ["time_sleep", [2]]
-]
-
-execute_action(actions)
-```
-
-## Project Template
-
-Generate a quick-start project structure with sample files.
+## Auth & APIs
 
 ```python
-from je_web_runner import create_project_dir
+from je_web_runner import (
+    http_get, http_post, http_assert_status, http_assert_json_contains,
+)
+from je_web_runner.utils.auth.oauth import (
+    client_credentials_token,
+    bearer_header,
+)
+from je_web_runner.utils.database.db_validate import (
+    db_query,
+    db_assert_count,
+    db_assert_value,
+)
 
-create_project_dir(project_path="./my_project", parent_name="WebRunner")
+token = client_credentials_token(
+    "https://idp.example/oauth2/token",
+    "client-id", "client-secret",
+    cache_key="default",
+)
+http_get("https://api.example/users/me", headers=bearer_header(token["access_token"]))
+http_assert_status(200)
+http_assert_json_contains("role", "admin")
+
+db_assert_count(
+    "postgresql+psycopg://user:pw@host/db",
+    "SELECT 1 FROM orders WHERE user_id = :uid",
+    expected=1,
+    params={"uid": 42},
+)
 ```
 
-Generated structure:
+OAuth2 helpers cache tokens in-process and refresh 30 seconds before expiry.
 
+## Recorder
+
+```python
+from je_web_runner import (
+    recorder_start,
+    recorder_stop,
+    recorder_save_recording,
+)
+
+recorder_start(webdriver_wrapper_instance)
+# … user clicks / inputs in the browser …
+recorder_save_recording(
+    webdriver_wrapper_instance,
+    output_path="./recorded.json",
+    raw_events_path="./raw.json",  # optional — debugging
+)
 ```
-my_project/WebRunner/
-├── keyword/
-│   ├── keyword1.json
-│   ├── keyword2.json
-│   └── bad_keyword_1.json
-└── executor/
-    ├── executor_one_file.py
-    ├── executor_folder.py
-    └── executor_bad_file.py
+
+The recorder injects a static JS listener (no CDP, no eval), so it works on Chrome / Firefox / Edge alike. **Sensitive fields are masked by default** — `type=password`, names matching `password / card_number / cvv / ssn / secret / token / api_key / otp / passcode`, and 13–19-digit numeric values are replaced with `***MASKED***`.
+
+## CI / Integrations
+
+```python
+from je_web_runner.utils.notifier.webhook_notifier import notify_run_summary
+from je_web_runner.utils.test_management.jira_client import jira_create_failure_issues
+from je_web_runner.utils.test_management.testrail_client import (
+    testrail_send_results,
+    testrail_results_from_pairs,
+)
+from je_web_runner.utils.ci_annotations.github_annotations import (
+    emit_failure_annotations,
+    emit_from_junit_xml,
+)
 ```
+
+For GitHub Actions inline annotations, run `emit_from_junit_xml("run_junit.xml")` after `generate_junit_xml_report` — failed test cases surface as `::error file=…::` lines on the PR diff.
+
+`docker/docker-compose.yml` ships a Selenium Grid 4 stack (hub + Chrome + Firefox nodes); `docker/.env.example` exposes the version pin and concurrency settings.
+
+The IDE config examples under [`docs/ide/`](docs/ide/) wire VS Code and JetBrains to the action JSON schema produced by `WR_export_action_schema`.
+
+## AI Assistance
+
+```python
+from je_web_runner.utils.ai_assist.llm_assist import (
+    set_llm_callable,
+    suggest_locator,
+    generate_actions_from_prompt,
+)
+
+# Plug in any callable that returns a string:
+def my_llm(prompt: str) -> str:
+    # call OpenAI / Anthropic / local Ollama / mock
+    ...
+
+set_llm_callable(my_llm)
+
+locator = suggest_locator(html_blob, description="primary submit button")
+draft = generate_actions_from_prompt("log in as alice and place an order")
+```
+
+WebRunner intentionally ships **no built-in LLM client** — the boundary is a single `Callable[[str], str]` so swapping provider is one line.
 
 ## CLI Usage
 
-WebRunner can be executed directly from the command line.
-
 ```bash
-# Execute a single JSON action file
+# Original entry points (unchanged):
 python -m je_web_runner -e actions.json
-
-# Execute all JSON files in a directory
 python -m je_web_runner -d ./actions/
+python -m je_web_runner --execute_str '[["WR_quit_all"]]'
 
-# Execute a JSON string directly
-python -m je_web_runner --execute_str '[["WR_get_webdriver_manager", {"webdriver_name": "chrome"}], ["WR_quit"]]'
+# Newer flags:
+python -m je_web_runner -d ./actions --tag smoke --exclude-tag slow
+python -m je_web_runner -d ./actions --parallel 4 --parallel-mode process
+python -m je_web_runner -d ./actions --ledger ledger.json
+python -m je_web_runner -d ./actions --rerun-failed ledger.json
+python -m je_web_runner -d ./actions --shard 1/4
+python -m je_web_runner -d ./actions --watch ./actions
+python -m je_web_runner --report run                          # JSON + HTML + XML + JUnit
+python -m je_web_runner --validate ./action_smoke.json
+python -m je_web_runner --migrate ./actions --migrate-dry-run
 ```
 
-## WebDriver Options Configuration
-
-Configure browser options before launching.
-
-```python
-from je_web_runner import set_webdriver_options_argument, get_webdriver_manager
-
-# Set browser arguments (e.g., headless mode)
-options = set_webdriver_options_argument("chrome", [
-    "--headless",
-    "--disable-gpu",
-    "--no-sandbox",
-    "--window-size=1920,1080"
-])
-
-# Launch with options
-manager = get_webdriver_manager("chrome", options=["--headless", "--disable-gpu"])
-```
-
-### DesiredCapabilities
-
-```python
-from je_web_runner import get_desired_capabilities, get_desired_capabilities_keys
-
-# View available capabilities
-keys = get_desired_capabilities_keys()
-
-# Get capabilities for a browser
-caps = get_desired_capabilities("CHROME")
-```
+Compose any of the flags above; the dispatcher applies tag filters → ledger / re-run-failed → sharding → dependency-aware ordering before handing files to the runner.
 
 ## Test Record
-
-All WebRunner actions are automatically recorded for audit trails and report generation.
 
 ```python
 from je_web_runner import test_record_instance
 
-# Enable recording
 test_record_instance.set_record_enable(True)
-
-# ... perform automation ...
-
-# Access records
+# … perform automation …
 records = test_record_instance.test_record_list
-
-# Each record contains:
-# {
-#     "function_name": "to_url",
-#     "local_param": {"url": "https://example.com"},
-#     "time": "2025-01-01 12:00:00",
-#     "program_exception": "None"
-# }
-
-# Clear records
+# Each record: {"function_name", "local_param", "time", "program_exception"}
 test_record_instance.clean_record()
 ```
 
 ## Exception Handling
 
-WebRunner provides a hierarchy of custom exceptions:
+WebRunner provides a hierarchy of custom exceptions — every helper raises a domain-specific subclass of `WebRunnerException`:
 
-| Exception | Description |
-|-----------|-------------|
-| `WebRunnerException` | Base exception |
-| `WebRunnerWebDriverNotFoundException` | WebDriver not found |
-| `WebRunnerOptionsWrongTypeException` | Invalid options type |
-| `WebRunnerArgumentWrongTypeException` | Invalid argument type |
-| `WebRunnerWebDriverIsNoneException` | WebDriver is None |
-| `WebRunnerExecuteException` | Execution error |
-| `WebRunnerJsonException` | JSON processing error |
-| `WebRunnerGenerateJsonReportException` | JSON report generation error |
-| `WebRunnerAssertException` | Assertion failure |
-| `WebRunnerHTMLException` | HTML report error |
-| `WebRunnerAddCommandException` | Command registration error |
-| `XMLException` / `XMLTypeException` | XML processing error |
-| `CallbackExecutorException` | Callback execution error |
+| Exception                                  | Description                                      |
+|--------------------------------------------|--------------------------------------------------|
+| `WebRunnerException`                       | Base                                             |
+| `WebRunnerWebDriverNotFoundException`      | WebDriver not found                              |
+| `WebRunnerOptionsWrongTypeException`       | Invalid options type                             |
+| `WebRunnerArgumentWrongTypeException`      | Invalid argument type                            |
+| `WebRunnerWebDriverIsNoneException`        | WebDriver is None                                |
+| `WebRunnerExecuteException`                | Action execution error                           |
+| `WebRunnerJsonException`                   | JSON processing error                            |
+| `WebRunnerGenerateJsonReportException`     | JSON / XML / JUnit / Allure report error         |
+| `WebRunnerHTMLException`                   | HTML report error                                |
+| `WebRunnerAddCommandException`             | Custom command registration error                |
+| `WebRunnerAssertException`                 | Assertion failure                                |
+| `XMLException` / `XMLTypeException`        | XML processing error                             |
+| `CallbackExecutorException`                | Callback execution error                         |
+| `PlaywrightBackendError`                   | Playwright backend / element failure             |
+| `PlaywrightLocatorError`                   | TestObject → Playwright selector mapping         |
+| `RecorderError` / `VisualRegressionError`  | Recorder / visual regression                     |
+| `HealingError` / `EnvConfigError` / `DataDrivenError` | Self-healing / env / dataset            |
+| `HttpAssertionError` / `HttpError`         | HTTP API assertions                              |
+| `AccessibilityError` / `LighthouseError`   | a11y / Lighthouse                                |
+| `NotifierError` / `JiraError` / `TestRailError` | Notifications / test management            |
+| `CDPError` / `StorageError` / `ServiceWorkerError` | Browser internals                        |
+| `OAuthError` / `DatabaseValidationError`   | Auth / DB                                        |
+| `NetworkEmulationError` / `LoadTestError`  | Throttling / Locust                              |
+| `ShardingError` / `MigrationError` / `ActionLinterError` | Orchestration / linting              |
+| `LLMAssistError` / `OTelTracingError`      | AI / observability                               |
 
 ## Logging
 
-WebRunner uses a rotating file handler for logging.
+WebRunner uses a rotating file handler:
 
 - **Log file:** `WEBRunner.log`
-- **Log level:** WARNING and above
-- **Max file size:** 1 GB
+- **Level:** WARNING+
+- **Max size:** 1 GB
 - **Format:** `%(asctime)s | %(name)s | %(levelname)s | %(message)s`
 
 ## Supported Browsers
 
-| Browser | Key |
-|---------|-----|
-| Google Chrome | `chrome` |
-| Chromium | `chromium` |
-| Mozilla Firefox | `firefox` |
-| Microsoft Edge | `edge` |
-| Internet Explorer | `ie` |
-| Apple Safari | `safari` |
+| Browser           | Selenium key | Playwright   |
+|-------------------|--------------|--------------|
+| Google Chrome     | `chrome`     | `chromium`   |
+| Chromium          | `chromium`   | `chromium`   |
+| Mozilla Firefox   | `firefox`    | `firefox`    |
+| Microsoft Edge    | `edge`       | `chromium`   |
+| Internet Explorer | `ie`         | n/a          |
+| Apple Safari      | `safari`     | `webkit`     |
 
 ## Supported Platforms
 
@@ -700,4 +781,3 @@ WebRunner uses a rotating file handler for logging.
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
