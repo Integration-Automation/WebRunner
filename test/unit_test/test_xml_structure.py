@@ -1,4 +1,5 @@
 import unittest
+from typing import Any, cast
 
 from defusedxml.ElementTree import fromstring
 
@@ -37,8 +38,9 @@ class TestXmlStructure(unittest.TestCase):
         self.assertEqual(result["root"]["value"], "123")
 
     def test_invalid_type_raises(self):
+        bad_input: Any = "not a dict"
         with self.assertRaises(TypeError):
-            dict_to_elements_tree("not a dict")
+            dict_to_elements_tree(cast(dict, bad_input))
 
     def test_multiple_root_keys_raises(self):
         with self.assertRaises(ValueError):

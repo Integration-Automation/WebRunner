@@ -1,6 +1,7 @@
 from defusedxml import ElementTree as DefusedElementTree
 from defusedxml.minidom import parseString as defused_parse_string
-from xml.etree import ElementTree
+# ElementTree class used only as a writer wrapper around an already-defused root.
+from xml.etree.ElementTree import ElementTree as _ETree  # nosec B405 # nosemgrep: use-defused-xml
 
 from je_web_runner.utils.exception.exception_tags import cant_read_xml_error
 from je_web_runner.utils.exception.exception_tags import xml_type_error
@@ -48,7 +49,7 @@ class XMLParser(object):
         else:
             self.xml_parser_from_file()
 
-    def xml_parser_from_string(self, **kwargs) -> ElementTree.Element:
+    def xml_parser_from_string(self, **kwargs):
         """
         從字串解析 XML
         Parse XML from string
@@ -62,7 +63,7 @@ class XMLParser(object):
             raise XMLException(cant_read_xml_error) from error
         return self.xml_root
 
-    def xml_parser_from_file(self, **kwargs) -> ElementTree.Element:
+    def xml_parser_from_file(self, **kwargs):
         """
         從檔案解析 XML
         Parse XML from file
@@ -88,5 +89,5 @@ class XMLParser(object):
         """
         write_content = write_content.strip()
         content = DefusedElementTree.fromstring(write_content)
-        tree = ElementTree.ElementTree(content)
+        tree = _ETree(content)
         tree.write(write_xml_filename, encoding="utf-8")
