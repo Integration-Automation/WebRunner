@@ -554,6 +554,20 @@ class Executor(object):
             # Add package
             "WR_add_package_to_executor": package_manager.add_package_to_executor,
             "WR_add_package_to_callback_executor": package_manager.add_package_to_callback_executor,
+
+            # ----- naming aliases (clearer / consistent names) ------------
+            # Legacy names above are kept for back-compat; prefer these.
+            "WR_new_driver": web_runner.new_driver,                              # alias of WR_get_webdriver_manager
+            "WR_quit_all": web_runner.quit,                                       # alias of WR_quit
+            "WR_quit_current": webdriver_wrapper_instance.quit,                   # alias of WR_single_quit
+            "WR_explicit_wait": webdriver_wrapper_instance.explict_wait,          # fixes "explict" typo
+            "WR_save_test_object": test_object_record.save_test_object,           # snake_case form of WR_SaveTestObject
+            "WR_clear_test_objects": test_object_record.clean_record,             # accurate verb vs "Clean"
+            "WR_find_recorded_element": webdriver_wrapper_instance.find_element_with_test_object_record,
+            "WR_find_recorded_elements": webdriver_wrapper_instance.find_elements_with_test_object_record,
+            "WR_element_input": web_runner.webdriver_element.input_to_element,    # WR_element_* prefix
+            "WR_element_click": web_runner.webdriver_element.click_element,       # WR_element_* prefix
+            "WR_element_assert": web_runner.webdriver_element.check_current_web_element,
         }
 
         # 將安全的 Python 內建函式加入事件字典，過濾可執行任意程式碼者
