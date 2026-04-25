@@ -92,6 +92,7 @@ from je_web_runner.utils.docs import command_reference as _docs
 from je_web_runner.utils.database import db_validate as _db
 from je_web_runner.utils.scheduler import cron_runner as _scheduler
 from je_web_runner.utils.multi_user import matrix as _matrix
+from je_web_runner.utils.replay_studio import replay_studio as _replay
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -418,6 +419,10 @@ class Executor(object):
             "WR_classify_error": _classifier.classify_error,
             "WR_classify_failure": _classifier.classify,
             "WR_classify_failures": _classifier.classify_failures,
+
+            # replay studio (HTML timeline)
+            "WR_build_replay_html": _replay.build_replay_html,
+            "WR_export_replay_studio": _replay.export_replay_studio,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
