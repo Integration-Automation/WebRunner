@@ -47,6 +47,7 @@ from je_web_runner.utils.har_diff import har_diff as _har_diff
 from je_web_runner.utils.test_filter import dependency as _dependency
 from je_web_runner.utils.test_filter import tag_filter as _tag_filter
 from je_web_runner.utils.ab_run import ab_runner as _ab
+from je_web_runner.utils.cloud_grid import cloud_drivers as _cloud
 from je_web_runner.utils.run_ledger import flaky as _flaky
 from je_web_runner.utils.run_ledger import ledger as _ledger
 from je_web_runner.utils.service_worker import sw_control as _sw
@@ -363,6 +364,15 @@ class Executor(object):
             # A/B run mode
             "WR_run_ab": _ab.run_ab,
             "WR_diff_ab_records": _ab.diff_records,
+
+            # cloud grid (BrowserStack / Sauce Labs / LambdaTest)
+            "WR_browserstack_capabilities": _cloud.build_browserstack_capabilities,
+            "WR_saucelabs_capabilities": _cloud.build_saucelabs_capabilities,
+            "WR_lambdatest_capabilities": _cloud.build_lambdatest_capabilities,
+            "WR_connect_browserstack": _cloud.connect_browserstack,
+            "WR_connect_saucelabs": _cloud.connect_saucelabs,
+            "WR_connect_lambdatest": _cloud.connect_lambdatest,
+            "WR_start_remote_driver": _cloud.start_remote_driver,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
