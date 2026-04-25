@@ -9,7 +9,7 @@ runs without it.
 from __future__ import annotations
 
 import time
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -65,14 +65,14 @@ def build_http_user_class(
     Each action dict supports: ``name``, ``method``, ``path``, ``weight``,
     ``json_body``, ``headers``, ``params``.
     """
-    HttpUser, between, task, _Environment = _require_locust()
+    http_user_cls, between, task, _environment_cls = _require_locust()
     attrs: Dict[str, Any] = {"wait_time": between(wait_min, wait_max)}
     for index, action in enumerate(actions):
         weight = int(action.get("weight", 1))
         attrs[f"task_{index}"] = task(weight)(_build_task(action))
     # Honour Locust's custom metaclass instead of forcing the built-in ``type``.
-    user_metaclass = type(HttpUser)
-    return user_metaclass("WebRunnerHttpUser", (HttpUser,), attrs)
+    user_metaclass = type(http_user_cls)
+    return user_metaclass("WebRunnerHttpUser", (http_user_cls,), attrs)
 
 
 def run_locust(
@@ -95,11 +95,11 @@ def run_locust(
     if not isinstance(host, str) or not (host.startswith("http://") or host.startswith("https://")):
         raise LoadTestError(f"host must be http(s): {host!r}")
     web_runner_logger.info(f"run_locust host={host} users={num_users} run_seconds={run_seconds}")
-    _HttpUser, _between, _task, Environment = _require_locust()
+    _http_user_cls, _between, _task, environment_cls = _require_locust()
     user_class = build_http_user_class(actions, wait_min=wait_min, wait_max=wait_max)
     user_class.host = host
 
-    env = Environment(user_classes=[user_class])
+    env = environment_cls(user_classes=[user_class])
     runner = env.create_local_runner()
     runner.start(num_users, spawn_rate=spawn_rate)
     try:

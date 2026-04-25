@@ -10,7 +10,7 @@ clear install hint.
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Any, ContextManager, Optional
+from typing import Any, ContextManager
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -54,19 +54,24 @@ def init_tracer(
     """
     global _tracer
     web_runner_logger.info(f"init_tracer service={service_name}")
+    # The names below are real classes from opentelemetry-sdk; the
+    # ``CamelCase`` in lower-scope is unavoidable (SonarCloud S117 false
+    # positive on import aliases).
     (
         trace,
-        Resource,
-        TracerProvider,
-        _BatchSpanProcessor,
-        SimpleSpanProcessor,
-        ConsoleSpanExporter,
+        resource_cls,
+        tracer_provider_cls,
+        _batch_processor_cls,  # imported for completeness; not used here
+        simple_processor_cls,
+        console_exporter_cls,
     ) = _require_otel()
-    provider = TracerProvider(resource=Resource.create({"service.name": service_name}))
+    provider = tracer_provider_cls(
+        resource=resource_cls.create({"service.name": service_name})
+    )
     if span_processor is not None:
         provider.add_span_processor(span_processor)
     elif use_console_exporter:
-        provider.add_span_processor(SimpleSpanProcessor(ConsoleSpanExporter()))
+        provider.add_span_processor(simple_processor_cls(console_exporter_cls()))
     trace.set_tracer_provider(provider)
     _tracer = trace.get_tracer(service_name)
     return _tracer

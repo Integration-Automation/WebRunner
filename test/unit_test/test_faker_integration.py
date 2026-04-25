@@ -1,6 +1,6 @@
 import sys
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from je_web_runner.utils.test_data.faker_integration import (
     FakerError,

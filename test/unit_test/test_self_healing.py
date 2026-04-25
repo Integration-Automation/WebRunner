@@ -4,7 +4,6 @@ from unittest.mock import MagicMock, patch
 from je_web_runner.element.web_element_wrapper import web_element_wrapper
 from je_web_runner.utils.self_healing.healing_locator import (
     HealingError,
-    HealingRegistry,
     clear_fallbacks,
     find_with_healing_playwright,
     find_with_healing_selenium,

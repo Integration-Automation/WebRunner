@@ -4,7 +4,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from je_web_runner.utils.lighthouse.lighthouse_runner import (
     LighthouseError,

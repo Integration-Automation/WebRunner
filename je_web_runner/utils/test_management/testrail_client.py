@@ -4,7 +4,7 @@ TestRail integration: push case-level pass/fail results into a run.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List
 
 import requests
 from requests.auth import HTTPBasicAuth

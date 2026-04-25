@@ -21,7 +21,7 @@ class EnvConfigError(WebRunnerException):
     """Raised when an env file cannot be loaded or a placeholder is missing."""
 
 
-_PLACEHOLDER_RE = re.compile(r"\$\{ENV\.([A-Za-z_][A-Za-z0-9_]*)\}")
+_PLACEHOLDER_RE = re.compile(r"\$\{ENV\.([A-Za-z_]\w*)\}")
 
 
 def load_env(env_name: Optional[str] = None, env_dir: str = ".", override: bool = False) -> str:

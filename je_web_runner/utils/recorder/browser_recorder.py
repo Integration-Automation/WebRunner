@@ -90,7 +90,7 @@ _SENSITIVE_NAME_RE = re.compile(
     r"(password|card[-_]?number|cvv|cvc|ssn|secret|token|api[-_]?key|otp|passcode)",
     re.IGNORECASE,
 )
-_LONG_DIGIT_RE = re.compile(r"^[0-9]{13,19}$")
+_LONG_DIGIT_RE = re.compile(r"^\d{13,19}$")
 
 
 def _looks_sensitive(selector: str, value: str) -> bool:

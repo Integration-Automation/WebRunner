@@ -19,7 +19,7 @@ class DataDrivenError(WebRunnerException):
     """Raised when a dataset cannot be loaded or a placeholder is unknown."""
 
 
-_ROW_PLACEHOLDER_RE = re.compile(r"\$\{ROW\.([A-Za-z_][A-Za-z0-9_]*)\}")
+_ROW_PLACEHOLDER_RE = re.compile(r"\$\{ROW\.([A-Za-z_]\w*)\}")
 
 
 def load_dataset_csv(path: str, encoding: str = "utf-8") -> List[Dict[str, str]]:

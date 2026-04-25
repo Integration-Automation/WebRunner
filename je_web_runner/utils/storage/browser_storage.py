@@ -6,7 +6,6 @@ so they work without backend-specific shims.
 """
 from __future__ import annotations
 
-import json as _json
 from typing import Any, Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException

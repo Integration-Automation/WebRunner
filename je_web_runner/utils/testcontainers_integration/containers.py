@@ -48,8 +48,8 @@ def start_postgres(
     Start a Postgres container and return the testcontainers handle.
     """
     web_runner_logger.info(f"start_postgres image={image}")
-    PostgresContainer = _require("postgres", "PostgresContainer")
-    container = PostgresContainer(image, user=user, password=password, dbname=dbname)
+    postgres_cls = _require("postgres", "PostgresContainer")
+    container = postgres_cls(image, user=user, password=password, dbname=dbname)
     container.start()
     _started.append(container)
     return container
@@ -57,8 +57,8 @@ def start_postgres(
 
 def start_redis(image: str = "redis:7-alpine") -> Any:
     web_runner_logger.info(f"start_redis image={image}")
-    RedisContainer = _require("redis", "RedisContainer")
-    container = RedisContainer(image)
+    redis_cls = _require("redis", "RedisContainer")
+    container = redis_cls(image)
     container.start()
     _started.append(container)
     return container
@@ -70,8 +70,8 @@ def start_generic(image: str, ports: Optional[Dict[int, int]] = None) -> Any:
     Start any Docker image. ``ports`` is a {container_port: host_port} map.
     """
     web_runner_logger.info(f"start_generic image={image}")
-    DockerContainer = _require("core.container", "DockerContainer")
-    container = DockerContainer(image)
+    docker_cls = _require("core.container", "DockerContainer")
+    container = docker_cls(image)
     if ports:
         for container_port, host_port in ports.items():
             container.with_bind_ports(int(container_port), int(host_port))

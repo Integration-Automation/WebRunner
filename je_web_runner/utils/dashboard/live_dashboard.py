@@ -94,8 +94,10 @@ class _Handler(BaseHTTPRequestHandler):
             return
         self._send(404, b"not found", "text/plain")
 
-    def log_message(self, format: str, *args: Any) -> None:  # noqa: A002 — base sig
-        # Quiet by default — route through WebRunner's logger at debug level.
+    def log_message(self, format: str, *args: Any) -> None:  # pylint: disable=redefined-builtin
+        # ``format`` shadows the built-in here because BaseHTTPRequestHandler
+        # defines the method with that exact parameter name; renaming would
+        # break the override contract. Routes through WebRunner's logger.
         web_runner_logger.debug("dashboard: " + (format % args))
 
 

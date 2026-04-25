@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import patch
 
-from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
 from je_web_runner.utils.executor.action_executor import Executor
 
 
