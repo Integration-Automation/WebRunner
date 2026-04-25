@@ -84,6 +84,7 @@ from je_web_runner.utils.test_data import faker_integration as _fakerint
 from je_web_runner.utils.extensions import extension_loader as _ext
 from je_web_runner.utils.dom_traversal import shadow_iframe as _dom
 from je_web_runner.utils.file_transfer import file_helpers as _ft
+from je_web_runner.utils.linter import action_linter as _linter
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -361,6 +362,11 @@ class Executor(object):
             "WR_wait_for_download": _ft.wait_for_download,
             "WR_list_new_downloads": _ft.list_new_downloads,
             "WR_snapshot_directory": _ft.snapshot_directory,
+
+            # action linter
+            "WR_lint_action": _linter.lint_action,
+            "WR_lint_action_file": _linter.lint_action_file,
+            "WR_lint_severity_counts": _linter.severity_counts,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
