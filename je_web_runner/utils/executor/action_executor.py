@@ -72,6 +72,7 @@ from je_web_runner.utils.test_management import jira_client as _jira
 from je_web_runner.utils.test_management import testrail_client as _testrail
 from je_web_runner.utils.run_ledger import flaky as _flaky
 from je_web_runner.utils.run_ledger import ledger as _ledger
+from je_web_runner.utils.run_ledger import classifier as _classifier
 from je_web_runner.utils.service_worker import sw_control as _sw
 from je_web_runner.utils.storage import browser_storage as _storage
 from je_web_runner.utils.cdp.cdp_commands import (
@@ -412,6 +413,11 @@ class Executor(object):
 
             # multi-user matrix runner
             "WR_run_for_users": _matrix.run_for_users,
+
+            # failure classifier
+            "WR_classify_error": _classifier.classify_error,
+            "WR_classify_failure": _classifier.classify,
+            "WR_classify_failures": _classifier.classify_failures,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
