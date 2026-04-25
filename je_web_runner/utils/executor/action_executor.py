@@ -87,6 +87,7 @@ from je_web_runner.utils.file_transfer import file_helpers as _ft
 from je_web_runner.utils.linter import action_linter as _linter
 from je_web_runner.utils.linter import migration as _migration
 from je_web_runner.utils.schema import action_schema as _schema
+from je_web_runner.utils.docs import command_reference as _docs
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -378,6 +379,11 @@ class Executor(object):
             # JSON Schema export
             "WR_build_action_schema": _schema.build_action_schema,
             "WR_export_action_schema": _schema.export_schema,
+
+            # auto-generated docs
+            "WR_build_command_reference": _docs.build_command_reference,
+            "WR_export_command_reference": _docs.export_command_reference,
+            "WR_list_commands": _docs.list_commands,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
