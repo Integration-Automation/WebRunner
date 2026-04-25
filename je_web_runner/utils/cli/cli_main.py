@@ -101,6 +101,15 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="migrate_dry_run",
         help="with --migrate, only report changes without writing files",
     )
+    parser.add_argument(
+        "--shard",
+        type=str,
+        default=None,
+        help=(
+            "shard spec INDEX/TOTAL (e.g. 1/4) for distributed --execute_dir; "
+            "files are partitioned deterministically by SHA-1 path hash"
+        ),
+    )
     return parser
 
 
@@ -194,6 +203,7 @@ def _run_dir(
     ledger_path: Optional[str] = None,
     rerun_only: Optional[Sequence[str]] = None,
     parallel_mode: str = "thread",
+    shard_spec: Optional[str] = None,
 ) -> None:
     files = get_dir_files_as_list(directory)
     if rerun_only is not None:
@@ -201,6 +211,9 @@ def _run_dir(
         files = [path for path in files if path in rerun_set]
     if include_tags or exclude_tags:
         files = filter_paths(files, include=include_tags, exclude=exclude_tags)
+    if shard_spec:
+        from je_web_runner.utils.sharding.shard import partition_with_spec
+        files = partition_with_spec(files, shard_spec)
 
     has_dependencies = any(build_dependency_graph(files).get(path) for path in files)
     if has_dependencies:
@@ -284,6 +297,7 @@ def _dispatch(args: argparse.Namespace) -> None:
                 ledger_path=args.ledger,
                 rerun_only=rerun_only,
                 parallel_mode=args.parallel_mode,
+                shard_spec=args.shard,
             )
 
         if args.watch:

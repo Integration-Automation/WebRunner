@@ -97,6 +97,7 @@ from je_web_runner.utils.auth import oauth as _oauth
 from je_web_runner.utils.factories import factory as _factories
 from je_web_runner.utils.testcontainers_integration import containers as _tc
 from je_web_runner.utils.dashboard import live_dashboard as _dashboard
+from je_web_runner.utils.sharding import shard as _sharding
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -452,6 +453,11 @@ class Executor(object):
             # live dashboard
             "WR_dashboard_start": _dashboard.start_dashboard,
             "WR_dashboard_stop": _dashboard.stop_dashboard,
+
+            # sharding
+            "WR_parse_shard_spec": _sharding.parse_shard_spec,
+            "WR_partition": _sharding.partition,
+            "WR_partition_with_spec": _sharding.partition_with_spec,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
