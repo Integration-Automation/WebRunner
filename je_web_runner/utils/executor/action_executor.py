@@ -27,6 +27,7 @@ from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
+from je_web_runner.utils.json.json_validator import validate_action_file, validate_action_json
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.package_manager.package_manager_class import package_manager
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
@@ -136,6 +137,10 @@ class Executor(object):
             # execute
             "WR_execute_action": self.execute_action,
             "WR_execute_files": self.execute_files,
+
+            # validate
+            "WR_validate_action_json": validate_action_json,
+            "WR_validate_action_file": validate_action_file,
 
             # Add package
             "WR_add_package_to_executor": package_manager.add_package_to_executor,
