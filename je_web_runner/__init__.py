@@ -57,6 +57,13 @@ from je_web_runner.utils.data_driven.data_runner import (
     run_with_dataset,
 )
 from je_web_runner.utils.env_config.env_loader import EnvConfigError, expand_in_action, get_env, load_env
+from je_web_runner.utils.notifier.webhook_notifier import (
+    NotifierError,
+    notify_run_summary,
+    notify_slack,
+    notify_webhook,
+    summarise_run,
+)
 from je_web_runner.utils.self_healing.healing_locator import (
     HealingError,
     HealingRegistry,
@@ -164,6 +171,8 @@ __all__ = [
     "HttpAssertionError",
     "AccessibilityError", "load_axe_source", "selenium_run_audit",
     "playwright_run_audit", "summarise_violations",
+    "summarise_run", "notify_webhook", "notify_slack", "notify_run_summary",
+    "NotifierError",
     "validate_action_json", "validate_action_file", "validate_action_files",
     "visual_capture_baseline", "visual_compare_with_baseline",
     "recorder_start", "recorder_stop", "recorder_pull_events",

@@ -55,6 +55,12 @@ from je_web_runner.utils.data_driven.data_runner import (
     run_with_dataset,
 )
 from je_web_runner.utils.env_config.env_loader import expand_in_action, get_env, load_env
+from je_web_runner.utils.notifier.webhook_notifier import (
+    notify_run_summary,
+    notify_slack,
+    notify_webhook,
+    summarise_run,
+)
 from je_web_runner.utils.self_healing.healing_locator import (
     clear_fallbacks as _heal_clear_fallbacks,
     find_with_healing_playwright as _heal_find_pw,
@@ -253,6 +259,12 @@ class Executor(object):
             "WR_a11y_run_audit": _axe_run_selenium,
             "WR_pw_a11y_run_audit": _axe_run_pw,
             "WR_a11y_summarise": _axe_summarise,
+
+            # webhook / Slack notifications
+            "WR_summarise_run": summarise_run,
+            "WR_notify_webhook": notify_webhook,
+            "WR_notify_slack": notify_slack,
+            "WR_notify_run_summary": notify_run_summary,
 
             # visual regression
             "WR_visual_capture_baseline": _visual_capture_baseline,
