@@ -43,6 +43,7 @@ from je_web_runner.utils.secrets_scanner import scanner as _secrets
 from je_web_runner.utils.security_headers import headers_audit as _headers_audit
 from je_web_runner.utils.perf_metrics import page_metrics as _perf
 from je_web_runner.utils.snapshot import snapshot as _snapshot
+from je_web_runner.utils.har_diff import har_diff as _har_diff
 from je_web_runner.utils.service_worker import sw_control as _sw
 from je_web_runner.utils.storage import browser_storage as _storage
 from je_web_runner.utils.cdp.cdp_commands import (
@@ -333,6 +334,10 @@ class Executor(object):
             "WR_match_snapshot": _snapshot.match_snapshot,
             "WR_update_snapshot": _snapshot.update_snapshot,
             "WR_delete_snapshot": _snapshot.delete_snapshot,
+
+            # HAR diff
+            "WR_diff_har": _har_diff.diff_har,
+            "WR_diff_har_files": _har_diff.diff_har_files,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
