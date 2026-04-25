@@ -29,6 +29,8 @@ from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml_report
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml_report
+from je_web_runner.utils.generate_report.generate_allure_report import generate_allure
+from je_web_runner.utils.generate_report.generate_allure_report import generate_allure_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.accessibility.axe_audit import (
     load_axe_source as _axe_load_source,
@@ -199,6 +201,8 @@ class Executor(object):
             "WR_generate_xml_report": generate_xml_report,
             "WR_generate_junit_xml": generate_junit_xml,
             "WR_generate_junit_xml_report": generate_junit_xml_report,
+            "WR_generate_allure": generate_allure,
+            "WR_generate_allure_report": generate_allure_report,
 
             # execute
             "WR_execute_action": self.execute_action,
