@@ -42,6 +42,7 @@ from je_web_runner.utils.observability import event_capture as _event_capture
 from je_web_runner.utils.secrets_scanner import scanner as _secrets
 from je_web_runner.utils.security_headers import headers_audit as _headers_audit
 from je_web_runner.utils.perf_metrics import page_metrics as _perf
+from je_web_runner.utils.snapshot import snapshot as _snapshot
 from je_web_runner.utils.service_worker import sw_control as _sw
 from je_web_runner.utils.storage import browser_storage as _storage
 from je_web_runner.utils.cdp.cdp_commands import (
@@ -327,6 +328,11 @@ class Executor(object):
             "WR_perf_collect": _perf.selenium_collect_metrics,
             "WR_pw_perf_collect": _perf.playwright_collect_metrics,
             "WR_perf_assert_within": _perf.assert_metrics_within,
+
+            # snapshot testing
+            "WR_match_snapshot": _snapshot.match_snapshot,
+            "WR_update_snapshot": _snapshot.update_snapshot,
+            "WR_delete_snapshot": _snapshot.delete_snapshot,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
