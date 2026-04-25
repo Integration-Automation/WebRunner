@@ -37,6 +37,13 @@ from je_web_runner.utils.data_driven.data_runner import (
     run_with_dataset,
 )
 from je_web_runner.utils.env_config.env_loader import expand_in_action, get_env, load_env
+from je_web_runner.utils.self_healing.healing_locator import (
+    clear_fallbacks as _heal_clear_fallbacks,
+    find_with_healing_playwright as _heal_find_pw,
+    find_with_healing_selenium as _heal_find_selenium,
+    register_fallback as _heal_register_fallback,
+    register_fallbacks as _heal_register_fallbacks,
+)
 from je_web_runner.utils.json.json_validator import validate_action_file, validate_action_json
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.package_manager.package_manager_class import package_manager
@@ -203,6 +210,13 @@ class Executor(object):
 
             # retry policy
             "WR_set_retry_policy": self.set_retry_policy,
+
+            # self-healing locators
+            "WR_register_fallback_locator": _heal_register_fallback,
+            "WR_register_fallback_locators": _heal_register_fallbacks,
+            "WR_clear_fallback_locators": _heal_clear_fallbacks,
+            "WR_find_with_healing": _heal_find_selenium,
+            "WR_pw_find_with_healing": _heal_find_pw,
 
             # visual regression
             "WR_visual_capture_baseline": _visual_capture_baseline,

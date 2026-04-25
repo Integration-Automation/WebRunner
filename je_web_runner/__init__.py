@@ -36,6 +36,16 @@ from je_web_runner.utils.data_driven.data_runner import (
     run_with_dataset,
 )
 from je_web_runner.utils.env_config.env_loader import EnvConfigError, expand_in_action, get_env, load_env
+from je_web_runner.utils.self_healing.healing_locator import (
+    HealingError,
+    HealingRegistry,
+    clear_fallbacks,
+    find_with_healing_playwright,
+    find_with_healing_selenium,
+    healing_registry,
+    register_fallback,
+    register_fallbacks,
+)
 from je_web_runner.utils.project.create_project_structure import create_project_dir
 from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as visual_capture_baseline
 from je_web_runner.utils.visual_regression.visual_diff import compare_with_baseline as visual_compare_with_baseline
@@ -120,6 +130,9 @@ __all__ = [
     "load_env", "get_env", "expand_in_action", "EnvConfigError",
     "load_dataset_csv", "load_dataset_json", "expand_with_row",
     "run_with_dataset", "DataDrivenError",
+    "HealingError", "HealingRegistry", "healing_registry",
+    "register_fallback", "register_fallbacks", "clear_fallbacks",
+    "find_with_healing_selenium", "find_with_healing_playwright",
     "validate_action_json", "validate_action_file", "validate_action_files",
     "visual_capture_baseline", "visual_compare_with_baseline",
     "recorder_start", "recorder_stop", "recorder_pull_events",
