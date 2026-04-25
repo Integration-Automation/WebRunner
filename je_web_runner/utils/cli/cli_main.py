@@ -17,7 +17,12 @@ from je_web_runner.utils.file_process.get_dir_file_list import get_dir_files_as_
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.json.json_validator import validate_action_file
 from je_web_runner.utils.run_ledger.ledger import failed_files, record_run
+from je_web_runner.utils.test_filter.dependency import (
+    build_dependency_graph,
+    topological_order,
+)
 from je_web_runner.utils.test_filter.tag_filter import filter_paths
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
 
@@ -82,23 +87,44 @@ def _parse_execute_str(execute_str: str) -> list:
     return json.loads(execute_str)
 
 
-def _run_one_with_ledger(path: str, ledger_path: Optional[str]) -> None:
-    """Run a single file; if a ledger path is given, record pass/fail."""
+def _run_one_file(path: str) -> bool:
+    """Execute one file; return True if no failures were recorded."""
     failure_marker = "program_exception"
+    baseline = len(test_record_instance.test_record_list)
     failed = False
-    if ledger_path:
-        baseline = len(test_record_instance.test_record_list)
     try:
         execute_action(read_action_json(path))
-    except Exception:  # noqa: BLE001 — we only want to log; executor itself rarely raises
+    except Exception:  # noqa: BLE001 — record and continue (or rethrow caller-side)
         failed = True
-        if not ledger_path:
-            raise
-    if ledger_path:
-        new_records = test_record_instance.test_record_list[baseline:]
-        if any(record.get(failure_marker, "None") != "None" for record in new_records):
-            failed = True
-        record_run(ledger_path, path, passed=not failed)
+    new_records = test_record_instance.test_record_list[baseline:]
+    if any(record.get(failure_marker, "None") != "None" for record in new_records):
+        failed = True
+    return not failed
+
+
+def _run_with_dependencies(
+    files: Sequence[str],
+    ledger_path: Optional[str],
+) -> None:
+    """Run files in topological order, skipping downstream when upstream fails."""
+    graph = build_dependency_graph(files)
+    ordered = topological_order(graph)
+    failed_set: set = set()
+    for path in ordered:
+        deps = graph.get(path, [])
+        if any(dep in failed_set for dep in deps):
+            web_runner_logger.warning(
+                f"skipping {path!r}: upstream dependency failed"
+            )
+            failed_set.add(path)
+            if ledger_path:
+                record_run(ledger_path, path, passed=False)
+            continue
+        passed = _run_one_file(path)
+        if not passed:
+            failed_set.add(path)
+        if ledger_path:
+            record_run(ledger_path, path, passed=passed)
 
 
 def _run_dir(
@@ -115,15 +141,28 @@ def _run_dir(
         files = [path for path in files if path in rerun_set]
     if include_tags or exclude_tags:
         files = filter_paths(files, include=include_tags, exclude=exclude_tags)
+
+    has_dependencies = any(build_dependency_graph(files).get(path) for path in files)
+    if has_dependencies:
+        _run_with_dependencies(files, ledger_path)
+        return
     if parallel <= 1 and not ledger_path:
         execute_files(files)
         return
     if parallel <= 1:
         for path in files:
-            _run_one_with_ledger(path, ledger_path)
+            passed = _run_one_file(path)
+            if ledger_path:
+                record_run(ledger_path, path, passed=passed)
         return
+
+    def _run_and_record(path: str) -> None:
+        passed = _run_one_file(path)
+        if ledger_path:
+            record_run(ledger_path, path, passed=passed)
+
     with ThreadPoolExecutor(max_workers=parallel) as pool:
-        list(pool.map(lambda path: _run_one_with_ledger(path, ledger_path), files))
+        list(pool.map(_run_and_record, files))
 
 
 def _generate_reports(base_name: str) -> None:

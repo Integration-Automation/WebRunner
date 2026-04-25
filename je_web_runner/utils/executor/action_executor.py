@@ -44,6 +44,7 @@ from je_web_runner.utils.security_headers import headers_audit as _headers_audit
 from je_web_runner.utils.perf_metrics import page_metrics as _perf
 from je_web_runner.utils.snapshot import snapshot as _snapshot
 from je_web_runner.utils.har_diff import har_diff as _har_diff
+from je_web_runner.utils.test_filter import dependency as _dependency
 from je_web_runner.utils.test_filter import tag_filter as _tag_filter
 from je_web_runner.utils.run_ledger import ledger as _ledger
 from je_web_runner.utils.service_worker import sw_control as _sw
@@ -341,9 +342,13 @@ class Executor(object):
             "WR_diff_har": _har_diff.diff_har,
             "WR_diff_har_files": _har_diff.diff_har_files,
 
-            # tag filter
+            # tag filter / dependencies
             "WR_read_metadata": _tag_filter.read_metadata,
             "WR_filter_paths": _tag_filter.filter_paths,
+            "WR_read_depends_on": _dependency.read_depends_on,
+            "WR_build_dependency_graph": _dependency.build_dependency_graph,
+            "WR_topological_order": _dependency.topological_order,
+            "WR_skip_dependents_of_failed": _dependency.skip_dependents_of_failed,
 
             # run ledger
             "WR_ledger_record_run": _ledger.record_run,
