@@ -82,6 +82,7 @@ from je_web_runner.utils.cdp.cdp_commands import (
 from je_web_runner.utils.network_emulation import throttling as _throttle
 from je_web_runner.utils.test_data import faker_integration as _fakerint
 from je_web_runner.utils.extensions import extension_loader as _ext
+from je_web_runner.utils.dom_traversal import shadow_iframe as _dom
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -344,6 +345,14 @@ class Executor(object):
             # browser extension loaders
             "WR_chrome_options_with_extension": _ext.selenium_chrome_options_with_extension,
             "WR_pw_extension_args": _ext.playwright_extension_launch_args,
+
+            # shadow DOM / iframe traversal
+            "WR_shadow_query": _dom.selenium_query_in_shadow,
+            "WR_pw_shadow_query": _dom.playwright_query_in_shadow,
+            "WR_pw_shadow_selector": _dom.playwright_shadow_selector,
+            "WR_iframe_switch_chain": _dom.selenium_switch_iframe_chain,
+            "WR_iframe_back_to_default": _dom.selenium_back_to_default,
+            "WR_pw_frame_locator_chain": _dom.playwright_frame_locator_chain,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
