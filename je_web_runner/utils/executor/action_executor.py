@@ -30,6 +30,12 @@ from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
+from je_web_runner.utils.accessibility.axe_audit import (
+    load_axe_source as _axe_load_source,
+    playwright_run_audit as _axe_run_pw,
+    selenium_run_audit as _axe_run_selenium,
+    summarise_violations as _axe_summarise,
+)
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -237,6 +243,12 @@ class Executor(object):
             "WR_http_delete": http_delete,
             "WR_http_assert_status": http_assert_status,
             "WR_http_assert_json_contains": http_assert_json_contains,
+
+            # accessibility (axe-core)
+            "WR_a11y_load_axe": _axe_load_source,
+            "WR_a11y_run_audit": _axe_run_selenium,
+            "WR_pw_a11y_run_audit": _axe_run_pw,
+            "WR_a11y_summarise": _axe_summarise,
 
             # visual regression
             "WR_visual_capture_baseline": _visual_capture_baseline,

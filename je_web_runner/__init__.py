@@ -28,6 +28,13 @@ from je_web_runner.utils.test_object.test_object_class import create_test_object
 from je_web_runner.utils.test_object.test_object_class import get_test_object_type_list
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 from je_web_runner.utils.callback.callback_function_executor import callback_executor
+from je_web_runner.utils.accessibility.axe_audit import (
+    AccessibilityError,
+    load_axe_source,
+    playwright_run_audit,
+    selenium_run_audit,
+    summarise_violations,
+)
 from je_web_runner.utils.api.http_client import (
     HttpAssertionError,
     get_last_response,
@@ -152,6 +159,8 @@ __all__ = [
     "http_request", "http_get", "http_post", "http_put", "http_patch", "http_delete",
     "http_assert_status", "http_assert_json_contains", "get_last_response",
     "HttpAssertionError",
+    "AccessibilityError", "load_axe_source", "selenium_run_audit",
+    "playwright_run_audit", "summarise_violations",
     "validate_action_json", "validate_action_file", "validate_action_files",
     "visual_capture_baseline", "visual_compare_with_baseline",
     "recorder_start", "recorder_stop", "recorder_pull_events",
