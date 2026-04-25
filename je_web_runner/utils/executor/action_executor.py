@@ -48,6 +48,7 @@ from je_web_runner.utils.test_filter import dependency as _dependency
 from je_web_runner.utils.test_filter import tag_filter as _tag_filter
 from je_web_runner.utils.ab_run import ab_runner as _ab
 from je_web_runner.utils.cloud_grid import cloud_drivers as _cloud
+from je_web_runner.utils.ci_annotations import github_annotations as _gh_annotations
 from je_web_runner.utils.test_management import jira_client as _jira
 from je_web_runner.utils.test_management import testrail_client as _testrail
 from je_web_runner.utils.run_ledger import flaky as _flaky
@@ -382,6 +383,11 @@ class Executor(object):
             "WR_testrail_send_results": _testrail.testrail_send_results,
             "WR_testrail_results_from_pairs": _testrail.testrail_results_from_pairs,
             "WR_testrail_close_run": _testrail.testrail_close_run,
+
+            # GitHub Actions annotations
+            "WR_gh_format_error": _gh_annotations.format_error_annotation,
+            "WR_gh_emit_failures": _gh_annotations.emit_failure_annotations,
+            "WR_gh_emit_from_junit_xml": _gh_annotations.emit_from_junit_xml,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
