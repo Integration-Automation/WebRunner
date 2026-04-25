@@ -33,6 +33,15 @@ from je_web_runner.utils.package_manager.package_manager_class import package_ma
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as _visual_capture_baseline
 from je_web_runner.utils.visual_regression.visual_diff import compare_with_baseline as _visual_compare
+from je_web_runner.webdriver.playwright_wrapper import (
+    pw_click as _pw_click,
+    pw_fill as _pw_fill,
+    pw_find_element as _pw_find_element,
+    pw_launch as _pw_launch,
+    pw_quit as _pw_quit,
+    pw_screenshot as _pw_screenshot,
+    pw_to_url as _pw_to_url,
+)
 from je_web_runner.utils.recorder.browser_recorder import pull_events as _recorder_pull_events
 from je_web_runner.utils.recorder.browser_recorder import save_recording as _recorder_save_recording
 from je_web_runner.utils.recorder.browser_recorder import start_recording as _recorder_start
@@ -159,6 +168,15 @@ class Executor(object):
             "WR_recorder_save": lambda output_path, raw_events_path=None: _recorder_save_recording(
                 webdriver_wrapper_instance, output_path, raw_events_path
             ),
+
+            # playwright backend (opt-in; runs alongside selenium)
+            "WR_pw_launch": _pw_launch,
+            "WR_pw_to_url": _pw_to_url,
+            "WR_pw_click": _pw_click,
+            "WR_pw_fill": _pw_fill,
+            "WR_pw_screenshot": _pw_screenshot,
+            "WR_pw_quit": _pw_quit,
+            "WR_pw_find_element": _pw_find_element,
 
             # Add package
             "WR_add_package_to_executor": package_manager.add_package_to_executor,

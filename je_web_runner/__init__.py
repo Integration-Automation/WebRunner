@@ -31,6 +31,10 @@ from je_web_runner.utils.callback.callback_function_executor import callback_exe
 from je_web_runner.utils.project.create_project_structure import create_project_dir
 from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as visual_capture_baseline
 from je_web_runner.utils.visual_regression.visual_diff import compare_with_baseline as visual_compare_with_baseline
+from je_web_runner.webdriver.playwright_wrapper import playwright_wrapper_instance
+from je_web_runner.webdriver.playwright_wrapper import pw_click, pw_fill, pw_find_element
+from je_web_runner.webdriver.playwright_wrapper import pw_launch, pw_quit
+from je_web_runner.webdriver.playwright_wrapper import pw_screenshot, pw_to_url
 from je_web_runner.utils.recorder.browser_recorder import events_to_actions as recorder_events_to_actions
 from je_web_runner.utils.recorder.browser_recorder import pull_events as recorder_pull_events
 from je_web_runner.utils.recorder.browser_recorder import save_recording as recorder_save_recording
@@ -51,5 +55,8 @@ __all__ = [
     "validate_action_json", "validate_action_file", "validate_action_files",
     "visual_capture_baseline", "visual_compare_with_baseline",
     "recorder_start", "recorder_stop", "recorder_pull_events",
-    "recorder_events_to_actions", "recorder_save_recording"
+    "recorder_events_to_actions", "recorder_save_recording",
+    "playwright_wrapper_instance",
+    "pw_launch", "pw_to_url", "pw_click", "pw_fill",
+    "pw_screenshot", "pw_quit", "pw_find_element"
 ]
