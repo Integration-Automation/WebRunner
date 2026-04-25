@@ -48,6 +48,8 @@ from je_web_runner.utils.test_filter import dependency as _dependency
 from je_web_runner.utils.test_filter import tag_filter as _tag_filter
 from je_web_runner.utils.ab_run import ab_runner as _ab
 from je_web_runner.utils.cloud_grid import cloud_drivers as _cloud
+from je_web_runner.utils.test_management import jira_client as _jira
+from je_web_runner.utils.test_management import testrail_client as _testrail
 from je_web_runner.utils.run_ledger import flaky as _flaky
 from je_web_runner.utils.run_ledger import ledger as _ledger
 from je_web_runner.utils.service_worker import sw_control as _sw
@@ -373,6 +375,13 @@ class Executor(object):
             "WR_connect_saucelabs": _cloud.connect_saucelabs,
             "WR_connect_lambdatest": _cloud.connect_lambdatest,
             "WR_start_remote_driver": _cloud.start_remote_driver,
+
+            # JIRA / TestRail integration
+            "WR_jira_create_issue": _jira.jira_create_issue,
+            "WR_jira_create_failure_issues": _jira.jira_create_failure_issues,
+            "WR_testrail_send_results": _testrail.testrail_send_results,
+            "WR_testrail_results_from_pairs": _testrail.testrail_results_from_pairs,
+            "WR_testrail_close_run": _testrail.testrail_close_run,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
