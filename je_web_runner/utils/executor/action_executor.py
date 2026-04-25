@@ -94,6 +94,7 @@ from je_web_runner.utils.scheduler import cron_runner as _scheduler
 from je_web_runner.utils.multi_user import matrix as _matrix
 from je_web_runner.utils.replay_studio import replay_studio as _replay
 from je_web_runner.utils.auth import oauth as _oauth
+from je_web_runner.utils.factories import factory as _factories
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -432,6 +433,11 @@ class Executor(object):
             "WR_oauth_get_cached": _oauth.get_cached_token,
             "WR_oauth_clear_cache": _oauth.clear_token_cache,
             "WR_oauth_bearer_header": _oauth.bearer_header,
+
+            # factory pattern helpers
+            "WR_user_factory": _factories.user_factory,
+            "WR_order_factory": _factories.order_factory,
+            "WR_product_factory": _factories.product_factory,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
