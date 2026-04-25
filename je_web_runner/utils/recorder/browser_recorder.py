@@ -12,6 +12,7 @@ events back into WR_* action JSON consumable by the executor.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Iterable, List, Optional
 
@@ -47,6 +48,17 @@ _RECORDER_JS = r"""
     return parts.join(' > ');
   }
 
+  function looksSensitive(target, value) {
+    if (target.type === 'password') return true;
+    var label = ((target.name || target.id || target.autocomplete || '') + '').toLowerCase();
+    if (/(card[\-_]?number|cvv|cvc|ssn|secret|token|api[\-_]?key|otp|passcode)/.test(label)) {
+      return true;
+    }
+    var digits = (value || '').replace(/[\s-]/g, '');
+    if (/^[0-9]{13,19}$/.test(digits)) return true;
+    return false;
+  }
+
   document.addEventListener('click', function(ev) {
     var sel = cssPath(ev.target);
     if (sel) window.__wr_events.push({type: 'click', selector: sel, time: Date.now()});
@@ -54,8 +66,12 @@ _RECORDER_JS = r"""
 
   document.addEventListener('change', function(ev) {
     var sel = cssPath(ev.target);
-    if (sel) window.__wr_events.push({
-      type: 'input', selector: sel, value: String(ev.target.value || ''), time: Date.now()
+    if (!sel) return;
+    var value = String(ev.target.value || '');
+    var masked = looksSensitive(ev.target, value);
+    if (masked) value = '***MASKED***';
+    window.__wr_events.push({
+      type: 'input', selector: sel, value: value, masked: masked, time: Date.now()
     });
   }, true);
 })();
@@ -68,6 +84,40 @@ _DRAIN_JS = (
 )
 
 _RESET_JS = "window.__wr_recorder_installed = false; window.__wr_events = [];"
+
+
+_SENSITIVE_NAME_RE = re.compile(
+    r"(password|card[-_]?number|cvv|cvc|ssn|secret|token|api[-_]?key|otp|passcode)",
+    re.IGNORECASE,
+)
+_LONG_DIGIT_RE = re.compile(r"^[0-9]{13,19}$")
+
+
+def _looks_sensitive(selector: str, value: str) -> bool:
+    if not isinstance(value, str):
+        return False
+    if _SENSITIVE_NAME_RE.search(selector or ""):
+        return True
+    digits = re.sub(r"[\s-]", "", value)
+    return bool(_LONG_DIGIT_RE.match(digits))
+
+
+def mask_sensitive_events(events: Iterable[dict]) -> List[dict]:
+    """
+    在 Python 端再做一次遮罩，保險起見
+    Defensive Python-side masking pass; mainly useful when consuming raw
+    events that bypassed the JS-side masking (e.g. loaded from disk).
+    """
+    masked: List[dict] = []
+    for event in events:
+        copy = dict(event)
+        if copy.get("type") == "input" and not copy.get("masked"):
+            value = copy.get("value", "")
+            if _looks_sensitive(copy.get("selector", ""), value):
+                copy["value"] = "***MASKED***"
+                copy["masked"] = True
+        masked.append(copy)
+    return masked
 
 
 def _resolve_driver(driver_or_wrapper) -> object:

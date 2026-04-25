@@ -7,6 +7,7 @@ from unittest.mock import MagicMock
 from je_web_runner.utils.recorder.browser_recorder import (
     RecorderError,
     events_to_actions,
+    mask_sensitive_events,
     pull_events,
     save_recording,
     start_recording,
@@ -83,6 +84,46 @@ class TestEventTranslation(unittest.TestCase):
             {"type": "click", "selector": "#go"},
         ])
         self.assertEqual(len(actions), 3)
+
+
+class TestMaskSensitiveEvents(unittest.TestCase):
+
+    def test_masks_credit_card_value(self):
+        events = [{"type": "input", "selector": "#card", "value": "4111 1111 1111 1111"}]
+        out = mask_sensitive_events(events)
+        self.assertEqual(out[0]["value"], "***MASKED***")
+        self.assertTrue(out[0]["masked"])
+
+    def test_masks_password_field_by_selector(self):
+        events = [{"type": "input", "selector": "input[name=\"password\"]", "value": "hunter2"}]
+        out = mask_sensitive_events(events)
+        self.assertEqual(out[0]["value"], "***MASKED***")
+
+    def test_masks_api_key_selector(self):
+        events = [{"type": "input", "selector": "#api_key", "value": "abcd1234"}]
+        out = mask_sensitive_events(events)
+        self.assertEqual(out[0]["value"], "***MASKED***")
+
+    def test_keeps_normal_input(self):
+        events = [{"type": "input", "selector": "#username", "value": "alice"}]
+        out = mask_sensitive_events(events)
+        self.assertEqual(out[0]["value"], "alice")
+        self.assertNotIn("masked", out[0])
+
+    def test_already_masked_left_alone(self):
+        events = [{
+            "type": "input",
+            "selector": "#username",
+            "value": "***MASKED***",
+            "masked": True,
+        }]
+        out = mask_sensitive_events(events)
+        self.assertEqual(out[0]["value"], "***MASKED***")
+
+    def test_non_input_events_pass_through(self):
+        events = [{"type": "click", "selector": "#go"}]
+        out = mask_sensitive_events(events)
+        self.assertEqual(out, [{"type": "click", "selector": "#go"}])
 
 
 class TestSaveRecording(unittest.TestCase):
