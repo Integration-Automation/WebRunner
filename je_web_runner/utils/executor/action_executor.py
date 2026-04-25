@@ -45,6 +45,7 @@ from je_web_runner.utils.perf_metrics import page_metrics as _perf
 from je_web_runner.utils.snapshot import snapshot as _snapshot
 from je_web_runner.utils.har_diff import har_diff as _har_diff
 from je_web_runner.utils.test_filter import tag_filter as _tag_filter
+from je_web_runner.utils.run_ledger import ledger as _ledger
 from je_web_runner.utils.service_worker import sw_control as _sw
 from je_web_runner.utils.storage import browser_storage as _storage
 from je_web_runner.utils.cdp.cdp_commands import (
@@ -343,6 +344,12 @@ class Executor(object):
             # tag filter
             "WR_read_metadata": _tag_filter.read_metadata,
             "WR_filter_paths": _tag_filter.filter_paths,
+
+            # run ledger
+            "WR_ledger_record_run": _ledger.record_run,
+            "WR_ledger_failed_files": _ledger.failed_files,
+            "WR_ledger_passed_files": _ledger.passed_files,
+            "WR_ledger_clear": _ledger.clear_ledger,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
