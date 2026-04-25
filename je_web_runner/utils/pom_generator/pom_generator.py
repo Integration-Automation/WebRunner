@@ -128,29 +128,42 @@ def _action_kind(element: Dict[str, Optional[str]]) -> str:
     return "click"
 
 
+_PASS_BODY = "        pass"
+
+
 def _render_method(method_name: str, kind: str, locator_constant: str) -> List[str]:
+    register_todo = "        # TODO: register self." + locator_constant + " as a TestObject before calling."
     if kind == "input":
         return [
             f"    def {method_name}(self, value: str) -> None:",
             f"        \"\"\"Type ``value`` into the {method_name[len('input_to_'):]} field.\"\"\"",
-            "        # TODO: register self." + locator_constant + " as a TestObject before calling.",
-            "        pass",
+            register_todo,
+            _PASS_BODY,
             "",
         ]
     if kind == "select":
         return [
             f"    def {method_name}(self, value: str) -> None:",
             "        # TODO: hook up to your dropdown helper.",
-            "        pass",
+            _PASS_BODY,
             "",
         ]
     return [
         f"    def {method_name}(self) -> None:",
         f"        \"\"\"Click the {method_name[len('click_'):]} element.\"\"\"",
-        "        # TODO: register self." + locator_constant + " as a TestObject before calling.",
-        "        pass",
+        register_todo,
+        _PASS_BODY,
         "",
     ]
+
+
+def _prefix_for(kind: str) -> str:
+    """Return the method-name prefix for a given action kind."""
+    if kind == "input":
+        return "input_to"
+    if kind == "select":
+        return "select_in"
+    return "click"
 
 
 def generate_pom_class(class_name: str, elements: List[Dict[str, Optional[str]]]) -> str:
@@ -179,8 +192,7 @@ def generate_pom_class(class_name: str, elements: List[Dict[str, Optional[str]]]
         used_constants.add(const_name)
         constants.append(f"    {const_name} = ({locator[0]!r}, {locator[1]!r})")
 
-        prefix = "input_to" if kind == "input" else ("select_in" if kind == "select" else "click")
-        method_name = _safe_method_name(prefix, str(hint), used_methods)
+        method_name = _safe_method_name(_prefix_for(kind), str(hint), used_methods)
         methods.extend(_render_method(method_name, kind, const_name))
 
     if not constants:

@@ -5,7 +5,7 @@ backends.
 """
 from __future__ import annotations
 
-from typing import Any, List, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -15,6 +15,9 @@ from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 class DOMTraversalError(WebRunnerException):
     """Raised when traversal cannot complete."""
+
+
+_NO_SELENIUM_DRIVER = "no Selenium driver active"
 
 
 # Walk down a chain of host selectors, then run the final selector inside
@@ -45,7 +48,7 @@ def selenium_query_in_shadow(host_chain: Sequence[str], inner_selector: str) -> 
     )
     driver = webdriver_wrapper_instance.current_webdriver
     if driver is None:
-        raise DOMTraversalError("no Selenium driver active")
+        raise DOMTraversalError(_NO_SELENIUM_DRIVER)
     return driver.execute_script(_SHADOW_QUERY_JS, list(host_chain), inner_selector)
 
 
@@ -74,7 +77,7 @@ def selenium_switch_iframe_chain(selectors: Sequence[str]) -> None:
     web_runner_logger.info(f"selenium_switch_iframe_chain: {list(selectors)}")
     driver = webdriver_wrapper_instance.current_webdriver
     if driver is None:
-        raise DOMTraversalError("no Selenium driver active")
+        raise DOMTraversalError(_NO_SELENIUM_DRIVER)
     driver.switch_to.default_content()
     for selector in selectors:
         frame = driver.find_element("css selector", selector)
@@ -85,7 +88,7 @@ def selenium_back_to_default() -> None:
     """Return Selenium focus to the top-level frame."""
     driver = webdriver_wrapper_instance.current_webdriver
     if driver is None:
-        raise DOMTraversalError("no Selenium driver active")
+        raise DOMTraversalError(_NO_SELENIUM_DRIVER)
     driver.switch_to.default_content()
 
 

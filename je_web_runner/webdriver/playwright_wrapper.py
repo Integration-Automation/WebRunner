@@ -53,6 +53,10 @@ def _require_playwright():
 
 _SUPPORTED_BROWSERS = frozenset({"chromium", "firefox", "webkit"})
 
+_BROWSER_NOT_LAUNCHED = "Playwright browser not launched; call launch() first"
+_RUNTIME_NOT_STARTED = "Playwright runtime not started"
+_CLOCK_API_UNAVAILABLE = "Playwright clock API unavailable; upgrade Playwright"
+
 
 def _record(name: str, params, error: Optional[Exception]) -> None:
     record_action_to_list(f"Playwright {name}", params, error)
@@ -90,7 +94,7 @@ class PlaywrightWrapper:
     @property
     def browser(self):
         if self._browser is None:
-            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
         return self._browser
 
     def launch(
@@ -138,7 +142,7 @@ class PlaywrightWrapper:
     def _device_options(self, device_name: str) -> dict:
         """Look up Playwright's built-in device descriptor by name."""
         if self._playwright is None:
-            raise PlaywrightBackendError("Playwright runtime not started")
+            raise PlaywrightBackendError(_RUNTIME_NOT_STARTED)
         devices = getattr(self._playwright, "devices", None)
         if not devices or device_name not in devices:
             available = sorted(devices.keys()) if devices else []
@@ -155,7 +159,7 @@ class PlaywrightWrapper:
         """
         web_runner_logger.info(f"playwright start_emulation: {device_name}")
         if self._browser is None:
-            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
         if self._context is not None:
             self._context.close()
         self._context = self._build_context(extra_options=self._device_options(device_name))
@@ -167,7 +171,7 @@ class PlaywrightWrapper:
         """Replace the device-emulating context with a plain one."""
         web_runner_logger.info("playwright stop_emulation")
         if self._browser is None:
-            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
         if self._context is not None:
             self._context.close()
         self._context = self._build_context()
@@ -211,7 +215,7 @@ class PlaywrightWrapper:
         """
         web_runner_logger.info(f"playwright set_timezone: {timezone_id}")
         if self._browser is None:
-            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
         if self._context is not None:
             self._context.close()
         self._context = self._build_context(extra_options={"timezone_id": timezone_id})
@@ -223,7 +227,7 @@ class PlaywrightWrapper:
         """Install Playwright's clock (requires Playwright 1.45+)."""
         clock = getattr(self.context, "clock", None)
         if clock is None:
-            raise PlaywrightBackendError("Playwright clock API unavailable; upgrade Playwright")
+            raise PlaywrightBackendError(_CLOCK_API_UNAVAILABLE)
         if fake_now_ms is None:
             clock.install()
         else:
@@ -232,13 +236,13 @@ class PlaywrightWrapper:
     def clock_set_time(self, time_ms: float) -> None:
         clock = getattr(self.context, "clock", None)
         if clock is None:
-            raise PlaywrightBackendError("Playwright clock API unavailable; upgrade Playwright")
+            raise PlaywrightBackendError(_CLOCK_API_UNAVAILABLE)
         clock.set_fixed_time(time_ms)
 
     def clock_run_for(self, duration_ms: float) -> None:
         clock = getattr(self.context, "clock", None)
         if clock is None:
-            raise PlaywrightBackendError("Playwright clock API unavailable; upgrade Playwright")
+            raise PlaywrightBackendError(_CLOCK_API_UNAVAILABLE)
         clock.run_for(duration_ms)
 
     def set_locale(
@@ -253,7 +257,7 @@ class PlaywrightWrapper:
         """
         web_runner_logger.info(f"playwright set_locale: {locale}")
         if self._browser is None:
-            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
         options: Dict[str, Any] = {"locale": locale}
         if accept_language:
             options["extra_http_headers"] = {"Accept-Language": accept_language}
@@ -267,7 +271,7 @@ class PlaywrightWrapper:
     def list_device_names(self) -> List[str]:
         """Return all device names known to the active Playwright runtime."""
         if self._playwright is None:
-            raise PlaywrightBackendError("Playwright runtime not started")
+            raise PlaywrightBackendError(_RUNTIME_NOT_STARTED)
         devices = getattr(self._playwright, "devices", None) or {}
         return sorted(devices.keys())
 
@@ -279,7 +283,7 @@ class PlaywrightWrapper:
         """
         web_runner_logger.info(f"playwright start_har_recording: {har_path}")
         if self._browser is None:
-            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
         if self._context is not None:
             self._context.close()
         self._context = self._build_context(har_path, content)
@@ -295,7 +299,7 @@ class PlaywrightWrapper:
         """
         web_runner_logger.info("playwright stop_har_recording")
         if self._browser is None:
-            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
         if self._context is not None:
             self._context.close()
         self._context = self._browser.new_context()
