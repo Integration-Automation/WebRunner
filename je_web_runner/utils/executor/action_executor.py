@@ -17,6 +17,19 @@ _UNSAFE_BUILTINS = frozenset({
     "getattr", "setattr", "delattr",
 })
 
+# WR_* 命令會把整段 JavaScript 字串送進瀏覽器執行；當 action JSON 來源不可信時
+# 必須能關閉。透過 ``set_allow_arbitrary_script(False)`` 切換。
+# WR_* commands that hand a JS string straight to the browser. When action
+# JSON comes from an untrusted source the operator should be able to disable
+# them; ``set_allow_arbitrary_script(False)`` flips the gate.
+_ARBITRARY_SCRIPT_COMMANDS = frozenset({
+    "WR_execute_script",
+    "WR_execute_async_script",
+    "WR_pw_evaluate",
+    "WR_cdp",
+    "WR_pw_cdp",
+})
+
 from je_web_runner.manager.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
 from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
@@ -141,6 +154,11 @@ class Executor(object):
         # Global retry policy. retries == 0 disables retry; backoff is in
         # seconds and is multiplied by the (1-based) attempt number.
         self.retry_policy = {"retries": 0, "backoff": 0.0}
+        # 是否允許將任意 JS / CDP 字串透過 action 送到瀏覽器；預設 True 維持向下
+        # 相容，但若 action JSON 來自不可信來源請改 False。
+        # Default True for back-compat; flip to False when action JSON comes
+        # from an untrusted source.
+        self.allow_arbitrary_script: bool = True
         # 事件字典：將字串名稱對應到實際可執行的函式
         # Event dictionary: map string keys to actual callable functions
         self.event_dict = {
@@ -265,6 +283,9 @@ class Executor(object):
 
             # retry policy
             "WR_set_retry_policy": self.set_retry_policy,
+
+            # security: arbitrary-script gate
+            "WR_set_allow_arbitrary_script": self.set_allow_arbitrary_script,
 
             # self-healing locators
             "WR_register_fallback_locator": _heal_register_fallback,
@@ -597,6 +618,14 @@ class Executor(object):
             web_runner_logger.error(f"failure screenshot write failed: {error!r}")
             return None
 
+    def set_allow_arbitrary_script(self, enabled: bool) -> None:
+        """
+        切換是否允許 ``WR_execute_script`` / ``WR_pw_evaluate`` / CDP 命令
+        Toggle the gate for arbitrary-script commands. Disable when action
+        JSON files are not fully trusted.
+        """
+        self.allow_arbitrary_script = bool(enabled)
+
     def _execute_event(self, action: list):
         """
         執行事件字典中的函式
@@ -606,6 +635,11 @@ class Executor(object):
                        Action list, e.g., ["function_name", {params}] or ["function_name"]
         :return: 執行結果 / return value of the executed function
         """
+        if action[0] in _ARBITRARY_SCRIPT_COMMANDS and not self.allow_arbitrary_script:
+            raise WebRunnerExecuteException(
+                f"arbitrary-script command {action[0]!r} is disabled; "
+                "call WR_set_allow_arbitrary_script(true) to enable"
+            )
         event = self.event_dict.get(action[0])
         if event is None:
             raise WebRunnerExecuteException(executor_data_error + " unknown command: " + str(action[0]))
