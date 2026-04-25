@@ -38,6 +38,7 @@ from je_web_runner.utils.accessibility.axe_audit import (
     selenium_run_audit as _axe_run_selenium,
     summarise_violations as _axe_summarise,
 )
+from je_web_runner.utils.observability import event_capture as _event_capture
 from je_web_runner.utils.service_worker import sw_control as _sw
 from je_web_runner.utils.storage import browser_storage as _storage
 from je_web_runner.utils.cdp.cdp_commands import (
@@ -299,6 +300,16 @@ class Executor(object):
             "WR_pw_sw_unregister": _sw.playwright_unregister_service_workers,
             "WR_pw_sw_clear_caches": _sw.playwright_clear_caches,
             "WR_pw_sw_bypass": _sw.playwright_bypass_service_worker,
+
+            # console / network event capture
+            "WR_pw_event_capture_start": _event_capture.start_event_capture,
+            "WR_pw_event_capture_stop": _event_capture.stop_event_capture,
+            "WR_pw_event_capture_clear": _event_capture.clear_event_capture,
+            "WR_pw_console_messages": _event_capture.get_console_messages,
+            "WR_pw_network_responses": _event_capture.get_network_responses,
+            "WR_pw_assert_no_console_errors": _event_capture.assert_no_console_errors,
+            "WR_pw_assert_no_5xx": _event_capture.assert_no_5xx,
+            "WR_pw_assert_no_4xx_or_5xx": _event_capture.assert_no_4xx_or_5xx,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
