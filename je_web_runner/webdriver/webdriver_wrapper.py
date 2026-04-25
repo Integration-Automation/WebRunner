@@ -774,7 +774,23 @@ class WebDriverWrapper(object):
     def perform(self) -> None:
         """
         執行累積的 ActionChains 動作
-        Perform all queued ActionChains actions
+        Perform all queued ActionChains actions.
+
+        Selenium 的 ActionChains 是「先排隊、後一次執行」模型。
+        ``WR_left_click_and_hold`` / ``WR_move_to_element`` /
+        ``WR_release`` / ``WR_press_key`` 等命令只是把動作排入佇列，
+        必須最後呼叫 ``WR_perform`` 才會真的觸發；中途要清除請用
+        ``WR_reset_actions``。對單純點擊或輸入請改用
+        ``WR_element_click`` / ``WR_element_input`` 直接執行，免用
+        ActionChains。
+
+        Selenium ActionChains is a queue-then-execute model. Commands like
+        ``WR_left_click_and_hold`` / ``WR_move_to_element`` /
+        ``WR_release`` / ``WR_press_key`` only enqueue the action; you must
+        call ``WR_perform`` at the end to actually fire them, and
+        ``WR_reset_actions`` to drop the queue mid-flow. For simple clicks
+        or text input prefer ``WR_element_click`` / ``WR_element_input``,
+        which run synchronously.
         """
         web_runner_logger.info("WebDriverWrapper perform")
         try:
@@ -786,8 +802,12 @@ class WebDriverWrapper(object):
 
     def reset_actions(self) -> None:
         """
-        清除目前累積的 ActionChains 動作
-        Clear all queued ActionChains actions
+        清除目前累積的 ActionChains 動作（搭配 ``WR_perform`` 使用）
+        Clear all queued ActionChains actions.
+
+        Use this together with ``WR_perform`` when you want to abort an
+        ActionChains sequence partway through. See ``perform`` above for
+        the queue-then-execute model.
         """
         web_runner_logger.info("WebDriverWrapper reset_actions")
         try:
@@ -1365,11 +1385,23 @@ class WebDriverWrapper(object):
     # log
     def get_log(self, log_type: str):
         """
-        取得 WebDriver 日誌
-        Get WebDriver logs
+        取得 WebDriver 日誌（``log_type`` 為必填）
+        Get WebDriver logs (``log_type`` is required).
 
-        :param log_type: ["browser", "driver", "client", "server"]
-        :return: log 資料 (list of dict)
+        :param log_type: 必填，需為下列之一：
+                         Required; one of:
+
+                         - ``"browser"`` — JS console output (Chrome/Edge)
+                         - ``"driver"``  — driver-side messages
+                         - ``"client"``  — client-side bindings logs
+                         - ``"server"``  — Selenium server logs
+                         - ``"performance"`` — perf log (only when enabled in capabilities)
+
+                         不同瀏覽器支援的子集不同；Firefox 自 GeckoDriver 後幾乎不再
+                         提供，多數情況請改用 Playwright 的 console-event capture。
+                         Browser support varies; modern Firefox no longer exposes most
+                         of these, prefer Playwright's console-event capture instead.
+        :return: log 資料 (list of dict) / log entries
         """
         web_runner_logger.info(f"WebDriverWrapper get_log, log_type: {log_type}")
         try:

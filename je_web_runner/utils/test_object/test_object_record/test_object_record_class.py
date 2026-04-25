@@ -1,5 +1,6 @@
 from typing import Union
 
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_object.test_object_class import TestObject
 
 
@@ -25,12 +26,18 @@ class TestObjectRecord(object):
     def save_test_object(self, test_object_name: str, object_type: str = None, **kwargs) -> None:
         """
         儲存新的測試物件
-        Save a new test object
+        Save a new test object.
 
         :param test_object_name: 測試物件名稱 / test object name
         :param object_type: 測試物件類型 (可選) / test object type (optional)
-        :param kwargs: 額外參數 (目前未使用) / extra parameters (currently unused)
+        :param kwargs: 多餘的參數會被吞掉並寫入警告日誌（避免 typo 默默通過）
+                       Unexpected kwargs are dropped with a warning so typos
+                       don't pass silently.
         """
+        if kwargs:
+            web_runner_logger.warning(
+                f"save_test_object: ignoring unexpected kwargs {sorted(kwargs)!r}"
+            )
         test_object = TestObject(test_object_name, object_type)
         self.test_object_record_dict.update({test_object.test_object_name: test_object})
 
