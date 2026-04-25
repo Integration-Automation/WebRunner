@@ -5,10 +5,11 @@ Validate action JSON structure to surface errors before execution.
 Action format accepted by the executor:
 - top-level value is either a ``list`` of actions, or a ``dict`` with key
   ``"webdriver_wrapper"`` whose value is a list of actions.
-- each action is itself a list of length 1 or 2:
-  - ``[command_name]``                 -- no-argument call
-  - ``[command_name, {kwargs}]``       -- keyword-argument call
-  - ``[command_name, [positional]]``   -- positional-argument call
+- each action is itself a list of length 1, 2, or 3:
+  - ``[command_name]``                              -- no-argument call
+  - ``[command_name, {kwargs}]``                    -- keyword-argument call
+  - ``[command_name, [positional]]``                -- positional-argument call
+  - ``[command_name, [positional], {kwargs}]``      -- mixed positional + kwargs
 """
 from __future__ import annotations
 
@@ -44,9 +45,10 @@ def _validate_single_action(action: object, index: int) -> None:
         raise WebRunnerExecuteException(
             f"{executor_data_error}: action #{index} must be a list, got {type(action).__name__}"
         )
-    if len(action) not in (1, 2):
+    if len(action) not in (1, 2, 3):
         raise WebRunnerExecuteException(
-            f"{executor_data_error}: action #{index} must have 1 or 2 elements, got {len(action)}"
+            f"{executor_data_error}: action #{index} must have 1, 2, or 3 elements, "
+            f"got {len(action)}"
         )
     if not isinstance(action[0], str) or not action[0]:
         raise WebRunnerExecuteException(
@@ -57,6 +59,18 @@ def _validate_single_action(action: object, index: int) -> None:
             f"{executor_data_error}: action #{index} arguments must be dict/list/tuple, "
             f"got {type(action[1]).__name__}"
         )
+    if len(action) == 3:
+        positional, kwargs = action[1], action[2]
+        if not isinstance(positional, (list, tuple)):
+            raise WebRunnerExecuteException(
+                f"{executor_data_error}: action #{index} 3-element form requires "
+                f"a positional list/tuple in slot 1, got {type(positional).__name__}"
+            )
+        if not isinstance(kwargs, dict):
+            raise WebRunnerExecuteException(
+                f"{executor_data_error}: action #{index} 3-element form requires "
+                f"a kwargs dict in slot 2, got {type(kwargs).__name__}"
+            )
 
 
 def validate_action_json(data: Union[list, dict]) -> bool:

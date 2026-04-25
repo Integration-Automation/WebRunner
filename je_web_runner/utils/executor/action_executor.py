@@ -668,23 +668,30 @@ class Executor(object):
         event = self.event_dict.get(action[0])
         if event is None:
             raise WebRunnerExecuteException(executor_data_error + " unknown command: " + str(action[0]))
-        if len(action) == 2:
-            if isinstance(action[1], dict):
-                # 使用關鍵字參數呼叫
-                # Call with keyword arguments
-                return event(**action[1])
-            else:
-                # 使用位置參數呼叫
-                # Call with positional arguments
-                return event(*action[1])
-        elif len(action) == 1:
+        if len(action) == 1:
             # 無參數呼叫
             # Call without arguments
             return event()
-        else:
-            # 格式錯誤，拋出例外
-            # Invalid format, raise exception
-            raise WebRunnerExecuteException(executor_data_error + " " + str(action))
+        if len(action) == 2:
+            if isinstance(action[1], dict):
+                # 關鍵字參數呼叫
+                # Call with keyword arguments
+                return event(**action[1])
+            # 位置參數呼叫
+            # Call with positional arguments
+            return event(*action[1])
+        if len(action) == 3:
+            # 同時帶位置 + 關鍵字參數
+            # Mixed positional + keyword arguments
+            positional, kwargs = action[1], action[2]
+            if not isinstance(positional, (list, tuple)) or not isinstance(kwargs, dict):
+                raise WebRunnerExecuteException(
+                    f"{executor_data_error}: 3-element action requires [cmd, [positional], {{kwargs}}]"
+                )
+            return event(*positional, **kwargs)
+        # 格式錯誤，拋出例外
+        # Invalid format, raise exception
+        raise WebRunnerExecuteException(executor_data_error + " " + str(action))
 
     def execute_action(self, action_list: Union[list, dict]) -> dict:
         """
