@@ -57,6 +57,14 @@ from je_web_runner.utils.data_driven.data_runner import (
     run_with_dataset,
 )
 from je_web_runner.utils.env_config.env_loader import EnvConfigError, expand_in_action, get_env, load_env
+from je_web_runner.utils.pom_generator.pom_generator import (
+    POMGeneratorError,
+    extract_elements_from_html,
+    generate_pom_class,
+    generate_pom_from_html,
+    generate_pom_from_url,
+    write_pom_to_file,
+)
 from je_web_runner.utils.notifier.webhook_notifier import (
     NotifierError,
     notify_run_summary,
@@ -173,6 +181,8 @@ __all__ = [
     "playwright_run_audit", "summarise_violations",
     "summarise_run", "notify_webhook", "notify_slack", "notify_run_summary",
     "NotifierError",
+    "POMGeneratorError", "extract_elements_from_html", "generate_pom_class",
+    "generate_pom_from_html", "generate_pom_from_url", "write_pom_to_file",
     "validate_action_json", "validate_action_file", "validate_action_files",
     "visual_capture_baseline", "visual_compare_with_baseline",
     "recorder_start", "recorder_stop", "recorder_pull_events",

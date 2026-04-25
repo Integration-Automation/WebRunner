@@ -55,6 +55,11 @@ from je_web_runner.utils.data_driven.data_runner import (
     run_with_dataset,
 )
 from je_web_runner.utils.env_config.env_loader import expand_in_action, get_env, load_env
+from je_web_runner.utils.pom_generator.pom_generator import (
+    generate_pom_from_html,
+    generate_pom_from_url,
+    write_pom_to_file,
+)
 from je_web_runner.utils.notifier.webhook_notifier import (
     notify_run_summary,
     notify_slack,
@@ -265,6 +270,11 @@ class Executor(object):
             "WR_notify_webhook": notify_webhook,
             "WR_notify_slack": notify_slack,
             "WR_notify_run_summary": notify_run_summary,
+
+            # page-object model generator
+            "WR_generate_pom_from_url": generate_pom_from_url,
+            "WR_generate_pom_from_html": generate_pom_from_html,
+            "WR_write_pom_to_file": write_pom_to_file,
 
             # visual regression
             "WR_visual_capture_baseline": _visual_capture_baseline,
