@@ -398,6 +398,52 @@ class PlaywrightWrapper:
     def main_frame(self) -> Any:
         return self.page.main_frame
 
+    # ----- network route mocking --------------------------------------
+
+    def route_mock(self, url_pattern: str, response: dict) -> None:
+        """
+        將符合 ``url_pattern`` 的請求以 stub 回應
+        Stub network requests matching ``url_pattern`` with a static response.
+
+        ``response`` 支援 keys: ``status`` (int), ``body`` (str/bytes),
+        ``headers`` (dict), ``content_type`` (str)。
+        """
+        web_runner_logger.info(f"playwright route_mock: {url_pattern}")
+        fulfill_kwargs = {
+            "status": response.get("status", 200),
+            "body": response.get("body", ""),
+            "headers": response.get("headers", {}),
+        }
+        if "content_type" in response:
+            fulfill_kwargs["content_type"] = response["content_type"]
+
+        def _handler(route, request):  # noqa: ARG001 — Playwright requires this signature
+            route.fulfill(**fulfill_kwargs)
+
+        self.page.route(url_pattern, _handler)
+
+    def route_mock_json(self, url_pattern: str, json_data: Any, status: int = 200) -> None:
+        """JSON 便捷版本 / Convenience for JSON responses."""
+        import json as _json
+
+        self.route_mock(
+            url_pattern,
+            {
+                "status": status,
+                "body": _json.dumps(json_data),
+                "headers": {"Content-Type": "application/json"},
+                "content_type": "application/json",
+            },
+        )
+
+    def route_unmock(self, url_pattern: str) -> None:
+        """Remove a specific route handler (Playwright will fall through to network)."""
+        self.page.unroute(url_pattern)
+
+    def route_clear(self) -> None:
+        """Remove all route handlers on the current page."""
+        self.page.unroute_all()
+
 
 playwright_wrapper_instance = PlaywrightWrapper()
 
@@ -414,6 +460,22 @@ def pw_start_har_recording(har_path: str, content: str = "omit") -> None:
 
 def pw_stop_har_recording() -> None:
     playwright_wrapper_instance.stop_har_recording()
+
+
+def pw_route_mock(url_pattern: str, response: dict) -> None:
+    playwright_wrapper_instance.route_mock(url_pattern, response)
+
+
+def pw_route_mock_json(url_pattern: str, json_data: Any, status: int = 200) -> None:
+    playwright_wrapper_instance.route_mock_json(url_pattern, json_data, status=status)
+
+
+def pw_route_unmock(url_pattern: str) -> None:
+    playwright_wrapper_instance.route_unmock(url_pattern)
+
+
+def pw_route_clear() -> None:
+    playwright_wrapper_instance.route_clear()
 
 
 def pw_quit() -> None:

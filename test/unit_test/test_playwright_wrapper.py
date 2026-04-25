@@ -259,6 +259,43 @@ class TestHarRecording(unittest.TestCase):
             wrapper.start_har_recording("run.har")
 
 
+class TestRouteMocking(unittest.TestCase):
+
+    def test_route_mock_registers_handler(self):
+        wrapper, _, _, _, page = _launch_with_fakes()
+        wrapper.route_mock("**/api/users", {"status": 201, "body": "{}"})
+        page.route.assert_called_once()
+        pattern = page.route.call_args[0][0]
+        handler = page.route.call_args[0][1]
+        self.assertEqual(pattern, "**/api/users")
+
+        # Simulate Playwright invoking the handler
+        route_obj = MagicMock()
+        request_obj = MagicMock()
+        handler(route_obj, request_obj)
+        kwargs = route_obj.fulfill.call_args.kwargs
+        self.assertEqual(kwargs["status"], 201)
+        self.assertEqual(kwargs["body"], "{}")
+
+    def test_route_mock_json_serialises(self):
+        wrapper, _, _, _, page = _launch_with_fakes()
+        wrapper.route_mock_json("**/api", {"a": 1}, status=202)
+        handler = page.route.call_args[0][1]
+        route_obj = MagicMock()
+        handler(route_obj, MagicMock())
+        kwargs = route_obj.fulfill.call_args.kwargs
+        self.assertEqual(kwargs["status"], 202)
+        self.assertIn('"a": 1', kwargs["body"])
+        self.assertEqual(kwargs["headers"]["Content-Type"], "application/json")
+
+    def test_route_unmock_and_clear(self):
+        wrapper, _, _, _, page = _launch_with_fakes()
+        wrapper.route_unmock("**/api")
+        page.unroute.assert_called_once_with("**/api")
+        wrapper.route_clear()
+        page.unroute_all.assert_called_once()
+
+
 class TestScreenshots(unittest.TestCase):
 
     def test_screenshot_returns_path(self):

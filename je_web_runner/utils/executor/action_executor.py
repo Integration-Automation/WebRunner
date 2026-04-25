@@ -235,6 +235,11 @@ class Executor(object):
             "WR_pw_quit": _pw.pw_quit,
             "WR_pw_start_har_recording": _pw.pw_start_har_recording,
             "WR_pw_stop_har_recording": _pw.pw_stop_har_recording,
+            # network route mocking
+            "WR_pw_route_mock": _pw.pw_route_mock,
+            "WR_pw_route_mock_json": _pw.pw_route_mock_json,
+            "WR_pw_route_unmock": _pw.pw_route_unmock,
+            "WR_pw_route_clear": _pw.pw_route_clear,
             "WR_pw_to_url": _pw.pw_to_url,
             "WR_pw_forward": _pw.pw_forward,
             "WR_pw_back": _pw.pw_back,
