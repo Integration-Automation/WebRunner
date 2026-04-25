@@ -82,6 +82,12 @@ def _build_parser() -> argparse.ArgumentParser:
         dest="rerun_failed",
         help="path to a previously-written ledger; only files with a failed status are run",
     )
+    parser.add_argument(
+        "--watch",
+        type=str,
+        default=None,
+        help="watch a directory and re-run --execute_dir whenever JSON files change",
+    )
     return parser
 
 
@@ -255,15 +261,23 @@ def _dispatch(args: argparse.Namespace) -> None:
         execute_action(read_action_json(args.execute_file))
     if args.execute_dir:
         rerun_only = failed_files(args.rerun_failed) if args.rerun_failed else None
-        _run_dir(
-            args.execute_dir,
-            args.parallel,
-            include_tags=include_tags,
-            exclude_tags=exclude_tags,
-            ledger_path=args.ledger,
-            rerun_only=rerun_only,
-            parallel_mode=args.parallel_mode,
-        )
+
+        def _do_run() -> None:
+            _run_dir(
+                args.execute_dir,
+                args.parallel,
+                include_tags=include_tags,
+                exclude_tags=exclude_tags,
+                ledger_path=args.ledger,
+                rerun_only=rerun_only,
+                parallel_mode=args.parallel_mode,
+            )
+
+        if args.watch:
+            from je_web_runner.utils.cli.watch_mode import watch_directory
+            watch_directory(args.watch, _do_run)
+        else:
+            _do_run()
     if args.execute_str:
         execute_action(_parse_execute_str(args.execute_str))
     if args.report:
