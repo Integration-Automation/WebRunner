@@ -90,6 +90,7 @@ from je_web_runner.utils.schema import action_schema as _schema
 from je_web_runner.utils.docs import command_reference as _docs
 from je_web_runner.utils.database import db_validate as _db
 from je_web_runner.utils.scheduler import cron_runner as _scheduler
+from je_web_runner.utils.multi_user import matrix as _matrix
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -408,6 +409,9 @@ class Executor(object):
             "WR_stop_scheduler": _scheduler.stop_scheduler,
             "WR_scheduler_counts": _scheduler.scheduler_counts,
             "WR_reset_scheduler": _scheduler.reset_scheduler,
+
+            # multi-user matrix runner
+            "WR_run_for_users": _matrix.run_for_users,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
