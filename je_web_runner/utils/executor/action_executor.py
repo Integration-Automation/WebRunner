@@ -83,6 +83,7 @@ from je_web_runner.utils.network_emulation import throttling as _throttle
 from je_web_runner.utils.test_data import faker_integration as _fakerint
 from je_web_runner.utils.extensions import extension_loader as _ext
 from je_web_runner.utils.dom_traversal import shadow_iframe as _dom
+from je_web_runner.utils.file_transfer import file_helpers as _ft
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -353,6 +354,13 @@ class Executor(object):
             "WR_iframe_switch_chain": _dom.selenium_switch_iframe_chain,
             "WR_iframe_back_to_default": _dom.selenium_back_to_default,
             "WR_pw_frame_locator_chain": _dom.playwright_frame_locator_chain,
+
+            # file upload / download
+            "WR_upload_file": _ft.selenium_upload_file,
+            "WR_pw_upload_file": _ft.playwright_upload_file,
+            "WR_wait_for_download": _ft.wait_for_download,
+            "WR_list_new_downloads": _ft.list_new_downloads,
+            "WR_snapshot_directory": _ft.snapshot_directory,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
