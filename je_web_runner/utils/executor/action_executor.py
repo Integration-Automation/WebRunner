@@ -99,6 +99,7 @@ from je_web_runner.utils.testcontainers_integration import containers as _tc
 from je_web_runner.utils.dashboard import live_dashboard as _dashboard
 from je_web_runner.utils.sharding import shard as _sharding
 from je_web_runner.utils.appium_integration import appium_driver as _appium
+from je_web_runner.utils.ai_assist import llm_assist as _llm
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -465,6 +466,13 @@ class Executor(object):
             "WR_appium_quit": _appium.quit_appium_session,
             "WR_appium_android_caps": _appium.build_android_caps,
             "WR_appium_ios_caps": _appium.build_ios_caps,
+
+            # LLM scaffolds
+            "WR_llm_set_callable": _llm.set_llm_callable,
+            "WR_llm_has_callable": _llm.has_llm_callable,
+            "WR_llm_suggest_locator": _llm.suggest_locator,
+            "WR_llm_generate_actions": _llm.generate_actions_from_prompt,
+            "WR_llm_self_heal_locator": _llm.llm_self_heal_locator,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
