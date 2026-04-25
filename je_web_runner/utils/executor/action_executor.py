@@ -38,6 +38,7 @@ from je_web_runner.utils.accessibility.axe_audit import (
     selenium_run_audit as _axe_run_selenium,
     summarise_violations as _axe_summarise,
 )
+from je_web_runner.utils.service_worker import sw_control as _sw
 from je_web_runner.utils.storage import browser_storage as _storage
 from je_web_runner.utils.cdp.cdp_commands import (
     playwright_cdp as _cdp_playwright,
@@ -290,6 +291,14 @@ class Executor(object):
             "WR_pw_session_storage_get": _storage.playwright_session_storage_get,
             "WR_pw_session_storage_clear": _storage.playwright_session_storage_clear,
             "WR_pw_indexed_db_drop": _storage.playwright_indexed_db_drop,
+
+            # service worker / cache storage
+            "WR_sw_unregister": _sw.selenium_unregister_service_workers,
+            "WR_sw_clear_caches": _sw.selenium_clear_caches,
+            "WR_sw_bypass": _sw.selenium_bypass_service_worker,
+            "WR_pw_sw_unregister": _sw.playwright_unregister_service_workers,
+            "WR_pw_sw_clear_caches": _sw.playwright_clear_caches,
+            "WR_pw_sw_bypass": _sw.playwright_bypass_service_worker,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
