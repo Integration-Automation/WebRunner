@@ -1,7 +1,9 @@
 import builtins
 import types
+from datetime import datetime
 from inspect import getmembers, isbuiltin
-from typing import Union
+from pathlib import Path
+from typing import Optional, Union
 
 # 禁止暴露於 JSON 動作執行器的內建函式，避免任意程式碼執行
 # Builtins that must never be callable from user-supplied JSON actions,
@@ -50,9 +52,30 @@ from je_web_runner.utils.test_record.test_record_class import test_record_instan
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 
+def _try_selenium_screenshot() -> Optional[bytes]:
+    try:
+        if webdriver_wrapper_instance.current_webdriver is None:
+            return None
+        return webdriver_wrapper_instance.get_screenshot_as_png()
+    except Exception:  # noqa: BLE001 — best-effort fallback path
+        return None
+
+
+def _try_playwright_screenshot() -> Optional[bytes]:
+    try:
+        if not _pw.playwright_wrapper_instance._pages:
+            return None
+        return _pw.playwright_wrapper_instance.screenshot_bytes()
+    except Exception:  # noqa: BLE001 — best-effort fallback path
+        return None
+
+
 class Executor(object):
 
     def __init__(self):
+        # 失敗時自動截圖目錄；None 代表停用
+        # Output directory for auto-captured failure screenshots; None disables it.
+        self.failure_screenshot_dir: Optional[str] = None
         # 事件字典：將字串名稱對應到實際可執行的函式
         # Event dictionary: map string keys to actual callable functions
         self.event_dict = {
@@ -170,6 +193,9 @@ class Executor(object):
                 action_data, rows, self.execute_action
             ),
 
+            # failure auto-screenshot
+            "WR_set_failure_screenshot_dir": self.set_failure_screenshot_dir,
+
             # visual regression
             "WR_visual_capture_baseline": _visual_capture_baseline,
             "WR_visual_compare": _visual_compare,
@@ -279,6 +305,33 @@ class Executor(object):
                 continue
             self.event_dict[name] = function
 
+    def set_failure_screenshot_dir(self, path: Optional[str]) -> None:
+        """
+        設定 (或停用) 動作失敗時的自動截圖目錄
+        Configure the directory used for auto-screenshots on action failure.
+        Pass ``None`` to disable.
+        """
+        if path:
+            Path(path).mkdir(parents=True, exist_ok=True)
+        self.failure_screenshot_dir = path
+
+    def _capture_failure_screenshot(self, action) -> Optional[str]:
+        """Best-effort screenshot save when an action raises. Returns path or None."""
+        if not self.failure_screenshot_dir:
+            return None
+        png = _try_selenium_screenshot() or _try_playwright_screenshot()
+        if not png:
+            return None
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        safe_name = str(action[0] if isinstance(action, list) and action else "unknown")
+        target = Path(self.failure_screenshot_dir) / f"{timestamp}_{safe_name}.png"
+        try:
+            target.write_bytes(png)
+            return str(target)
+        except OSError as error:
+            web_runner_logger.error(f"failure screenshot write failed: {error!r}")
+            return None
+
     def _execute_event(self, action: list):
         """
         執行事件字典中的函式
@@ -363,7 +416,13 @@ class Executor(object):
                     f"execute_action, action_list: {action_list}, "
                     f"action: {action}, failed: {repr(error)}")
                 execute_record = "execute: " + str(action)
-                execute_record_dict.update({execute_record: repr(error)})
+                screenshot_path = self._capture_failure_screenshot(action)
+                if screenshot_path:
+                    execute_record_dict.update({
+                        execute_record: f"{repr(error)} (failure screenshot: {screenshot_path})"
+                    })
+                else:
+                    execute_record_dict.update({execute_record: repr(error)})
 
         # 輸出執行結果
         # Print execution results
