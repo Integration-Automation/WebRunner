@@ -1,0 +1,55 @@
+# Selenium Grid 4.x stack for WebRunner.
+#
+# Usage:
+#   cd docker
+#   cp .env.example .env       # adjust browser versions / scaling if needed
+#   docker compose up -d
+#
+# Connect WebRunner to the hub by pointing your test scripts at:
+#   http://localhost:4444/wd/hub
+#
+# Tear down with:  docker compose down
+#
+# To scale a node (e.g. 3 chrome workers):
+#   docker compose up -d --scale chrome=3
+version: "3.8"
+
+services:
+  selenium-hub:
+    image: selenium/hub:${SELENIUM_VERSION:-4.20.0}
+    container_name: webrunner-selenium-hub
+    ports:
+      - "4442:4442"   # event bus publish
+      - "4443:4443"   # event bus subscribe
+      - "4444:4444"   # hub API / Grid UI
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:4444/wd/hub/status || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+
+  chrome:
+    image: selenium/node-chrome:${SELENIUM_VERSION:-4.20.0}
+    shm_size: 2gb
+    depends_on:
+      selenium-hub:
+        condition: service_healthy
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=${CHROME_MAX_SESSIONS:-1}
+      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
+
+  firefox:
+    image: selenium/node-firefox:${SELENIUM_VERSION:-4.20.0}
+    shm_size: 2gb
+    depends_on:
+      selenium-hub:
+        condition: service_healthy
+    environment:
+      - SE_EVENT_BUS_HOST=selenium-hub
+      - SE_EVENT_BUS_PUBLISH_PORT=4442
+      - SE_EVENT_BUS_SUBSCRIBE_PORT=4443
+      - SE_NODE_MAX_SESSIONS=${FIREFOX_MAX_SESSIONS:-1}
+      - SE_NODE_OVERRIDE_MAX_SESSIONS=true
