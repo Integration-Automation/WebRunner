@@ -7,8 +7,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from concurrent.futures import ThreadPoolExecutor
-from typing import Optional, Sequence
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from typing import Optional, Sequence, Tuple
 
 from je_web_runner.utils.exception.exception_tags import argparse_get_wrong_data
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
@@ -37,7 +37,19 @@ def _build_parser() -> argparse.ArgumentParser:
         "--parallel",
         type=int,
         default=1,
-        help="when used with --execute_dir, run files concurrently (thread pool size)",
+        help="when used with --execute_dir, run files concurrently (worker count)",
+    )
+    parser.add_argument(
+        "--parallel-mode",
+        type=str,
+        default="thread",
+        choices=("thread", "process"),
+        dest="parallel_mode",
+        help=(
+            "thread: shares the WebRunner globals (FAST, but UNSAFE for browser "
+            "actions because webdriver wrappers are module-level singletons). "
+            "process: each file runs in its own process for true isolation"
+        ),
     )
     parser.add_argument(
         "--report",
@@ -102,6 +114,34 @@ def _run_one_file(path: str) -> bool:
     return not failed
 
 
+def _run_one_file_isolated(path: str) -> Tuple[str, bool, list]:
+    """
+    Top-level picklable worker for ``ProcessPoolExecutor``: executes the file
+    in its own process (so the WebRunner singletons are fresh) and returns
+    ``(path, passed, records)``. The parent merges ``records`` into its own
+    ``test_record_instance`` so report generators still see every step.
+    """
+    # Re-import inside the worker so the child process initialises its own
+    # singletons; this is the whole point of parallel-mode=process.
+    from je_web_runner.utils.executor.action_executor import execute_action as _execute
+    from je_web_runner.utils.json.json_file.json_file import read_action_json as _read_json
+    from je_web_runner.utils.test_record.test_record_class import (
+        test_record_instance as _records,
+    )
+
+    failure_marker = "program_exception"
+    baseline = len(_records.test_record_list)
+    failed = False
+    try:
+        _execute(_read_json(path))
+    except Exception:  # noqa: BLE001 — failure path, propagated via tuple
+        failed = True
+    new_records = _records.test_record_list[baseline:]
+    if any(record.get(failure_marker, "None") != "None" for record in new_records):
+        failed = True
+    return path, not failed, list(new_records)
+
+
 def _run_with_dependencies(
     files: Sequence[str],
     ledger_path: Optional[str],
@@ -134,6 +174,7 @@ def _run_dir(
     exclude_tags=None,
     ledger_path: Optional[str] = None,
     rerun_only: Optional[Sequence[str]] = None,
+    parallel_mode: str = "thread",
 ) -> None:
     files = get_dir_files_as_list(directory)
     if rerun_only is not None:
@@ -155,6 +196,21 @@ def _run_dir(
             if ledger_path:
                 record_run(ledger_path, path, passed=passed)
         return
+
+    if parallel_mode == "process":
+        with ProcessPoolExecutor(max_workers=parallel) as pool:
+            for path, passed, records in pool.map(_run_one_file_isolated, files):
+                # Merge child records back into the parent's buffer so report
+                # generators still observe every step.
+                test_record_instance.test_record_list.extend(records)
+                if ledger_path:
+                    record_run(ledger_path, path, passed=passed)
+        return
+
+    web_runner_logger.warning(
+        "--parallel-mode=thread shares webdriver singletons across files; "
+        "use --parallel-mode=process for browser-touching tests"
+    )
 
     def _run_and_record(path: str) -> None:
         passed = _run_one_file(path)
@@ -206,6 +262,7 @@ def _dispatch(args: argparse.Namespace) -> None:
             exclude_tags=exclude_tags,
             ledger_path=args.ledger,
             rerun_only=rerun_only,
+            parallel_mode=args.parallel_mode,
         )
     if args.execute_str:
         execute_action(_parse_execute_str(args.execute_str))

@@ -2,7 +2,7 @@ import json
 import os
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from je_web_runner.utils.cli.cli_main import _build_parser, _parse_execute_str, main
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
@@ -21,6 +21,12 @@ class TestCliParser(unittest.TestCase):
         parser = _build_parser()
         args = parser.parse_args(["-e", "x.json"])
         self.assertEqual(args.parallel, 1)
+        self.assertEqual(args.parallel_mode, "thread")
+
+    def test_parallel_mode_process_accepted(self):
+        parser = _build_parser()
+        args = parser.parse_args(["-d", "tests", "--parallel-mode", "process"])
+        self.assertEqual(args.parallel_mode, "process")
 
     def test_validate_and_report_flags(self):
         parser = _build_parser()
@@ -57,6 +63,24 @@ class TestCliDispatch(unittest.TestCase):
                     patch("je_web_runner.utils.cli.cli_main.read_action_json", return_value=[["WR_quit"]]):
                 main(["-d", tmpdir, "--parallel", "2"])
                 self.assertEqual(exec_mock.call_count, 2)
+
+    def test_parallel_mode_process_uses_process_pool(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _write_action_json(tmpdir, "a.json", [["WR_quit"]])
+            _write_action_json(tmpdir, "b.json", [["WR_quit"]])
+            fake_pool_cls = MagicMock()
+            fake_pool = MagicMock()
+            fake_pool_cls.return_value.__enter__.return_value = fake_pool
+            fake_pool.map.return_value = [
+                ("a.json", True, []),
+                ("b.json", True, []),
+            ]
+            with patch(
+                "je_web_runner.utils.cli.cli_main.ProcessPoolExecutor",
+                fake_pool_cls,
+            ):
+                main(["-d", tmpdir, "--parallel", "2", "--parallel-mode", "process"])
+                fake_pool.map.assert_called_once()
 
     def test_report_flag_invokes_all_generators(self):
         with patch("je_web_runner.utils.generate_report.generate_html_report.generate_html_report") as html_mock, \
