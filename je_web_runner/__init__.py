@@ -37,6 +37,12 @@ from je_web_runner.utils.accessibility.axe_audit import (
     selenium_run_audit,
     summarise_violations,
 )
+from je_web_runner.utils.cdp.cdp_commands import (
+    CDPError,
+    playwright_cdp,
+    reset_playwright_cdp_sessions,
+    selenium_cdp,
+)
 from je_web_runner.utils.api.http_client import (
     HttpAssertionError,
     get_last_response,
@@ -179,6 +185,7 @@ __all__ = [
     "HttpAssertionError",
     "AccessibilityError", "load_axe_source", "selenium_run_audit",
     "playwright_run_audit", "summarise_violations",
+    "CDPError", "selenium_cdp", "playwright_cdp", "reset_playwright_cdp_sessions",
     "summarise_run", "notify_webhook", "notify_slack", "notify_run_summary",
     "NotifierError",
     "POMGeneratorError", "extract_elements_from_html", "generate_pom_class",

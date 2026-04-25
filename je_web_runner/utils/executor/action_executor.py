@@ -38,6 +38,11 @@ from je_web_runner.utils.accessibility.axe_audit import (
     selenium_run_audit as _axe_run_selenium,
     summarise_violations as _axe_summarise,
 )
+from je_web_runner.utils.cdp.cdp_commands import (
+    playwright_cdp as _cdp_playwright,
+    reset_playwright_cdp_sessions as _cdp_reset,
+    selenium_cdp as _cdp_selenium,
+)
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -258,6 +263,11 @@ class Executor(object):
             "WR_http_delete": http_delete,
             "WR_http_assert_status": http_assert_status,
             "WR_http_assert_json_contains": http_assert_json_contains,
+
+            # raw CDP
+            "WR_cdp": _cdp_selenium,
+            "WR_pw_cdp": _cdp_playwright,
+            "WR_pw_cdp_reset_sessions": _cdp_reset,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
