@@ -1,0 +1,33 @@
+<!-- IntelliJ / PyCharm: Settings → Languages & Frameworks → Schemas and DTDs → JSON Schema Mappings.
+     Click + and paste-equivalent of the entry below; or drop this file into
+     ``.idea/jsonSchemas.xml`` for the workspace. The schema file path is
+     produced by ``WR_export_action_schema("./webrunner-action-schema.json")``. -->
+<application>
+  <component name="JsonSchemaMappingsProjectConfiguration">
+    <state>
+      <map>
+        <entry key="webrunner-action">
+          <value>
+            <SchemaInfo>
+              <option name="name" value="WebRunner action" />
+              <option name="relativePathToSchema" value="webrunner-action-schema.json" />
+              <option name="applicationDefined" value="true" />
+              <option name="patterns">
+                <list>
+                  <Item>
+                    <option name="path" value="**/actions/**/*.json" />
+                    <option name="mappingKind" value="Pattern" />
+                  </Item>
+                  <Item>
+                    <option name="path" value="**/action_*.json" />
+                    <option name="mappingKind" value="Pattern" />
+                  </Item>
+                </list>
+              </option>
+            </SchemaInfo>
+          </value>
+        </entry>
+      </map>
+    </state>
+  </component>
+</application>
