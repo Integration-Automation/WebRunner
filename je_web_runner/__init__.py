@@ -28,6 +28,18 @@ from je_web_runner.utils.test_object.test_object_class import create_test_object
 from je_web_runner.utils.test_object.test_object_class import get_test_object_type_list
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 from je_web_runner.utils.callback.callback_function_executor import callback_executor
+from je_web_runner.utils.api.http_client import (
+    HttpAssertionError,
+    get_last_response,
+    http_assert_json_contains,
+    http_assert_status,
+    http_delete,
+    http_get,
+    http_patch,
+    http_post,
+    http_put,
+    http_request,
+)
 from je_web_runner.utils.data_driven.data_runner import (
     DataDrivenError,
     expand_with_row,
@@ -137,6 +149,9 @@ __all__ = [
     "HealingError", "HealingRegistry", "healing_registry",
     "register_fallback", "register_fallbacks", "clear_fallbacks",
     "find_with_healing_selenium", "find_with_healing_playwright",
+    "http_request", "http_get", "http_post", "http_put", "http_patch", "http_delete",
+    "http_assert_status", "http_assert_json_contains", "get_last_response",
+    "HttpAssertionError",
     "validate_action_json", "validate_action_file", "validate_action_files",
     "visual_capture_baseline", "visual_compare_with_baseline",
     "recorder_start", "recorder_stop", "recorder_pull_events",

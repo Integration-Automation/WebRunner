@@ -30,6 +30,16 @@ from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
+from je_web_runner.utils.api.http_client import (
+    http_assert_json_contains,
+    http_assert_status,
+    http_delete,
+    http_get,
+    http_patch,
+    http_post,
+    http_put,
+    http_request,
+)
 from je_web_runner.utils.data_driven.data_runner import (
     expand_with_row,
     load_dataset_csv,
@@ -217,6 +227,16 @@ class Executor(object):
             "WR_clear_fallback_locators": _heal_clear_fallbacks,
             "WR_find_with_healing": _heal_find_selenium,
             "WR_pw_find_with_healing": _heal_find_pw,
+
+            # HTTP API testing
+            "WR_http_request": http_request,
+            "WR_http_get": http_get,
+            "WR_http_post": http_post,
+            "WR_http_put": http_put,
+            "WR_http_patch": http_patch,
+            "WR_http_delete": http_delete,
+            "WR_http_assert_status": http_assert_status,
+            "WR_http_assert_json_contains": http_assert_json_contains,
 
             # visual regression
             "WR_visual_capture_baseline": _visual_capture_baseline,
