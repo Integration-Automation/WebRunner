@@ -98,6 +98,7 @@ from je_web_runner.utils.factories import factory as _factories
 from je_web_runner.utils.testcontainers_integration import containers as _tc
 from je_web_runner.utils.dashboard import live_dashboard as _dashboard
 from je_web_runner.utils.sharding import shard as _sharding
+from je_web_runner.utils.appium_integration import appium_driver as _appium
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -458,6 +459,12 @@ class Executor(object):
             "WR_parse_shard_spec": _sharding.parse_shard_spec,
             "WR_partition": _sharding.partition,
             "WR_partition_with_spec": _sharding.partition_with_spec,
+
+            # Appium
+            "WR_appium_start": _appium.start_appium_session,
+            "WR_appium_quit": _appium.quit_appium_session,
+            "WR_appium_android_caps": _appium.build_android_caps,
+            "WR_appium_ios_caps": _appium.build_ios_caps,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
