@@ -350,6 +350,10 @@ class Executor(object):
             "WR_pw_route_mock_json": _pw.pw_route_mock_json,
             "WR_pw_route_unmock": _pw.pw_route_unmock,
             "WR_pw_route_clear": _pw.pw_route_clear,
+            # device emulation
+            "WR_pw_emulate": _pw.pw_emulate,
+            "WR_pw_stop_emulate": _pw.pw_stop_emulate,
+            "WR_pw_list_devices": _pw.pw_list_devices,
             "WR_pw_to_url": _pw.pw_to_url,
             "WR_pw_forward": _pw.pw_forward,
             "WR_pw_back": _pw.pw_back,

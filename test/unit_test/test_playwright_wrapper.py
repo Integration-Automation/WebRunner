@@ -259,6 +259,48 @@ class TestHarRecording(unittest.TestCase):
             wrapper.start_har_recording("run.har")
 
 
+class TestDeviceEmulation(unittest.TestCase):
+
+    def _launch_with_devices(self, devices_dict):
+        factory_callable, playwright, browser, context, _ = _build_fake_playwright()
+        playwright.devices = devices_dict
+        with patch.object(pw_module, "_require_playwright", return_value=factory_callable):
+            wrapper = PlaywrightWrapper()
+            wrapper.launch(browser="chromium", headless=True)
+        return wrapper, browser, context
+
+    def test_list_devices_returns_sorted_keys(self):
+        wrapper, _, _ = self._launch_with_devices({"iPhone 13": {}, "Pixel 7": {}})
+        self.assertEqual(wrapper.list_device_names(), ["Pixel 7", "iPhone 13"])
+
+    def test_start_emulation_passes_device_options_to_new_context(self):
+        wrapper, browser, original_context = self._launch_with_devices({
+            "iPhone 13": {"viewport": {"width": 390, "height": 844}, "userAgent": "iphone"}
+        })
+        new_context = MagicMock()
+        new_context.new_page.return_value = MagicMock()
+        browser.new_context.return_value = new_context
+        wrapper.start_emulation("iPhone 13")
+        original_context.close.assert_called_once()
+        kwargs = browser.new_context.call_args.kwargs
+        self.assertEqual(kwargs["userAgent"], "iphone")
+        self.assertEqual(kwargs["viewport"]["width"], 390)
+
+    def test_unknown_device_raises(self):
+        wrapper, _, _ = self._launch_with_devices({"iPhone 13": {}})
+        with self.assertRaises(PlaywrightBackendError):
+            wrapper.start_emulation("Nokia 3310")
+
+    def test_stop_emulation_replaces_context(self):
+        wrapper, browser, original_context = self._launch_with_devices({"iPhone 13": {}})
+        new_context = MagicMock()
+        new_context.new_page.return_value = MagicMock()
+        browser.new_context.return_value = new_context
+        wrapper.stop_emulation()
+        original_context.close.assert_called_once()
+        self.assertIs(wrapper.context, new_context)
+
+
 class TestRouteMocking(unittest.TestCase):
 
     def test_route_mock_registers_handler(self):

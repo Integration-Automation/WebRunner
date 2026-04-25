@@ -122,14 +122,65 @@ class PlaywrightWrapper:
         self._pages = [page]
         self._page_index = 0
 
-    def _build_context(self, record_har_path: Optional[str], record_har_content: str):
-        """Create a context, optionally configured with HAR recording."""
-        if not record_har_path:
-            return self._browser.new_context()
-        return self._browser.new_context(
-            record_har_path=record_har_path,
-            record_har_content=record_har_content,
-        )
+    def _build_context(
+        self,
+        record_har_path: Optional[str] = None,
+        record_har_content: str = "omit",
+        extra_options: Optional[dict] = None,
+    ):
+        """Create a context, optionally configured with HAR recording / extras."""
+        kwargs = dict(extra_options or {})
+        if record_har_path:
+            kwargs["record_har_path"] = record_har_path
+            kwargs["record_har_content"] = record_har_content
+        return self._browser.new_context(**kwargs) if kwargs else self._browser.new_context()
+
+    def _device_options(self, device_name: str) -> dict:
+        """Look up Playwright's built-in device descriptor by name."""
+        if self._playwright is None:
+            raise PlaywrightBackendError("Playwright runtime not started")
+        devices = getattr(self._playwright, "devices", None)
+        if not devices or device_name not in devices:
+            available = sorted(devices.keys()) if devices else []
+            raise PlaywrightBackendError(
+                f"unknown device {device_name!r}; available examples: {available[:5]}"
+            )
+        return dict(devices[device_name])
+
+    def start_emulation(self, device_name: str) -> None:
+        """
+        套用 Playwright 內建裝置設定（重建 context 與 page）
+        Apply a Playwright device descriptor by name; the current context is
+        closed and replaced with one configured for the requested device.
+        """
+        web_runner_logger.info(f"playwright start_emulation: {device_name}")
+        if self._browser is None:
+            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+        if self._context is not None:
+            self._context.close()
+        self._context = self._build_context(extra_options=self._device_options(device_name))
+        page = self._context.new_page()
+        self._pages = [page]
+        self._page_index = 0
+
+    def stop_emulation(self) -> None:
+        """Replace the device-emulating context with a plain one."""
+        web_runner_logger.info("playwright stop_emulation")
+        if self._browser is None:
+            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+        if self._context is not None:
+            self._context.close()
+        self._context = self._build_context()
+        page = self._context.new_page()
+        self._pages = [page]
+        self._page_index = 0
+
+    def list_device_names(self) -> List[str]:
+        """Return all device names known to the active Playwright runtime."""
+        if self._playwright is None:
+            raise PlaywrightBackendError("Playwright runtime not started")
+        devices = getattr(self._playwright, "devices", None) or {}
+        return sorted(devices.keys())
 
     def start_har_recording(self, har_path: str, content: str = "omit") -> None:
         """
@@ -476,6 +527,18 @@ def pw_route_unmock(url_pattern: str) -> None:
 
 def pw_route_clear() -> None:
     playwright_wrapper_instance.route_clear()
+
+
+def pw_emulate(device_name: str) -> None:
+    playwright_wrapper_instance.start_emulation(device_name)
+
+
+def pw_stop_emulate() -> None:
+    playwright_wrapper_instance.stop_emulation()
+
+
+def pw_list_devices() -> List[str]:
+    return playwright_wrapper_instance.list_device_names()
 
 
 def pw_quit() -> None:
