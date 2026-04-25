@@ -230,6 +230,35 @@ class TestMouseAndKeyboard(unittest.TestCase):
         page.keyboard.up.assert_called_with("Shift")
 
 
+class TestHarRecording(unittest.TestCase):
+
+    def test_launch_with_har_path_passes_to_new_context(self):
+        factory_callable, playwright, browser, _, _ = _build_fake_playwright()
+        with patch.object(pw_module, "_require_playwright", return_value=factory_callable):
+            wrapper = PlaywrightWrapper()
+            wrapper.launch(record_har_path="run.har", record_har_content="embed")
+        browser.new_context.assert_called_once_with(
+            record_har_path="run.har", record_har_content="embed"
+        )
+
+    def test_start_stop_har_recording_swaps_context(self):
+        wrapper, _, browser, original_context, _ = _launch_with_fakes()
+        new_context = MagicMock()
+        new_context.new_page.return_value = MagicMock()
+        browser.new_context.return_value = new_context
+        wrapper.start_har_recording("run.har")
+        original_context.close.assert_called_once()
+        # Each call to new_context replaces the wrapped instance.
+        self.assertIs(wrapper.context, new_context)
+        wrapper.stop_har_recording()
+        new_context.close.assert_called_once()
+
+    def test_start_har_without_browser_raises(self):
+        wrapper = PlaywrightWrapper()
+        with self.assertRaises(PlaywrightBackendError):
+            wrapper.start_har_recording("run.har")
+
+
 class TestScreenshots(unittest.TestCase):
 
     def test_screenshot_returns_path(self):

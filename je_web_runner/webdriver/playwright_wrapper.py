@@ -93,8 +93,20 @@ class PlaywrightWrapper:
             raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
         return self._browser
 
-    def launch(self, browser: str = "chromium", headless: bool = True, **launch_options: Any) -> None:
-        """Launch the requested browser, open a context and a fresh page."""
+    def launch(
+        self,
+        browser: str = "chromium",
+        headless: bool = True,
+        record_har_path: Optional[str] = None,
+        record_har_content: str = "omit",
+        **launch_options: Any,
+    ) -> None:
+        """
+        啟動指定瀏覽器；可選擇於 context 開啟 HAR 錄製
+        Launch the requested browser; optionally enable HAR recording on the
+        context. ``record_har_content`` accepts ``"omit"`` / ``"embed"`` /
+        ``"attach"`` (Playwright defaults).
+        """
         web_runner_logger.info(f"playwright launch: browser={browser}, headless={headless}")
         if browser not in _SUPPORTED_BROWSERS:
             raise PlaywrightBackendError(
@@ -105,6 +117,47 @@ class PlaywrightWrapper:
         self._playwright = sync_playwright().start()
         browser_type = getattr(self._playwright, browser)
         self._browser = browser_type.launch(headless=headless, **launch_options)
+        self._context = self._build_context(record_har_path, record_har_content)
+        page = self._context.new_page()
+        self._pages = [page]
+        self._page_index = 0
+
+    def _build_context(self, record_har_path: Optional[str], record_har_content: str):
+        """Create a context, optionally configured with HAR recording."""
+        if not record_har_path:
+            return self._browser.new_context()
+        return self._browser.new_context(
+            record_har_path=record_har_path,
+            record_har_content=record_har_content,
+        )
+
+    def start_har_recording(self, har_path: str, content: str = "omit") -> None:
+        """
+        於現有 browser 內重建 context 並開啟 HAR 錄製
+        Recreate the context with HAR recording enabled. Existing pages are
+        closed; a fresh page is opened on the new context.
+        """
+        web_runner_logger.info(f"playwright start_har_recording: {har_path}")
+        if self._browser is None:
+            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+        if self._context is not None:
+            self._context.close()
+        self._context = self._build_context(har_path, content)
+        page = self._context.new_page()
+        self._pages = [page]
+        self._page_index = 0
+
+    def stop_har_recording(self) -> None:
+        """
+        關閉並寫出當前 HAR，重建一個未錄製的 context
+        Close the recording context (which flushes the HAR file) and replace
+        it with a fresh non-recording context.
+        """
+        web_runner_logger.info("playwright stop_har_recording")
+        if self._browser is None:
+            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+        if self._context is not None:
+            self._context.close()
         self._context = self._browser.new_context()
         page = self._context.new_page()
         self._pages = [page]
@@ -353,6 +406,14 @@ playwright_wrapper_instance = PlaywrightWrapper()
 
 def pw_launch(browser: str = "chromium", headless: bool = True, **options: Any) -> None:
     playwright_wrapper_instance.launch(browser=browser, headless=headless, **options)
+
+
+def pw_start_har_recording(har_path: str, content: str = "omit") -> None:
+    playwright_wrapper_instance.start_har_recording(har_path, content=content)
+
+
+def pw_stop_har_recording() -> None:
+    playwright_wrapper_instance.stop_har_recording()
 
 
 def pw_quit() -> None:
