@@ -79,6 +79,7 @@ from je_web_runner.utils.cdp.cdp_commands import (
     reset_playwright_cdp_sessions as _cdp_reset,
     selenium_cdp as _cdp_selenium,
 )
+from je_web_runner.utils.network_emulation import throttling as _throttle
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -314,6 +315,13 @@ class Executor(object):
             "WR_cdp": _cdp_selenium,
             "WR_pw_cdp": _cdp_playwright,
             "WR_pw_cdp_reset_sessions": _cdp_reset,
+
+            # network throttling presets
+            "WR_throttle": _throttle.selenium_emulate_network,
+            "WR_throttle_clear": _throttle.selenium_clear_throttling,
+            "WR_pw_throttle": _throttle.playwright_emulate_network,
+            "WR_pw_throttle_clear": _throttle.playwright_clear_throttling,
+            "WR_throttle_presets": _throttle.list_presets,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
