@@ -17,7 +17,7 @@ webdriver_manager bootstrap intentionally do not exist here).
 """
 from __future__ import annotations
 
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -174,6 +174,72 @@ class PlaywrightWrapper:
         page = self._context.new_page()
         self._pages = [page]
         self._page_index = 0
+
+    # ----- geolocation / permissions / timezone / clock --------------
+
+    def set_geolocation(
+        self,
+        latitude: float,
+        longitude: float,
+        accuracy: Optional[float] = None,
+    ) -> None:
+        """Set the page geolocation; remember to grant ``geolocation`` permission first."""
+        web_runner_logger.info(f"playwright set_geolocation: {latitude}, {longitude}")
+        coords: Dict[str, float] = {"latitude": latitude, "longitude": longitude}
+        if accuracy is not None:
+            coords["accuracy"] = accuracy
+        self.context.set_geolocation(coords)
+
+    def grant_permissions(
+        self,
+        permissions: List[str],
+        origin: Optional[str] = None,
+    ) -> None:
+        """Grant browser permissions (e.g. ``geolocation`` / ``clipboard-read``)."""
+        if origin is None:
+            self.context.grant_permissions(permissions)
+        else:
+            self.context.grant_permissions(permissions, origin=origin)
+
+    def clear_permissions(self) -> None:
+        self.context.clear_permissions()
+
+    def set_timezone(self, timezone_id: str) -> None:
+        """
+        重建 context 並指定時區（Playwright 不支援直接修改既有 context 的時區）
+        Recreate the context with ``timezoneId``; the existing page is closed.
+        """
+        web_runner_logger.info(f"playwright set_timezone: {timezone_id}")
+        if self._browser is None:
+            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+        if self._context is not None:
+            self._context.close()
+        self._context = self._build_context(extra_options={"timezone_id": timezone_id})
+        page = self._context.new_page()
+        self._pages = [page]
+        self._page_index = 0
+
+    def clock_install(self, fake_now_ms: Optional[float] = None) -> None:
+        """Install Playwright's clock (requires Playwright 1.45+)."""
+        clock = getattr(self.context, "clock", None)
+        if clock is None:
+            raise PlaywrightBackendError("Playwright clock API unavailable; upgrade Playwright")
+        if fake_now_ms is None:
+            clock.install()
+        else:
+            clock.install(time=fake_now_ms)
+
+    def clock_set_time(self, time_ms: float) -> None:
+        clock = getattr(self.context, "clock", None)
+        if clock is None:
+            raise PlaywrightBackendError("Playwright clock API unavailable; upgrade Playwright")
+        clock.set_fixed_time(time_ms)
+
+    def clock_run_for(self, duration_ms: float) -> None:
+        clock = getattr(self.context, "clock", None)
+        if clock is None:
+            raise PlaywrightBackendError("Playwright clock API unavailable; upgrade Playwright")
+        clock.run_for(duration_ms)
 
     def list_device_names(self) -> List[str]:
         """Return all device names known to the active Playwright runtime."""
@@ -539,6 +605,34 @@ def pw_stop_emulate() -> None:
 
 def pw_list_devices() -> List[str]:
     return playwright_wrapper_instance.list_device_names()
+
+
+def pw_set_geolocation(latitude: float, longitude: float, accuracy: Optional[float] = None) -> None:
+    playwright_wrapper_instance.set_geolocation(latitude, longitude, accuracy=accuracy)
+
+
+def pw_grant_permissions(permissions: List[str], origin: Optional[str] = None) -> None:
+    playwright_wrapper_instance.grant_permissions(permissions, origin=origin)
+
+
+def pw_clear_permissions() -> None:
+    playwright_wrapper_instance.clear_permissions()
+
+
+def pw_set_timezone(timezone_id: str) -> None:
+    playwright_wrapper_instance.set_timezone(timezone_id)
+
+
+def pw_clock_install(fake_now_ms: Optional[float] = None) -> None:
+    playwright_wrapper_instance.clock_install(fake_now_ms)
+
+
+def pw_clock_set_time(time_ms: float) -> None:
+    playwright_wrapper_instance.clock_set_time(time_ms)
+
+
+def pw_clock_run_for(duration_ms: float) -> None:
+    playwright_wrapper_instance.clock_run_for(duration_ms)
 
 
 def pw_quit() -> None:

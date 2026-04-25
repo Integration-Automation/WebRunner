@@ -301,6 +301,60 @@ class TestDeviceEmulation(unittest.TestCase):
         self.assertIs(wrapper.context, new_context)
 
 
+class TestContextOverrides(unittest.TestCase):
+
+    def test_set_geolocation_calls_context(self):
+        wrapper, _, _, context, _ = _launch_with_fakes()
+        wrapper.set_geolocation(35.0, 139.0, accuracy=10)
+        context.set_geolocation.assert_called_once_with(
+            {"latitude": 35.0, "longitude": 139.0, "accuracy": 10}
+        )
+
+    def test_grant_and_clear_permissions(self):
+        wrapper, _, _, context, _ = _launch_with_fakes()
+        wrapper.grant_permissions(["geolocation"])
+        context.grant_permissions.assert_called_once_with(["geolocation"])
+        wrapper.grant_permissions(["clipboard-read"], origin="https://e.com")
+        context.grant_permissions.assert_called_with(["clipboard-read"], origin="https://e.com")
+        wrapper.clear_permissions()
+        context.clear_permissions.assert_called_once()
+
+    def test_set_timezone_recreates_context(self):
+        wrapper, _, browser, original_context, _ = _launch_with_fakes()
+        new_context = MagicMock()
+        new_context.new_page.return_value = MagicMock()
+        browser.new_context.return_value = new_context
+        wrapper.set_timezone("Asia/Tokyo")
+        original_context.close.assert_called_once()
+        kwargs = browser.new_context.call_args.kwargs
+        self.assertEqual(kwargs["timezone_id"], "Asia/Tokyo")
+
+    def test_clock_install_with_and_without_time(self):
+        wrapper, _, _, context, _ = _launch_with_fakes()
+        clock = MagicMock()
+        context.clock = clock
+        wrapper.clock_install()
+        clock.install.assert_called_once_with()
+        clock.install.reset_mock()
+        wrapper.clock_install(123456789)
+        clock.install.assert_called_once_with(time=123456789)
+
+    def test_clock_set_and_run_for(self):
+        wrapper, _, _, context, _ = _launch_with_fakes()
+        clock = MagicMock()
+        context.clock = clock
+        wrapper.clock_set_time(1000)
+        clock.set_fixed_time.assert_called_once_with(1000)
+        wrapper.clock_run_for(500)
+        clock.run_for.assert_called_once_with(500)
+
+    def test_clock_unavailable_raises(self):
+        wrapper, _, _, context, _ = _launch_with_fakes()
+        context.clock = None
+        with self.assertRaises(PlaywrightBackendError):
+            wrapper.clock_install()
+
+
 class TestRouteMocking(unittest.TestCase):
 
     def test_route_mock_registers_handler(self):
