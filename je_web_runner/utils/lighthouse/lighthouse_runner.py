@@ -93,7 +93,14 @@ def run_lighthouse(
     safe_url = _check_url(url)
     web_runner_logger.info(f"run_lighthouse: {safe_url}")
     using_tmp = output_path is None
-    target = output_path or tempfile.mktemp(suffix=".lh.json")  # nosec B306 — controlled tempfile
+    if using_tmp:
+        # ``NamedTemporaryFile`` returns a securely-generated path without
+        # the ``mktemp`` race; ``delete=False`` lets the lighthouse CLI
+        # write to it before we read it back, and we clean up at the end.
+        with tempfile.NamedTemporaryFile(suffix=".lh.json", delete=False) as tmp:
+            target = tmp.name
+    else:
+        target = output_path
     cmd = _build_command(safe_url, target, lighthouse_path, chrome_flags, extra_args)
     try:
         result = subprocess.run(  # nosec B603 — explicit list, shell=False

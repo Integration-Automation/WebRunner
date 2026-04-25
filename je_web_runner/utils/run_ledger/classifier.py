@@ -21,7 +21,10 @@ _TRANSIENT_PATTERNS = [
     re.compile(r"\bConnectionReset"),
     re.compile(r"\bTimeoutError\b", re.IGNORECASE),
     re.compile(r"\bWebDriverException"),
-    re.compile(r"\bStale\s*Element\s*Reference", re.IGNORECASE),
+    # Avoid the ``\s*`` quantifiers SonarCloud S5852 flags as
+    # potentially-quadratic; the exact spellings we care about are exactly
+    # these two literals.
+    re.compile(r"\b(?:StaleElementReference|Stale Element Reference)", re.IGNORECASE),
     re.compile(r"\b502 Bad Gateway\b"),
     re.compile(r"\b503 Service Unavailable\b"),
     re.compile(r"\b504 Gateway Timeout\b"),
@@ -31,8 +34,10 @@ _ENVIRONMENT_PATTERNS = [
     re.compile(r"\bENOSPC\b"),
     re.compile(r"No space left on device"),
     re.compile(r"MemoryError"),
-    re.compile(r"chromedriver.*not.*found", re.IGNORECASE),
-    re.compile(r"geckodriver.*not.*found", re.IGNORECASE),
+    # Bounded ``.{0,80}`` instead of unbounded ``.*`` so SonarCloud S5852
+    # is satisfied; 80 chars is more than enough for the messages we see.
+    re.compile(r"chromedriver.{0,80}not.{0,80}found", re.IGNORECASE),
+    re.compile(r"geckodriver.{0,80}not.{0,80}found", re.IGNORECASE),
     re.compile(r"DNS lookup failed"),
 ]
 
@@ -65,9 +70,8 @@ def classify(error_repr: str, ledger_path: Optional[str] = None,
     error_bucket = classify_error(error_repr)
     if error_bucket is not None:
         return error_bucket
-    if ledger_path and file_path:
-        if file_path in flaky_paths(ledger_path):
-            return "flaky"
+    if ledger_path and file_path and file_path in flaky_paths(ledger_path):
+        return "flaky"
     return "real"
 
 

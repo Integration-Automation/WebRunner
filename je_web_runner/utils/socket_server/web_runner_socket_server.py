@@ -56,10 +56,12 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
         try:
             execute_str = json.loads(command_string)
             socket = self.request
-            for _, execute_return in execute_action(execute_str).items():
+            for execute_return in execute_action(execute_str).values():
                 _send_chunks(socket.sendto, self.client_address, str(execute_return).encode("utf-8"))
             socket.sendto(_END_MARKER, self.client_address)
-        except (json.JSONDecodeError, ValueError, TypeError, OSError) as error:
+        except (ValueError, TypeError, OSError) as error:
+            # JSONDecodeError inherits from ValueError, so it is already
+            # covered above (SonarCloud S5713).
             try:
                 socket = self.request
                 _send_chunks(socket.sendto, self.client_address, str(error).encode("utf-8"))
@@ -93,7 +95,11 @@ class TCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
 
 
 def _build_tls_context(certfile: str, keyfile: str) -> ssl.SSLContext:
+    # ``Purpose.CLIENT_AUTH`` only sets the side; explicitly pin TLSv1.2+
+    # so SonarCloud S4423 is satisfied even on older Pythons that may
+    # leave the default minimum at TLSv1.0.
     context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
     context.load_cert_chain(certfile=certfile, keyfile=keyfile)
     return context
 
