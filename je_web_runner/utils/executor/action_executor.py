@@ -80,6 +80,7 @@ from je_web_runner.utils.cdp.cdp_commands import (
     selenium_cdp as _cdp_selenium,
 )
 from je_web_runner.utils.network_emulation import throttling as _throttle
+from je_web_runner.utils.test_data import faker_integration as _fakerint
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -322,6 +323,22 @@ class Executor(object):
             "WR_pw_throttle": _throttle.playwright_emulate_network,
             "WR_pw_throttle_clear": _throttle.playwright_clear_throttling,
             "WR_throttle_presets": _throttle.list_presets,
+
+            # faker (random test data)
+            "WR_faker_seed": _fakerint.seed_faker,
+            "WR_faker": _fakerint.fake_value,
+            "WR_faker_email": _fakerint.fake_email,
+            "WR_faker_name": _fakerint.fake_name,
+            "WR_faker_first_name": _fakerint.fake_first_name,
+            "WR_faker_last_name": _fakerint.fake_last_name,
+            "WR_faker_phone": _fakerint.fake_phone,
+            "WR_faker_address": _fakerint.fake_address,
+            "WR_faker_uuid": _fakerint.fake_uuid,
+            "WR_faker_credit_card": _fakerint.fake_credit_card,
+            "WR_faker_url": _fakerint.fake_url,
+            "WR_faker_user_agent": _fakerint.fake_user_agent,
+            "WR_faker_password": _fakerint.fake_password,
+            "WR_faker_text": _fakerint.fake_text,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
