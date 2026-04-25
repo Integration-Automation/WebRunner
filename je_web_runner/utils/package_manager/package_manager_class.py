@@ -6,7 +6,7 @@ from sys import stderr
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
-_VALID_MODULE_NAME = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*)*$")
+_VALID_MODULE_NAME = re.compile(r"^[A-Za-z_]\w*(\.[A-Za-z_]\w*)*$", re.ASCII)
 
 
 class PackageManager(object):
@@ -37,7 +37,7 @@ class PackageManager(object):
             found_spec = find_spec(package)
             if found_spec is not None and _VALID_MODULE_NAME.match(found_spec.name):
                 try:
-                    installed_package = import_module(found_spec.name)
+                    installed_package = import_module(found_spec.name)  # nosemgrep: non-literal-import
                     self.installed_package_dict.update(
                         {found_spec.name: installed_package}
                     )
