@@ -16,6 +16,7 @@ from je_web_runner.utils.executor.action_executor import execute_action, execute
 from je_web_runner.utils.file_process.get_dir_file_list import get_dir_files_as_list
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.json.json_validator import validate_action_file
+from je_web_runner.utils.test_filter.tag_filter import filter_paths
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -36,7 +37,26 @@ def _build_parser() -> argparse.ArgumentParser:
         type=str,
         help="after execution, generate JSON / HTML / XML / JUnit reports with this base name",
     )
+    parser.add_argument(
+        "--tag",
+        type=str,
+        default=None,
+        help="comma-separated tags; only run files whose meta.tags contains one",
+    )
+    parser.add_argument(
+        "--exclude-tag",
+        type=str,
+        default=None,
+        dest="exclude_tag",
+        help="comma-separated tags; skip files whose meta.tags contains any",
+    )
     return parser
+
+
+def _split_csv(value: Optional[str]) -> list:
+    if not value:
+        return []
+    return [item.strip() for item in value.split(",") if item.strip()]
 
 
 def _parse_execute_str(execute_str: str) -> list:
@@ -47,8 +67,10 @@ def _parse_execute_str(execute_str: str) -> list:
     return json.loads(execute_str)
 
 
-def _run_dir(directory: str, parallel: int) -> None:
+def _run_dir(directory: str, parallel: int, include_tags=None, exclude_tags=None) -> None:
     files = get_dir_files_as_list(directory)
+    if include_tags or exclude_tags:
+        files = filter_paths(files, include=include_tags, exclude=exclude_tags)
     if parallel <= 1:
         execute_files(files)
         return
@@ -70,21 +92,31 @@ def _generate_reports(base_name: str) -> None:
     generate_junit_xml_report(base_name)
 
 
-def _validate_dir(directory: str) -> None:
-    for path in get_dir_files_as_list(directory):
+def _validate_dir(directory: str, include_tags=None, exclude_tags=None) -> None:
+    paths = get_dir_files_as_list(directory)
+    if include_tags or exclude_tags:
+        paths = filter_paths(paths, include=include_tags, exclude=exclude_tags)
+    for path in paths:
         validate_action_file(path)
 
 
 def _dispatch(args: argparse.Namespace) -> None:
     """Run side-effects requested by the parsed args, in a sensible order."""
+    include_tags = _split_csv(args.tag)
+    exclude_tags = _split_csv(args.exclude_tag)
     if args.validate:
         validate_action_file(args.validate)
     if args.validate_dir:
-        _validate_dir(args.validate_dir)
+        _validate_dir(args.validate_dir, include_tags=include_tags, exclude_tags=exclude_tags)
     if args.execute_file:
         execute_action(read_action_json(args.execute_file))
     if args.execute_dir:
-        _run_dir(args.execute_dir, args.parallel)
+        _run_dir(
+            args.execute_dir,
+            args.parallel,
+            include_tags=include_tags,
+            exclude_tags=exclude_tags,
+        )
     if args.execute_str:
         execute_action(_parse_execute_str(args.execute_str))
     if args.report:

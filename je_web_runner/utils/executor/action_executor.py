@@ -44,6 +44,7 @@ from je_web_runner.utils.security_headers import headers_audit as _headers_audit
 from je_web_runner.utils.perf_metrics import page_metrics as _perf
 from je_web_runner.utils.snapshot import snapshot as _snapshot
 from je_web_runner.utils.har_diff import har_diff as _har_diff
+from je_web_runner.utils.test_filter import tag_filter as _tag_filter
 from je_web_runner.utils.service_worker import sw_control as _sw
 from je_web_runner.utils.storage import browser_storage as _storage
 from je_web_runner.utils.cdp.cdp_commands import (
@@ -338,6 +339,10 @@ class Executor(object):
             # HAR diff
             "WR_diff_har": _har_diff.diff_har,
             "WR_diff_har_files": _har_diff.diff_har_files,
+
+            # tag filter
+            "WR_read_metadata": _tag_filter.read_metadata,
+            "WR_filter_paths": _tag_filter.filter_paths,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
