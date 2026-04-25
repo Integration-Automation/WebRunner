@@ -8,6 +8,7 @@ import argparse
 import json
 import sys
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from pathlib import Path
 from typing import Optional, Sequence, Tuple
 
 from je_web_runner.utils.exception.exception_tags import argparse_get_wrong_data
@@ -87,6 +88,18 @@ def _build_parser() -> argparse.ArgumentParser:
         type=str,
         default=None,
         help="watch a directory and re-run --execute_dir whenever JSON files change",
+    )
+    parser.add_argument(
+        "--migrate",
+        type=str,
+        default=None,
+        help="path to action JSON file or directory; rewrites legacy command names in place",
+    )
+    parser.add_argument(
+        "--migrate-dry-run",
+        action="store_true",
+        dest="migrate_dry_run",
+        help="with --migrate, only report changes without writing files",
     )
     return parser
 
@@ -282,6 +295,8 @@ def _dispatch(args: argparse.Namespace) -> None:
         execute_action(_parse_execute_str(args.execute_str))
     if args.report:
         _generate_reports(args.report)
+    if args.migrate:
+        _do_migrate(args.migrate, dry_run=args.migrate_dry_run)
 
 
 def _has_any_action(args: argparse.Namespace) -> bool:
@@ -292,7 +307,25 @@ def _has_any_action(args: argparse.Namespace) -> bool:
         args.validate,
         args.validate_dir,
         args.report,
+        args.migrate,
     ])
+
+
+def _do_migrate(target: str, dry_run: bool) -> None:
+    from je_web_runner.utils.linter.migration import migrate_action_file, migrate_directory
+    path = Path(target)
+    if path.is_dir():
+        results = migrate_directory(target, dry_run=dry_run)
+    elif path.is_file():
+        results = [migrate_action_file(target, dry_run=dry_run)]
+    else:
+        raise FileNotFoundError(f"--migrate target not found: {target}")
+    for entry in results:
+        if entry["changes"]:
+            mode = "would update" if not entry["written"] else "updated"
+            print(f"{mode} {entry['path']}: {len(entry['changes'])} changes")
+            for change in entry["changes"]:
+                print(f"  [{change['index']}] {change['from']} -> {change['to']}")
 
 
 def main(argv: Optional[Sequence[str]] = None) -> int:

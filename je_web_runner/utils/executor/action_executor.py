@@ -85,6 +85,7 @@ from je_web_runner.utils.extensions import extension_loader as _ext
 from je_web_runner.utils.dom_traversal import shadow_iframe as _dom
 from je_web_runner.utils.file_transfer import file_helpers as _ft
 from je_web_runner.utils.linter import action_linter as _linter
+from je_web_runner.utils.linter import migration as _migration
 from je_web_runner.utils.api.http_client import (
     http_assert_json_contains,
     http_assert_status,
@@ -367,6 +368,11 @@ class Executor(object):
             "WR_lint_action": _linter.lint_action,
             "WR_lint_action_file": _linter.lint_action_file,
             "WR_lint_severity_counts": _linter.severity_counts,
+
+            # migration helper
+            "WR_migrate_action": _migration.migrate_action,
+            "WR_migrate_action_file": _migration.migrate_action_file,
+            "WR_migrate_directory": _migration.migrate_directory,
 
             # storage (Selenium)
             "WR_local_storage_set": _storage.selenium_local_storage_set,
