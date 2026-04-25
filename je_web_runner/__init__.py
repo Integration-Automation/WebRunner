@@ -28,6 +28,13 @@ from je_web_runner.utils.test_object.test_object_class import create_test_object
 from je_web_runner.utils.test_object.test_object_class import get_test_object_type_list
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 from je_web_runner.utils.callback.callback_function_executor import callback_executor
+from je_web_runner.utils.data_driven.data_runner import (
+    DataDrivenError,
+    expand_with_row,
+    load_dataset_csv,
+    load_dataset_json,
+    run_with_dataset,
+)
 from je_web_runner.utils.env_config.env_loader import EnvConfigError, expand_in_action, get_env, load_env
 from je_web_runner.utils.project.create_project_structure import create_project_dir
 from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as visual_capture_baseline
@@ -109,6 +116,8 @@ __all__ = [
     "TestObject", "create_test_object", "get_test_object_type_list",
     "test_record_instance", "Keys", "callback_executor", "create_project_dir",
     "load_env", "get_env", "expand_in_action", "EnvConfigError",
+    "load_dataset_csv", "load_dataset_json", "expand_with_row",
+    "run_with_dataset", "DataDrivenError",
     "validate_action_json", "validate_action_file", "validate_action_files",
     "visual_capture_baseline", "visual_compare_with_baseline",
     "recorder_start", "recorder_stop", "recorder_pull_events",

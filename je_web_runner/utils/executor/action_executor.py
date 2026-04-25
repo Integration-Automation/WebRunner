@@ -27,6 +27,12 @@ from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
+from je_web_runner.utils.data_driven.data_runner import (
+    expand_with_row,
+    load_dataset_csv,
+    load_dataset_json,
+    run_with_dataset,
+)
 from je_web_runner.utils.env_config.env_loader import expand_in_action, get_env, load_env
 from je_web_runner.utils.json.json_validator import validate_action_file, validate_action_json
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -155,6 +161,14 @@ class Executor(object):
             "WR_load_env": load_env,
             "WR_get_env": get_env,
             "WR_expand_env_in_action": expand_in_action,
+
+            # data-driven testing
+            "WR_load_dataset_csv": load_dataset_csv,
+            "WR_load_dataset_json": load_dataset_json,
+            "WR_expand_with_row": expand_with_row,
+            "WR_run_with_dataset": lambda action_data, rows: run_with_dataset(
+                action_data, rows, self.execute_action
+            ),
 
             # visual regression
             "WR_visual_capture_baseline": _visual_capture_baseline,
