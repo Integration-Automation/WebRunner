@@ -19,7 +19,9 @@ class TestWebElementSelectMethods(unittest.TestCase):
         wrapper = WebElementWrapper()
         wrapper.current_web_element = MagicMock()
         with patch("je_web_runner.element.web_element_wrapper.Select") as select_cls:
-            wrapper.select_by_index("3")
+            # Deliberately pass a string to verify the int() cast inside
+            # select_by_index; SonarCloud S5655 is a false positive here.
+            wrapper.select_by_index("3")  # type: ignore[arg-type]
             select_cls.return_value.select_by_index.assert_called_once_with(3)
 
     def test_select_by_visible_text_invokes_select_helper(self):

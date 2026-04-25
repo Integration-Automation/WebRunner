@@ -45,7 +45,9 @@ class TestSnapshot(unittest.TestCase):
     def test_non_string_value_rejected(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             with self.assertRaises(WebRunnerException):
-                match_snapshot("x", 42, tmpdir)
+                # Intentionally non-str so we exercise the type guard;
+                # SonarCloud S5655 is a false positive on this fixture.
+                match_snapshot("x", 42, tmpdir)  # type: ignore[arg-type]
 
     def test_unsafe_chars_in_name_sanitised(self):
         with tempfile.TemporaryDirectory() as tmpdir:

@@ -23,10 +23,13 @@ class TestTestcontainers(unittest.TestCase):
             "je_web_runner.utils.testcontainers_integration.containers._require",
             return_value=fake_class,
         ):
-            container = start_postgres(image="postgres:16-alpine", user="u", password="p", dbname="d")
+            # ``password`` is a mock fixture, never reaches a real DB.
+            container = start_postgres(  # nosec B106
+                image="postgres:16-alpine", user="u", password="p", dbname="d",
+            )
             self.assertIs(container, fake_container)
             fake_class.assert_called_once_with(
-                "postgres:16-alpine", user="u", password="p", dbname="d",
+                "postgres:16-alpine", user="u", password="p", dbname="d",  # nosec B106
             )
             fake_container.start.assert_called_once()
             self.assertEqual(started_count(), 1)

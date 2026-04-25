@@ -62,7 +62,7 @@ class TestRowExpansion(unittest.TestCase):
 
     def test_non_string_passes_through(self):
         self.assertEqual(expand_with_row(7, {}), 7)
-        self.assertEqual(expand_with_row(None, {}), None)
+        self.assertIsNone(expand_with_row(None, {}))
 
 
 class TestRunWithDataset(unittest.TestCase):

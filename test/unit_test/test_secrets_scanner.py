@@ -36,22 +36,25 @@ class TestPatternDetection(unittest.TestCase):
         self.assertTrue(any(f["rule"] == "private_key" for f in findings))
 
 
+# Fixtures below intentionally contain credential-shaped strings so the
+# scanner can prove it flags them. SonarCloud S2068 / S6418 are false
+# positives on these test inputs.
 class TestSuspiciousKeyHeuristic(unittest.TestCase):
 
     def test_high_entropy_value_under_password_key(self):
-        action = [["WR_input", {"password": "Ab12cd34Ef56gh78Ij90KlMnOp"}]]
+        action = [["WR_input", {"password": "Ab12cd34Ef56gh78Ij90KlMnOp"}]]  # nosec B105
         findings = scan_action(action)
         self.assertTrue(
             any(f["rule"] == "suspicious_key_high_entropy" for f in findings)
         )
 
     def test_env_placeholder_not_flagged(self):
-        action = [["WR_input", {"password": "${ENV.PASSWORD}"}]]
+        action = [["WR_input", {"password": "${ENV.PASSWORD}"}]]  # nosec B105
         findings = scan_action(action)
         self.assertEqual(findings, [])
 
     def test_short_value_under_password_key_not_flagged(self):
-        action = [["WR_input", {"password": "abc"}]]
+        action = [["WR_input", {"password": "abc"}]]  # nosec B105
         findings = scan_action(action)
         self.assertEqual(findings, [])
 
@@ -61,8 +64,11 @@ class TestActionFile(unittest.TestCase):
     def test_file_round_trip(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "actions.json")
-            Path(path).write_text(json.dumps([["x", {"api_key": "AKIAABCDEFGHIJKLMNOP"}]]),
-                                  encoding="utf-8")
+            # Fake key value used to verify the scanner's pattern hits.
+            Path(path).write_text(  # nosec B105
+                json.dumps([["x", {"api_key": "AKIAABCDEFGHIJKLMNOP"}]]),
+                encoding="utf-8",
+            )
             findings = scan_action_file(path)
             self.assertGreater(len(findings), 0)
 

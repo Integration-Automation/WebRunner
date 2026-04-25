@@ -67,7 +67,7 @@ class TestPasswordGrant(unittest.TestCase):
     def test_password_grant_dispatches(self):
         with patch("je_web_runner.utils.auth.oauth.requests.post",
                    return_value=_success_response()) as post_mock:
-            password_grant_token(
+            password_grant_token(  # nosec B106 — fake fixture, mocked transport
                 "https://idp.example/oauth2/token", "id", "secret",
                 username="alice", password="hunter2",
             )
