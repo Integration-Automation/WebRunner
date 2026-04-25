@@ -46,6 +46,7 @@ from je_web_runner.utils.snapshot import snapshot as _snapshot
 from je_web_runner.utils.har_diff import har_diff as _har_diff
 from je_web_runner.utils.test_filter import dependency as _dependency
 from je_web_runner.utils.test_filter import tag_filter as _tag_filter
+from je_web_runner.utils.run_ledger import flaky as _flaky
 from je_web_runner.utils.run_ledger import ledger as _ledger
 from je_web_runner.utils.service_worker import sw_control as _sw
 from je_web_runner.utils.storage import browser_storage as _storage
@@ -355,6 +356,8 @@ class Executor(object):
             "WR_ledger_failed_files": _ledger.failed_files,
             "WR_ledger_passed_files": _ledger.passed_files,
             "WR_ledger_clear": _ledger.clear_ledger,
+            "WR_flakiness_stats": _flaky.flakiness_stats,
+            "WR_flaky_paths": _flaky.flaky_paths,
 
             # accessibility (axe-core)
             "WR_a11y_load_axe": _axe_load_source,
