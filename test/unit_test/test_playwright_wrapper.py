@@ -354,6 +354,17 @@ class TestContextOverrides(unittest.TestCase):
         with self.assertRaises(PlaywrightBackendError):
             wrapper.clock_install()
 
+    def test_set_locale_recreates_context_with_options(self):
+        wrapper, _, browser, original_context, _ = _launch_with_fakes()
+        new_context = MagicMock()
+        new_context.new_page.return_value = MagicMock()
+        browser.new_context.return_value = new_context
+        wrapper.set_locale("ja-JP", accept_language="ja,en;q=0.9")
+        original_context.close.assert_called_once()
+        kwargs = browser.new_context.call_args.kwargs
+        self.assertEqual(kwargs["locale"], "ja-JP")
+        self.assertEqual(kwargs["extra_http_headers"]["Accept-Language"], "ja,en;q=0.9")
+
 
 class TestRouteMocking(unittest.TestCase):
 

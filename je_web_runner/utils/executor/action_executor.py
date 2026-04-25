@@ -362,6 +362,7 @@ class Executor(object):
             "WR_pw_clock_install": _pw.pw_clock_install,
             "WR_pw_clock_set_time": _pw.pw_clock_set_time,
             "WR_pw_clock_run_for": _pw.pw_clock_run_for,
+            "WR_pw_set_locale": _pw.pw_set_locale,
             "WR_pw_to_url": _pw.pw_to_url,
             "WR_pw_forward": _pw.pw_forward,
             "WR_pw_back": _pw.pw_back,

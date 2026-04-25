@@ -241,6 +241,29 @@ class PlaywrightWrapper:
             raise PlaywrightBackendError("Playwright clock API unavailable; upgrade Playwright")
         clock.run_for(duration_ms)
 
+    def set_locale(
+        self,
+        locale: str,
+        accept_language: Optional[str] = None,
+    ) -> None:
+        """
+        切換 ``locale`` 與 ``Accept-Language``（重建 context）
+        Recreate the context with the given ``locale`` (and optional
+        Accept-Language override). The current page is closed.
+        """
+        web_runner_logger.info(f"playwright set_locale: {locale}")
+        if self._browser is None:
+            raise PlaywrightBackendError("Playwright browser not launched; call launch() first")
+        options: Dict[str, Any] = {"locale": locale}
+        if accept_language:
+            options["extra_http_headers"] = {"Accept-Language": accept_language}
+        if self._context is not None:
+            self._context.close()
+        self._context = self._build_context(extra_options=options)
+        page = self._context.new_page()
+        self._pages = [page]
+        self._page_index = 0
+
     def list_device_names(self) -> List[str]:
         """Return all device names known to the active Playwright runtime."""
         if self._playwright is None:
@@ -633,6 +656,10 @@ def pw_clock_set_time(time_ms: float) -> None:
 
 def pw_clock_run_for(duration_ms: float) -> None:
     playwright_wrapper_instance.clock_run_for(duration_ms)
+
+
+def pw_set_locale(locale: str, accept_language: Optional[str] = None) -> None:
+    playwright_wrapper_instance.set_locale(locale, accept_language=accept_language)
 
 
 def pw_quit() -> None:
