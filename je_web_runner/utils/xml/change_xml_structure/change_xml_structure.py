@@ -1,6 +1,6 @@
 from collections import defaultdict
-# nosec B405,B408 - Element/SubElement/tostring are XML builders, not parsers; defused libs do not provide builders.
-from xml.etree.ElementTree import Element, SubElement, tostring  # noqa: S314,S405
+# Element/SubElement/tostring are XML builders, not parsers; defusedxml does not provide builders.
+from xml.etree.ElementTree import Element, SubElement, tostring  # nosec B405 # nosemgrep: use-defused-xml
 
 
 def _collect_children(elements_tree) -> dict:
