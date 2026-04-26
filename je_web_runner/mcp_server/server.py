@@ -375,29 +375,36 @@ def serve_stdio(
     out_stream = stdout or sys.stdout
     used_server = server or make_default_server()
     for line in in_stream:
-        line = line.strip()
-        if not line:
+        stripped = line.strip()
+        if not stripped:
             continue
-        try:
-            message = json.loads(line)
-        except ValueError:
-            response = used_server._error(  # pylint: disable=protected-access
-                None, -32700, "parse error"
-            )
-            _write_message(out_stream, response)
+        message = _parse_message(stripped, used_server, out_stream)
+        if message is None:
             continue
-        if isinstance(message, list):
-            # batch — process individually
-            for item in message:
-                response = used_server.handle(item)
-                if response is not None:
-                    _write_message(out_stream, response)
-            continue
-        if not isinstance(message, dict):
-            continue
-        response = used_server.handle(message)
-        if response is not None:
-            _write_message(out_stream, response)
+        _dispatch(message, used_server, out_stream)
+
+
+def _parse_message(line: str, server: McpServer, out_stream: TextIO) -> Any:
+    try:
+        return json.loads(line)
+    except ValueError:
+        response = server._error(  # pylint: disable=protected-access
+            None, -32700, "parse error"
+        )
+        _write_message(out_stream, response)
+        return None
+
+
+def _dispatch(message: Any, server: McpServer, out_stream: TextIO) -> None:
+    if isinstance(message, list):
+        for item in message:
+            _dispatch(item, server, out_stream)
+        return
+    if not isinstance(message, dict):
+        return
+    response = server.handle(message)
+    if response is not None:
+        _write_message(out_stream, response)
 
 
 def _write_message(out_stream: TextIO, message: Dict[str, Any]) -> None:

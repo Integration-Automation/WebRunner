@@ -43,7 +43,7 @@ class TestCspViolationCollector(unittest.TestCase):
     def test_assert_none_raises(self):
         driver = MagicMock()
         driver.execute_script.return_value = json.dumps([
-            {"violatedDirective": "img-src", "blockedURI": "http://evil"},
+            {"violatedDirective": "img-src", "blockedURI": "http://evil"},  # NOSONAR — fixture for CSP violation reporter
         ])
         collector = CspViolationCollector()
         collector.collect(driver)

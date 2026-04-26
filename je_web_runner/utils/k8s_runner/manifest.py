@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -133,28 +133,36 @@ def render_yaml_documents(manifests: List[Dict[str, Any]]) -> str:
 def _dump_yaml(value: Any, indent: int = 0) -> str:
     pad = "  " * indent
     if isinstance(value, dict):
-        if not value:
-            return f"{pad}{{}}"
-        lines = []
-        for key, item in value.items():
-            if isinstance(item, (dict, list)):
-                lines.append(f"{pad}{key}:")
-                lines.append(_dump_yaml(item, indent + 1))
-            else:
-                lines.append(f"{pad}{key}: {_scalar(item)}")
-        return "\n".join(lines)
+        return _dump_dict(value, pad, indent)
     if isinstance(value, list):
-        if not value:
-            return f"{pad}[]"
-        lines = []
-        for item in value:
-            if isinstance(item, (dict, list)):
-                lines.append(f"{pad}-")
-                lines.append(_dump_yaml(item, indent + 1))
-            else:
-                lines.append(f"{pad}- {_scalar(item)}")
-        return "\n".join(lines)
+        return _dump_list(value, pad, indent)
     return f"{pad}{_scalar(value)}"
+
+
+def _dump_dict(value: Dict[str, Any], pad: str, indent: int) -> str:
+    if not value:
+        return f"{pad}{{}}"
+    lines = []
+    for key, item in value.items():
+        if isinstance(item, (dict, list)):
+            lines.append(f"{pad}{key}:")
+            lines.append(_dump_yaml(item, indent + 1))
+        else:
+            lines.append(f"{pad}{key}: {_scalar(item)}")
+    return "\n".join(lines)
+
+
+def _dump_list(value: List[Any], pad: str, indent: int) -> str:
+    if not value:
+        return f"{pad}[]"
+    lines = []
+    for item in value:
+        if isinstance(item, (dict, list)):
+            lines.append(f"{pad}-")
+            lines.append(_dump_yaml(item, indent + 1))
+        else:
+            lines.append(f"{pad}- {_scalar(item)}")
+    return "\n".join(lines)
 
 
 def _scalar(value: Any) -> str:

@@ -72,37 +72,45 @@ def run_with_retry(
     """
     used_policy = policy or RetryPolicy()
     attempt = 0
-    last_error: Optional[BaseException] = None
     while True:
         attempt += 1
         try:
             return func(*args, **kwargs)
         except Exception as error:  # pylint: disable=broad-except
-            last_error = error
-            error_repr = repr(error)
-            category = classify(error_repr, ledger_path=ledger_path, file_path=file_path)
-            budget = used_policy.budget_for(category)
-            will_retry = attempt <= budget
-            decision = RetryDecision(
-                attempt=attempt,
-                category=category,
-                sleep_seconds=used_policy.backoff_for(attempt) if will_retry else 0.0,
-                will_retry=will_retry,
-                error_repr=error_repr,
-            )
-            used_policy.history.append(decision)
-            web_runner_logger.warning(
-                f"adaptive_retry attempt={attempt} category={category} "
-                f"will_retry={will_retry} err={error_repr[:120]}"
-            )
-            if not will_retry:
-                if category == "real":
+            decision = _record_attempt(used_policy, attempt, error, ledger_path, file_path)
+            if not decision.will_retry:
+                if decision.category == "real":
                     raise AdaptiveRetryError(
-                        f"non-retryable real failure: {error_repr[:200]}"
+                        f"non-retryable real failure: {decision.error_repr[:200]}"
                     ) from error
                 raise
             if decision.sleep_seconds > 0:
                 sleep(decision.sleep_seconds)
+
+
+def _record_attempt(
+    policy: RetryPolicy,
+    attempt: int,
+    error: BaseException,
+    ledger_path: Optional[str],
+    file_path: Optional[str],
+) -> RetryDecision:
+    error_repr = repr(error)
+    category = classify(error_repr, ledger_path=ledger_path, file_path=file_path)
+    will_retry = attempt <= policy.budget_for(category)
+    decision = RetryDecision(
+        attempt=attempt,
+        category=category,
+        sleep_seconds=policy.backoff_for(attempt) if will_retry else 0.0,
+        will_retry=will_retry,
+        error_repr=error_repr,
+    )
+    policy.history.append(decision)
+    web_runner_logger.warning(
+        f"adaptive_retry attempt={attempt} category={category} "
+        f"will_retry={will_retry} err={error_repr[:120]}"
+    )
+    return decision
 
 
 def summarise_history(policy: RetryPolicy) -> Dict[str, Any]:

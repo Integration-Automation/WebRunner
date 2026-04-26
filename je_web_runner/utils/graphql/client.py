@@ -39,7 +39,7 @@ _INTROSPECTION_QUERY = """
 @dataclass
 class GraphQLClient:
     endpoint: str
-    headers: Dict[str, str] = None  # type: ignore[assignment]
+    headers: Optional[Dict[str, str]] = None
     timeout: float = 10.0
 
     def __post_init__(self) -> None:
@@ -56,33 +56,42 @@ class GraphQLClient:
         variables: Optional[Dict[str, Any]] = None,
         operation_name: Optional[str] = None,
     ) -> Dict[str, Any]:
-        body = json.dumps(
-            {"query": query, "variables": variables or {}, "operationName": operation_name},
-            ensure_ascii=False,
-        ).encode("utf-8")
-        request = urllib.request.Request(
-            self.endpoint,
-            data=body,
-            method="POST",
-        )
-        request.add_header("Content-Type", "application/json")
-        request.add_header("Accept", "application/json")
-        for name, value in self.headers.items():
-            request.add_header(name, value)
-        try:
-            ssl_context = ssl.create_default_context()
-            with urllib.request.urlopen(  # nosec B310 — scheme already validated
-                request, timeout=self.timeout, context=ssl_context,
-            ) as response:
-                payload = json.loads(response.read().decode("utf-8"))
-        except (OSError, ValueError) as error:
-            raise GraphQLError(f"GraphQL transport failed: {error!r}") from error
+        request = self._build_request(query, variables, operation_name)
+        payload = self._send(request)
         web_runner_logger.info(
             f"graphql {operation_name or query.split()[0]} keys={list(payload.keys())}"
         )
         if isinstance(payload.get("errors"), list) and payload["errors"]:
             raise GraphQLError(f"GraphQL errors: {payload['errors'][:3]}")
         return payload
+
+    def _build_request(
+        self,
+        query: str,
+        variables: Optional[Dict[str, Any]],
+        operation_name: Optional[str],
+    ) -> urllib.request.Request:
+        body = json.dumps(
+            {"query": query, "variables": variables or {}, "operationName": operation_name},
+            ensure_ascii=False,
+        ).encode("utf-8")
+        request = urllib.request.Request(self.endpoint, data=body, method="POST")
+        request.add_header("Content-Type", "application/json")
+        request.add_header("Accept", "application/json")
+        for name, value in (self.headers or {}).items():
+            request.add_header(name, value)
+        return request
+
+    def _send(self, request: urllib.request.Request) -> Dict[str, Any]:
+        # Python 3.10+ default context already enforces TLS 1.2+. NOSONAR S4423
+        ssl_context = ssl.create_default_context()
+        try:
+            with urllib.request.urlopen(  # nosec B310 — scheme already validated
+                request, timeout=self.timeout, context=ssl_context,
+            ) as response:
+                return json.loads(response.read().decode("utf-8"))
+        except (OSError, ValueError) as error:
+            raise GraphQLError(f"GraphQL transport failed: {error!r}") from error
 
     def introspect(self) -> Dict[str, Any]:
         return self.execute(_INTROSPECTION_QUERY)
@@ -100,23 +109,35 @@ def extract_field(payload: Dict[str, Any], path: str) -> Any:
     for raw_part in path.split("."):
         if not raw_part:
             raise GraphQLError(f"empty path segment in {path!r}")
-        index: Optional[int] = None
-        name = raw_part
-        if "[" in raw_part and raw_part.endswith("]"):
-            name, _, rest = raw_part.partition("[")
-            try:
-                index = int(rest[:-1])
-            except ValueError as error:
-                raise GraphQLError(f"bad index in {raw_part!r}") from error
+        name, index = _split_part(raw_part)
         if name:
-            if not isinstance(cursor, dict) or name not in cursor:
-                raise GraphQLError(f"field {name!r} missing at {path!r}")
-            cursor = cursor[name]
+            cursor = _get_field(cursor, name, path)
         if index is not None:
-            if not isinstance(cursor, list) or index >= len(cursor):
-                raise GraphQLError(f"index {index} out of range at {path!r}")
-            cursor = cursor[index]
+            cursor = _get_index(cursor, index, path)
     return cursor
+
+
+def _split_part(raw_part: str) -> tuple:
+    """Return ``(name, index)`` for a path segment like ``users[0]``."""
+    if "[" in raw_part and raw_part.endswith("]"):
+        name, _, rest = raw_part.partition("[")
+        try:
+            return name, int(rest[:-1])
+        except ValueError as error:
+            raise GraphQLError(f"bad index in {raw_part!r}") from error
+    return raw_part, None
+
+
+def _get_field(cursor: Any, name: str, path: str) -> Any:
+    if not isinstance(cursor, dict) or name not in cursor:
+        raise GraphQLError(f"field {name!r} missing at {path!r}")
+    return cursor[name]
+
+
+def _get_index(cursor: Any, index: int, path: str) -> Any:
+    if not isinstance(cursor, list) or index >= len(cursor):
+        raise GraphQLError(f"index {index} out of range at {path!r}")
+    return cursor[index]
 
 
 def introspect_types(payload: Dict[str, Any]) -> List[str]:

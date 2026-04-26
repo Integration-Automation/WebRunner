@@ -10,6 +10,7 @@ in heavyweight ORM models.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
 
@@ -22,6 +23,13 @@ class DbFixtureError(WebRunnerException):
 
 
 _AllowedScalar = (str, int, float, bool, type(None))
+_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def _safe_identifier(name: str, kind: str) -> str:
+    if not _IDENTIFIER_RE.match(name):
+        raise DbFixtureError(f"{kind} {name!r} contains unsafe characters")
+    return name
 
 
 def load_fixture_file(path: Union[str, Path]) -> Dict[str, List[Dict[str, Any]]]:
@@ -40,27 +48,35 @@ def validate_shape(data: Any) -> Dict[str, List[Dict[str, Any]]]:
     """Make sure the loaded object matches ``{table: [rows]}``."""
     if not isinstance(data, dict):
         raise DbFixtureError("fixture root must be an object")
-    result: Dict[str, List[Dict[str, Any]]] = {}
+    return {
+        table: _validate_rows(table, rows)
+        for table, rows in _validated_tables(data)
+    }
+
+
+def _validated_tables(data: Dict[Any, Any]):
     for table, rows in data.items():
         if not isinstance(table, str) or not table:
             raise DbFixtureError(f"table name must be non-empty string, got {table!r}")
         if not isinstance(rows, list):
             raise DbFixtureError(f"rows for {table!r} must be a list")
-        validated: List[Dict[str, Any]] = []
-        for index, row in enumerate(rows):
-            if not isinstance(row, dict):
+        yield table, rows
+
+
+def _validate_rows(table: str, rows: List[Any]) -> List[Dict[str, Any]]:
+    validated: List[Dict[str, Any]] = []
+    for index, row in enumerate(rows):
+        if not isinstance(row, dict):
+            raise DbFixtureError(
+                f"{table!r} row {index} must be an object, got {type(row).__name__}"
+            )
+        for column, value in row.items():
+            if not isinstance(value, _AllowedScalar):
                 raise DbFixtureError(
-                    f"{table!r} row {index} must be an object, got {type(row).__name__}"
+                    f"{table!r}.{column}: unsupported type {type(value).__name__}"
                 )
-            for column, value in row.items():
-                if not isinstance(value, _AllowedScalar):
-                    raise DbFixtureError(
-                        f"{table!r}.{column}: unsupported type "
-                        f"{type(value).__name__}"
-                    )
-            validated.append(row)
-        result[table] = validated
-    return result
+        validated.append(row)
+    return validated
 
 
 def load_into_connection(
@@ -83,11 +99,13 @@ def load_into_connection(
             continue
         if not rows:
             continue
-        columns = list(rows[0].keys())
+        safe_table = _safe_identifier(table, "table")
+        columns = [_safe_identifier(c, "column") for c in rows[0].keys()]
         placeholder = ", ".join(f":{col}" for col in columns)
         column_text = ", ".join(f"{quote}{col}{quote}" for col in columns)
-        sql = (
-            f"INSERT INTO {quote}{table}{quote} "
+        # nosemgrep: python_sql_rule-hardcoded-sql-expression
+        sql = (  # nosec B608 — identifiers validated above
+            f"INSERT INTO {quote}{safe_table}{quote} "
             f"({column_text}) VALUES ({placeholder})"
         )
         for row in rows:
@@ -101,6 +119,7 @@ def _wrap_text(sql: str) -> Any:
     """Use SQLAlchemy ``text()`` when available, otherwise return raw SQL."""
     try:
         from sqlalchemy import text  # type: ignore[import-not-found]
+        # nosemgrep: python.sqlalchemy.security.audit.avoid-sqlalchemy-text.avoid-sqlalchemy-text
         return text(sql)
     except Exception:  # pylint: disable=broad-except
         return sql
@@ -109,4 +128,8 @@ def _wrap_text(sql: str) -> Any:
 def truncate_tables(connection: Any, tables: Iterable[str], quote: str = '"') -> None:
     """``DELETE FROM`` each table; cheap teardown for in-test fixture reload."""
     for table in tables:
-        connection.execute(_wrap_text(f"DELETE FROM {quote}{table}{quote}"), {})
+        safe_table = _safe_identifier(table, "table")
+        # nosemgrep: python_sql_rule-hardcoded-sql-expression
+        connection.execute(  # nosec B608 — identifier validated above
+            _wrap_text(f"DELETE FROM {quote}{safe_table}{quote}"), {},
+        )

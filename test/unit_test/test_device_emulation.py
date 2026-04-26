@@ -70,7 +70,7 @@ class TestCdpCommand(unittest.TestCase):
 
     def test_payload_shape(self):
         payload = cdp_emulation_command("iPhone SE")
-        self.assertEqual(payload["mobile"], True)
+        self.assertTrue(payload["mobile"])
         self.assertEqual(payload["deviceScaleFactor"], 2.0)
 
 

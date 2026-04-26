@@ -73,7 +73,7 @@ class TestYamlRendering(unittest.TestCase):
         self.assertIn("---", text)
 
     def test_render_yaml_documents_handles_empty(self):
-        self.assertTrue(render_yaml_documents([]).strip() == "")
+        self.assertEqual(render_yaml_documents([]).strip(), "")
 
 
 if __name__ == "__main__":

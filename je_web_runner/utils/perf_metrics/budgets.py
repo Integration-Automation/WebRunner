@@ -47,39 +47,39 @@ class RouteBudget:
 
 def load_budgets(source: Union[str, Path, list]) -> List[RouteBudget]:
     """Load budgets from a path, JSON string, or in-memory list."""
-    if isinstance(source, list):
-        raw = source
-    elif isinstance(source, (str, Path)):
-        path = Path(source)
-        if path.is_file():
-            try:
-                raw = json.loads(path.read_text(encoding="utf-8"))
-            except ValueError as error:
-                raise PerfBudgetError(f"budget file is not JSON: {error}") from error
-        else:
-            try:
-                raw = json.loads(str(source))
-            except ValueError as error:
-                raise PerfBudgetError(f"budget string is not JSON: {error}") from error
-    else:
-        raise PerfBudgetError(f"unsupported source type: {type(source).__name__}")
+    raw = _coerce_to_list(source)
     if not isinstance(raw, list):
         raise PerfBudgetError("budget root must be a list")
-    budgets: List[RouteBudget] = []
-    for index, entry in enumerate(raw):
-        if not isinstance(entry, dict):
-            raise PerfBudgetError(f"budget[{index}] must be an object")
-        if "path" not in entry and "path_glob" not in entry:
-            raise PerfBudgetError(f"budget[{index}]: needs 'path' or 'path_glob'")
-        metrics = entry.get("metrics") or {}
-        if not isinstance(metrics, dict) or not metrics:
-            raise PerfBudgetError(f"budget[{index}]: 'metrics' must be a non-empty object")
-        budgets.append(RouteBudget(
-            path=entry.get("path"),
-            path_glob=entry.get("path_glob"),
-            metrics={k: float(v) for k, v in metrics.items()},
-        ))
-    return budgets
+    return [_build_route_budget(index, entry) for index, entry in enumerate(raw)]
+
+
+def _coerce_to_list(source: Union[str, Path, list]) -> Any:
+    if isinstance(source, list):
+        return source
+    if not isinstance(source, (str, Path)):
+        raise PerfBudgetError(f"unsupported source type: {type(source).__name__}")
+    path = Path(source)
+    text = path.read_text(encoding="utf-8") if path.is_file() else str(source)
+    label = "budget file" if path.is_file() else "budget string"
+    try:
+        return json.loads(text)
+    except ValueError as error:
+        raise PerfBudgetError(f"{label} is not JSON: {error}") from error
+
+
+def _build_route_budget(index: int, entry: Any) -> "RouteBudget":
+    if not isinstance(entry, dict):
+        raise PerfBudgetError(f"budget[{index}] must be an object")
+    if "path" not in entry and "path_glob" not in entry:
+        raise PerfBudgetError(f"budget[{index}]: needs 'path' or 'path_glob'")
+    metrics = entry.get("metrics") or {}
+    if not isinstance(metrics, dict) or not metrics:
+        raise PerfBudgetError(f"budget[{index}]: 'metrics' must be a non-empty object")
+    return RouteBudget(
+        path=entry.get("path"),
+        path_glob=entry.get("path_glob"),
+        metrics={k: float(v) for k, v in metrics.items()},
+    )
 
 
 @dataclass

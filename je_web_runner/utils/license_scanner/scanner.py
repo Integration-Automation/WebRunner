@@ -87,9 +87,7 @@ def assert_allowed_licenses(
     deny_set = {d.strip() for d in (deny or [])}
     bad: List[LicenseFinding] = []
     for finding in findings:
-        if finding.license_id in deny_set:
-            bad.append(finding)
-        elif finding.license_id not in allow_set:
+        if finding.license_id in deny_set or finding.license_id not in allow_set:
             bad.append(finding)
     if bad:
         sample = [

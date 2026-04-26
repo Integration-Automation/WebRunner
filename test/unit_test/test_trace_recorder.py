@@ -1,6 +1,5 @@
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import MagicMock
 
 from je_web_runner.utils.trace_recorder import (

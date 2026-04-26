@@ -56,7 +56,7 @@ def apply_to_request_headers(
     rules: List[HeaderRule],
 ) -> Dict[str, str]:
     """Return a new headers dict with all matching rules applied."""
-    next_headers = {k: v for k, v in headers.items()}
+    next_headers = dict(headers)
     for rule in rules:
         if not _matches(rule, url):
             continue

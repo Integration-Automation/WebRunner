@@ -15,10 +15,10 @@ class TestRenderTemplate(unittest.TestCase):
     def test_login_basic_renders(self):
         actions = render_template("login_basic", {
             "username_locator": "#user",
-            "password_locator": "#pass",
+            "password_locator": "#pass",  # NOSONAR  # nosec B105 — locator name fixture, not a credential
             "submit_locator": "#go",
             "username": "alice",
-            "password": "wonderland",
+            "password": "wonderland",  # NOSONAR  # nosec B105 — fixture exercises template substitution
         })
         # The fill step should have substituted "alice"
         flat = repr(actions)

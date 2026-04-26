@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import os
 import subprocess  # nosec B404 — argv-only invocation, no shell
-from pathlib import Path
 from typing import Callable, Iterable, List, Optional, Sequence, Set
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -26,7 +25,7 @@ GitRunner = Callable[[Sequence[str]], str]
 def _default_git_runner(args: Sequence[str]) -> str:
     cmd = ["git", *args]
     try:
-        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit
+        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
         out = subprocess.check_output(  # nosec B603 — explicit argv list
             cmd,
             stderr=subprocess.DEVNULL,
@@ -88,4 +87,6 @@ def _normalise(path: str) -> str:
     if not path:
         return ""
     expanded = os.path.expanduser(path)
-    return str(Path(expanded).as_posix())
+    # Treat \ as a separator regardless of host OS — git diff always emits
+    # forward slashes, but a candidate list can be authored on Windows.
+    return expanded.replace("\\", "/")

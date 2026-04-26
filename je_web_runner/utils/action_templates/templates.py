@@ -32,7 +32,7 @@ class ActionTemplate:
     description: str = ""
 
 
-_PLACEHOLDER_RE = re.compile(r"\{\{\s*([A-Za-z_][A-Za-z0-9_]*)\s*\}\}")
+_PLACEHOLDER_RE = re.compile(r"\{\{\s*([A-Za-z_]\w*)\s*\}\}")
 
 
 _BUILTIN_TEMPLATES: Dict[str, ActionTemplate] = {

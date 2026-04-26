@@ -38,7 +38,7 @@ class TestGraphQLClient(unittest.TestCase):
 
     def test_invalid_endpoint_rejected(self):
         with self.assertRaises(GraphQLError):
-            GraphQLClient("ftp://example.com")
+            GraphQLClient("ftp://example.com")  # NOSONAR — fixture, validator rejects it
 
     def test_executes_query(self):
         client = GraphQLClient("https://api.example.com/graphql")
@@ -47,7 +47,7 @@ class TestGraphQLClient(unittest.TestCase):
             return_value=_fake_response({"data": {"ok": True}}),
         ) as urlopen_mock:
             result = client.execute("{ ok }")
-        self.assertEqual(result["data"]["ok"], True)
+        self.assertTrue(result["data"]["ok"])
         urlopen_mock.assert_called_once()
 
     def test_errors_in_payload_raise(self):

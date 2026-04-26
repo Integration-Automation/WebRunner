@@ -54,40 +54,48 @@ class MockS3Storage:
 
 # ----- SMTP capture ----------------------------------------------------------
 
+_SMTP_OK = b"250 ok\r\n"
+
+
 class _SmtpHandler(socketserver.StreamRequestHandler):
 
     def handle(self) -> None:  # pragma: no cover - exercised via integration paths
         server: Any = self.server  # type: ignore[assignment]
         self.wfile.write(b"220 mock SMTP\r\n")
-        message_lines: List[str] = []
-        in_data = False
+        state: Dict[str, Any] = {"in_data": False, "lines": []}
         while True:
             line = self.rfile.readline()
             if not line:
                 break
             decoded = line.decode("utf-8", errors="replace")
-            if not in_data:
-                upper = decoded.upper().strip()
-                if upper.startswith("EHLO") or upper.startswith("HELO"):
-                    self.wfile.write(b"250 ok\r\n")
-                elif upper.startswith("MAIL FROM") or upper.startswith("RCPT TO"):
-                    self.wfile.write(b"250 ok\r\n")
-                elif upper == "DATA":
-                    self.wfile.write(b"354 send data\r\n")
-                    in_data = True
-                elif upper == "QUIT":
-                    self.wfile.write(b"221 bye\r\n")
-                    break
-                else:
-                    self.wfile.write(b"250 ok\r\n")
-            else:
-                if decoded.strip() == ".":
-                    server.captured.append("".join(message_lines))
-                    message_lines = []
-                    self.wfile.write(b"250 queued\r\n")
-                    in_data = False
-                else:
-                    message_lines.append(decoded)
+            if state["in_data"]:
+                _handle_data_line(self, server, state, decoded)
+            elif not _handle_command(self, decoded, state):
+                break
+
+
+def _handle_command(handler: Any, decoded: str, state: Dict[str, Any]) -> bool:
+    """Process one command line; return False to close the connection."""
+    upper = decoded.upper().strip()
+    if upper == "QUIT":
+        handler.wfile.write(b"221 bye\r\n")
+        return False
+    if upper == "DATA":
+        handler.wfile.write(b"354 send data\r\n")
+        state["in_data"] = True
+    else:
+        handler.wfile.write(_SMTP_OK)
+    return True
+
+
+def _handle_data_line(handler: Any, server: Any, state: Dict[str, Any], decoded: str) -> None:
+    if decoded.strip() == ".":
+        server.captured.append("".join(state["lines"]))
+        state["lines"] = []
+        state["in_data"] = False
+        handler.wfile.write(b"250 queued\r\n")
+    else:
+        state["lines"].append(decoded)
 
 
 class MockSmtpServer:
@@ -126,7 +134,9 @@ def _make_oauth_handler(server_state: Dict[str, Any]) -> Callable:
 
     class _OAuthRequestHandler(BaseHTTPRequestHandler):
 
-        def log_message(self, format, *args):  # noqa: A002 - signature override
+        def log_message(self, format, *args):  # pylint: disable=redefined-builtin
+            # ``format`` shadowing is required by BaseHTTPRequestHandler's API;
+            # silence stdlib-driven access logging.
             return
 
         def _send(self, status: int, payload: Dict[str, Any]) -> None:

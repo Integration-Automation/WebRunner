@@ -9,7 +9,7 @@ guards, not full Draft-7 conformance.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -41,34 +41,47 @@ def _validate(value: Any, schema: Dict[str, Any], path: str,
         errors.append(f"{path}: schema must be a dict")
         return
     if "oneOf" in schema:
-        candidates = schema["oneOf"]
-        any_match = False
-        for sub in candidates:
-            sub_errors: List[str] = []
-            _validate(value, sub, path, sub_errors)
-            if not sub_errors:
-                any_match = True
-                break
-        if not any_match:
-            errors.append(f"{path}: did not match any oneOf candidate")
+        _validate_one_of(value, schema["oneOf"], path, errors)
         return
     expected = schema.get("type")
-    if expected is not None:
-        check = _TYPE_CHECKS.get(expected)
-        if check is None:
-            errors.append(f"{path}: unsupported type {expected!r}")
-            return
-        if not check(value):
-            errors.append(f"{path}: expected {expected}, got {type(value).__name__}")
-            return
-    enum = schema.get("enum")
-    if enum is not None and value not in enum:
-        errors.append(f"{path}: value {value!r} not in enum {enum!r}")
+    if expected is not None and not _check_type(value, expected, path, errors):
+        return
+    if not _check_enum(value, schema, path, errors):
         return
     if expected == "object":
         _validate_object(value, schema, path, errors)
     elif expected == "array":
         _validate_array(value, schema, path, errors)
+
+
+def _validate_one_of(value: Any, candidates: List[Any], path: str,
+                     errors: List[str]) -> None:
+    for sub in candidates:
+        sub_errors: List[str] = []
+        _validate(value, sub, path, sub_errors)
+        if not sub_errors:
+            return
+    errors.append(f"{path}: did not match any oneOf candidate")
+
+
+def _check_type(value: Any, expected: str, path: str, errors: List[str]) -> bool:
+    check = _TYPE_CHECKS.get(expected)
+    if check is None:
+        errors.append(f"{path}: unsupported type {expected!r}")
+        return False
+    if not check(value):
+        errors.append(f"{path}: expected {expected}, got {type(value).__name__}")
+        return False
+    return True
+
+
+def _check_enum(value: Any, schema: Dict[str, Any], path: str,
+                errors: List[str]) -> bool:
+    enum = schema.get("enum")
+    if enum is not None and value not in enum:
+        errors.append(f"{path}: value {value!r} not in enum {enum!r}")
+        return False
+    return True
 
 
 def _validate_object(value: Dict[str, Any], schema: Dict[str, Any],

@@ -6,7 +6,6 @@ from je_web_runner.utils.observability.timeline import (
     from_responses,
     from_spans,
     merge,
-    to_dicts,
 )
 
 
