@@ -37,6 +37,9 @@ jobs:
     - name: Run unit tests
       run: python -m pytest test/unit_test/test_*.py -v
 
+    - name: Run integration tests
+      run: python -m pytest test/integration_test/ -v --timeout=60
+
   integration-test:
     name: Integration Tests (Python ${{ matrix.python-version }})
     needs: unit-test
