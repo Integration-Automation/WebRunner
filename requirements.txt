@@ -1,2 +1,5 @@
 je_web_runner
 defusedxml
+Pillow
+faker
+sqlalchemy
