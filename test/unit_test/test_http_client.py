@@ -53,7 +53,7 @@ class TestHttpRequest(unittest.TestCase):
 
     def test_url_must_be_http_or_https(self):
         with self.assertRaises(WebRunnerException):
-            http_request("GET", "ftp://example.com")
+            http_request("GET", "ftp://example.com")  # NOSONAR — fixture, asserts the validator rejects it
         with self.assertRaises(WebRunnerException):
             http_request("GET", "")
 

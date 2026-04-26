@@ -40,7 +40,7 @@ def _require(module: str, attribute: str) -> Any:
 def start_postgres(
     image: str = "postgres:16-alpine",
     user: str = "test",
-    password: str = "test",  # nosec B107 — testcontainers fixture default; never reaches prod
+    password: str = "test",  # NOSONAR  # nosec B107 — testcontainers default
     dbname: str = "test",
 ) -> Any:
     """

@@ -28,7 +28,7 @@ _NO_EXCEPTION = "None"
 def _check_url(base_url: str) -> str:
     if not isinstance(base_url, str) or not base_url:
         raise JiraError("base_url must be a non-empty string")
-    if not (base_url.startswith("http://") or base_url.startswith("https://")):
+    if not (base_url.startswith("http://") or base_url.startswith("https://")):  # NOSONAR — scheme allow-list, not an outbound HTTP call
         raise JiraError(f"base_url must be http(s): {base_url!r}")
     return base_url.rstrip("/")
 

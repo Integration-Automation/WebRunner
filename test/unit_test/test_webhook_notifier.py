@@ -43,7 +43,7 @@ class TestWebhook(unittest.TestCase):
 
     def test_url_must_be_http(self):
         with self.assertRaises(NotifierError):
-            notify_webhook("ftp://example.com", {})
+            notify_webhook("ftp://example.com", {})  # NOSONAR — fixture, asserts the validator rejects it
 
     def test_post_with_payload_returns_status(self):
         response = MagicMock(status_code=200, text="ok")

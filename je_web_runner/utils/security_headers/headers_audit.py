@@ -95,7 +95,7 @@ def audit_url(
     GET ``url`` 並稽核回應 headers
     Issue a GET request and audit the response headers.
     """
-    if not isinstance(url, str) or not (url.startswith("http://") or url.startswith("https://")):
+    if not isinstance(url, str) or not (url.startswith("http://") or url.startswith("https://")):  # NOSONAR — scheme allow-list, not an outbound HTTP call
         raise SecurityHeadersError(f"URL must be http(s): {url!r}")
     web_runner_logger.info(f"audit_url: {url}")
     response = requests.get(url, timeout=timeout, allow_redirects=True)

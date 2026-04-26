@@ -42,19 +42,19 @@ class TestPatternDetection(unittest.TestCase):
 class TestSuspiciousKeyHeuristic(unittest.TestCase):
 
     def test_high_entropy_value_under_password_key(self):
-        action = [["WR_input", {"password": "Ab12cd34Ef56gh78Ij90KlMnOp"}]]  # nosec B105
+        action = [["WR_input", {"password": "Ab12cd34Ef56gh78Ij90KlMnOp"}]]  # NOSONAR  # nosec B105
         findings = scan_action(action)
         self.assertTrue(
             any(f["rule"] == "suspicious_key_high_entropy" for f in findings)
         )
 
     def test_env_placeholder_not_flagged(self):
-        action = [["WR_input", {"password": "${ENV.PASSWORD}"}]]  # nosec B105
+        action = [["WR_input", {"password": "${ENV.PASSWORD}"}]]  # NOSONAR  # nosec B105
         findings = scan_action(action)
         self.assertEqual(findings, [])
 
     def test_short_value_under_password_key_not_flagged(self):
-        action = [["WR_input", {"password": "abc"}]]  # nosec B105
+        action = [["WR_input", {"password": "abc"}]]  # NOSONAR  # nosec B105
         findings = scan_action(action)
         self.assertEqual(findings, [])
 
@@ -65,7 +65,7 @@ class TestActionFile(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "actions.json")
             # Fake key value used to verify the scanner's pattern hits.
-            Path(path).write_text(  # nosec B105
+            Path(path).write_text(  # NOSONAR  # nosec B105
                 json.dumps([["x", {"api_key": "AKIAABCDEFGHIJKLMNOP"}]]),
                 encoding="utf-8",
             )

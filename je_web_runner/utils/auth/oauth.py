@@ -31,7 +31,7 @@ _token_cache: Dict[str, Dict[str, Any]] = {}
 def _check_token_url(url: str) -> str:
     if not isinstance(url, str) or not url:
         raise OAuthError("token_url must be a non-empty string")
-    if not (url.startswith("http://") or url.startswith("https://")):
+    if not (url.startswith("http://") or url.startswith("https://")):  # NOSONAR — scheme allow-list, not an outbound HTTP call
         raise OAuthError(f"token_url must be http(s): {url!r}")
     return url
 

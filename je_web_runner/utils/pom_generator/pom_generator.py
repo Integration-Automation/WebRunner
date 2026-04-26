@@ -225,7 +225,7 @@ def generate_pom_from_url(url: str, class_name: str, timeout: int = 30) -> str:
     從 URL 下載 HTML 並產生 POM 類別
     Fetch the URL and emit a POM class. ``http`` / ``https`` schemes only.
     """
-    if not isinstance(url, str) or not (url.startswith("http://") or url.startswith("https://")):
+    if not isinstance(url, str) or not (url.startswith("http://") or url.startswith("https://")):  # NOSONAR — scheme allow-list, not an outbound HTTP call
         raise POMGeneratorError(f"URL must be http(s): {url!r}")
     web_runner_logger.info(f"generate_pom_from_url: {url}")
     response = requests.get(url, timeout=timeout)

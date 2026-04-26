@@ -233,7 +233,7 @@ class TestMouseAndKeyboard(unittest.TestCase):
 class TestHarRecording(unittest.TestCase):
 
     def test_launch_with_har_path_passes_to_new_context(self):
-        factory_callable, playwright, browser, _, _ = _build_fake_playwright()
+        factory_callable, _, browser, _, _ = _build_fake_playwright()
         with patch.object(pw_module, "_require_playwright", return_value=factory_callable):
             wrapper = PlaywrightWrapper()
             wrapper.launch(record_har_path="run.har", record_har_content="embed")

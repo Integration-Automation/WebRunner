@@ -29,7 +29,7 @@ class TestRunLighthouse(unittest.TestCase):
 
     def test_invalid_url_raises(self):
         with self.assertRaises(LighthouseError):
-            run_lighthouse("ftp://example.com")
+            run_lighthouse("ftp://example.com")  # NOSONAR — fixture, asserts the validator rejects it
 
     def test_runs_and_summarises(self):
         with tempfile.TemporaryDirectory() as tmpdir:

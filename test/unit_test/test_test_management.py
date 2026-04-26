@@ -26,7 +26,7 @@ class TestJiraCreateIssue(unittest.TestCase):
 
     def test_invalid_url_raises(self):
         with self.assertRaises(JiraError):
-            jira_create_issue("ftp://x", "u", "k", "P", "summary")
+            jira_create_issue("ftp://x", "u", "k", "P", "summary")  # NOSONAR — fixture, asserts the validator rejects it
 
     def test_posts_expected_payload(self):
         response = MagicMock(status_code=201, text="ok")
@@ -85,7 +85,7 @@ class TestTestRail(unittest.TestCase):
 
     def test_send_results_invalid_url(self):
         with self.assertRaises(TestRailError):
-            _send_results("ftp://x", "u", "k", 1, [])
+            _send_results("ftp://x", "u", "k", 1, [])  # NOSONAR — fixture, asserts the validator rejects it
 
     def test_send_results_posts_payload(self):
         response = MagicMock(status_code=200, text="ok")

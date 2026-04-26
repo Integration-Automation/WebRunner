@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.snapshot.snapshot import (
@@ -45,9 +46,11 @@ class TestSnapshot(unittest.TestCase):
     def test_non_string_value_rejected(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             with self.assertRaises(WebRunnerException):
-                # Intentionally non-str so we exercise the type guard;
-                # SonarCloud S5655 is a false positive on this fixture.
-                match_snapshot("x", 42, tmpdir)  # type: ignore[arg-type]
+                # The function rejects non-str inputs; pass through
+                # ``Any`` so SonarCloud S5655 doesn't object to the
+                # intentional type mismatch in the fixture.
+                bad_value: Any = 42
+                match_snapshot("x", bad_value, tmpdir)
 
     def test_unsafe_chars_in_name_sanitised(self):
         with tempfile.TemporaryDirectory() as tmpdir:

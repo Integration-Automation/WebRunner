@@ -30,7 +30,7 @@ _state: Dict[str, Any] = {"last_response": None}
 def _allowed_url(url: str) -> str:
     if not isinstance(url, str) or not url:
         raise WebRunnerException("HTTP URL must be a non-empty string")
-    if not (url.startswith("http://") or url.startswith("https://")):
+    if not (url.startswith("http://") or url.startswith("https://")):  # NOSONAR — scheme allow-list, not an outbound HTTP call
         raise WebRunnerException(f"HTTP URL must start with http:// or https://: {url!r}")
     return url
 

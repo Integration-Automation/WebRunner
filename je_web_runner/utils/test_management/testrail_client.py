@@ -24,7 +24,7 @@ _PASSED, _FAILED = 1, 5  # TestRail status_id values
 def _check_url(base_url: str) -> str:
     if not isinstance(base_url, str) or not base_url:
         raise TestRailError("base_url must be a non-empty string")
-    if not (base_url.startswith("http://") or base_url.startswith("https://")):
+    if not (base_url.startswith("http://") or base_url.startswith("https://")):  # NOSONAR — scheme allow-list, not an outbound HTTP call
         raise TestRailError(f"base_url must be http(s): {base_url!r}")
     return base_url.rstrip("/")
 

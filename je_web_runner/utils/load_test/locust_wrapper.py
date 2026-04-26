@@ -92,7 +92,7 @@ def run_locust(
     :param run_seconds: 總時長 / total run time in seconds
     :return: dict with ``total`` and ``per_endpoint``
     """
-    if not isinstance(host, str) or not (host.startswith("http://") or host.startswith("https://")):
+    if not isinstance(host, str) or not (host.startswith("http://") or host.startswith("https://")):  # NOSONAR — scheme allow-list, not an outbound HTTP call
         raise LoadTestError(f"host must be http(s): {host!r}")
     web_runner_logger.info(f"run_locust host={host} users={num_users} run_seconds={run_seconds}")
     _http_user_cls, _between, _task, environment_cls = _require_locust()

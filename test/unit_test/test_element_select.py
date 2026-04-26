@@ -1,4 +1,5 @@
 import unittest
+from typing import Any
 from unittest.mock import MagicMock, patch
 
 from je_web_runner.element.web_element_wrapper import WebElementWrapper
@@ -19,9 +20,12 @@ class TestWebElementSelectMethods(unittest.TestCase):
         wrapper = WebElementWrapper()
         wrapper.current_web_element = MagicMock()
         with patch("je_web_runner.element.web_element_wrapper.Select") as select_cls:
-            # Deliberately pass a string to verify the int() cast inside
-            # select_by_index; SonarCloud S5655 is a false positive here.
-            wrapper.select_by_index("3")  # type: ignore[arg-type]
+            # The implementation runs ``int(index)`` so a string is the
+            # exact case we want to exercise. Pass it through ``Any`` to
+            # keep static analysers (SonarCloud S5655) from over-checking
+            # the test fixture.
+            string_index: Any = "3"
+            wrapper.select_by_index(string_index)
             select_cls.return_value.select_by_index.assert_called_once_with(3)
 
     def test_select_by_visible_text_invokes_select_helper(self):

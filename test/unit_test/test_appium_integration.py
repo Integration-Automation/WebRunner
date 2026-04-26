@@ -15,7 +15,7 @@ class TestStartSession(unittest.TestCase):
 
     def test_invalid_url_raises(self):
         with self.assertRaises(AppiumIntegrationError):
-            start_appium_session("ftp://x", {"platformName": "Android"})
+            start_appium_session("ftp://x", {"platformName": "Android"})  # NOSONAR — fixture, asserts the validator rejects it
 
     def test_empty_caps_raises(self):
         with self.assertRaises(AppiumIntegrationError):
@@ -61,20 +61,23 @@ class TestQuitSession(unittest.TestCase):
 class TestCaps(unittest.TestCase):
 
     def test_android_caps_shape(self):
-        caps = build_android_caps("/tmp/app.apk", platform_version="14")
+        # Use a placeholder path that's never opened — the test only
+        # validates the capability dict shape, so SonarCloud S5443 about
+        # ``/tmp`` writability would be a false positive on a real path.
+        caps = build_android_caps("./fixtures/app.apk", platform_version="14")
         self.assertEqual(caps["platformName"], "Android")
         self.assertEqual(caps["appium:platformVersion"], "14")
-        self.assertEqual(caps["appium:app"], "/tmp/app.apk")
+        self.assertEqual(caps["appium:app"], "./fixtures/app.apk")
         self.assertEqual(caps["appium:automationName"], "UiAutomator2")
 
     def test_ios_caps_shape(self):
-        caps = build_ios_caps("/tmp/app.app", device_name="iPhone 14")
+        caps = build_ios_caps("./fixtures/app.app", device_name="iPhone 14")
         self.assertEqual(caps["platformName"], "iOS")
         self.assertEqual(caps["appium:deviceName"], "iPhone 14")
         self.assertEqual(caps["appium:automationName"], "XCUITest")
 
     def test_extra_caps_merge(self):
-        caps = build_android_caps("/tmp/x.apk", extra={"appium:autoGrantPermissions": True})
+        caps = build_android_caps("./fixtures/x.apk", extra={"appium:autoGrantPermissions": True})
         self.assertTrue(caps["appium:autoGrantPermissions"])
 
 

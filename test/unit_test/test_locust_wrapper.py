@@ -80,7 +80,7 @@ class TestRunLocust(unittest.TestCase):
 
     def test_invalid_host_rejected(self):
         with self.assertRaises(LoadTestError):
-            run_locust("ftp://x", actions=[{"method": "GET", "path": "/"}])
+            run_locust("ftp://x", actions=[{"method": "GET", "path": "/"}])  # NOSONAR — fixture, asserts the validator rejects it
 
     def test_runs_environment_and_summarises(self):
         # Build minimal stub objects that mimic locust's stats shape.

@@ -27,7 +27,7 @@ _DEFAULT_TIMEOUT = 180
 
 
 def _check_url(url: str) -> str:
-    if not isinstance(url, str) or not (url.startswith("http://") or url.startswith("https://")):
+    if not isinstance(url, str) or not (url.startswith("http://") or url.startswith("https://")):  # NOSONAR — scheme allow-list, not an outbound HTTP call
         raise LighthouseError(f"URL must be http(s): {url!r}")
     return url
 

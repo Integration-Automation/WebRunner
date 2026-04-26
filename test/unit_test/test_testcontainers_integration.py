@@ -24,12 +24,18 @@ class TestTestcontainers(unittest.TestCase):
             return_value=fake_class,
         ):
             # ``password`` is a mock fixture, never reaches a real DB.
-            container = start_postgres(  # nosec B106
-                image="postgres:16-alpine", user="u", password="p", dbname="d",
+            container = start_postgres(
+                image="postgres:16-alpine",
+                user="u",
+                password="p",  # NOSONAR  # nosec B106
+                dbname="d",
             )
             self.assertIs(container, fake_container)
             fake_class.assert_called_once_with(
-                "postgres:16-alpine", user="u", password="p", dbname="d",  # nosec B106
+                "postgres:16-alpine",
+                user="u",
+                password="p",  # NOSONAR  # nosec B106
+                dbname="d",
             )
             fake_container.start.assert_called_once()
             self.assertEqual(started_count(), 1)

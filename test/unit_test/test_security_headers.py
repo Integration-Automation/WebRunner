@@ -65,7 +65,7 @@ class TestAuditUrl(unittest.TestCase):
 
     def test_invalid_scheme_raises(self):
         with self.assertRaises(SecurityHeadersError):
-            audit_url("ftp://example.com")
+            audit_url("ftp://example.com")  # NOSONAR — fixture, asserts the validator rejects it
 
     def test_fetches_and_audits(self):
         response = MagicMock()

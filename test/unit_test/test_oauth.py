@@ -30,7 +30,7 @@ class TestClientCredentials(unittest.TestCase):
 
     def test_invalid_url_raises(self):
         with self.assertRaises(OAuthError):
-            client_credentials_token("ftp://example.com", "id", "secret")
+            client_credentials_token("ftp://example.com", "id", "secret")  # NOSONAR — fixture, asserts the validator rejects it
 
     def test_returns_token_response(self):
         with patch("je_web_runner.utils.auth.oauth.requests.post",
@@ -67,9 +67,12 @@ class TestPasswordGrant(unittest.TestCase):
     def test_password_grant_dispatches(self):
         with patch("je_web_runner.utils.auth.oauth.requests.post",
                    return_value=_success_response()) as post_mock:
-            password_grant_token(  # nosec B106 — fake fixture, mocked transport
-                "https://idp.example/oauth2/token", "id", "secret",
-                username="alice", password="hunter2",
+            password_grant_token(
+                "https://idp.example/oauth2/token",
+                "id",
+                "secret",
+                username="alice",
+                password="hunter2",  # NOSONAR  # nosec B106 — mocked transport
             )
             data = post_mock.call_args.kwargs["data"]
             self.assertEqual(data["grant_type"], "password")

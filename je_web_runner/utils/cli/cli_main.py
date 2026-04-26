@@ -162,7 +162,8 @@ def _run_one_file_isolated(path: str) -> Tuple[str, bool, list]:
     failed = False
     try:
         _execute(_read_json(path))
-    except Exception:  # noqa: BLE001 — failure path, propagated via tuple
+    except Exception:  # pylint: disable=broad-except
+        # Failure path — the tuple we return signals it to the parent.
         failed = True
     new_records = _records.test_record_list[baseline:]
     if any(record.get(failure_marker, "None") != "None" for record in new_records):

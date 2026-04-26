@@ -44,7 +44,7 @@ def start_appium_session(
     """
     web_runner_logger.info(f"start_appium_session: {server_url}")
     if not isinstance(server_url, str) or not (
-        server_url.startswith("http://") or server_url.startswith("https://")
+        server_url.startswith("http://") or server_url.startswith("https://")  # NOSONAR — scheme allow-list, not an outbound HTTP call
     ):
         raise AppiumIntegrationError(f"server_url must be http(s): {server_url!r}")
     if not isinstance(capabilities, dict) or not capabilities:

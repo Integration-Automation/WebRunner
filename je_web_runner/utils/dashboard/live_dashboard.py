@@ -115,7 +115,9 @@ class LiveDashboard:
         if self._server is None:
             raise DashboardError("dashboard is not running")
         host, port = self._server.server_address
-        return f"http://{host}:{port}"
+        # Local-only progress dashboard, served over plain HTTP by design;
+        # SonarCloud S5332 is a false positive on this URL builder.
+        return f"http://{host}:{port}"  # NOSONAR
 
     def start(self) -> str:
         web_runner_logger.info(f"LiveDashboard.start {self._host}:{self._port}")

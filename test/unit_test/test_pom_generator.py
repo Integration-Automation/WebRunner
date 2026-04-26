@@ -75,7 +75,7 @@ class TestUrlFetch(unittest.TestCase):
 
     def test_url_must_be_http(self):
         with self.assertRaises(POMGeneratorError):
-            generate_pom_from_url("ftp://example.com", "X")
+            generate_pom_from_url("ftp://example.com", "X")  # NOSONAR — fixture, asserts the validator rejects it
 
     def test_fetches_and_generates(self):
         response = MagicMock()
