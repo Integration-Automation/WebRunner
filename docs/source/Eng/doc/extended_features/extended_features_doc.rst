@@ -495,3 +495,43 @@ Fan-out / event bus / extension harness
 * ``extension_harness.parse_manifest("./ext")`` — MV2 / MV3 manifest
   reader; ``apply_to_chrome_options`` and
   ``playwright_persistent_context_args`` plug into either backend.
+
+Action formatter / Markdown authoring
+=====================================
+
+* ``action_formatter.format_actions(actions)`` — canonical multi-line
+  JSON, kwargs in preferred-then-alphabetical order; ``format_file(path)``
+  reformats in place and returns ``(text, changed)``.
+* ``md_authoring.parse_markdown(text)`` — bullet templates: ``open
+  <url>``, ``click <selector>``, ``type "<text>" into <selector>``,
+  ``wait <n>s``, ``assert title "<text>"``, ``press <Key>``,
+  ``screenshot``, ``run template <name>``, ``quit``. Unrecognised lines
+  become ``WR__note`` entries.
+
+Triage & production observability
+=================================
+
+* ``failure_cluster.cluster_failures(failures, top_n=5)`` — group
+  failures by normalised error signature (strip timestamps, hex,
+  paths, line numbers, large numerics, quoted substrings).
+* ``synthetic_monitoring.SyntheticMonitor(alert_sink).register(name,
+  check, failure_threshold=2)`` — edge-triggered alerts on transitions;
+  ``run_for(iterations, interval_seconds)`` for the loop.
+* ``observability.otlp_exporter.configure_otlp_export(provider,
+  OtlpExportConfig(endpoint="https://otlp:4317"))`` — register an OTLP
+  ``BatchSpanProcessor`` with an existing ``TracerProvider``;
+  ``protocol="grpc"`` (default) or ``"http"``.
+
+Storybook / shadow DOM
+======================
+
+* ``storybook.discover_stories(index_or_path)`` reads Storybook 7+
+  ``index.json``;
+  ``plan_actions_for_stories(stories, base_url, run_a11y=True,
+  capture_screenshot=True, extra_per_story=...)`` builds a flat action
+  plan that visits each story under ``iframe.html?id=...`` and runs
+  axe / screenshot.
+* ``dom_traversal.shadow_pierce.find_first(driver, css_selector)`` /
+  ``find_all`` walk open shadow roots recursively. ``execute_script``
+  for Selenium, ``evaluate`` for Playwright; ``assert_pierced_visible``
+  raises if the selector doesn't match anywhere.

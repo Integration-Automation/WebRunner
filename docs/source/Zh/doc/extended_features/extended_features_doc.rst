@@ -346,3 +346,29 @@ Fan-out / event bus / extension harness
 * ``event_bus.EventBus`` — 檔案系統 ndjson pub/sub，跨 shard 協調用
 * ``extension_harness`` — 解析 MV2/MV3 manifest，配置 Selenium 或
   Playwright 載入未打包擴充
+
+Action formatter / Markdown 撰寫
+================================
+
+* ``action_formatter.format_actions`` — canonical 縮排與鍵順序，搭配
+  既有 LSP 一起用
+* ``md_authoring.parse_markdown`` — 用 Markdown bullet 寫測試流程，再
+  轉成 ``WR_*`` action JSON
+
+Triage / 線上 Observability
+===========================
+
+* ``failure_cluster.cluster_failures`` — 把失敗依 normalised signature
+  分群、列出 top buckets
+* ``synthetic_monitoring.SyntheticMonitor`` — 固定 subset 對 prod 持續
+  輪播，狀態 edge-triggered alert
+* ``observability.otlp_exporter`` — 把現有 OTel spans 寄到 OTLP gRPC /
+  HTTP 後端（Jaeger / Tempo）
+
+Storybook / Shadow DOM
+======================
+
+* ``storybook.discover_stories`` + ``plan_actions_for_stories`` — 走訪
+  Storybook stories 自動跑 axe + screenshot
+* ``dom_traversal.shadow_pierce.find_first`` — 遞迴穿透 open shadow
+  root 找元件，Selenium 與 Playwright 通吃

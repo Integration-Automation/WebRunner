@@ -638,6 +638,24 @@ python -m je_web_runner.action_lsp
 
 `textDocument/completion` returns every registered `WR_*` command; `textDocument/publishDiagnostics` runs the action linter on `didOpen` / `didChange`. Pair with VS Code's *Configure JSON Language Servers* or the JetBrains LSP plugin.
 
+## Even More Capabilities (newest wave)
+
+Authoring / formatting:
+
+- **Action JSON formatter** — `action_formatter.format_actions(actions)` writes a canonical multi-line array with kwargs in a stable preferred-then-alphabetical order; `format_file(path)` reformats in place and reports `(text, changed)`.
+- **Markdown → action JSON** — `md_authoring.parse_markdown(text)` understands `- open <url>`, `- click #id`, `- type "x" into <selector>`, `- wait 3s`, `- assert title "..."`, `- press Enter`, `- screenshot`, `- run template <name>`, `- quit`. Lines that don't match are preserved as `WR__note` so the round-trip is loss-less.
+
+Triage / production observability:
+
+- **Failure clustering** — `failure_cluster.cluster_failures(failures, top_n=5)` reduces each error message to a stable signature (strips timestamps, hex addresses, line numbers, paths, large numerics, quoted substrings) so the same root cause across runs lands in one bucket.
+- **Synthetic monitoring** — `synthetic_monitoring.SyntheticMonitor(alert_sink).register("homepage", check)` reruns checks; the sink only fires on edge transitions (`green → red` / `red → green`) with `failure_threshold` / `recovery_threshold` to silence flapping.
+- **OTLP exporter** — `observability.otlp_exporter.configure_otlp_export(provider, OtlpExportConfig(endpoint="https://otlp:4317"))` ships the existing OTel spans to Jaeger / Tempo / any OTLP backend (gRPC by default, HTTP fallback).
+
+Frontend / component:
+
+- **Storybook integration** — `storybook.discover_stories(index_path)` reads Storybook 7+ `index.json` (or legacy `stories.json`); `plan_actions_for_stories(stories, base_url, run_a11y=True)` builds a flat action list visiting each story in iframe mode and running axe + screenshot.
+- **Shadow DOM auto-pierce** — `dom_traversal.shadow_pierce.find_first(driver, "button.primary")` recursively walks open shadow roots (Selenium `execute_script` or Playwright `evaluate`) so a single CSS selector can match across shadow boundaries.
+
 ## Even More Capabilities (latest wave)
 
 Onboarding / migration:
