@@ -7,6 +7,8 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath('.'))
+# Reach the repo root so ``import je_web_runner`` works inside autodoc.
+sys.path.insert(0, os.path.abspath(os.path.join(os.pardir, os.pardir)))
 
 # -- Project information -----------------------------------------------------
 
@@ -17,8 +19,33 @@ author = 'JE-Chen'
 # -- General configuration ---------------------------------------------------
 
 extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.autosectionlabel",
+    "sphinx.ext.napoleon",
     "sphinxcontrib.mermaid",
+]
+
+# Autosummary writes per-module reference pages on every build.
+autosummary_generate = True
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": False,
+    "show-inheritance": True,
+}
+# Autodoc imports the modules it documents; some carry soft deps that
+# aren't installed in the docs build environment, so silence them.
+autodoc_mock_imports = [
+    "selenium",
+    "appium",
+    "playwright",
+    "PIL",
+    "faker",
+    "sqlalchemy",
+    "locust",
+    "opentelemetry",
+    "axe_selenium_python",
+    "testcontainers",
 ]
 
 # sphinxcontrib-mermaid renders the ``.. mermaid::`` directive used in
