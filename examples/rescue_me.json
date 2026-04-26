@@ -1,0 +1,15 @@
+[
+  ["WR_set_driver", {
+    "webdriver_name": "chrome",
+    "options": [
+      "--autoplay-policy=no-user-gesture-required",
+      "--disable-blink-features=AutomationControlled",
+      "--mute-audio=false"
+    ]
+  }],
+  ["WR_to_url", {"url": "https://music.youtube.com/watch?v=jajHOxvEbXk"}],
+  ["WR_sleep", {"seconds": 5}],
+  ["WR_execute_script", {"script": "const v=document.querySelector('video');if(!v)return 'no-video';v.muted=false;v.volume=1.0;const p=v.play();if(p&&p.catch)p.catch(()=>{});return v.paused?'paused':'playing';"}],
+  ["WR_sleep", {"seconds": 90}],
+  ["WR_quit_all"]
+]

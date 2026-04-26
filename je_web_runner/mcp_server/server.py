@@ -618,8 +618,14 @@ def build_default_tools() -> List[Tool]:
 
 
 def make_default_server() -> McpServer:
+    # Imported lazily so ``server`` can be imported without dragging the
+    # full executor (and therefore Selenium / Playwright) into modules that
+    # only need the protocol skeleton.
+    from je_web_runner.mcp_server.browser_tools import build_browser_tools
     server = McpServer()
     for tool in build_default_tools():
+        server.register(tool)
+    for tool in build_browser_tools():
         server.register(tool)
     return server
 
