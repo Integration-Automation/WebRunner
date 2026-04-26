@@ -628,6 +628,36 @@ serve_stdio(server=server)
 
 The server speaks MCP `2024-11-05`: `initialize`, `tools/list`, `tools/call`, `resources/list`, `ping`, `shutdown`.
 
+## Action JSON LSP
+
+A standard Language Server Protocol implementation for action JSON files:
+
+```bash
+python -m je_web_runner.action_lsp
+```
+
+`textDocument/completion` returns every registered `WR_*` command; `textDocument/publishDiagnostics` runs the action linter on `didOpen` / `didChange`. Pair with VS Code's *Configure JSON Language Servers* or the JetBrains LSP plugin.
+
+## Even More Capabilities
+
+Reliability & dev-loop:
+
+- **Browser pool** — `browser_pool.BrowserPool(factory, size=4, max_uses=50).warm()`; `with pool.session() as ses: …` removes browser cold-start from local dev. Health check + recycle policy built in.
+- **WebDriver BiDi bridge** — `bidi_backend.BidiBridge().subscribe(target, "console", callback)` works against either Selenium 4 BiDi (`driver.script.add_console_message_handler`) or Playwright `page.on(...)`. `register_translator` lets you wire custom event names.
+
+Determinism & offline runs:
+
+- **HAR replay server** — `har_replay.HarReplayServer(load_har("recorded.har")).start()` boots a local HTTP server that serves recorded responses; supports literal / glob / `re:` URL matching with rotation across duplicates. Drop-in for staging-API outages.
+
+Quality / privacy:
+
+- **PII scanner** — `pii_scanner.scan_text(text)` finds emails, E.164 phones, Luhn-validated credit cards, US SSN, ROC ID, and IPv4. `assert_no_pii(text, allow_categories=...)` for CI gates; `redact_text(text)` returns a sanitised copy.
+- **Visual diff review UI** — `visual_review.VisualReviewServer(baseline_dir, current_dir).start()` opens a local web UI showing each baseline / current pair side-by-side with an *Accept current as baseline* button (idempotent file copy with path-traversal guard).
+
+Test orchestration:
+
+- **Test impact analysis** — `impact_analysis.build_index("./actions")` walks every action JSON file and projects locator names, URLs, template names, and `WR_*` commands into a reverse index; `affected_action_files(index, locators=["primary_cta"])` answers "which tests touch this?" so diff-aware shards can go beyond filename matching.
+
 ## Browser Internals
 
 ```python

@@ -270,3 +270,45 @@ MCP server
 ``webrunner_diff_shard`` / ``webrunner_render_k8s`` /
 ``webrunner_partition_shard``。可透過 ``McpServer.register(Tool(...))``
 擴充自訂工具，協定版本 ``2024-11-05``。
+
+Action JSON LSP
+===============
+
+.. code-block:: shell
+
+   python -m je_web_runner.action_lsp
+
+標準 LSP 3.17 stdio server，``textDocument/completion`` 回傳所有已註冊
+``WR_*`` 指令；``textDocument/didOpen`` / ``didChange`` 觸發
+``publishDiagnostics`` 跑 action linter。
+
+Browser pool / BiDi bridge
+==========================
+
+* ``browser_pool.BrowserPool`` — 暖機 N 個 browser instance、checkout/
+  checkin、健康檢查與最大次數淘汰
+* ``bidi_backend.BidiBridge`` — 跨 Selenium 4 BiDi 與 Playwright 的
+  事件訂閱統一介面，可 ``register_translator`` 擴充
+
+HAR replay server
+=================
+
+把 ``har_replay.load_har("recorded.har")`` 載入後給
+``HarReplayServer(entries).start()`` 啟用本機 HTTP server，URL pattern
+支援字面 / glob / ``re:`` regex、重複條目自動輪播。
+
+PII / Visual review
+===================
+
+* ``pii_scanner.scan_text`` — email / 電話 / Luhn 驗證信用卡 / SSN /
+  ROC 身分證號 / IPv4，``assert_no_pii`` 與 ``redact_text`` 配套
+* ``visual_review.VisualReviewServer`` — 本機 web UI side-by-side 顯示
+  baseline / current，一鍵 accept
+
+Test impact analysis
+====================
+
+``impact_analysis.build_index("./actions")`` 走訪 action JSON 建立
+locator / URL / template / command 反查表；
+``affected_action_files(index, locators=["primary_cta"])`` 回傳所有
+參考此 locator 的測試檔，搭配 ``sharding.diff_shard`` 做精準測試選擇。

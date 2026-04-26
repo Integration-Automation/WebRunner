@@ -389,3 +389,63 @@ Default tools registered: ``webrunner_lint_action``,
 Custom tools register via ``McpServer.register(Tool(...))``; the server
 implements MCP ``2024-11-05`` (``initialize`` / ``tools/list`` /
 ``tools/call`` / ``resources/list`` / ``ping`` / ``shutdown``).
+
+Action JSON LSP
+===============
+
+.. code-block:: shell
+
+   python -m je_web_runner.action_lsp
+
+Standard LSP 3.17-shaped server over stdio. ``textDocument/completion``
+suggests every registered ``WR_*`` command; ``textDocument/didOpen`` /
+``didChange`` push ``publishDiagnostics`` based on
+:func:`linter.action_linter.lint_action`.
+
+Browser pool / BiDi bridge
+==========================
+
+* ``browser_pool.BrowserPool(factory, size=N).warm()`` /
+  ``pool.session() as ses`` — pre-warmed browser instances with health
+  check + recycle policy.
+* ``bidi_backend.BidiBridge().subscribe(target, event, callback)`` —
+  unified BiDi-style event subscription against either Selenium 4 BiDi
+  (``driver.script.add_console_message_handler``) or Playwright
+  ``page.on(...)``. ``register_translator`` extends the event list.
+
+HAR replay server
+=================
+
+* ``har_replay.load_har("recorded.har")`` parses ``log.entries`` from a
+  HAR file.
+* ``HarReplayServer(entries).start()`` boots a local HTTP server that
+  serves the recorded responses; URL patterns support literal /
+  ``*`` glob / ``re:`` regex with rotation across duplicates.
+
+PII scanner & visual review
+===========================
+
+* ``pii_scanner.scan_text(text)`` finds ``email`` / ``phone_e164`` /
+  Luhn-checked ``credit_card`` / ``ssn_us`` / checksum-validated
+  ``taiwan_id`` / ``ipv4``. ``assert_no_pii`` and ``redact_text`` are
+  the CI gate / sanitiser.
+* ``visual_review.VisualReviewServer(baseline_dir, current_dir).start()``
+  serves a local web UI with side-by-side images and an *Accept current
+  as baseline* button (path-traversal guarded).
+
+Test impact analysis
+====================
+
+``impact_analysis.build_index("./actions")`` walks every action JSON
+file and projects locator names, URLs, template names, and ``WR_*``
+command names into a reverse index. Combine with
+``sharding.diff_shard`` for a smarter test selection:
+
+.. code-block:: python
+
+   from je_web_runner.utils.impact_analysis import (
+       affected_action_files, build_index,
+   )
+
+   index = build_index("./actions")
+   to_run = affected_action_files(index, locators=["primary_cta"])
