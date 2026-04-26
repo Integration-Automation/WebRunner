@@ -389,3 +389,207 @@ Default tools registered: ``webrunner_lint_action``,
 Custom tools register via ``McpServer.register(Tool(...))``; the server
 implements MCP ``2024-11-05`` (``initialize`` / ``tools/list`` /
 ``tools/call`` / ``resources/list`` / ``ping`` / ``shutdown``).
+
+Action JSON LSP
+===============
+
+.. code-block:: shell
+
+   python -m je_web_runner.action_lsp
+
+Standard LSP 3.17-shaped server over stdio. ``textDocument/completion``
+suggests every registered ``WR_*`` command; ``textDocument/didOpen`` /
+``didChange`` push ``publishDiagnostics`` based on
+:func:`linter.action_linter.lint_action`.
+
+Browser pool / BiDi bridge
+==========================
+
+* ``browser_pool.BrowserPool(factory, size=N).warm()`` /
+  ``pool.session() as ses`` — pre-warmed browser instances with health
+  check + recycle policy.
+* ``bidi_backend.BidiBridge().subscribe(target, event, callback)`` —
+  unified BiDi-style event subscription against either Selenium 4 BiDi
+  (``driver.script.add_console_message_handler``) or Playwright
+  ``page.on(...)``. ``register_translator`` extends the event list.
+
+HAR replay server
+=================
+
+* ``har_replay.load_har("recorded.har")`` parses ``log.entries`` from a
+  HAR file.
+* ``HarReplayServer(entries).start()`` boots a local HTTP server that
+  serves the recorded responses; URL patterns support literal /
+  ``*`` glob / ``re:`` regex with rotation across duplicates.
+
+PII scanner & visual review
+===========================
+
+* ``pii_scanner.scan_text(text)`` finds ``email`` / ``phone_e164`` /
+  Luhn-checked ``credit_card`` / ``ssn_us`` / checksum-validated
+  ``taiwan_id`` / ``ipv4``. ``assert_no_pii`` and ``redact_text`` are
+  the CI gate / sanitiser.
+* ``visual_review.VisualReviewServer(baseline_dir, current_dir).start()``
+  serves a local web UI with side-by-side images and an *Accept current
+  as baseline* button (path-traversal guarded).
+
+Test impact analysis
+====================
+
+``impact_analysis.build_index("./actions")`` walks every action JSON
+file and projects locator names, URLs, template names, and ``WR_*``
+command names into a reverse index. Combine with
+``sharding.diff_shard`` for a smarter test selection:
+
+.. code-block:: python
+
+   from je_web_runner.utils.impact_analysis import (
+       affected_action_files, build_index,
+   )
+
+   index = build_index("./actions")
+   to_run = affected_action_files(index, locators=["primary_cta"])
+
+Workspace bootstrapper / driver pinner
+======================================
+
+* ``bootstrapper.init_workspace("./my-tests")`` — drops sample actions,
+  ledger, schema, pre-commit hook, GitHub Actions workflow.
+* ``driver_pin.install_for_browser(pin_file, browser)`` — read a JSON
+  pin file (``name`` / ``version`` / ``url`` / ``archive_format`` /
+  ``binary_inside``), fetch + cache once, return the binary path. No
+  GitHub API rate-limit dependency.
+
+Selenium → Playwright translator
+================================
+
+* ``sel_to_pw.translate_python_source(text)`` — rewrites common
+  ``driver.find_element(By.X, ...).send_keys(...)``-style lines into
+  ``page.locator(...).fill(...)`` equivalents; returns
+  ``Translation(line, original, translated, note)`` per hit.
+* ``sel_to_pw.translate_action_list(actions)`` — rewrites ``WR_*`` action
+  JSON to ``WR_pw_*`` (drops ``WR_implicitly_wait`` since Playwright
+  auto-waits).
+
+Form auto-fill / A11y diff
+==========================
+
+* ``form_autofill.plan_fill_actions(fields, fixture, submit_locator=...)``
+  — infers each field's purpose from ``data-testid`` / ``id`` / ``name``
+  / ``placeholder`` / ``label`` / ``type`` and emits a runnable action
+  sequence.
+* ``accessibility.a11y_diff.diff_violations(baseline, current)`` —
+  buckets axe-core findings into ``added`` / ``resolved`` /
+  ``persisting`` keyed on ``(rule_id, target)``;
+  ``assert_no_regressions(diff)`` is the CI gate.
+
+Fan-out / event bus / extension harness
+=======================================
+
+* ``fanout.run_fan_out([(name, callable)…], max_workers=4)`` — parallel
+  task runner returning per-task duration + outcome, ``fail_fast``
+  optional.
+* ``event_bus.EventBus(log_path).publish(topic, payload)`` — file-backed
+  ndjson pub/sub; ``poll(offset, topics=...)`` and
+  ``wait_for(topic, predicate, timeout=30)`` for cross-shard coordination.
+* ``extension_harness.parse_manifest("./ext")`` — MV2 / MV3 manifest
+  reader; ``apply_to_chrome_options`` and
+  ``playwright_persistent_context_args`` plug into either backend.
+
+Action formatter / Markdown authoring
+=====================================
+
+* ``action_formatter.format_actions(actions)`` — canonical multi-line
+  JSON, kwargs in preferred-then-alphabetical order; ``format_file(path)``
+  reformats in place and returns ``(text, changed)``.
+* ``md_authoring.parse_markdown(text)`` — bullet templates: ``open
+  <url>``, ``click <selector>``, ``type "<text>" into <selector>``,
+  ``wait <n>s``, ``assert title "<text>"``, ``press <Key>``,
+  ``screenshot``, ``run template <name>``, ``quit``. Unrecognised lines
+  become ``WR__note`` entries.
+
+Triage & production observability
+=================================
+
+* ``failure_cluster.cluster_failures(failures, top_n=5)`` — group
+  failures by normalised error signature (strip timestamps, hex,
+  paths, line numbers, large numerics, quoted substrings).
+* ``synthetic_monitoring.SyntheticMonitor(alert_sink).register(name,
+  check, failure_threshold=2)`` — edge-triggered alerts on transitions;
+  ``run_for(iterations, interval_seconds)`` for the loop.
+* ``observability.otlp_exporter.configure_otlp_export(provider,
+  OtlpExportConfig(endpoint="https://otlp:4317"))`` — register an OTLP
+  ``BatchSpanProcessor`` with an existing ``TracerProvider``;
+  ``protocol="grpc"`` (default) or ``"http"``.
+
+Storybook / shadow DOM
+======================
+
+* ``storybook.discover_stories(index_or_path)`` reads Storybook 7+
+  ``index.json``;
+  ``plan_actions_for_stories(stories, base_url, run_a11y=True,
+  capture_screenshot=True, extra_per_story=...)`` builds a flat action
+  plan that visits each story under ``iframe.html?id=...`` and runs
+  axe / screenshot.
+* ``dom_traversal.shadow_pierce.find_first(driver, css_selector)`` /
+  ``find_all`` walk open shadow roots recursively. ``execute_script``
+  for Selenium, ``evaluate`` for Playwright; ``assert_pierced_visible``
+  raises if the selector doesn't match anywhere.
+
+CDP tap / cross-browser / state diff
+====================================
+
+* ``cdp_tap.CdpRecorder(output_path).attach(driver)`` — wraps
+  ``execute_cdp_cmd`` so every call is appended to an ndjson log;
+  ``CdpReplayer(load_recording(path))`` plays the same sequence back.
+* ``cross_browser.diff_runs([chromium_run, firefox_run, webkit_run])``
+  — buckets findings into ``major`` / ``minor`` (5xx → major,
+  screenshot hash → minor); ``assert_parity(report, only_major=True)``
+  is the CI gate.
+* ``state_diff.capture_state(driver)`` snapshots cookies +
+  localStorage + sessionStorage; ``diff_states(before, after)`` reports
+  added / removed / changed keys per section.
+
+Page Object codegen
+===================
+
+``pom_codegen.discover_elements_from_html(html)`` walks every element
+with ``data-testid`` / ``id`` / form ``name`` and emits a Python module
+with one ``TestObject`` property per element via ``render_pom_module``.
+
+CI reproducibility & long-term observability
+============================================
+
+* ``workspace_lock.build_lock(drivers=..., playwright_versions={"chromium":
+  "127.0.0.0"})`` — snapshots every Python distribution + driver +
+  Playwright browser version; ``write_lock`` / ``diff_locks`` round-trip.
+* ``a11y_trend.aggregate_history(history)`` + ``render_html(points)``
+  — per-day per-impact axe-violation count, self-contained SVG chart.
+* ``perf_drift.detect_drift({"lcp_ms": samples}, baseline_window=20,
+  recent_window=5, tolerance=0.1)`` — sliding-window P95 drift
+  detection; ``assert_no_regression(report)`` is the strict path.
+
+CLI & orchestration polish
+==========================
+
+* ``test_filter.name_filter.filter_paths(paths, include=[...],
+  exclude=[...])`` — regex-based path selector orthogonal to tags.
+* ``process_supervisor.ProcessSupervisor().kill_orphans()`` — walk the
+  OS process table for ``chromedriver`` / ``geckodriver`` /
+  ``msedgedriver`` and kill stragglers; ``with_watchdog(fn, 300)``
+  enforces a wall-clock deadline.
+* ``pipeline.load_pipeline({"stages": [...]})`` + ``run_pipeline`` —
+  multi-stage gates with optional ``continue_on_failure``.
+
+Storybook visual snapshots / Appium gestures / coverage map
+===========================================================
+
+* ``storybook.visual_snapshots.capture_story_snapshots(stories,
+  base_url, take_screenshot, navigate, baseline_dir=...)`` — per-story
+  PNG capture with byte-level baseline comparison.
+* ``appium_integration.gestures`` — ``swipe`` / ``scroll`` /
+  ``long_press`` / ``pinch`` / ``double_tap`` prefer Appium's
+  ``mobile:`` named extensions, fall back to W3C Actions sequences.
+* ``coverage_map.build_coverage_map("./actions")`` — reverse index of
+  ``WR_to_url`` paths (numeric / UUID segments collapsed to ``:id``);
+  ``coverage.uncovered(declared_routes)`` flags missing routes.

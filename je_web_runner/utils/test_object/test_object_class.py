@@ -11,6 +11,9 @@ class TestObject(object):
     TestObject class, used to encapsulate locator information
     """
 
+    # Tell pytest this is a domain class, not a test container.
+    __test__ = False
+
     def __init__(self, test_object_name: str, object_type: str):
         # 測試物件的定位方式 (必須在 type_list 中)
         # Locator type of the test object (must be in type_list)

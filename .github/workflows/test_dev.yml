@@ -37,6 +37,10 @@ jobs:
     - name: Run unit tests
       run: python -m pytest test/unit_test/test_*.py -v
 
+    - name: Run integration tests
+      # Each subprocess test sets its own timeout; pytest-timeout isn't a dep.
+      run: python -m pytest test/integration_test/ -v
+
   integration-test:
     name: Integration Tests (Python ${{ matrix.python-version }})
     needs: unit-test

@@ -50,6 +50,8 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
     def _handle_quit(self) -> None:
         self.server.shutdown()
         self.server.close_flag = True
+        # Wake any waiter blocked on ``close_event.wait(timeout=...)``.
+        self.server.close_event.set()
         print("Now quit server", flush=True)
 
     def _execute_and_reply(self, command_string: str) -> None:
@@ -91,6 +93,8 @@ class TCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     def __init__(self, server_address, request_handler_class, auth_token: Optional[str] = None):
         super().__init__(server_address, request_handler_class)
         self.close_flag: bool = False
+        # ``close_event`` lets callers wait for shutdown without polling.
+        self.close_event: threading.Event = threading.Event()
         self.auth_token: Optional[str] = auth_token
 
 

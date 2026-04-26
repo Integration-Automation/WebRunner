@@ -151,6 +151,21 @@ from je_web_runner.utils.test_record.test_record_class import test_record_instan
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 
+def _sleep_seconds(seconds: Union[int, float] = 1) -> float:
+    """
+    阻塞當前執行緒指定秒數，回傳實際睡眠的秒數。
+    Block the calling thread for ``seconds`` (positive number). Negative
+    or non-numeric values raise :class:`ValueError` so a typo can't
+    silently no-op an action JSON pipeline.
+    """
+    if isinstance(seconds, bool) or not isinstance(seconds, (int, float)):
+        raise ValueError(f"WR_sleep seconds must be a number, got {type(seconds).__name__}")
+    if seconds < 0:
+        raise ValueError(f"WR_sleep seconds must be >= 0, got {seconds}")
+    time.sleep(float(seconds))
+    return float(seconds)
+
+
 def _try_selenium_screenshot() -> Optional[bytes]:
     try:
         if webdriver_wrapper_instance.current_webdriver is None:
@@ -207,6 +222,7 @@ class Executor(object):
             "WR_find_elements": webdriver_wrapper_instance.find_elements_with_test_object_record,
             "WR_implicitly_wait": webdriver_wrapper_instance.implicitly_wait,
             "WR_explict_wait": webdriver_wrapper_instance.explict_wait,
+            "WR_sleep": _sleep_seconds,
             "WR_to_url": webdriver_wrapper_instance.to_url,
             "WR_forward": webdriver_wrapper_instance.forward,
             "WR_back": webdriver_wrapper_instance.back,

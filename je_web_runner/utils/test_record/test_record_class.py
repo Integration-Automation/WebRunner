@@ -10,6 +10,9 @@ class TestRecord(object):
     Test record manager
     """
 
+    # Domain class — not a pytest test container.
+    __test__ = False
+
     def __init__(self, init_record: bool = False):
         # 儲存所有測試紀錄的清單
         # List to store all test records

@@ -538,22 +538,26 @@ class WebDriverWrapper(object):
             )
             record_action_to_list("webdriver wrapper execute", param, error)
 
-    def execute_script(self, script: str, *args) -> None:
+    def execute_script(self, script: str, *args):
         """
-        在當前頁面執行 JavaScript
-        Execute JavaScript on the current page
+        在當前頁面執行 JavaScript，回傳 JS 的回傳值。
+        Execute JavaScript on the current page and return the result.
 
         :param script: JavaScript 程式碼 / JavaScript code
         :param args: 傳入 JS 的參數 / arguments passed to JS
+        :return: JS 回傳值（dict / list / 字面值 / None）
+                 The value returned by the script (dict / list / literal / None)
         """
         web_runner_logger.info(f"WebDriverWrapper execute_script, script: {script}")
         param = locals()
         try:
-            self.current_webdriver.execute_script(script, *args)
+            value = self.current_webdriver.execute_script(script, *args)
             record_action_to_list("webdriver wrapper execute_script", param, None)
+            return value
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper execute_script, script: {script}, failed: {repr(error)}")
             record_action_to_list("webdriver wrapper execute_script", param, error)
+            return None
 
     def execute_async_script(self, script: str, *args):
         """

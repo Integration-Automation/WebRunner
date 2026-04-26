@@ -1,0 +1,65 @@
+name: E2E Browser Smoke
+
+# Manually triggered job that boots Selenium Grid in Docker and runs the
+# real-browser smoke tests under test/e2e_test/. Kept off the unit-test
+# critical path because the Grid pull is heavy and depends on Docker Hub.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily at 06:00 UTC; failures don't block PRs.
+    - cron: "0 6 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  e2e:
+    name: E2E (Selenium Grid)
+    runs-on: ubuntu-latest
+
+    services:
+      selenium-hub:
+        image: selenium/hub:4.20.0
+        ports: ["4444:4444"]
+        options: >-
+          --health-cmd "curl -fsS http://localhost:4444/wd/hub/status || exit 1"
+          --health-interval 10s --health-timeout 5s --health-retries 6
+      chrome-node:
+        image: selenium/node-chrome:4.20.0
+        env:
+          SE_EVENT_BUS_HOST: selenium-hub
+          SE_EVENT_BUS_PUBLISH_PORT: 4442
+          SE_EVENT_BUS_SUBSCRIBE_PORT: 4443
+          SE_NODE_MAX_SESSIONS: 2
+          SE_NODE_OVERRIDE_MAX_SESSIONS: "true"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip wheel
+          pip install -r dev_requirements.txt
+
+      - name: Wait for Grid to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:4444/wd/hub/status >/dev/null; then
+              echo "Grid ready after $i tries"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Grid did not become ready"
+          exit 1
+
+      - name: Run real-browser E2E
+        env:
+          WEBRUNNER_E2E_HUB: http://localhost:4444/wd/hub
+        run: python -m pytest test/e2e_test/ -m e2e -v

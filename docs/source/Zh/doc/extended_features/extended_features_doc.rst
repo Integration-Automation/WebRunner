@@ -270,3 +270,154 @@ MCP server
 ``webrunner_diff_shard`` / ``webrunner_render_k8s`` /
 ``webrunner_partition_shard``。可透過 ``McpServer.register(Tool(...))``
 擴充自訂工具，協定版本 ``2024-11-05``。
+
+Action JSON LSP
+===============
+
+.. code-block:: shell
+
+   python -m je_web_runner.action_lsp
+
+標準 LSP 3.17 stdio server，``textDocument/completion`` 回傳所有已註冊
+``WR_*`` 指令；``textDocument/didOpen`` / ``didChange`` 觸發
+``publishDiagnostics`` 跑 action linter。
+
+Browser pool / BiDi bridge
+==========================
+
+* ``browser_pool.BrowserPool`` — 暖機 N 個 browser instance、checkout/
+  checkin、健康檢查與最大次數淘汰
+* ``bidi_backend.BidiBridge`` — 跨 Selenium 4 BiDi 與 Playwright 的
+  事件訂閱統一介面，可 ``register_translator`` 擴充
+
+HAR replay server
+=================
+
+把 ``har_replay.load_har("recorded.har")`` 載入後給
+``HarReplayServer(entries).start()`` 啟用本機 HTTP server，URL pattern
+支援字面 / glob / ``re:`` regex、重複條目自動輪播。
+
+PII / Visual review
+===================
+
+* ``pii_scanner.scan_text`` — email / 電話 / Luhn 驗證信用卡 / SSN /
+  ROC 身分證號 / IPv4，``assert_no_pii`` 與 ``redact_text`` 配套
+* ``visual_review.VisualReviewServer`` — 本機 web UI side-by-side 顯示
+  baseline / current，一鍵 accept
+
+Test impact analysis
+====================
+
+``impact_analysis.build_index("./actions")`` 走訪 action JSON 建立
+locator / URL / template / command 反查表；
+``affected_action_files(index, locators=["primary_cta"])`` 回傳所有
+參考此 locator 的測試檔，搭配 ``sharding.diff_shard`` 做精準測試選擇。
+
+Bootstrapper / driver pinner
+============================
+
+* ``bootstrapper.init_workspace`` — 一鍵 scaffold 起手式
+  （sample actions / ledger / pre-commit / GitHub Actions）
+* ``driver_pin.install_for_browser`` — 讀 ``.webrunner/drivers.json``
+  下載並快取 driver，避開 webdriver-manager 的 GitHub API 限流
+
+Selenium → Playwright 翻譯
+==========================
+
+* ``sel_to_pw.translate_python_source`` — 常見 Selenium 寫法靜態翻譯成
+  Playwright 等價（``find_element(By.ID, "x")`` → ``page.locator("#x")``）
+* ``sel_to_pw.translate_action_list`` — ``WR_*`` action JSON 轉
+  ``WR_pw_*``、自動丟掉 ``WR_implicitly_wait``
+
+Form auto-fill / A11y diff
+==========================
+
+* ``form_autofill.plan_fill_actions(fields, fixture)`` — 自動推斷欄位
+  用途並產出 ``WR_save_test_object`` + ``WR_element_input`` 序列
+* ``accessibility.a11y_diff.diff_violations`` — 比較兩次 axe-core 結果
+  分出 added / resolved / persisting；``assert_no_regressions`` 為
+  CI 把關
+
+Fan-out / event bus / extension harness
+=======================================
+
+* ``fanout.run_fan_out`` — 同 test 內平行跑多個 callable，每個 task
+  回報耗時與結果
+* ``event_bus.EventBus`` — 檔案系統 ndjson pub/sub，跨 shard 協調用
+* ``extension_harness`` — 解析 MV2/MV3 manifest，配置 Selenium 或
+  Playwright 載入未打包擴充
+
+Action formatter / Markdown 撰寫
+================================
+
+* ``action_formatter.format_actions`` — canonical 縮排與鍵順序，搭配
+  既有 LSP 一起用
+* ``md_authoring.parse_markdown`` — 用 Markdown bullet 寫測試流程，再
+  轉成 ``WR_*`` action JSON
+
+Triage / 線上 Observability
+===========================
+
+* ``failure_cluster.cluster_failures`` — 把失敗依 normalised signature
+  分群、列出 top buckets
+* ``synthetic_monitoring.SyntheticMonitor`` — 固定 subset 對 prod 持續
+  輪播，狀態 edge-triggered alert
+* ``observability.otlp_exporter`` — 把現有 OTel spans 寄到 OTLP gRPC /
+  HTTP 後端（Jaeger / Tempo）
+
+Storybook / Shadow DOM
+======================
+
+* ``storybook.discover_stories`` + ``plan_actions_for_stories`` — 走訪
+  Storybook stories 自動跑 axe + screenshot
+* ``dom_traversal.shadow_pierce.find_first`` — 遞迴穿透 open shadow
+  root 找元件，Selenium 與 Playwright 通吃
+
+CDP tap / Cross-browser / State diff
+====================================
+
+* ``cdp_tap.CdpRecorder`` / ``CdpReplayer`` — 把 ``execute_cdp_cmd``
+  的呼叫全錄成 ndjson、之後可離線 replay
+* ``cross_browser.diff_runs`` — 同 action JSON 跑 Chromium / Firefox /
+  WebKit 後比對 title / DOM / console / 網路 / 截圖差異
+* ``state_diff.capture_state`` + ``diff_states`` — 比對測試前後的
+  cookies / localStorage / sessionStorage 變化
+
+Page Object codegen
+===================
+
+``pom_codegen.discover_elements_from_html`` 走過 HTML 抓
+``data-testid`` / ``id`` / form fields，``render_pom_module`` 產生
+Python POM 模組。
+
+Lock file / a11y trend / perf drift
+===================================
+
+* ``workspace_lock.build_lock`` — pip 版本 + driver 版本 + Playwright
+  browser 版本一起 pin，CI 完全 reproducible
+* ``a11y_trend.aggregate_history`` + ``render_html`` — axe 違規數
+  時間序列，自帶 SVG 圖表
+* ``perf_drift.detect_drift`` — 滑動視窗 P95 比對，超 tolerance 即視為
+  regression
+
+CLI / 編排 polish
+=================
+
+* ``test_filter.name_filter.filter_paths`` — regex include/exclude 路徑
+  篩選，與既有 tag filter 並行
+* ``process_supervisor`` — 殺掉 orphan webdriver、給長 callable 上
+  watchdog
+* ``pipeline.load_pipeline`` + ``run_pipeline`` — 多階段 gate，
+  ``continue_on_failure`` 可作為 lint / scan 收尾
+
+Storybook 視覺快照 / Appium gestures / Coverage map
+====================================================
+
+* ``storybook.visual_snapshots.capture_story_snapshots`` — 走訪 stories
+  截圖、可選擇與 baseline byte-level 比對
+* ``appium_integration.gestures`` — ``swipe`` / ``scroll`` /
+  ``long_press`` / ``pinch`` / ``double_tap``，優先用 ``mobile:`` 擴充
+  否則退回 W3C Actions
+* ``coverage_map.build_coverage_map`` — 從 action JSON 抽出 ``WR_to_url``
+  的 path 建立 route → files 反查表，``coverage.uncovered`` 找出未覆蓋
+  的 route

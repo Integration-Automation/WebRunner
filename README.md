@@ -628,6 +628,114 @@ serve_stdio(server=server)
 
 The server speaks MCP `2024-11-05`: `initialize`, `tools/list`, `tools/call`, `resources/list`, `ping`, `shutdown`.
 
+## Action JSON LSP
+
+A standard Language Server Protocol implementation for action JSON files:
+
+```bash
+python -m je_web_runner.action_lsp
+```
+
+`textDocument/completion` returns every registered `WR_*` command; `textDocument/publishDiagnostics` runs the action linter on `didOpen` / `didChange`. Pair with VS Code's *Configure JSON Language Servers* or the JetBrains LSP plugin.
+
+## Even More Capabilities (polish wave)
+
+CLI & orchestration polish:
+
+- **Regex test selector** — `test_filter.name_filter.filter_paths(paths, include=["smoke.*"], exclude=["slow"])` keeps only matching candidate paths; orthogonal to the existing tag filter.
+- **Process supervisor** — `process_supervisor.ProcessSupervisor().kill_orphans()` walks the OS process table for `chromedriver` / `geckodriver` / `msedgedriver` and kills stragglers (skips `os.getpid()` automatically). `with_watchdog(callable, timeout_seconds=300)` wraps a long callable with a hard wall-clock raise.
+- **Pipeline DSL** — `pipeline.load_pipeline({"stages": [...]})` + `run_pipeline(pipeline, runner)` execute multi-stage gates: `continue_on_failure=True` makes a stage non-blocking (linters / scanners), otherwise downstream stages skip.
+
+Frontend / mobile / coverage:
+
+- **Storybook visual snapshots** — `storybook.visual_snapshots.capture_story_snapshots(stories, base_url, take_screenshot, navigate, baseline_dir=...)` walks every story, persists deterministic filenames (`components-button--primary.png`), and diffs against an optional baseline. `assert_no_visual_regressions(report)` is the gate.
+- **Appium gestures** — `appium_integration.gestures` ships `swipe`, `scroll`, `long_press`, `pinch`, `double_tap` that prefer Appium's `mobile:` named-gesture extension and fall back to W3C Actions on older drivers.
+- **Coverage map** — `coverage_map.build_coverage_map("./actions")` walks every action JSON file, normalises `WR_to_url` paths (`/users/42` → `/users/:id`) and produces a route → files reverse index. `coverage.uncovered(declared_routes)` answers "which routes have no test?".
+
+## Even More Capabilities (final wave)
+
+Debugging & reproducibility:
+
+- **CDP message tap** — `cdp_tap.CdpRecorder("cdp.ndjson").attach(driver)` wraps `execute_cdp_cmd` so every command + return value is appended to an ndjson log; `CdpReplayer(load_recording(...))` plays it back against a stub for offline debugging.
+- **Cross-browser parity** — `cross_browser.diff_runs([chromium_run, firefox_run, webkit_run])` diffs title / DOM hash / console / network status / screenshot hash, classifying each finding as `major` (5xx, title, DOM mismatch) or `minor`. `assert_parity(report, only_major=True)` is the gate.
+- **Browser state diff** — `state_diff.capture_state(driver)` snapshots cookies + localStorage + sessionStorage; `diff_states(before, after)` lists added / removed / changed keys per section so cart / auth flows stay traceable.
+
+Authoring / scaffolding:
+
+- **Page Object codegen** — `pom_codegen.discover_elements_from_html(html)` walks every element with `data-testid` / `id` / form `name`; `render_pom_module(elements, class_name="LoginPage")` returns a Python module with one `TestObject` property per element.
+
+CI reproducibility:
+
+- **Workspace lock file** — `workspace_lock.build_lock(drivers=..., playwright_versions={"chromium": "127.0.0.0"})` snapshots every Python distribution + driver version + Playwright browser version; `write_lock(lock, ".webrunner/lock.json")` and `diff_locks(before, after)` complete the pipeline.
+
+Long-running observability:
+
+- **A11y trend dashboard** — `a11y_trend.aggregate_history(history)` buckets axe runs by day and impact; `render_html(points)` produces a self-contained SVG line chart so regressions are visible at a glance.
+- **Perf drift detector** — `perf_drift.detect_drift({"lcp_ms": samples}, baseline_window=20, recent_window=5)` compares the recent P95 against a rolling baseline P95 and flags drift outside `tolerance`. `assert_no_regression(report)` is the strict path; `higher_is_better={"frame_rate"}` for inverted metrics.
+
+## Even More Capabilities (newest wave)
+
+Authoring / formatting:
+
+- **Action JSON formatter** — `action_formatter.format_actions(actions)` writes a canonical multi-line array with kwargs in a stable preferred-then-alphabetical order; `format_file(path)` reformats in place and reports `(text, changed)`.
+- **Markdown → action JSON** — `md_authoring.parse_markdown(text)` understands `- open <url>`, `- click #id`, `- type "x" into <selector>`, `- wait 3s`, `- assert title "..."`, `- press Enter`, `- screenshot`, `- run template <name>`, `- quit`. Lines that don't match are preserved as `WR__note` so the round-trip is loss-less.
+
+Triage / production observability:
+
+- **Failure clustering** — `failure_cluster.cluster_failures(failures, top_n=5)` reduces each error message to a stable signature (strips timestamps, hex addresses, line numbers, paths, large numerics, quoted substrings) so the same root cause across runs lands in one bucket.
+- **Synthetic monitoring** — `synthetic_monitoring.SyntheticMonitor(alert_sink).register("homepage", check)` reruns checks; the sink only fires on edge transitions (`green → red` / `red → green`) with `failure_threshold` / `recovery_threshold` to silence flapping.
+- **OTLP exporter** — `observability.otlp_exporter.configure_otlp_export(provider, OtlpExportConfig(endpoint="https://otlp:4317"))` ships the existing OTel spans to Jaeger / Tempo / any OTLP backend (gRPC by default, HTTP fallback).
+
+Frontend / component:
+
+- **Storybook integration** — `storybook.discover_stories(index_path)` reads Storybook 7+ `index.json` (or legacy `stories.json`); `plan_actions_for_stories(stories, base_url, run_a11y=True)` builds a flat action list visiting each story in iframe mode and running axe + screenshot.
+- **Shadow DOM auto-pierce** — `dom_traversal.shadow_pierce.find_first(driver, "button.primary")` recursively walks open shadow roots (Selenium `execute_script` or Playwright `evaluate`) so a single CSS selector can match across shadow boundaries.
+
+## Even More Capabilities (latest wave)
+
+Onboarding / migration:
+
+- **Workspace bootstrapper** — `python -m je_web_runner --init` (or `bootstrapper.init_workspace("my-tests")`) drops `actions/sample.json`, `.webrunner/ledger.json`, pinned-driver template, JSON schema, pre-commit hook, and a starter GitHub Actions workflow.
+- **Driver pinner** — `driver_pin.install_for_browser(".webrunner/drivers.json", "firefox")` reads a JSON pin file (`name` / `version` / `url` / `archive_format` / `binary_inside`), downloads + extracts once, then serves from cache. Bypasses the GitHub API rate limit that webdriver-manager hits in CI.
+- **Selenium → Playwright translator** — `sel_to_pw.translate_python_source(text)` rewrites `driver.find_element(By.ID, "x")` → `page.locator("#x")` and similar; `translate_action_list(actions)` rewrites `WR_*` action JSON to its `WR_pw_*` equivalent (drops `WR_implicitly_wait` since Playwright auto-waits).
+
+Test authoring:
+
+- **Form auto-fill** — `form_autofill.plan_fill_actions(fields, fixture, submit_locator=...)` infers each field from `data-testid` / `id` / `name` / `placeholder` / `label` / `type` and emits a ready-to-run `WR_save_test_object` + `WR_element_input` sequence.
+
+Quality:
+
+- **A11y diff** — `accessibility.a11y_diff.diff_violations(baseline, current)` buckets axe-core findings into `added` / `resolved` / `persisting` keyed on `(rule_id, target)`; `assert_no_regressions(diff, allow_rules=...)` is the CI gate.
+
+Performance / orchestration:
+
+- **Fan-out** — `fanout.run_fan_out([("preflight-a", task_a), task_b, ...], max_workers=4)` runs read-only callables concurrently inside one test, returning per-task duration + outcome with `raise_for_failures()` for the strict path.
+- **Event bus** — `event_bus.EventBus(".webrunner/events.log").publish("setup-done", {"shard": 1})`; subscribers `poll()` from a remembered offset or `wait_for(topic, predicate=..., timeout=30)`. File-backed ndjson — no Redis dependency.
+
+Browser internals:
+
+- **Extension test harness** — `extension_harness.parse_manifest("./ext")` reads MV2 / MV3 manifests; `apply_to_chrome_options(options, [ext_dir])` adds `--load-extension` flags; `playwright_persistent_context_args(...)` returns the kwargs needed for `launch_persistent_context`.
+
+## Even More Capabilities
+
+Reliability & dev-loop:
+
+- **Browser pool** — `browser_pool.BrowserPool(factory, size=4, max_uses=50).warm()`; `with pool.session() as ses: …` removes browser cold-start from local dev. Health check + recycle policy built in.
+- **WebDriver BiDi bridge** — `bidi_backend.BidiBridge().subscribe(target, "console", callback)` works against either Selenium 4 BiDi (`driver.script.add_console_message_handler`) or Playwright `page.on(...)`. `register_translator` lets you wire custom event names.
+
+Determinism & offline runs:
+
+- **HAR replay server** — `har_replay.HarReplayServer(load_har("recorded.har")).start()` boots a local HTTP server that serves recorded responses; supports literal / glob / `re:` URL matching with rotation across duplicates. Drop-in for staging-API outages.
+
+Quality / privacy:
+
+- **PII scanner** — `pii_scanner.scan_text(text)` finds emails, E.164 phones, Luhn-validated credit cards, US SSN, ROC ID, and IPv4. `assert_no_pii(text, allow_categories=...)` for CI gates; `redact_text(text)` returns a sanitised copy.
+- **Visual diff review UI** — `visual_review.VisualReviewServer(baseline_dir, current_dir).start()` opens a local web UI showing each baseline / current pair side-by-side with an *Accept current as baseline* button (idempotent file copy with path-traversal guard).
+
+Test orchestration:
+
+- **Test impact analysis** — `impact_analysis.build_index("./actions")` walks every action JSON file and projects locator names, URLs, template names, and `WR_*` commands into a reverse index; `affected_action_files(index, locators=["primary_cta"])` answers "which tests touch this?" so diff-aware shards can go beyond filename matching.
+
 ## Browser Internals
 
 ```python

@@ -8,6 +8,7 @@ WebRunner English Documentation
     doc/installation/installation_doc.rst
     doc/quick_start/quick_start_doc.rst
     doc/extended_features/extended_features_doc.rst
+    doc/api_reference/api_reference.rst
     doc/webdriver_manager/webdriver_manager_doc.rst
     doc/webdriver_wrapper/webdriver_wrapper_doc.rst
     doc/web_element/web_element_doc.rst
