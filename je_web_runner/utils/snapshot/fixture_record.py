@@ -70,10 +70,8 @@ class FixtureRecorder:
         if not self._dirty:
             return
         cache = self._cache or {}
-        # The recorder path is supplied by the test author at construction;
-        # this is not a network-reachable surface. NOSONAR S2083
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.path.write_text(
+        self.path.parent.mkdir(parents=True, exist_ok=True)  # NOSONAR — path is test-author input, not network-reachable
+        self.path.write_text(  # NOSONAR — see comment above
             json.dumps(cache, ensure_ascii=False, indent=2, sort_keys=True),
             encoding="utf-8",
         )

@@ -82,8 +82,7 @@ def _request(
     request.add_header("X-GitHub-Api-Version", "2022-11-28")
     if data is not None:
         request.add_header("Content-Type", "application/json")
-    # Python 3.10+ default context enforces TLS 1.2+. NOSONAR S4423
-    ssl_context = ssl.create_default_context()
+    ssl_context = ssl.create_default_context()  # NOSONAR — Py3.10+ default enforces TLS 1.2+
     try:
         with urllib.request.urlopen(  # nosec B310 — host already validated
             request, timeout=timeout, context=ssl_context,

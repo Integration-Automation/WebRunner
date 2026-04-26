@@ -83,8 +83,7 @@ class GraphQLClient:
         return request
 
     def _send(self, request: urllib.request.Request) -> Dict[str, Any]:
-        # Python 3.10+ default context already enforces TLS 1.2+. NOSONAR S4423
-        ssl_context = ssl.create_default_context()
+        ssl_context = ssl.create_default_context()  # NOSONAR — Py3.10+ default enforces TLS 1.2+
         try:
             with urllib.request.urlopen(  # nosec B310 — scheme already validated
                 request, timeout=self.timeout, context=ssl_context,

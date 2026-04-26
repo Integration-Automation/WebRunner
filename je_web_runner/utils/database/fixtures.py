@@ -23,7 +23,7 @@ class DbFixtureError(WebRunnerException):
 
 
 _AllowedScalar = (str, int, float, bool, type(None))
-_IDENTIFIER_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_IDENTIFIER_RE = re.compile(r"^[A-Za-z_]\w*$")
 
 
 def _safe_identifier(name: str, kind: str) -> str:
@@ -101,18 +101,29 @@ def load_into_connection(
             continue
         safe_table = _safe_identifier(table, "table")
         columns = [_safe_identifier(c, "column") for c in rows[0].keys()]
-        placeholder = ", ".join(f":{col}" for col in columns)
-        column_text = ", ".join(f"{quote}{col}{quote}" for col in columns)
-        # nosemgrep: python_sql_rule-hardcoded-sql-expression
-        sql = (  # nosec B608 — identifiers validated above
-            f"INSERT INTO {quote}{safe_table}{quote} "
-            f"({column_text}) VALUES ({placeholder})"
-        )
+        sql = _build_insert(safe_table, columns, quote)
         for row in rows:
-            connection.execute(_wrap_text(sql), row)
+            # nosemgrep: python_sql_rule-hardcoded-sql-expression
+            connection.execute(_wrap_text(sql), row)  # nosec B608 — identifiers validated, values bound
         inserted[table] = len(rows)
         web_runner_logger.info(f"db_fixtures inserted {len(rows)} into {table!r}")
     return inserted
+
+
+def _build_insert(table: str, columns: List[str], quote: str) -> str:
+    """Construct an INSERT with already-validated identifiers."""
+    placeholder = ", ".join(f":{col}" for col in columns)
+    column_text = ", ".join(f"{quote}{col}{quote}" for col in columns)
+    # nosemgrep: python_sql_rule-hardcoded-sql-expression
+    return (  # nosec B608 — identifiers validated by _safe_identifier
+        f"INSERT INTO {quote}{table}{quote} ({column_text}) VALUES ({placeholder})"
+    )
+
+
+def _build_delete(table: str, quote: str) -> str:
+    """Construct a DELETE FROM statement with an already-validated identifier."""
+    # nosemgrep: python_sql_rule-hardcoded-sql-expression
+    return f"DELETE FROM {quote}{table}{quote}"  # nosec B608 — identifier validated
 
 
 def _wrap_text(sql: str) -> Any:
@@ -129,7 +140,6 @@ def truncate_tables(connection: Any, tables: Iterable[str], quote: str = '"') ->
     """``DELETE FROM`` each table; cheap teardown for in-test fixture reload."""
     for table in tables:
         safe_table = _safe_identifier(table, "table")
+        sql = _build_delete(safe_table, quote)
         # nosemgrep: python_sql_rule-hardcoded-sql-expression
-        connection.execute(  # nosec B608 — identifier validated above
-            _wrap_text(f"DELETE FROM {quote}{safe_table}{quote}"), {},
-        )
+        connection.execute(_wrap_text(sql), {})  # nosec B608 — identifier validated
