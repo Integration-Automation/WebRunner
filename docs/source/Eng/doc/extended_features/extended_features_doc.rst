@@ -535,3 +535,36 @@ Storybook / shadow DOM
   ``find_all`` walk open shadow roots recursively. ``execute_script``
   for Selenium, ``evaluate`` for Playwright; ``assert_pierced_visible``
   raises if the selector doesn't match anywhere.
+
+CDP tap / cross-browser / state diff
+====================================
+
+* ``cdp_tap.CdpRecorder(output_path).attach(driver)`` — wraps
+  ``execute_cdp_cmd`` so every call is appended to an ndjson log;
+  ``CdpReplayer(load_recording(path))`` plays the same sequence back.
+* ``cross_browser.diff_runs([chromium_run, firefox_run, webkit_run])``
+  — buckets findings into ``major`` / ``minor`` (5xx → major,
+  screenshot hash → minor); ``assert_parity(report, only_major=True)``
+  is the CI gate.
+* ``state_diff.capture_state(driver)`` snapshots cookies +
+  localStorage + sessionStorage; ``diff_states(before, after)`` reports
+  added / removed / changed keys per section.
+
+Page Object codegen
+===================
+
+``pom_codegen.discover_elements_from_html(html)`` walks every element
+with ``data-testid`` / ``id`` / form ``name`` and emits a Python module
+with one ``TestObject`` property per element via ``render_pom_module``.
+
+CI reproducibility & long-term observability
+============================================
+
+* ``workspace_lock.build_lock(drivers=..., playwright_versions={"chromium":
+  "127.0.0.0"})`` — snapshots every Python distribution + driver +
+  Playwright browser version; ``write_lock`` / ``diff_locks`` round-trip.
+* ``a11y_trend.aggregate_history(history)`` + ``render_html(points)``
+  — per-day per-impact axe-violation count, self-contained SVG chart.
+* ``perf_drift.detect_drift({"lcp_ms": samples}, baseline_window=20,
+  recent_window=5, tolerance=0.1)`` — sliding-window P95 drift
+  detection; ``assert_no_regression(report)`` is the strict path.

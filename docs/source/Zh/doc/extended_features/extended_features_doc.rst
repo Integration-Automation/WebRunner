@@ -372,3 +372,30 @@ Storybook / Shadow DOM
   Storybook stories 自動跑 axe + screenshot
 * ``dom_traversal.shadow_pierce.find_first`` — 遞迴穿透 open shadow
   root 找元件，Selenium 與 Playwright 通吃
+
+CDP tap / Cross-browser / State diff
+====================================
+
+* ``cdp_tap.CdpRecorder`` / ``CdpReplayer`` — 把 ``execute_cdp_cmd``
+  的呼叫全錄成 ndjson、之後可離線 replay
+* ``cross_browser.diff_runs`` — 同 action JSON 跑 Chromium / Firefox /
+  WebKit 後比對 title / DOM / console / 網路 / 截圖差異
+* ``state_diff.capture_state`` + ``diff_states`` — 比對測試前後的
+  cookies / localStorage / sessionStorage 變化
+
+Page Object codegen
+===================
+
+``pom_codegen.discover_elements_from_html`` 走過 HTML 抓
+``data-testid`` / ``id`` / form fields，``render_pom_module`` 產生
+Python POM 模組。
+
+Lock file / a11y trend / perf drift
+===================================
+
+* ``workspace_lock.build_lock`` — pip 版本 + driver 版本 + Playwright
+  browser 版本一起 pin，CI 完全 reproducible
+* ``a11y_trend.aggregate_history`` + ``render_html`` — axe 違規數
+  時間序列，自帶 SVG 圖表
+* ``perf_drift.detect_drift`` — 滑動視窗 P95 比對，超 tolerance 即視為
+  regression

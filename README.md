@@ -638,6 +638,27 @@ python -m je_web_runner.action_lsp
 
 `textDocument/completion` returns every registered `WR_*` command; `textDocument/publishDiagnostics` runs the action linter on `didOpen` / `didChange`. Pair with VS Code's *Configure JSON Language Servers* or the JetBrains LSP plugin.
 
+## Even More Capabilities (final wave)
+
+Debugging & reproducibility:
+
+- **CDP message tap** — `cdp_tap.CdpRecorder("cdp.ndjson").attach(driver)` wraps `execute_cdp_cmd` so every command + return value is appended to an ndjson log; `CdpReplayer(load_recording(...))` plays it back against a stub for offline debugging.
+- **Cross-browser parity** — `cross_browser.diff_runs([chromium_run, firefox_run, webkit_run])` diffs title / DOM hash / console / network status / screenshot hash, classifying each finding as `major` (5xx, title, DOM mismatch) or `minor`. `assert_parity(report, only_major=True)` is the gate.
+- **Browser state diff** — `state_diff.capture_state(driver)` snapshots cookies + localStorage + sessionStorage; `diff_states(before, after)` lists added / removed / changed keys per section so cart / auth flows stay traceable.
+
+Authoring / scaffolding:
+
+- **Page Object codegen** — `pom_codegen.discover_elements_from_html(html)` walks every element with `data-testid` / `id` / form `name`; `render_pom_module(elements, class_name="LoginPage")` returns a Python module with one `TestObject` property per element.
+
+CI reproducibility:
+
+- **Workspace lock file** — `workspace_lock.build_lock(drivers=..., playwright_versions={"chromium": "127.0.0.0"})` snapshots every Python distribution + driver version + Playwright browser version; `write_lock(lock, ".webrunner/lock.json")` and `diff_locks(before, after)` complete the pipeline.
+
+Long-running observability:
+
+- **A11y trend dashboard** — `a11y_trend.aggregate_history(history)` buckets axe runs by day and impact; `render_html(points)` produces a self-contained SVG line chart so regressions are visible at a glance.
+- **Perf drift detector** — `perf_drift.detect_drift({"lcp_ms": samples}, baseline_window=20, recent_window=5)` compares the recent P95 against a rolling baseline P95 and flags drift outside `tolerance`. `assert_no_regression(report)` is the strict path; `higher_is_better={"frame_rate"}` for inverted metrics.
+
 ## Even More Capabilities (newest wave)
 
 Authoring / formatting:
