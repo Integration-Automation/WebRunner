@@ -687,11 +687,26 @@ WebRunner ships a [Model Context Protocol](https://modelcontextprotocol.io/) ser
 python -m je_web_runner.mcp_server
 ```
 
-The default tool list exposes:
+The default tool list (19 tools) exposes:
 
-- `webrunner_lint_action`, `webrunner_locator_strength`
-- `webrunner_render_template`, `webrunner_compute_trend`
-- `webrunner_validate_response`, `webrunner_summary_markdown`
+Action JSON authoring & linting:
+- `webrunner_lint_action`, `webrunner_score_action_locators`, `webrunner_locator_strength`
+- `webrunner_format_actions`, `webrunner_parse_markdown`, `webrunner_render_template`
+- `webrunner_translate_actions_to_playwright`, `webrunner_translate_python_to_playwright`
+
+Code generation:
+- `webrunner_pom_from_html`
+
+Quality / triage:
+- `webrunner_a11y_diff`, `webrunner_cluster_failures`, `webrunner_compute_trend`
+
+Security & privacy:
+- `webrunner_scan_pii`, `webrunner_redact_pii`
+
+Reporting & contract:
+- `webrunner_summary_markdown`, `webrunner_validate_response`
+
+Sharding & infra:
 - `webrunner_diff_shard`, `webrunner_render_k8s`, `webrunner_partition_shard`
 
 ```python

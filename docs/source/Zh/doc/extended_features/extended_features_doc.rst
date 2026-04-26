@@ -264,12 +264,25 @@ MCP server
 
    python -m je_web_runner.mcp_server
 
-預設工具：``webrunner_lint_action`` / ``webrunner_locator_strength`` /
-``webrunner_render_template`` / ``webrunner_compute_trend`` /
-``webrunner_validate_response`` / ``webrunner_summary_markdown`` /
-``webrunner_diff_shard`` / ``webrunner_render_k8s`` /
-``webrunner_partition_shard``。可透過 ``McpServer.register(Tool(...))``
-擴充自訂工具，協定版本 ``2024-11-05``。
+預設工具共 19 個，依用途分組：
+
+* Action 撰寫 / lint：``webrunner_lint_action`` /
+  ``webrunner_score_action_locators`` / ``webrunner_locator_strength`` /
+  ``webrunner_format_actions`` / ``webrunner_parse_markdown`` /
+  ``webrunner_render_template`` /
+  ``webrunner_translate_actions_to_playwright`` /
+  ``webrunner_translate_python_to_playwright``
+* 程式碼生成：``webrunner_pom_from_html``
+* 品質 / triage：``webrunner_a11y_diff`` / ``webrunner_cluster_failures``
+  / ``webrunner_compute_trend``
+* 安全 / 隱私：``webrunner_scan_pii`` / ``webrunner_redact_pii``
+* 報告 / contract：``webrunner_summary_markdown`` /
+  ``webrunner_validate_response``
+* Sharding / infra：``webrunner_diff_shard`` / ``webrunner_render_k8s``
+  / ``webrunner_partition_shard``
+
+可透過 ``McpServer.register(Tool(...))`` 自行擴充工具，協定版本
+``2024-11-05``。
 
 Action JSON LSP
 ===============

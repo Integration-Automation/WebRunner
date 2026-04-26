@@ -118,6 +118,121 @@ class TestDefaultTools(unittest.TestCase):
         for tool in build_default_tools():
             self.assertEqual(tool.input_schema["type"], "object")
 
+    def test_full_default_tool_surface(self):
+        # The MCP server is the public LLM-facing surface; freeze the tool
+        # list here so accidental removals fail loudly in review.
+        names = {tool.name for tool in build_default_tools()}
+        self.assertEqual(names, {
+            "webrunner_lint_action",
+            "webrunner_locator_strength",
+            "webrunner_render_template",
+            "webrunner_compute_trend",
+            "webrunner_validate_response",
+            "webrunner_summary_markdown",
+            "webrunner_diff_shard",
+            "webrunner_render_k8s",
+            "webrunner_partition_shard",
+            "webrunner_format_actions",
+            "webrunner_parse_markdown",
+            "webrunner_translate_actions_to_playwright",
+            "webrunner_translate_python_to_playwright",
+            "webrunner_pom_from_html",
+            "webrunner_scan_pii",
+            "webrunner_redact_pii",
+            "webrunner_cluster_failures",
+            "webrunner_a11y_diff",
+            "webrunner_score_action_locators",
+        })
+
+
+class TestNewTools(unittest.TestCase):
+
+    def setUp(self):
+        self.server = make_default_server()
+
+    def _call(self, name, arguments):
+        return self.server.handle({"id": 1, "method": "tools/call", "params": {
+            "name": name, "arguments": arguments,
+        }})
+
+    def test_format_actions(self):
+        result = self._call("webrunner_format_actions",
+                            {"actions": [["WR_quit_all"]]})
+        self.assertFalse(result["result"]["isError"])
+        self.assertIn('["WR_quit_all"]', result["result"]["content"][0]["text"])
+
+    def test_parse_markdown(self):
+        result = self._call("webrunner_parse_markdown",
+                            {"text": "- open https://example.com\n- quit"})
+        body = result["result"]["content"][0]["text"]
+        self.assertIn("WR_to_url", body)
+        self.assertIn("WR_quit_all", body)
+
+    def test_translate_actions_to_playwright(self):
+        result = self._call("webrunner_translate_actions_to_playwright", {
+            "actions": [["WR_to_url", {"url": "https://x"}]],
+        })
+        self.assertIn("WR_pw_to_url", result["result"]["content"][0]["text"])
+
+    def test_translate_python_to_playwright(self):
+        result = self._call("webrunner_translate_python_to_playwright", {
+            "source": "driver.get('https://x.com')",
+        })
+        self.assertIn("page.goto", result["result"]["content"][0]["text"])
+
+    def test_pom_from_html(self):
+        html = '<button data-testid="primary-cta">Go</button>'
+        result = self._call("webrunner_pom_from_html",
+                            {"html": html, "class_name": "Login"})
+        body = result["result"]["content"][0]["text"]
+        self.assertIn("class Login", body)
+        self.assertIn("primary_cta", body)
+
+    def test_scan_pii(self):
+        result = self._call("webrunner_scan_pii",
+                            {"text": "email alice@example.com here"})
+        body = result["result"]["content"][0]["text"]
+        self.assertIn("email", body)
+
+    def test_redact_pii(self):
+        result = self._call("webrunner_redact_pii", {
+            "text": "email alice@example.com here",
+            "replacement": "[X]",
+        })
+        self.assertIn("[X]", result["result"]["content"][0]["text"])
+
+    def test_cluster_failures(self):
+        result = self._call("webrunner_cluster_failures", {
+            "failures": [
+                {"function_name": "a", "exception": "TimeoutError at 0xab"},
+                {"function_name": "b", "exception": "TimeoutError at 0xcd"},
+            ]
+        })
+        body = result["result"]["content"][0]["text"]
+        self.assertIn('"count": 2', body)
+
+    def test_a11y_diff(self):
+        result = self._call("webrunner_a11y_diff", {
+            "baseline": [],
+            "current": [{
+                "id": "label",
+                "impact": "serious",
+                "nodes": [{"target": ["input.email"]}],
+            }],
+        })
+        body = result["result"]["content"][0]["text"]
+        self.assertIn('"regressed": true', body)
+
+    def test_score_action_locators(self):
+        result = self._call("webrunner_score_action_locators", {
+            "actions": [
+                ["WR_save_test_object",
+                 {"test_object_name": "submit", "object_type": "ID"}],
+            ],
+        })
+        body = result["result"]["content"][0]["text"]
+        self.assertIn("score", body)
+
 
 if __name__ == "__main__":
     unittest.main()
