@@ -19,6 +19,6 @@ except Exception as error:  # pylint: disable=broad-except
     print(repr(error), file=sys.stderr)
     try:
         webdriver_wrapper_instance.current_webdriver.quit()
-    except Exception:  # pylint: disable=broad-except
-        pass
+    except Exception as quit_error:  # pylint: disable=broad-except  # nosec B110
+        print(f"quit during cleanup failed: {quit_error!r}", file=sys.stderr)
     sys.exit(1)
