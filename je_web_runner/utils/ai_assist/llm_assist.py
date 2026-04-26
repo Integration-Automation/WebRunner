@@ -127,3 +127,46 @@ def llm_self_heal_locator(name: str, html_provider: Callable[[], str]) -> Dict[s
     """
     web_runner_logger.info(f"llm_self_heal_locator: {name}")
     return suggest_locator(html_provider(), name)
+
+
+# ----- failure root-cause analysis -----------------------------------------
+
+_RCA_PROMPT = (
+    "You are a senior web QA engineer. Given the failure context below, "
+    "produce a concise root-cause analysis with these sections (no prose "
+    "outside the JSON envelope): "
+    '{{"likely_cause": "...", "evidence": ["..."], "next_steps": ["..."], '
+    '"confidence": 0..1}}.\n\n'
+    "Test name: {test_name}\n"
+    "Error: {error_repr}\n"
+    "Recent console:\n{console}\n"
+    "Recent network:\n{network}\n"
+    "Steps that ran:\n{steps}\n"
+)
+
+
+def explain_failure(
+    test_name: str,
+    error_repr: str,
+    console: Optional[List[Dict[str, Any]]] = None,
+    network: Optional[List[Dict[str, Any]]] = None,
+    steps: Optional[List[Any]] = None,
+) -> Dict[str, Any]:
+    """
+    要求 LLM 從失敗素材中產出 RCA 草稿
+    Ask the registered LLM to draft a root-cause analysis. Returns
+    ``{likely_cause, evidence, next_steps, confidence}``.
+    """
+    prompt = _RCA_PROMPT.format(
+        test_name=test_name,
+        error_repr=error_repr[:1500],
+        console=json.dumps(console or [], ensure_ascii=False)[:1500],
+        network=json.dumps(network or [], ensure_ascii=False)[:1500],
+        steps=json.dumps(steps or [], ensure_ascii=False)[:1500],
+    )
+    response = _invoke(prompt)
+    payload = _extract_json_object(response)
+    expected = {"likely_cause", "evidence", "next_steps", "confidence"}
+    if not isinstance(payload, dict) or not expected.issubset(payload.keys()):
+        raise LLMAssistError(f"LLM RCA payload missing keys: {response[:200]}")
+    return payload
