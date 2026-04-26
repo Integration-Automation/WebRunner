@@ -189,3 +189,84 @@ WebRunner 不打包任何 LLM client。透過 ``set_llm_callable(fn)`` 註冊任
 
 * ``suggest_locator`` — 自我修復定位的 LLM 後援
 * ``generate_actions_from_prompt`` — 自然語言生成 action 草稿
+* ``explain_failure`` — 從失敗素材生成 RCA：``{likely_cause, evidence,
+  next_steps, confidence}``
+
+可靠度
+======
+
+* ``adaptive_retry.run_with_retry`` — 依 classifier 結果決定是否重試
+* ``linter.locator_strength.score_locator`` — locator 0–100 分強度評估
+* ``smart_wait.wait_for_fetch_idle`` / ``wait_for_spa_route_stable`` —
+  比 ``time.sleep`` 智慧的 SPA 等待
+* ``throttler.throttle("svc")`` — 跨 shard 的檔案信號量
+
+可觀測性
+========
+
+* ``observability.timeline.build`` — 合併 OTel span / console / 網路回應
+* ``failure_bundle.FailureBundle`` — 失敗素材打包成可重現的 zip
+* ``memory_leak.detect_growth`` — heap 線性回歸找洩漏
+* ``trace_recorder.TraceRecorder`` — Playwright tracing 包裝
+* ``csp_reporter.CspViolationCollector`` — CSP 違規監聽
+
+測試資料 / 確定性
+=================
+
+* ``snapshot.fixture_record.FixtureRecorder`` — 第一次跑記錄、之後重放
+* ``database.fixtures`` — YAML/JSON → SQLAlchemy 連線 seed
+
+API 與合約
+==========
+
+* ``api_mock.MockRouter`` — Playwright route() 上層的宣告式 mock
+* ``contract_testing`` — JSON Schema 子集 + OpenAPI ``$ref`` 解析
+* ``graphql.GraphQLClient`` — GraphQL HTTP client + ``extract_field``
+* ``mock_services`` — SMTP / OAuth / S3 in-process mock
+
+安全測試
+========
+
+* ``header_tampering.HeaderTampering`` — 改 cookie/referer/origin
+* ``license_scanner`` — SPDX / 已知授權字樣偵測
+* ``cookie_consent.ConsentDismisser`` — 自動關閉 GDPR 彈窗
+
+裝置 / 區域
+===========
+
+* ``device_emulation`` — iPhone / Pixel / iPad / Desktop 預設
+* ``geo_locale`` — geolocation / timezone / locale 一次設定
+* ``multi_tab.TabChoreographer`` — 多分頁腳本連動
+* ``webauthn.enable_virtual_authenticator`` — passkey / FIDO2 模擬
+
+報告 / CI
+=========
+
+* ``pr_comment.post_or_update_comment`` — GitHub PR 自動留言（idempotent）
+* ``trend_dashboard.compute_trend`` — ledger 日趨勢 + SVG 圖表
+
+編排 / 開發者體驗
+=================
+
+* ``action_templates`` — login_basic / accept_cookies / switch_locale /
+  close_modal 等可重用樣板
+* ``sharding.diff_shard`` — 只跑 git diff 影響到的測試
+* ``watch_mode.watch_loop`` — 檔案變動監看
+* ``k8s_runner.render_job_manifests`` — 每個 shard 一個 batch/v1 Job
+* ``perf_metrics.budgets`` — 每路由 FCP/LCP/CLS 預算
+
+MCP server
+==========
+
+提供 Model Context Protocol stdio JSON-RPC server：
+
+.. code-block:: shell
+
+   python -m je_web_runner.mcp_server
+
+預設工具：``webrunner_lint_action`` / ``webrunner_locator_strength`` /
+``webrunner_render_template`` / ``webrunner_compute_trend`` /
+``webrunner_validate_response`` / ``webrunner_summary_markdown`` /
+``webrunner_diff_shard`` / ``webrunner_render_k8s`` /
+``webrunner_partition_shard``。可透過 ``McpServer.register(Tool(...))``
+擴充自訂工具，協定版本 ``2024-11-05``。

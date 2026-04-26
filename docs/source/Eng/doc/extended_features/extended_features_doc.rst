@@ -262,3 +262,130 @@ registers any ``Callable[[str], str]`` and powers:
   self-healing locator flow.
 * ``generate_actions_from_prompt(request)`` — natural language → action
   JSON draft.
+* ``explain_failure(test_name, error_repr, console=, network=, steps=)``
+  — produces a JSON RCA: ``{likely_cause, evidence, next_steps,
+  confidence}``.
+
+Reliability helpers
+===================
+
+* ``adaptive_retry.run_with_retry(fn, policy=...)`` — retries only when
+  the failure classifier labels the exception transient / flaky /
+  environment; ``RetryPolicy`` exposes per-category budgets and history.
+* ``linter.locator_strength.score_locator(strategy, value)`` — scores a
+  locator on a 0–100 scale; ``score_action_locators`` runs across an
+  action JSON list.
+* ``smart_wait.wait_for_fetch_idle`` / ``wait_for_spa_route_stable`` —
+  inject window.fetch and history hooks to detect SPA quiescence.
+* ``throttler.throttle("payments-api")`` — file-semaphore for cross-shard
+  concurrency limits.
+
+Observability
+=============
+
+* ``observability.timeline.build(spans=, console=, responses=)`` —
+  merges three event sources into a chronological list.
+* ``failure_bundle.FailureBundle("test", error_repr).write("bundle.zip")``
+  — replayable zip with manifest (``screenshot`` / ``dom`` / ``console``
+  / ``network`` / ``trace`` / arbitrary text & files).
+* ``memory_leak.detect_growth(driver, action, iterations=10)`` —
+  performance.memory linear-fit slope; ``growth_bytes_per_iter_budget``
+  raises on regression.
+* ``trace_recorder.TraceRecorder().start(context, name) / .stop(context)``
+  — Playwright tracing wrapper that always emits a ``.zip``.
+* ``csp_reporter.CspViolationCollector`` — securitypolicyviolation
+  listener with ``assert_none`` / ``assert_no_directive``.
+
+Test data & determinism
+=======================
+
+* ``snapshot.fixture_record.FixtureRecorder("fx.json", mode="auto")`` —
+  record once, replay forever; modes ``record`` / ``replay`` / ``auto``.
+* ``database.fixtures.load_fixture_file("seed.json")`` +
+  ``load_into_connection(conn, fixture)`` — seed Postgres / MySQL /
+  SQLite from ``{table: [rows]}`` JSON.
+
+API & contract testing
+======================
+
+* ``api_mock.MockRouter().add(method, url_pattern, body=, status=, times=)``
+  — supports literal, glob, and ``re:`` regex URL patterns; attach to a
+  Playwright page with ``attach_to_page(page)``.
+* ``contract_testing.validate_response(body, schema)`` — JSON-Schema
+  subset (type / properties / required / items / enum / oneOf /
+  additionalProperties); ``validate_against_openapi`` resolves
+  ``$ref`` and looks up ``paths[…].responses[…]``.
+* ``graphql.GraphQLClient(endpoint).execute(query, variables=)`` +
+  ``extract_field(payload, "users[0].name")``.
+* ``mock_services`` — ``MockOAuthServer``, ``MockSmtpServer``,
+  ``MockS3Storage`` for offline CI runs.
+
+Security probes
+===============
+
+* ``header_tampering.HeaderTampering()`` — rule list + Playwright
+  ``page.route()`` integration to set / remove / append headers.
+* ``license_scanner.scan_text(bundle_text)`` — find SPDX identifiers and
+  known license phrases; ``assert_allowed_licenses(findings, allow=,
+  deny=)`` for SBOM gates.
+* ``cookie_consent.ConsentDismisser().dismiss(driver)`` — auto-click
+  OneTrust / TrustArc / Cookiebot / Didomi / Quantcast accept buttons.
+
+Browser & locale
+================
+
+* ``device_emulation`` — ``available_presets`` /
+  ``playwright_kwargs("iPhone 15 Pro")`` /
+  ``apply_to_chrome_options(opts, "Desktop 1080p")`` /
+  ``cdp_emulation_command(name)``.
+* ``geo_locale.GeoOverride`` — yields both
+  ``cdp_payloads(override)`` and ``playwright_context_kwargs(override)``.
+* ``multi_tab.TabChoreographer`` — track tabs by alias;
+  ``register_current`` / ``open_new`` / ``switch_to`` / ``with_tab`` /
+  ``close``.
+* ``webauthn.enable_virtual_authenticator(driver)`` — CDP
+  ``WebAuthn.addVirtualAuthenticator`` for passkey simulation.
+
+Reporting & CI
+==============
+
+* ``pr_comment.post_or_update_comment(repo, pr_number, body, token=)``
+  — idempotent via a hidden HTML marker.
+* ``trend_dashboard.compute_trend("ledger.json")`` +
+  ``render_html(trend)`` — daily pass-rate / duration / SVG chart.
+
+Orchestration & DX
+==================
+
+* ``action_templates.render_template("login_basic", {...})`` —
+  built-in templates: ``login_basic``, ``accept_cookies``,
+  ``switch_locale``, ``close_modal``; ``register_template`` for custom.
+* ``sharding.diff_shard.select_for_changed(candidates, base_ref="main")``
+  — git-diff-aware test selection.
+* ``watch_mode.watch_loop(directory, on_change=callback)`` — polled file
+  watcher with snapshot diff.
+* ``k8s_runner.render_job_manifests(ShardJobConfig(...))`` /
+  ``render_job_yaml(config)`` — one ``batch/v1 Job`` per shard.
+* ``perf_metrics.budgets`` — ``load_budgets("budgets.json")`` +
+  ``evaluate_metrics(route, metrics, budgets)`` +
+  ``assert_within_budget(result)``.
+
+MCP server
+==========
+
+WebRunner ships a Model Context Protocol server so MCP-aware clients can
+drive it over JSON-RPC stdio:
+
+.. code-block:: shell
+
+   python -m je_web_runner.mcp_server
+
+Default tools registered: ``webrunner_lint_action``,
+``webrunner_locator_strength``, ``webrunner_render_template``,
+``webrunner_compute_trend``, ``webrunner_validate_response``,
+``webrunner_summary_markdown``, ``webrunner_diff_shard``,
+``webrunner_render_k8s``, ``webrunner_partition_shard``.
+
+Custom tools register via ``McpServer.register(Tool(...))``; the server
+implements MCP ``2024-11-05`` (``initialize`` / ``tools/list`` /
+``tools/call`` / ``resources/list`` / ``ping`` / ``shutdown``).
