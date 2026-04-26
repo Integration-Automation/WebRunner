@@ -67,52 +67,62 @@ class Pipeline:
 
 def load_pipeline(source: Union[str, Path, Dict[str, Any]]) -> Pipeline:
     """Load a pipeline definition from a path / JSON string / dict."""
-    if isinstance(source, dict):
-        document = source
-    elif isinstance(source, (str, Path)):
-        path = Path(source)
-        if path.is_file():
-            text = path.read_text(encoding="utf-8")
-        else:
-            text = str(source)
-        try:
-            document = json.loads(text)
-        except ValueError as error:
-            raise PipelineError(f"pipeline source is not JSON: {error}") from error
-    else:
-        raise PipelineError(f"unsupported source type: {type(source).__name__}")
-    if not isinstance(document, dict):
-        raise PipelineError("pipeline document must be an object")
+    document = _coerce_pipeline_document(source)
     raw_stages = document.get("stages")
     if not isinstance(raw_stages, list) or not raw_stages:
         raise PipelineError("'stages' must be a non-empty list")
     stages: List[PipelineStage] = []
     seen: set = set()
     for index, entry in enumerate(raw_stages):
-        if not isinstance(entry, dict):
-            raise PipelineError(f"stages[{index}] must be an object")
-        name = entry.get("name")
-        if not isinstance(name, str) or not name:
-            raise PipelineError(f"stages[{index}].name must be non-empty string")
-        if name in seen:
-            raise PipelineError(f"duplicate stage name {name!r}")
-        seen.add(name)
-        files = entry.get("files")
-        if not isinstance(files, list) or not all(isinstance(f, str) for f in files):
-            raise PipelineError(f"stages[{index}].files must be list[str]")
-        required_status = entry.get("required_status") or ["passed"]
-        if (not isinstance(required_status, list)
-                or not all(isinstance(s, str) for s in required_status)):
-            raise PipelineError(
-                f"stages[{index}].required_status must be list[str]"
-            )
-        stages.append(PipelineStage(
-            name=name,
-            files=list(files),
-            required_status=list(required_status),
-            continue_on_failure=bool(entry.get("continue_on_failure", False)),
-        ))
+        stages.append(_parse_stage(index, entry, seen))
     return Pipeline(stages=stages)
+
+
+def _coerce_pipeline_document(source: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:
+    if isinstance(source, dict):
+        document = source
+    elif isinstance(source, (str, Path)):
+        document = _load_pipeline_from_text(source)
+    else:
+        raise PipelineError(f"unsupported source type: {type(source).__name__}")
+    if not isinstance(document, dict):
+        raise PipelineError("pipeline document must be an object")
+    return document
+
+
+def _load_pipeline_from_text(source: Union[str, Path]) -> Dict[str, Any]:
+    path = Path(source)
+    text = path.read_text(encoding="utf-8") if path.is_file() else str(source)
+    try:
+        return json.loads(text)
+    except ValueError as error:
+        raise PipelineError(f"pipeline source is not JSON: {error}") from error
+
+
+def _parse_stage(index: int, entry: Any, seen: set) -> PipelineStage:
+    if not isinstance(entry, dict):
+        raise PipelineError(f"stages[{index}] must be an object")
+    name = entry.get("name")
+    if not isinstance(name, str) or not name:
+        raise PipelineError(f"stages[{index}].name must be non-empty string")
+    if name in seen:
+        raise PipelineError(f"duplicate stage name {name!r}")
+    seen.add(name)
+    files = entry.get("files")
+    if not isinstance(files, list) or not all(isinstance(f, str) for f in files):
+        raise PipelineError(f"stages[{index}].files must be list[str]")
+    required_status = entry.get("required_status") or ["passed"]
+    if (not isinstance(required_status, list)
+            or not all(isinstance(s, str) for s in required_status)):
+        raise PipelineError(
+            f"stages[{index}].required_status must be list[str]"
+        )
+    return PipelineStage(
+        name=name,
+        files=list(files),
+        required_status=list(required_status),
+        continue_on_failure=bool(entry.get("continue_on_failure", False)),
+    )
 
 
 FileRunner = Callable[[str], Dict[str, Any]]

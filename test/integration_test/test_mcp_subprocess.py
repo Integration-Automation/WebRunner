@@ -27,36 +27,49 @@ _LOCATOR_CALL = {
 _SHUTDOWN = {"jsonrpc": "2.0", "id": 4, "method": "shutdown"}
 
 
+def _spawn():
+    return subprocess.Popen(  # nosec B603 — argv list, no shell
+        [sys.executable, "-m", "je_web_runner.mcp_server"],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        bufsize=1,
+    )
+
+
+def _drive(proc, messages):
+    """Send ``messages`` as the proc's input and return stdout/stderr."""
+    payload = "".join(json.dumps(message) + "\n" for message in messages)
+    try:
+        stdout_data, stderr_data = proc.communicate(input=payload, timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        try:
+            stdout_data, stderr_data = proc.communicate(timeout=5)
+        except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort drain
+            stdout_data, stderr_data = "", ""
+    return stdout_data, stderr_data
+
+
+def _parse_messages(stdout_data):
+    return [
+        json.loads(line)
+        for line in stdout_data.splitlines()
+        if line.strip()
+    ]
+
+
 class TestMcpSubprocess(unittest.TestCase):
 
     def test_init_list_call_shutdown(self):
-        proc = subprocess.Popen(  # nosec B603 — argv list, no shell
-            [sys.executable, "-m", "je_web_runner.mcp_server"],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
-        )
-        try:
-            self._send(proc, _INIT)
-            self._send(proc, _INITIALIZED)
-            self._send(proc, _LIST)
-            self._send(proc, _LOCATOR_CALL)
-            self._send(proc, _SHUTDOWN)
-            assert proc.stdin is not None  # nosec B101 — typing guard
-            proc.stdin.close()
-            stdout_data, stderr_data = proc.communicate(timeout=10)
-        finally:
-            if proc.poll() is None:
-                proc.kill()
-                try:
-                    proc.communicate(timeout=5)
-                except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort cleanup
-                    pass
+        proc = _spawn()
+        stdout_data, stderr_data = _drive(proc, [
+            _INIT, _INITIALIZED, _LIST, _LOCATOR_CALL, _SHUTDOWN,
+        ])
         self.assertEqual(proc.returncode, 0,
                          msg=f"non-zero exit; stderr={stderr_data!r}")
-        responses = self._parse_messages(stdout_data)
+        responses = _parse_messages(stdout_data)
         ids = sorted(msg["id"] for msg in responses if "id" in msg)
         # initialize / tools/list / tools/call / shutdown all return responses;
         # notifications/initialized doesn't.
@@ -75,43 +88,13 @@ class TestMcpSubprocess(unittest.TestCase):
         self.assertIn("score", text)
 
     def test_unknown_method_returns_error(self):
-        proc = subprocess.Popen(  # nosec B603 — argv list, no shell
-            [sys.executable, "-m", "je_web_runner.mcp_server"],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
-        )
-        try:
-            self._send(proc, {"jsonrpc": "2.0", "id": 7, "method": "noSuchMethod"})
-            assert proc.stdin is not None  # nosec B101 — typing guard
-            proc.stdin.close()
-            stdout_data, _stderr = proc.communicate(timeout=10)
-        finally:
-            if proc.poll() is None:
-                proc.kill()
-                try:
-                    proc.communicate(timeout=5)
-                except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort cleanup
-                    pass
-        responses = self._parse_messages(stdout_data)
+        proc = _spawn()
+        stdout_data, _stderr = _drive(proc, [
+            {"jsonrpc": "2.0", "id": 7, "method": "noSuchMethod"},
+        ])
+        responses = _parse_messages(stdout_data)
         match = next(m for m in responses if m.get("id") == 7)
         self.assertEqual(match["error"]["code"], -32601)
-
-    @staticmethod
-    def _send(proc, message):
-        assert proc.stdin is not None  # nosec B101 — typing guard
-        proc.stdin.write(json.dumps(message) + "\n")
-        proc.stdin.flush()
-
-    @staticmethod
-    def _parse_messages(stdout_data):
-        return [
-            json.loads(line)
-            for line in stdout_data.splitlines()
-            if line.strip()
-        ]
 
 
 if __name__ == "__main__":

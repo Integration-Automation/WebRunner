@@ -46,11 +46,10 @@ _TIMESTAMP_RE = re.compile(
     _TIMESTAMP_DATE + r"[T ]" + _TIMESTAMP_TIME + _TIMESTAMP_FRACTION + _TIMESTAMP_ZONE
 )
 # Bounded character class size + finite outer repetition keeps backtracking
-# bounded; Semgrep's heuristic still flags the pattern because of the nested
-# quantifiers, but the worst case is O(80*40*input) which is linear-ish for
-# realistic error messages. NOSONAR S5852.
+# bounded; the worst case is O(80*40*input) which is linear-ish for the
+# realistic error messages this scanner is fed.
 # nosemgrep: python.lang.security.audit.regex-dos.regex_dos
-_PATH_RE = re.compile(
+_PATH_RE = re.compile(  # NOSONAR S5852 — quantifiers explicitly bounded above
     r"(?:[A-Za-z]:)?[\\/](?:[\w.\-]{1,80}[\\/]){1,40}[\w.\-]{1,80}"
 )
 _NUMBER_RE = re.compile(r"\b\d{2,}\b")

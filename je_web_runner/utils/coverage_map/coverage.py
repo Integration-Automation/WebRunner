@@ -109,23 +109,34 @@ def build_coverage_map(
     for path in sorted(base.glob(glob)):
         if not path.is_file():
             continue
-        try:
-            actions = json.loads(path.read_text(encoding="utf-8"))
-        except ValueError:
+        actions = _load_action_list(path)
+        if actions is None:
             continue
-        if not isinstance(actions, list):
-            continue
-        for action in actions:
-            url = _extract_url(action) if isinstance(action, list) else None
-            if not isinstance(url, str) or not url:
-                continue
-            route = normalise_path(_path_for(url), normalise_params=normalise_params)
+        for route in _routes_in(actions, normalise_params):
             routes_by_file[str(path)].add(route)
             files_by_route[route].add(str(path))
     return CoverageMap(
         routes_by_file=dict(routes_by_file),
         files_by_route=dict(files_by_route),
     )
+
+
+def _load_action_list(path: Path) -> Optional[List[Any]]:
+    try:
+        actions = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError:
+        return None
+    return actions if isinstance(actions, list) else None
+
+
+def _routes_in(actions: List[Any], normalise_params: bool):
+    for action in actions:
+        if not isinstance(action, list):
+            continue
+        url = _extract_url(action)
+        if not isinstance(url, str) or not url:
+            continue
+        yield normalise_path(_path_for(url), normalise_params=normalise_params)
 
 
 def coverage_for_routes(

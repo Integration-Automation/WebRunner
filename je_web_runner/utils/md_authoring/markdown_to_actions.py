@@ -31,8 +31,8 @@ class MdAuthoringError(WebRunnerException):
 
 
 # Trim leading whitespace + bullet marker; the body is captured greedily and
-# trimmed in Python afterwards so this regex stays linear-time. NOSONAR S5852
-_BULLET_RE = re.compile(r"^\s*[-*]\s*(.*)$")
+# trimmed in Python afterwards so this regex stays linear-time.
+_BULLET_RE = re.compile(r"^\s*[-*]\s*(.*)$")  # NOSONAR S5852 — greedy ``.*`` anchored to ``$``, no backtracking
 
 
 def _strategy_value_for(selector: str) -> Tuple[str, str]:
@@ -80,10 +80,13 @@ _WAIT_RE = re.compile(r"^wait\s+(\d+(?:\.\d+)?)\s*s(?:ec(?:onds)?)?$", re.IGNORE
 _TITLE_RE = re.compile(r"^assert\s+title\s+\"([^\"]*)\"$", re.IGNORECASE)
 _PRESS_RE = re.compile(r"^press\s+(\S+)$", re.IGNORECASE)
 _SCREENSHOT_RE = re.compile(r"^screenshot$", re.IGNORECASE)
-# Template name allows ASCII identifier chars plus dashes; the explicit
-# class avoids the polynomial-backtracking heuristic. NOSONAR S5852
-_TEMPLATE_RE = re.compile(
-    r"^run\s+template\s+([A-Za-z_][A-Za-z0-9_-]{0,80})$", re.IGNORECASE,
+# Template name allows ASCII identifier chars plus dashes; the bounded
+# {0,80} caps the worst case at linear in input length.
+_TEMPLATE_RE = re.compile(  # NOSONAR S5852 — class size bounded by {0,80}
+    # ``-`` placed at the end of the class so it isn't interpreted as a
+    # range; ``\w`` already covers A-Za-z0-9_ so dropping the explicit
+    # spans avoids the S5869 duplicate-class warning.
+    r"^run\s+template\s+([A-Za-z_][\w-]{0,80})$", re.IGNORECASE,
 )
 _QUIT_RE = re.compile(r"^quit$", re.IGNORECASE)
 

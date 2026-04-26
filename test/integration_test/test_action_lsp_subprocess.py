@@ -53,31 +53,35 @@ def _spawn():
     )
 
 
+def _drive(proc, frames):
+    """Pipe ``frames`` through the proc's input via communicate()."""
+    payload = b"".join(frames)
+    try:
+        stdout_data, stderr_data = proc.communicate(input=payload, timeout=10)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        try:
+            stdout_data, stderr_data = proc.communicate(timeout=5)
+        except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort drain
+            stdout_data, stderr_data = b"", b""
+    return stdout_data, stderr_data
+
+
 class TestActionLspSubprocess(unittest.TestCase):
 
     def test_initialize_didopen_publishes_diagnostics(self):
         proc = _spawn()
-        try:
-            assert proc.stdin is not None  # nosec B101 — typing guard
-            proc.stdin.write(_frame({"jsonrpc": "2.0", "id": 1,
-                                     "method": "initialize", "params": {}}))
-            proc.stdin.write(_frame({"jsonrpc": "2.0",
-                                     "method": "textDocument/didOpen",
-                                     "params": {"textDocument": {
-                                         "uri": "file:///x.json",
-                                         "text": "this is not json",
-                                     }}}))
-            proc.stdin.write(_frame({"jsonrpc": "2.0", "method": "exit"}))
-            proc.stdin.flush()
-            proc.stdin.close()
-            stdout_data, stderr_data = proc.communicate(timeout=10)
-        finally:
-            if proc.poll() is None:
-                proc.kill()
-                try:
-                    proc.communicate(timeout=5)
-                except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort cleanup
-                    pass
+        stdout_data, stderr_data = _drive(proc, [
+            _frame({"jsonrpc": "2.0", "id": 1,
+                    "method": "initialize", "params": {}}),
+            _frame({"jsonrpc": "2.0",
+                    "method": "textDocument/didOpen",
+                    "params": {"textDocument": {
+                        "uri": "file:///x.json",
+                        "text": "this is not json",
+                    }}}),
+            _frame({"jsonrpc": "2.0", "method": "exit"}),
+        ])
         self.assertEqual(proc.returncode, 0,
                          msg=f"stderr={stderr_data!r}")
         messages = _read_messages(stdout_data)
@@ -95,24 +99,14 @@ class TestActionLspSubprocess(unittest.TestCase):
 
     def test_completion_returns_command_names(self):
         proc = _spawn()
-        try:
-            assert proc.stdin is not None  # nosec B101 — typing guard
-            proc.stdin.write(_frame({"jsonrpc": "2.0", "id": 1,
-                                     "method": "initialize", "params": {}}))
-            proc.stdin.write(_frame({"jsonrpc": "2.0", "id": 2,
-                                     "method": "textDocument/completion",
-                                     "params": {}}))
-            proc.stdin.write(_frame({"jsonrpc": "2.0", "method": "exit"}))
-            proc.stdin.flush()
-            proc.stdin.close()
-            stdout_data, _stderr = proc.communicate(timeout=10)
-        finally:
-            if proc.poll() is None:
-                proc.kill()
-                try:
-                    proc.communicate(timeout=5)
-                except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort cleanup
-                    pass
+        stdout_data, _stderr = _drive(proc, [
+            _frame({"jsonrpc": "2.0", "id": 1,
+                    "method": "initialize", "params": {}}),
+            _frame({"jsonrpc": "2.0", "id": 2,
+                    "method": "textDocument/completion",
+                    "params": {}}),
+            _frame({"jsonrpc": "2.0", "method": "exit"}),
+        ])
         messages = _read_messages(stdout_data)
         completion = next(m for m in messages if m.get("id") == 2)
         labels = [item["label"] for item in completion["result"]["items"]]

@@ -188,16 +188,17 @@ def _make_handler(server: HarReplayServer) -> Callable:
             request_path = self.path
             entry = server.find(method, request_path)
             if entry is None:
-                # Method / path are echoed only inside a JSON payload so the
-                # client can debug, with a fixed Content-Type that prevents
-                # the user-controlled fragments being interpreted as HTML.
+                # Sanitise the echoed fragments to ASCII allow-list characters
+                # so any HTML / control bytes a malicious client embeds in the
+                # path can't reach the response payload (defence in depth on
+                # top of the JSON envelope + nosniff header).
                 payload = json.dumps({
                     "error": "no har match",
-                    "method": method,
-                    "path": request_path,
+                    "method": _safe_echo(method),
+                    "path": _safe_echo(request_path),
                 }).encode("utf-8")
                 self.send_response(server.not_found_status)
-                self.send_header("Content-Type", "application/json")  # NOSONAR S5131 — JSON envelope, not HTML
+                self.send_header("Content-Type", "application/json")
                 self.send_header("X-Content-Type-Options", "nosniff")
                 self.send_header("Content-Length", str(len(payload)))
                 self.end_headers()
@@ -238,3 +239,20 @@ def _entry_body_bytes(entry: HarEntry) -> bytes:
         except (ValueError, TypeError):
             return (entry.body or "").encode("utf-8")
     return (entry.body or "").encode("utf-8")
+
+
+_ECHO_SAFE_CHARS = set(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "0123456789-._~:/?#[]@!$&'()*+,;=% "
+)
+
+
+def _safe_echo(text: str, limit: int = 200) -> str:
+    """Strip characters outside the unreserved + pchar URI grammar.
+
+    Used in the no-match 404 payload so a malicious request method or
+    path can't smuggle HTML / control bytes into the response.
+    """
+    if not isinstance(text, str):
+        return ""
+    return "".join(ch for ch in text if ch in _ECHO_SAFE_CHARS)[:limit]

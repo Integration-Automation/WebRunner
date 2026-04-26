@@ -162,16 +162,16 @@ def _default_fetch(url: str) -> bytes:
 
 
 def _extract_archive(archive_format: str, payload: bytes, target_dir: Path) -> None:
-    # Both branches go through ``_safe_extract_*`` helpers that pre-validate
-    # every member resolves inside ``target_dir``, defending against the
-    # zip-slip / tar-slip class of attacks. NOSONAR S5042
+    # Both branches route through ``_safe_extract_*`` validators that
+    # check every member resolves inside ``target_dir`` before any extract
+    # call runs (zip-slip / tar-slip defence).
     if archive_format == "zip":
         with zipfile.ZipFile(io.BytesIO(payload)) as zf:
-            _safe_extract_zip(zf, target_dir)
+            _safe_extract_zip(zf, target_dir)  # NOSONAR S5042 — members validated above
         return
     if archive_format == "tar.gz":
         with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as tf:
-            _safe_extract_tar(tf, target_dir)
+            _safe_extract_tar(tf, target_dir)  # NOSONAR S5042 — members validated above
         return
     raise DriverPinError(f"unsupported archive format {archive_format!r}")
 
