@@ -144,6 +144,17 @@ class TestDefaultTools(unittest.TestCase):
             "webrunner_score_action_locators",
         })
 
+    def test_browser_tools_registered_in_default_server(self):
+        # Browser execution tools are merged into the default server so MCP
+        # clients can drive Selenium / Playwright through WR_* actions.
+        server = make_default_server()
+        for name in (
+            "webrunner_run_actions",
+            "webrunner_run_action_files",
+            "webrunner_list_commands",
+        ):
+            self.assertIn(name, server.tools)
+
 
 class TestNewTools(unittest.TestCase):
 
@@ -232,6 +243,44 @@ class TestNewTools(unittest.TestCase):
         })
         body = result["result"]["content"][0]["text"]
         self.assertIn("score", body)
+
+
+class TestBrowserTools(unittest.TestCase):
+    """Tools that call the executor — covered without launching a browser."""
+
+    def setUp(self):
+        self.server = make_default_server()
+
+    def _call(self, name, arguments):
+        return self.server.handle({"id": 1, "method": "tools/call", "params": {
+            "name": name, "arguments": arguments,
+        }})
+
+    def test_run_actions_rejects_non_list(self):
+        result = self._call("webrunner_run_actions", {"actions": "nope"})
+        self.assertTrue(result["result"]["isError"])
+
+    def test_run_action_files_rejects_non_string_paths(self):
+        result = self._call("webrunner_run_action_files", {"files": [123]})
+        self.assertTrue(result["result"]["isError"])
+
+    def test_list_commands_returns_wr_surface(self):
+        result = self._call("webrunner_list_commands", {})
+        body = result["result"]["content"][0]["text"]
+        self.assertIn("WR_to_url", body)
+        self.assertIn("WR_quit", body)
+
+    def test_run_actions_captures_stdout_and_executes_safe_command(self):
+        # WR_sleep with 0 seconds is a side-effect-free executor call that
+        # returns a numeric value — perfect for checking the wiring without
+        # launching a browser.
+        result = self._call("webrunner_run_actions",
+                            {"actions": [["WR_sleep", {"seconds": 0}]]})
+        self.assertFalse(result["result"]["isError"])
+        body = result["result"]["content"][0]["text"]
+        self.assertIn('"stdout"', body)
+        self.assertIn('"record"', body)
+        self.assertIn("WR_sleep", body)
 
 
 if __name__ == "__main__":
