@@ -2,6 +2,7 @@ import unittest
 
 from je_web_runner.utils.ai_assist.llm_assist import (
     LLMAssistError,
+    explain_failure,
     generate_actions_from_prompt,
     has_llm_callable,
     llm_self_heal_locator,
@@ -87,6 +88,37 @@ class TestSelfHealLocator(unittest.TestCase):
         result = llm_self_heal_locator("submit", html_provider)
         self.assertTrue(captured["called"])
         self.assertEqual(result["value"], "go")
+
+
+class TestExplainFailure(unittest.TestCase):
+
+    def setUp(self):
+        set_llm_callable(None)
+
+    def tearDown(self):
+        set_llm_callable(None)
+
+    def test_parses_rca_payload(self):
+        set_llm_callable(lambda prompt: (
+            '{"likely_cause": "stale element",'
+            ' "evidence": ["DOM mutated mid-click"],'
+            ' "next_steps": ["add wait_for_selector"],'
+            ' "confidence": 0.7}'
+        ))
+        rca = explain_failure(
+            test_name="login_test",
+            error_repr="StaleElementReferenceException",
+            console=[{"type": "error", "text": "uncaught"}],
+            network=[{"url": "/api/x", "status": 200}],
+            steps=[["WR_element_click"]],
+        )
+        self.assertEqual(rca["likely_cause"], "stale element")
+        self.assertEqual(rca["confidence"], 0.7)
+
+    def test_missing_keys_raises(self):
+        set_llm_callable(lambda prompt: '{"likely_cause": "x"}')
+        with self.assertRaises(LLMAssistError):
+            explain_failure("t", "boom")
 
 
 if __name__ == "__main__":

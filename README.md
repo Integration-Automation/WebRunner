@@ -536,6 +536,98 @@ Companion APIs — `WR_run_for_users` (multi-user matrix), `WR_run_ab` (A/B mode
 - **HAR diff** — `WR_diff_har` / `WR_diff_har_files` show added / removed / status-changed requests between two runs.
 - **Arbitrary-script gate** — `executor.set_allow_arbitrary_script(False)` blocks `WR_execute_script` / `WR_execute_async_script` / `WR_pw_evaluate` / `WR_cdp` / `WR_pw_cdp` for untrusted action JSON.
 
+## Extended Capabilities
+
+Reliability & flake reduction:
+
+- **Adaptive retry** — `je_web_runner.utils.adaptive_retry.run_with_retry(fn, policy=...)` replays only failures the classifier marks transient / flaky / environment; real bugs short-circuit.
+- **Locator strength scorer** — `linter.locator_strength.score_locator(strategy, value)` ranks locators 0–100; `assert_strength` fails CI on fragile XPath / TAG_NAME picks.
+- **Smart wait** — `smart_wait.wait_for_fetch_idle` and `wait_for_spa_route_stable` patch `window.fetch` and `history.pushState` to detect SPA quiescence — no more `time.sleep`.
+- **Service throttler** — `throttler.throttle("payments-api")` is a file-semaphore that caps cross-shard concurrency on a shared service.
+
+Debugging & observability:
+
+- **Timeline merger** — `observability.timeline.build(spans=, console=, responses=)` merges OTel spans, console messages, and network responses into one chronologically-sorted event list.
+- **Failure bundle** — `failure_bundle.FailureBundle("login_test", error_repr).add_screenshot(...).write("bundle.zip")` packages screenshots / DOM / network / console / trace into a single replayable zip with manifest.
+- **Memory leak detector** — `memory_leak.detect_growth(driver, action, iterations=10, growth_bytes_per_iter_budget=...)` polls `performance.memory.usedJSHeapSize` and fails on linear-fit growth above budget.
+- **Playwright trace recorder** — `trace_recorder.TraceRecorder(output_dir="trace-out").start(context, name); …; .stop(context)` always writes a `.zip` viewable with `playwright show-trace`.
+- **CSP reporter** — `csp_reporter.CspViolationCollector` injects a `securitypolicyviolation` listener and exposes `assert_none()` / `assert_no_directive("script-src")`.
+
+Test data & determinism:
+
+- **Record/replay fixture** — `snapshot.fixture_record.FixtureRecorder("fx.json", mode="auto")` saves the producer's output the first time, replays it forever after.
+- **DB fixture loader** — `database.fixtures.load_fixture_file("seed.json")` + `load_into_connection(conn, fixture)` seeds testcontainers Postgres / MySQL / SQLite from a `{table: [rows]}` JSON.
+
+API & contract testing:
+
+- **API mocking** — `api_mock.MockRouter().add("GET", "/api/users/*", body={"id": 1}).attach_to_page(page)` intercepts Playwright routes; URL globs and `re:` regex patterns supported.
+- **Contract testing** — `contract_testing.validate_response(body, schema)` runs a JSON-Schema subset; `validate_against_openapi(body, doc, "/users/{id}", "GET", 200)` resolves `$ref` and checks the right schema for the response status.
+- **GraphQL helper** — `graphql.GraphQLClient("https://api/graphql").execute("{ me { id } }")`; `extract_field(payload, "me.id")` plucks values via dotted path.
+- **In-process mock services** — `mock_services.MockOAuthServer().start()` issues fake bearer tokens, `MockSmtpServer` captures sent mails, `MockS3Storage` is a memory KV.
+
+Security probes:
+
+- **Header tampering** — `header_tampering.HeaderTampering().set_header("X-Forwarded-For", "192.0.2.1").attach_to_page(page)` mutates outbound requests so testers can probe missing-CSRF / wrong-origin / stripped-auth handling.
+- **License scanner** — `license_scanner.scan_text(bundle_text)` finds SPDX identifiers and known license phrases (AGPL/GPL/MIT/Apache-2.0/MPL/ISC/BSD) so SBOM gates can `assert_allowed_licenses`.
+
+Browser & locale:
+
+- **Device emulation presets** — `device_emulation.playwright_kwargs("iPhone 15 Pro")` and `apply_to_chrome_options(opts, "Desktop 1080p")`; viewport + DPR + UA + touch in one call.
+- **Geo / TZ / locale** — `geo_locale.GeoOverride(latitude=51.5, longitude=-0.13, timezone="Europe/London", locale="en-GB")` produces both CDP commands and Playwright `new_context` kwargs.
+- **Multi-tab choreographer** — `multi_tab.TabChoreographer().open_new(driver, "side", url=...)` registers tabs by alias so action JSON can `WR_switch_tab("side")`.
+- **WebAuthn virtual authenticator** — `webauthn.enable_virtual_authenticator(driver)` uses CDP `WebAuthn.*` to simulate passkey / FIDO2 sign-in flows.
+- **Cookie consent dismisser** — `cookie_consent.ConsentDismisser().dismiss(driver)` clicks the first matching OneTrust / TrustArc / Cookiebot / Didomi / Quantcast button; selector list extensible via `register_selector`.
+
+Reporting & CI:
+
+- **PR comment poster** — `pr_comment.post_or_update_comment("owner/repo", 42, body, token=...)` is idempotent via a hidden HTML marker so retried CI runs don't pile up.
+- **Trend dashboard** — `trend_dashboard.compute_trend("ledger.json")` buckets the ledger by day; `render_html(trend)` produces a self-contained SVG line chart + table.
+
+Orchestration & developer experience:
+
+- **Action template library** — `action_templates.render_template("login_basic", {...})` substitutes `{{placeholders}}` in built-in flows (login, accept-cookies, switch-locale, close-modal).
+- **Diff-aware shard** — `sharding.diff_shard.select_for_changed(candidates, base_ref="main")` filters candidates to those touched by the current branch's `git diff`.
+- **Watch mode** — `watch_mode.watch_loop(directory, on_change=callback, interval=0.5)` re-runs a callback whenever JSON files change.
+- **Kubernetes runner** — `k8s_runner.render_job_manifests(ShardJobConfig(name_prefix="run", image=..., total_shards=8, actions_dir="/actions"))` produces one `batch/v1 Job` per shard.
+- **Per-route perf budgets** — `perf_metrics.budgets.evaluate_metrics("/checkout", {"lcp_ms": 2300}, budgets)` plus `assert_within_budget(result)` enforce route-specific thresholds.
+
+AI assistance:
+
+- **Failure RCA** — `ai_assist.llm_assist.explain_failure(test_name, error_repr, console=, network=, steps=)` asks the registered LLM for `{likely_cause, evidence, next_steps, confidence}`.
+
+## MCP Server
+
+WebRunner ships a [Model Context Protocol](https://modelcontextprotocol.io/) server so any MCP-aware client (Claude, IDE plugins, etc.) can drive WebRunner over JSON-RPC stdio.
+
+```bash
+python -m je_web_runner.mcp_server
+```
+
+The default tool list exposes:
+
+- `webrunner_lint_action`, `webrunner_locator_strength`
+- `webrunner_render_template`, `webrunner_compute_trend`
+- `webrunner_validate_response`, `webrunner_summary_markdown`
+- `webrunner_diff_shard`, `webrunner_render_k8s`, `webrunner_partition_shard`
+
+```python
+from je_web_runner.mcp_server import McpServer, Tool, build_default_tools, serve_stdio
+
+# Or build a custom server
+server = McpServer()
+for tool in build_default_tools():
+    server.register(tool)
+server.register(Tool(
+    name="my_custom_tool",
+    description="…",
+    input_schema={"type": "object", "properties": {"x": {"type": "string"}}},
+    handler=lambda args: f"hello {args['x']}",
+))
+serve_stdio(server=server)
+```
+
+The server speaks MCP `2024-11-05`: `initialize`, `tools/list`, `tools/call`, `resources/list`, `ping`, `shutdown`.
+
 ## Browser Internals
 
 ```python
