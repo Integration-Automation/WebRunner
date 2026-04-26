@@ -7,14 +7,14 @@
       "--mute-audio=false"
     ]
   }],
-  ["WR_set_script_timeout", {"time_to_wait": 120}],
+  ["WR_set_script_timeout", {"time_to_wait": 60}],
   ["WR_to_url", {"url": "https://www.youtube.com/watch?v=hT_nvWreIhg"}],
-  ["WR_execute_async_script", {"script": "const cb = arguments[arguments.length - 1]; setTimeout(cb, 4000);"}],
+  ["WR_sleep", {"seconds": 4}],
   ["WR_execute_script", {"script": "const SELECTORS=['button[aria-label=\"Reject all\"]','button[aria-label=\"Accept all\"]','tp-yt-paper-button[aria-label*=\"Reject\"]','tp-yt-paper-button[aria-label*=\"Accept\"]'];for(const s of SELECTORS){const el=document.querySelector(s);if(el && el.offsetParent!==null){el.click();return s;}}return null;"}],
-  ["WR_execute_async_script", {"script": "const cb = arguments[arguments.length - 1]; setTimeout(cb, 1500);"}],
+  ["WR_sleep", {"seconds": 1.5}],
   ["WR_execute_script", {"script": "const v=document.querySelector('video');if(!v)return 'no-video';v.muted=false;const p=v.play();if(p && p.catch) p.catch(()=>{});return v.paused?'paused':'playing';"}],
   ["WR_execute_async_script", {"script": "const cb = arguments[arguments.length - 1]; const SKIP=['.ytp-skip-ad-button','.ytp-ad-skip-button','.ytp-ad-skip-button-modern','button[aria-label*=\"Skip Ad\" i]','button[aria-label*=\"Skip Ads\" i]']; const start=Date.now(); const tick=()=>{const player=document.querySelector('.html5-video-player'); const adShowing=player && player.classList.contains('ad-showing'); if(!adShowing) return cb('video'); for(const s of SKIP){const el=document.querySelector(s); if(el && el.offsetParent!==null){el.click(); return cb('skipped:'+s);}} if(Date.now()-start > 30000) return cb('timeout'); setTimeout(tick, 1000);}; tick();"}],
   ["WR_execute_script", {"script": "const v=document.querySelector('video');if(!v)return 'no-video';v.muted=false;const p=v.play();if(p && p.catch) p.catch(()=>{});return v.paused?'paused':'playing';"}],
-  ["WR_execute_async_script", {"script": "const cb = arguments[arguments.length - 1]; setTimeout(cb, 90000);"}],
+  ["WR_sleep", {"seconds": 90}],
   ["WR_quit_all"]
 ]

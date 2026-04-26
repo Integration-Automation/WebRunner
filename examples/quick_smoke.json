@@ -1,0 +1,7 @@
+[
+  ["WR_set_driver", {"webdriver_name": "chrome", "options": ["--headless=new", "--disable-gpu"]}],
+  ["WR_to_url", {"url": "https://example.com/"}],
+  ["WR_sleep", {"seconds": 1}],
+  ["WR_execute_script", {"script": "return document.title;"}],
+  ["WR_quit_all"]
+]
