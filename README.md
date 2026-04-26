@@ -638,6 +638,31 @@ python -m je_web_runner.action_lsp
 
 `textDocument/completion` returns every registered `WR_*` command; `textDocument/publishDiagnostics` runs the action linter on `didOpen` / `didChange`. Pair with VS Code's *Configure JSON Language Servers* or the JetBrains LSP plugin.
 
+## Even More Capabilities (latest wave)
+
+Onboarding / migration:
+
+- **Workspace bootstrapper** — `python -m je_web_runner --init` (or `bootstrapper.init_workspace("my-tests")`) drops `actions/sample.json`, `.webrunner/ledger.json`, pinned-driver template, JSON schema, pre-commit hook, and a starter GitHub Actions workflow.
+- **Driver pinner** — `driver_pin.install_for_browser(".webrunner/drivers.json", "firefox")` reads a JSON pin file (`name` / `version` / `url` / `archive_format` / `binary_inside`), downloads + extracts once, then serves from cache. Bypasses the GitHub API rate limit that webdriver-manager hits in CI.
+- **Selenium → Playwright translator** — `sel_to_pw.translate_python_source(text)` rewrites `driver.find_element(By.ID, "x")` → `page.locator("#x")` and similar; `translate_action_list(actions)` rewrites `WR_*` action JSON to its `WR_pw_*` equivalent (drops `WR_implicitly_wait` since Playwright auto-waits).
+
+Test authoring:
+
+- **Form auto-fill** — `form_autofill.plan_fill_actions(fields, fixture, submit_locator=...)` infers each field from `data-testid` / `id` / `name` / `placeholder` / `label` / `type` and emits a ready-to-run `WR_save_test_object` + `WR_element_input` sequence.
+
+Quality:
+
+- **A11y diff** — `accessibility.a11y_diff.diff_violations(baseline, current)` buckets axe-core findings into `added` / `resolved` / `persisting` keyed on `(rule_id, target)`; `assert_no_regressions(diff, allow_rules=...)` is the CI gate.
+
+Performance / orchestration:
+
+- **Fan-out** — `fanout.run_fan_out([("preflight-a", task_a), task_b, ...], max_workers=4)` runs read-only callables concurrently inside one test, returning per-task duration + outcome with `raise_for_failures()` for the strict path.
+- **Event bus** — `event_bus.EventBus(".webrunner/events.log").publish("setup-done", {"shard": 1})`; subscribers `poll()` from a remembered offset or `wait_for(topic, predicate=..., timeout=30)`. File-backed ndjson — no Redis dependency.
+
+Browser internals:
+
+- **Extension test harness** — `extension_harness.parse_manifest("./ext")` reads MV2 / MV3 manifests; `apply_to_chrome_options(options, [ext_dir])` adds `--load-extension` flags; `playwright_persistent_context_args(...)` returns the kwargs needed for `launch_persistent_context`.
+
 ## Even More Capabilities
 
 Reliability & dev-loop:

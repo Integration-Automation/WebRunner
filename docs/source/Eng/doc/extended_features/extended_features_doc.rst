@@ -449,3 +449,49 @@ command names into a reverse index. Combine with
 
    index = build_index("./actions")
    to_run = affected_action_files(index, locators=["primary_cta"])
+
+Workspace bootstrapper / driver pinner
+======================================
+
+* ``bootstrapper.init_workspace("./my-tests")`` — drops sample actions,
+  ledger, schema, pre-commit hook, GitHub Actions workflow.
+* ``driver_pin.install_for_browser(pin_file, browser)`` — read a JSON
+  pin file (``name`` / ``version`` / ``url`` / ``archive_format`` /
+  ``binary_inside``), fetch + cache once, return the binary path. No
+  GitHub API rate-limit dependency.
+
+Selenium → Playwright translator
+================================
+
+* ``sel_to_pw.translate_python_source(text)`` — rewrites common
+  ``driver.find_element(By.X, ...).send_keys(...)``-style lines into
+  ``page.locator(...).fill(...)`` equivalents; returns
+  ``Translation(line, original, translated, note)`` per hit.
+* ``sel_to_pw.translate_action_list(actions)`` — rewrites ``WR_*`` action
+  JSON to ``WR_pw_*`` (drops ``WR_implicitly_wait`` since Playwright
+  auto-waits).
+
+Form auto-fill / A11y diff
+==========================
+
+* ``form_autofill.plan_fill_actions(fields, fixture, submit_locator=...)``
+  — infers each field's purpose from ``data-testid`` / ``id`` / ``name``
+  / ``placeholder`` / ``label`` / ``type`` and emits a runnable action
+  sequence.
+* ``accessibility.a11y_diff.diff_violations(baseline, current)`` —
+  buckets axe-core findings into ``added`` / ``resolved`` /
+  ``persisting`` keyed on ``(rule_id, target)``;
+  ``assert_no_regressions(diff)`` is the CI gate.
+
+Fan-out / event bus / extension harness
+=======================================
+
+* ``fanout.run_fan_out([(name, callable)…], max_workers=4)`` — parallel
+  task runner returning per-task duration + outcome, ``fail_fast``
+  optional.
+* ``event_bus.EventBus(log_path).publish(topic, payload)`` — file-backed
+  ndjson pub/sub; ``poll(offset, topics=...)`` and
+  ``wait_for(topic, predicate, timeout=30)`` for cross-shard coordination.
+* ``extension_harness.parse_manifest("./ext")`` — MV2 / MV3 manifest
+  reader; ``apply_to_chrome_options`` and
+  ``playwright_persistent_context_args`` plug into either backend.

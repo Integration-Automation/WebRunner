@@ -312,3 +312,37 @@ Test impact analysis
 locator / URL / template / command 反查表；
 ``affected_action_files(index, locators=["primary_cta"])`` 回傳所有
 參考此 locator 的測試檔，搭配 ``sharding.diff_shard`` 做精準測試選擇。
+
+Bootstrapper / driver pinner
+============================
+
+* ``bootstrapper.init_workspace`` — 一鍵 scaffold 起手式
+  （sample actions / ledger / pre-commit / GitHub Actions）
+* ``driver_pin.install_for_browser`` — 讀 ``.webrunner/drivers.json``
+  下載並快取 driver，避開 webdriver-manager 的 GitHub API 限流
+
+Selenium → Playwright 翻譯
+==========================
+
+* ``sel_to_pw.translate_python_source`` — 常見 Selenium 寫法靜態翻譯成
+  Playwright 等價（``find_element(By.ID, "x")`` → ``page.locator("#x")``）
+* ``sel_to_pw.translate_action_list`` — ``WR_*`` action JSON 轉
+  ``WR_pw_*``、自動丟掉 ``WR_implicitly_wait``
+
+Form auto-fill / A11y diff
+==========================
+
+* ``form_autofill.plan_fill_actions(fields, fixture)`` — 自動推斷欄位
+  用途並產出 ``WR_save_test_object`` + ``WR_element_input`` 序列
+* ``accessibility.a11y_diff.diff_violations`` — 比較兩次 axe-core 結果
+  分出 added / resolved / persisting；``assert_no_regressions`` 為
+  CI 把關
+
+Fan-out / event bus / extension harness
+=======================================
+
+* ``fanout.run_fan_out`` — 同 test 內平行跑多個 callable，每個 task
+  回報耗時與結果
+* ``event_bus.EventBus`` — 檔案系統 ndjson pub/sub，跨 shard 協調用
+* ``extension_harness`` — 解析 MV2/MV3 manifest，配置 Selenium 或
+  Playwright 載入未打包擴充
