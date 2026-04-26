@@ -265,6 +265,76 @@ je_web_runner/
     └── xml/                     # XML utilities
 ```
 
+## Cookbook
+
+The `examples/` directory ships runnable recipes that exercise the new
+helpers against real Chrome / network. Each is invoked from the repo root:
+
+| Example | Demonstrates |
+|---|---|
+| `counting_stars.{py,json}` | `WR_sleep`, `WR_set_driver` with Chrome flags, autoplay-policy override, JS-driven `video.play()`, skip-ad polling. |
+| `google_search.py` | Consent dismissal, search-box typing, ENTER submit, result heading scrape. |
+| `form_submit.py` | `form_autofill.plan_fill_actions` + `state_diff.capture_state` round trip against `httpbin/forms/post`. |
+| `smart_wait_demo.py` | `wait_for_fetch_idle` + `wait_for_spa_route_stable` + `memory_leak.detect_growth` against a real page. |
+| `fanout_demo.py` | `fanout.run_fan_out` parallel HTTP preflights. |
+| `pii_redact_demo.py` | `pii_scanner.scan_text` + `redact_text` + `assert_no_pii` (pure logic). |
+| `quick_smoke.json` | Minimal `WR_set_driver` → `WR_sleep` → `WR_execute_script` → `WR_quit_all` smoke via the executor CLI. |
+
+Run a Python example directly:
+
+```bash
+python examples/google_search.py
+```
+
+Run an action JSON example through the executor:
+
+```bash
+python -m je_web_runner -e examples/quick_smoke.json
+```
+
+## Test Tiers
+
+```
+test/
+├── unit_test/         # 1200 mock-based unit tests (~12s)
+├── integration_test/  #   30 wired-modules tests with real I/O (~6s)
+└── e2e_test/          #    6 real-browser tests; skips without Selenium Grid
+```
+
+- **Unit** (`test/unit_test/test_*.py`) — runs everywhere; pulled in by both
+  `test_dev.yml` and `test_stable.yml`.
+- **Integration** (`test/integration_test/`) — wires 2+ modules together
+  with real SQLite, in-process HTTP servers, and real subprocesses for
+  the MCP / LSP. Same workflows as unit, second step.
+- **E2E** (`test/e2e_test/`) — talks to a Selenium Grid via
+  `WEBRUNNER_E2E_HUB`. Locally: `cd docker && docker compose up -d`.
+  CI: `.github/workflows/e2e_browser.yml` boots `selenium/hub:4.20.0`
+  + `selenium/node-chrome` daily / on demand.
+
+## Thematic API Façade
+
+The 80+ utility helpers live under `je_web_runner.utils.<area>`; for
+discoverability they are also re-exported under `je_web_runner.api`:
+
+```python
+from je_web_runner.api import (
+    authoring,      # action_formatter, md_authoring, templates, sel_to_pw, bootstrap
+    debugging,      # cross_browser, pr_comment, extension_harness
+    frontend,       # device emulation, geo/locale, multi-tab, shadow pierce, …
+    infra,          # driver pin, k8s runner, pipeline, lock, watch_mode, …
+    mobile,         # Appium gestures
+    networking,     # api_mock, contract_testing, GraphQL, mock services, har_replay
+    observability,  # timeline, failure bundle, trace recorder, OTLP, BiDi, cdp_tap
+    quality,        # a11y_diff, a11y_trend, perf budgets/drift, trend, failure cluster
+    reliability,    # adaptive retry, browser pool, smart wait, throttler, supervisor
+    security,       # PII, license, CSP, cookie consent, header tampering
+    test_data,      # DB fixtures, fixture record/replay, form auto-fill
+)
+```
+
+The original Selenium-flavoured top-level surface (`webdriver_wrapper_instance`,
+`execute_action`, `TestObject`, …) is unchanged.
+
 ## Quick Start
 
 ### Direct API
@@ -345,6 +415,20 @@ The executor maps a string command name to a Python callable. Every backend, int
     ["WR_pw_evaluate", ["() => document.title"], {"arg": None}],
 ]
 ```
+
+### Pacing actions
+
+`WR_sleep` blocks the executor thread for a given number of seconds — useful when the page needs settle time, when a JS animation needs to finish, or when an example wants to hold the browser open for the user to watch:
+
+```python
+[
+    ["WR_to_url", {"url": "https://example.com"}],
+    ["WR_sleep", {"seconds": 2.5}],
+    ["WR_get_screenshot_as_png"],
+]
+```
+
+Negative or non-numeric `seconds` raise `ValueError`. For pacing inside JavaScript (e.g. waiting on a custom event from the page) use `WR_execute_async_script` with a `setTimeout`-driven callback.
 
 ### Top-level shapes
 
