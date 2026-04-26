@@ -568,3 +568,28 @@ CI reproducibility & long-term observability
 * ``perf_drift.detect_drift({"lcp_ms": samples}, baseline_window=20,
   recent_window=5, tolerance=0.1)`` — sliding-window P95 drift
   detection; ``assert_no_regression(report)`` is the strict path.
+
+CLI & orchestration polish
+==========================
+
+* ``test_filter.name_filter.filter_paths(paths, include=[...],
+  exclude=[...])`` — regex-based path selector orthogonal to tags.
+* ``process_supervisor.ProcessSupervisor().kill_orphans()`` — walk the
+  OS process table for ``chromedriver`` / ``geckodriver`` /
+  ``msedgedriver`` and kill stragglers; ``with_watchdog(fn, 300)``
+  enforces a wall-clock deadline.
+* ``pipeline.load_pipeline({"stages": [...]})`` + ``run_pipeline`` —
+  multi-stage gates with optional ``continue_on_failure``.
+
+Storybook visual snapshots / Appium gestures / coverage map
+===========================================================
+
+* ``storybook.visual_snapshots.capture_story_snapshots(stories,
+  base_url, take_screenshot, navigate, baseline_dir=...)`` — per-story
+  PNG capture with byte-level baseline comparison.
+* ``appium_integration.gestures`` — ``swipe`` / ``scroll`` /
+  ``long_press`` / ``pinch`` / ``double_tap`` prefer Appium's
+  ``mobile:`` named extensions, fall back to W3C Actions sequences.
+* ``coverage_map.build_coverage_map("./actions")`` — reverse index of
+  ``WR_to_url`` paths (numeric / UUID segments collapsed to ``:id``);
+  ``coverage.uncovered(declared_routes)`` flags missing routes.

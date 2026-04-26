@@ -638,6 +638,20 @@ python -m je_web_runner.action_lsp
 
 `textDocument/completion` returns every registered `WR_*` command; `textDocument/publishDiagnostics` runs the action linter on `didOpen` / `didChange`. Pair with VS Code's *Configure JSON Language Servers* or the JetBrains LSP plugin.
 
+## Even More Capabilities (polish wave)
+
+CLI & orchestration polish:
+
+- **Regex test selector** — `test_filter.name_filter.filter_paths(paths, include=["smoke.*"], exclude=["slow"])` keeps only matching candidate paths; orthogonal to the existing tag filter.
+- **Process supervisor** — `process_supervisor.ProcessSupervisor().kill_orphans()` walks the OS process table for `chromedriver` / `geckodriver` / `msedgedriver` and kills stragglers (skips `os.getpid()` automatically). `with_watchdog(callable, timeout_seconds=300)` wraps a long callable with a hard wall-clock raise.
+- **Pipeline DSL** — `pipeline.load_pipeline({"stages": [...]})` + `run_pipeline(pipeline, runner)` execute multi-stage gates: `continue_on_failure=True` makes a stage non-blocking (linters / scanners), otherwise downstream stages skip.
+
+Frontend / mobile / coverage:
+
+- **Storybook visual snapshots** — `storybook.visual_snapshots.capture_story_snapshots(stories, base_url, take_screenshot, navigate, baseline_dir=...)` walks every story, persists deterministic filenames (`components-button--primary.png`), and diffs against an optional baseline. `assert_no_visual_regressions(report)` is the gate.
+- **Appium gestures** — `appium_integration.gestures` ships `swipe`, `scroll`, `long_press`, `pinch`, `double_tap` that prefer Appium's `mobile:` named-gesture extension and fall back to W3C Actions on older drivers.
+- **Coverage map** — `coverage_map.build_coverage_map("./actions")` walks every action JSON file, normalises `WR_to_url` paths (`/users/42` → `/users/:id`) and produces a route → files reverse index. `coverage.uncovered(declared_routes)` answers "which routes have no test?".
+
 ## Even More Capabilities (final wave)
 
 Debugging & reproducibility:

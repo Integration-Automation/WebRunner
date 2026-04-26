@@ -399,3 +399,25 @@ Lock file / a11y trend / perf drift
   時間序列，自帶 SVG 圖表
 * ``perf_drift.detect_drift`` — 滑動視窗 P95 比對，超 tolerance 即視為
   regression
+
+CLI / 編排 polish
+=================
+
+* ``test_filter.name_filter.filter_paths`` — regex include/exclude 路徑
+  篩選，與既有 tag filter 並行
+* ``process_supervisor`` — 殺掉 orphan webdriver、給長 callable 上
+  watchdog
+* ``pipeline.load_pipeline`` + ``run_pipeline`` — 多階段 gate，
+  ``continue_on_failure`` 可作為 lint / scan 收尾
+
+Storybook 視覺快照 / Appium gestures / Coverage map
+====================================================
+
+* ``storybook.visual_snapshots.capture_story_snapshots`` — 走訪 stories
+  截圖、可選擇與 baseline byte-level 比對
+* ``appium_integration.gestures`` — ``swipe`` / ``scroll`` /
+  ``long_press`` / ``pinch`` / ``double_tap``，優先用 ``mobile:`` 擴充
+  否則退回 W3C Actions
+* ``coverage_map.build_coverage_map`` — 從 action JSON 抽出 ``WR_to_url``
+  的 path 建立 route → files 反查表，``coverage.uncovered`` 找出未覆蓋
+  的 route
