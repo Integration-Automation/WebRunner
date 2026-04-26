@@ -65,10 +65,8 @@ class TestActionFile(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "actions.json")
             # Fake key value used to verify the scanner's pattern hits.
-            Path(path).write_text(  # NOSONAR  # nosec B105
-                json.dumps([["x", {"api_key": "AKIAABCDEFGHIJKLMNOP"}]]),
-                encoding="utf-8",
-            )
+            payload = json.dumps([["x", {"api_key": "AKIAABCDEFGHIJKLMNOP"}]])  # NOSONAR  # nosec B105
+            Path(path).write_text(payload, encoding="utf-8")
             findings = scan_action_file(path)
             self.assertGreater(len(findings), 0)
 

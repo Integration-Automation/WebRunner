@@ -25,7 +25,7 @@ class TestWebElementSelectMethods(unittest.TestCase):
             # keep static analysers (SonarCloud S5655) from over-checking
             # the test fixture.
             string_index: Any = "3"
-            wrapper.select_by_index(string_index)
+            wrapper.select_by_index(string_index)  # NOSONAR — fixture exercises the str→int cast
             select_cls.return_value.select_by_index.assert_called_once_with(3)
 
     def test_select_by_visible_text_invokes_select_helper(self):

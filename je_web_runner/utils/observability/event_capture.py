@@ -44,10 +44,12 @@ class EventCapture:
         for event, handler in self._handlers.items():
             try:
                 self._page.remove_listener(event, handler)
-            except Exception:  # nosec B110  # pylint: disable=broad-except
-                # Page already closed / listener already removed — there's
-                # nothing to recover here, the cleanup is best-effort.
-                continue
+            except Exception as detach_error:  # pylint: disable=broad-except
+                # Page already closed / listener already removed — log and
+                # move on, the cleanup is best-effort.
+                web_runner_logger.debug(
+                    f"event_capture detach: ignoring {event} cleanup failure: {detach_error!r}"
+                )
         self._handlers = {}
         self._page = None
 

@@ -50,7 +50,7 @@ class TestSnapshot(unittest.TestCase):
                 # ``Any`` so SonarCloud S5655 doesn't object to the
                 # intentional type mismatch in the fixture.
                 bad_value: Any = 42
-                match_snapshot("x", bad_value, tmpdir)
+                match_snapshot("x", bad_value, tmpdir)  # NOSONAR — asserts non-str rejection
 
     def test_unsafe_chars_in_name_sanitised(self):
         with tempfile.TemporaryDirectory() as tmpdir:
