@@ -1,4 +1,3 @@
-import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -101,7 +100,7 @@ class TestFormatFile(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "actions.json"
             path.write_text('[["WR_quit_all"]]', encoding="utf-8")
-            text, changed = format_file(path, write=False)
+            _, changed = format_file(path, write=False)
             self.assertTrue(changed)
             # Original file not rewritten
             self.assertEqual(path.read_text(encoding="utf-8"), '[["WR_quit_all"]]')

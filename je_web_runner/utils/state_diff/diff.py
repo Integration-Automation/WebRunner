@@ -8,7 +8,7 @@ so the helpers below detect the backend at runtime.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

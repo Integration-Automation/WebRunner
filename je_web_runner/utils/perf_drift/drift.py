@@ -61,6 +61,15 @@ def percentile(values: Sequence[float], pct: float) -> float:
     return float(sorted_values[low] + (sorted_values[high] - sorted_values[low]) * weight)
 
 
+def _direction_for(drifted: bool, would_improve: bool) -> str:
+    """Bucket a delta into ``regressed`` / ``improved`` / ``stable``."""
+    if drifted:
+        return "regressed"
+    if would_improve:
+        return "improved"
+    return "stable"
+
+
 def compute_drift(
     samples: Sequence[float],
     *,
@@ -94,14 +103,10 @@ def compute_drift(
     relative = delta / base_p if base_p else 0.0
     if higher_is_better:
         drifted = relative <= -tolerance
-        direction = "regressed" if drifted else (
-            "improved" if relative >= tolerance else "stable"
-        )
+        direction = _direction_for(drifted, relative >= tolerance)
     else:
         drifted = relative >= tolerance
-        direction = "regressed" if drifted else (
-            "improved" if relative <= -tolerance else "stable"
-        )
+        direction = _direction_for(drifted, relative <= -tolerance)
     return _MetricResult(
         metric=metric,
         baseline_p95=base_p,

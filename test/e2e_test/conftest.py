@@ -79,5 +79,5 @@ def chrome_driver(selenium_hub_url: str, hub_reachable: bool) -> Iterator:
     finally:
         try:
             driver.quit()
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort cleanup
             pass

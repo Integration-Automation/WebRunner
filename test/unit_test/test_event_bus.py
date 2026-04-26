@@ -82,7 +82,7 @@ class TestEventBus(unittest.TestCase):
 
             threading.Thread(target=publisher, daemon=True).start()
             envelope = bus.wait_for("ready", timeout=2.0, poll_interval=0.02)
-            self.assertEqual(envelope.payload["ok"], True)
+            self.assertTrue(envelope.payload["ok"])
 
     def test_wait_for_timeout_raises(self):
         with tempfile.TemporaryDirectory() as tmpdir:

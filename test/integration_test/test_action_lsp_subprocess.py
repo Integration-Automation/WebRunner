@@ -58,7 +58,7 @@ class TestActionLspSubprocess(unittest.TestCase):
     def test_initialize_didopen_publishes_diagnostics(self):
         proc = _spawn()
         try:
-            assert proc.stdin is not None
+            assert proc.stdin is not None  # nosec B101 — typing guard
             proc.stdin.write(_frame({"jsonrpc": "2.0", "id": 1,
                                      "method": "initialize", "params": {}}))
             proc.stdin.write(_frame({"jsonrpc": "2.0",
@@ -93,7 +93,7 @@ class TestActionLspSubprocess(unittest.TestCase):
     def test_completion_returns_command_names(self):
         proc = _spawn()
         try:
-            assert proc.stdin is not None
+            assert proc.stdin is not None  # nosec B101 — typing guard
             proc.stdin.write(_frame({"jsonrpc": "2.0", "id": 1,
                                      "method": "initialize", "params": {}}))
             proc.stdin.write(_frame({"jsonrpc": "2.0", "id": 2,

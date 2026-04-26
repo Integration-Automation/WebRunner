@@ -113,7 +113,10 @@ class ActionLspServer:
         self.documents.pop(uri, None)
         return None
 
-    def _completion(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _completion(self, _params: Dict[str, Any]) -> Dict[str, Any]:
+        # ``_params`` is part of the LSP request shape but the suggestion
+        # list is identical for every cursor position, so the textDocument
+        # / position payload is intentionally ignored.
         items = [
             {
                 "label": name,

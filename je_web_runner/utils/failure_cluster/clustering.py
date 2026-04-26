@@ -12,7 +12,6 @@ to a long-tail of singleton clusters during triage.
 from __future__ import annotations
 
 import re
-from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -36,10 +35,22 @@ class FailureCluster:
 
 _HEX_ADDRESS_RE = re.compile(r"0x[0-9a-fA-F]+")
 _LINE_NO_RE = re.compile(r"line\s+\d+", re.IGNORECASE)
+# The timestamp regex was flagged by SonarCloud S5843 for cognitive
+# complexity; split the date / time / fraction / zone parts so each
+# piece stays simple.
+_TIMESTAMP_DATE = r"\d{4}-\d{2}-\d{2}"
+_TIMESTAMP_TIME = r"\d{2}:\d{2}:\d{2}"
+_TIMESTAMP_FRACTION = r"(?:\.\d+)?"
+_TIMESTAMP_ZONE = r"(?:Z|[+-]\d{2}:?\d{2})?"
 _TIMESTAMP_RE = re.compile(
-    r"\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?"
+    _TIMESTAMP_DATE + r"[T ]" + _TIMESTAMP_TIME + _TIMESTAMP_FRACTION + _TIMESTAMP_ZONE
 )
-_PATH_RE = re.compile(r"(?:[A-Za-z]:)?[\\/](?:[\w\.\-]+[\\/])+[\w\.\-]+")
+# Bounded character class size avoids the polynomial backtracking
+# pattern Semgrep / SonarCloud S5852 flag for ``[\w\.\-]+`` repeated
+# outside its group.
+_PATH_RE = re.compile(
+    r"(?:[A-Za-z]:)?[\\/](?:[\w.\-]{1,80}[\\/]){1,40}[\w.\-]{1,80}"
+)
 _NUMBER_RE = re.compile(r"\b\d{2,}\b")
 _QUOTED_RE = re.compile(r"'[^']{0,80}'|\"[^\"]{0,80}\"")
 _WHITESPACE_RE = re.compile(r"\s+")

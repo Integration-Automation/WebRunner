@@ -72,7 +72,7 @@ class TestFacadeSpotChecks(unittest.TestCase):
 
     def test_observability_failure_bundle_class(self):
         from je_web_runner.api import observability
-        self.assertTrue(isinstance(observability.FailureBundle, type))
+        self.assertIsInstance(observability.FailureBundle, type)
 
     def test_authoring_format_actions_callable(self):
         from je_web_runner.api import authoring

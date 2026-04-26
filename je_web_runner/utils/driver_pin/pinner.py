@@ -16,7 +16,7 @@ import urllib.request
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, List, Optional, Union
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -164,13 +164,24 @@ def _default_fetch(url: str) -> bytes:
 def _extract_archive(archive_format: str, payload: bytes, target_dir: Path) -> None:
     if archive_format == "zip":
         with zipfile.ZipFile(io.BytesIO(payload)) as zf:
-            zf.extractall(target_dir)
+            _safe_extract_zip(zf, target_dir)
         return
     if archive_format == "tar.gz":
         with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as tf:
             _safe_extract_tar(tf, target_dir)
         return
     raise DriverPinError(f"unsupported archive format {archive_format!r}")
+
+
+def _safe_extract_zip(archive: zipfile.ZipFile, target_dir: Path) -> None:
+    base = target_dir.resolve()
+    for member in archive.namelist():
+        candidate = (target_dir / member).resolve()
+        try:
+            candidate.relative_to(base)
+        except ValueError as error:
+            raise DriverPinError(f"unsafe zip member {member!r}") from error
+    archive.extractall(target_dir)  # nosec B202 — members validated above
 
 
 def _safe_extract_tar(archive: tarfile.TarFile, target_dir: Path) -> None:
@@ -181,7 +192,7 @@ def _safe_extract_tar(archive: tarfile.TarFile, target_dir: Path) -> None:
             candidate.relative_to(base)
         except ValueError as error:
             raise DriverPinError(f"unsafe tar member {member.name!r}") from error
-    archive.extractall(target_dir)
+    archive.extractall(target_dir)  # nosec B202 — members validated above
 
 
 def install_for_browser(

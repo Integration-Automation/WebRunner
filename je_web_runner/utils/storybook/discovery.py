@@ -43,38 +43,43 @@ def discover_stories(
     stories. ``skip_examples`` filters the ``Example/Introduction`` story
     that the default-init template ships with.
     """
-    document = _load(source)
-    if "entries" in document:
-        items = document["entries"]
-    elif "stories" in document:
-        items = document["stories"]
-    else:
+    items = _entries_map(_load(source))
+    stories: List[StorybookStory] = []
+    for story_id, payload in items.items():
+        story = _story_from_entry(story_id, payload, skip_examples)
+        if story is not None:
+            stories.append(story)
+    return stories
+
+
+def _entries_map(document: Dict[str, Any]) -> Dict[str, Any]:
+    items = document.get("entries") or document.get("stories")
+    if items is None:
         raise StorybookError("index missing 'entries' / 'stories' map")
     if not isinstance(items, dict):
         raise StorybookError("entries must be a mapping")
-    stories: List[StorybookStory] = []
-    for story_id, payload in items.items():
-        if not isinstance(payload, dict):
-            raise StorybookError(f"entry {story_id!r} must be an object")
-        kind = str(payload.get("type") or payload.get("kind") or "story")
-        if kind not in {"story", "docs"}:
-            continue
-        if kind == "docs":
-            continue  # docs entries don't render the component itself
-        title = str(payload.get("title") or "")
-        name = str(payload.get("name") or "")
-        if skip_examples and title.startswith("Example/"):
-            continue
-        stories.append(StorybookStory(
-            id=str(payload.get("id") or story_id),
-            title=title,
-            name=name,
-            kind="story",
-            parameters=payload.get("parameters") if isinstance(
-                payload.get("parameters"), dict
-            ) else None,
-        ))
-    return stories
+    return items
+
+
+def _story_from_entry(story_id: Any, payload: Any,
+                      skip_examples: bool) -> Optional[StorybookStory]:
+    if not isinstance(payload, dict):
+        raise StorybookError(f"entry {story_id!r} must be an object")
+    kind = str(payload.get("type") or payload.get("kind") or "story")
+    if kind != "story":
+        return None
+    title = str(payload.get("title") or "")
+    if skip_examples and title.startswith("Example/"):
+        return None
+    name = str(payload.get("name") or "")
+    parameters = payload.get("parameters")
+    return StorybookStory(
+        id=str(payload.get("id") or story_id),
+        title=title,
+        name=name,
+        kind="story",
+        parameters=parameters if isinstance(parameters, dict) else None,
+    )
 
 
 def _load(source: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:

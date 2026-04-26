@@ -178,18 +178,27 @@ def _make_handler(server: HarReplayServer) -> Callable:
         def log_message(self, format, *args):  # pylint: disable=redefined-builtin
             return
 
+        def _drain_body(self) -> None:
+            length = int(self.headers.get("Content-Length") or 0)
+            if length:
+                self.rfile.read(length)  # drain body; not used for matching
+
         def _serve(self) -> None:
             method = self.command
             request_path = self.path
             entry = server.find(method, request_path)
             if entry is None:
+                # Method / path are echoed only inside a JSON payload so the
+                # client can debug, with a fixed Content-Type that prevents
+                # the user-controlled fragments being interpreted as HTML.
                 payload = json.dumps({
                     "error": "no har match",
                     "method": method,
                     "path": request_path,
                 }).encode("utf-8")
                 self.send_response(server.not_found_status)
-                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Type", "application/json")  # NOSONAR S5131 — JSON envelope, not HTML
+                self.send_header("X-Content-Type-Options", "nosniff")
                 self.send_header("Content-Length", str(len(payload)))
                 self.end_headers()
                 self.wfile.write(payload)
@@ -206,26 +215,17 @@ def _make_handler(server: HarReplayServer) -> Callable:
         def do_GET(self):  # noqa: N802
             self._serve()
 
-        def do_POST(self):  # noqa: N802
-            length = int(self.headers.get("Content-Length") or 0)
-            if length:
-                self.rfile.read(length)  # drain body, ignore for matching
-            self._serve()
-
-        def do_PUT(self):  # noqa: N802
-            length = int(self.headers.get("Content-Length") or 0)
-            if length:
-                self.rfile.read(length)
-            self._serve()
-
         def do_DELETE(self):  # noqa: N802
             self._serve()
 
-        def do_PATCH(self):  # noqa: N802
-            length = int(self.headers.get("Content-Length") or 0)
-            if length:
-                self.rfile.read(length)
+        def do_POST(self):  # noqa: N802
+            self._drain_body()
             self._serve()
+
+        # do_PUT and do_PATCH share POST's body-drain semantics; alias to
+        # avoid SonarCloud S4144 duplicate-method-body findings.
+        do_PUT = do_POST  # noqa: N815
+        do_PATCH = do_POST  # noqa: N815
 
     return _ReplayHandler
 

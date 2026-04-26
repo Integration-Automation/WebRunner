@@ -5,7 +5,6 @@ a11y_trend.aggregate_history fed real axe-shaped runs.
 Both produce HTML; we render and confirm dates / pass-rate make it into
 the output.
 """
-import json
 import tempfile
 import unittest
 from pathlib import Path

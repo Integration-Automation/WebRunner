@@ -24,8 +24,8 @@ def test_state_diff_round_trip(chrome_driver):
     chrome_driver.execute_script("localStorage.setItem('e2e-key', 'value');")
     after = capture_state(chrome_driver)
     diff = diff_states(before, after)
-    assert "e2e-key" in diff.local_storage.added
-    assert diff.local_storage.added["e2e-key"] == "value"
+    assert "e2e-key" in diff.local_storage.added  # nosec B101 — pytest-style
+    assert diff.local_storage.added["e2e-key"] == "value"  # nosec B101
 
 
 def test_memory_leak_sample_returns_int(chrome_driver):
@@ -36,7 +36,7 @@ def test_memory_leak_sample_returns_int(chrome_driver):
         size = sample_used_heap(chrome_driver)
     except MemoryLeakError:
         pytest.skip("performance.memory not available in this Chrome build")
-    assert size > 0
+    assert size > 0  # nosec B101 — pytest-style
 
 
 def test_csp_collector_returns_empty_when_no_csp(chrome_driver):
@@ -46,4 +46,4 @@ def test_csp_collector_returns_empty_when_no_csp(chrome_driver):
     collector = CspViolationCollector()
     collector.install(chrome_driver)
     violations = collector.collect(chrome_driver)
-    assert violations == []
+    assert violations == []  # nosec B101 — pytest-style

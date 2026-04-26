@@ -15,7 +15,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -143,7 +143,10 @@ class CdpReplayer:
     records: List[CdpRecord]
     _cursor: int = field(default=0, init=False)
 
-    def execute_cdp_cmd(self, method: str, params: Optional[Dict[str, Any]] = None) -> Any:
+    def execute_cdp_cmd(self, method: str, _params: Optional[Dict[str, Any]] = None) -> Any:
+        # ``_params`` mirrors driver.execute_cdp_cmd's signature for
+        # duck-typing but the replay sequence is keyed only on ``method``,
+        # so the params payload is intentionally ignored here.
         if self._cursor >= len(self.records):
             raise CdpTapError("replay exhausted; no more recorded entries")
         record = self.records[self._cursor]

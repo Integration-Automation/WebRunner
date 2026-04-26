@@ -141,7 +141,7 @@ class TestInstallForBrowser(unittest.TestCase):
                 url="https://example.com/g.zip",
                 archive_format="zip",
                 binary_inside="geckodriver.exe",
-                platforms=[],  # empty = match-all
+                platforms=[],  # an empty list means match every platform
             )])
             cache_dir = Path(tmpdir) / "cache"
             result = install_for_browser(

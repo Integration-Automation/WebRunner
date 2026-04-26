@@ -29,7 +29,7 @@ class TestNormaliseError(unittest.TestCase):
         self.assertIn("<q>", result)
 
     def test_lowercases(self):
-        self.assertEqual(normalise_error("TIMEOUT").startswith("timeout"), True)
+        self.assertTrue(normalise_error("TIMEOUT").startswith("timeout"))
 
 
 class TestClusterFailures(unittest.TestCase):

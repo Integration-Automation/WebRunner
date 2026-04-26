@@ -80,7 +80,7 @@ class TestPlanFillActions(unittest.TestCase):
             {"type": "email", "id": "email", "label": "Email"},
             {"type": "password", "id": "pwd", "label": "Password"},
         ]
-        fixture = {"email": "a@b.com", "password": "wonder"}  # nosec B106 — test fixture
+        fixture = {"email": "a@b.com", "password": "wonder"}  # NOSONAR  # nosec B106 — fake fixture
         actions = plan_fill_actions(fields, fixture)
         commands = [a[0] for a in actions]
         # Three-step block per field: save_test_object, find, input

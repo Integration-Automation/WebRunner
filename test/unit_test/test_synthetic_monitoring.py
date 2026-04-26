@@ -21,7 +21,10 @@ class TestSyntheticMonitor(unittest.TestCase):
     def test_red_alert_on_failure_threshold(self):
         alerts = []
         monitor = SyntheticMonitor(alert_sink=alerts.append)
-        boom = lambda: (_ for _ in ()).throw(RuntimeError("nope"))
+
+        def boom() -> None:
+            raise RuntimeError("nope")
+
         monitor.register("svc", boom, failure_threshold=2)
         monitor.tick_once()
         self.assertEqual(alerts, [])  # first failure under threshold

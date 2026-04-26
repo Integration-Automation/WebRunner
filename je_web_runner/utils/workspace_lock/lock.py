@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Union
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
 
 class WorkspaceLockError(WebRunnerException):
@@ -74,7 +75,10 @@ def _scan_distributions() -> List[tuple]:
         try:
             name = dist.metadata.get("Name") or ""
             version = dist.version or ""
-        except Exception:  # pylint: disable=broad-except
+        except Exception as error:  # pylint: disable=broad-except  # nosec B112 — broken dist metadata; log and skip
+            web_runner_logger.debug(
+                f"workspace_lock skipping unreadable distribution: {error!r}"
+            )
             continue
         if not name or not version:
             continue

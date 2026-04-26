@@ -85,7 +85,7 @@ def main() -> int:
     finally:
         try:
             webdriver_wrapper_instance.quit()
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort cleanup
             pass
     return 0
 

@@ -180,7 +180,10 @@ def with_watchdog(
     def runner() -> None:
         try:
             container["result"] = callable_obj()
-        except BaseException as error:  # pylint: disable=broad-except
+        except Exception as error:  # pylint: disable=broad-except
+            # The watchdog deliberately swallows the worker's exception
+            # so we can re-raise it from the parent thread once join()
+            # returns; KeyboardInterrupt / SystemExit propagate.
             container["error"] = error
 
     thread = threading.Thread(target=runner, daemon=True)

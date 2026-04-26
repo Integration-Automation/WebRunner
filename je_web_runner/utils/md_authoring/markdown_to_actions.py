@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -30,7 +30,9 @@ class MdAuthoringError(WebRunnerException):
     """Raised on invalid input or empty Markdown."""
 
 
-_BULLET_RE = re.compile(r"^\s*[-*]\s*(.+?)\s*$")
+# Trim leading whitespace + bullet marker; the body is captured greedily and
+# trimmed in Python afterwards so this regex stays linear-time (S5852).
+_BULLET_RE = re.compile(r"^\s*[-*]\s*(.*)$")
 
 
 def _strategy_value_for(selector: str) -> Tuple[str, str]:
@@ -68,14 +70,17 @@ def _type_actions(text: str, selector: str) -> List[List[Any]]:
     ]
 
 
-_TYPE_RE = re.compile(r"^type\s+\"([^\"]*)\"\s+into\s+(.+)$", re.IGNORECASE)
+# Use ``\S.*`` greedy capture so SonarCloud S5852 doesn't see polynomial
+# backtracking; bullet bodies are bounded by the line length already trimmed
+# in :func:`parse_markdown`.
+_TYPE_RE = re.compile(r"^type\s+\"([^\"]*)\"\s+into\s+(\S.*)$", re.IGNORECASE)
 _OPEN_RE = re.compile(r"^(?:open|go to|navigate to)\s+(\S+)$", re.IGNORECASE)
-_CLICK_RE = re.compile(r"^click\s+(.+)$", re.IGNORECASE)
+_CLICK_RE = re.compile(r"^click\s+(\S.*)$", re.IGNORECASE)
 _WAIT_RE = re.compile(r"^wait\s+(\d+(?:\.\d+)?)\s*s(?:ec(?:onds)?)?$", re.IGNORECASE)
 _TITLE_RE = re.compile(r"^assert\s+title\s+\"([^\"]*)\"$", re.IGNORECASE)
 _PRESS_RE = re.compile(r"^press\s+(\S+)$", re.IGNORECASE)
 _SCREENSHOT_RE = re.compile(r"^screenshot$", re.IGNORECASE)
-_TEMPLATE_RE = re.compile(r"^run\s+template\s+([A-Za-z_][\w-]*)$", re.IGNORECASE)
+_TEMPLATE_RE = re.compile(r"^run\s+template\s+([A-Za-z_]\w*-?\w*)$", re.IGNORECASE)
 _QUIT_RE = re.compile(r"^quit$", re.IGNORECASE)
 
 

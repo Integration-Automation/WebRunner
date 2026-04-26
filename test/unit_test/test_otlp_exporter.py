@@ -68,10 +68,11 @@ class TestBuildExporter(unittest.TestCase):
     def test_grpc_missing_dep_raises(self):
         from je_web_runner.utils.observability import otlp_exporter
 
+        def _raise_missing() -> None:
+            raise OtlpExporterError("missing")
+
         original = otlp_exporter._import_grpc_exporter
-        otlp_exporter._import_grpc_exporter = lambda: (_ for _ in ()).throw(
-            OtlpExporterError("missing")
-        )
+        otlp_exporter._import_grpc_exporter = _raise_missing
         try:
             with self.assertRaises(OtlpExporterError):
                 build_exporter(OtlpExportConfig(endpoint="x"))
@@ -81,10 +82,11 @@ class TestBuildExporter(unittest.TestCase):
     def test_http_missing_dep_raises(self):
         from je_web_runner.utils.observability import otlp_exporter
 
+        def _raise_missing() -> None:
+            raise OtlpExporterError("missing")
+
         original = otlp_exporter._import_http_exporter
-        otlp_exporter._import_http_exporter = lambda: (_ for _ in ()).throw(
-            OtlpExporterError("missing")
-        )
+        otlp_exporter._import_http_exporter = _raise_missing
         try:
             with self.assertRaises(OtlpExporterError):
                 build_exporter(OtlpExportConfig(endpoint="x", protocol="http"))

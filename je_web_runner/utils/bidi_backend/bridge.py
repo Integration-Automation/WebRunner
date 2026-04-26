@@ -16,7 +16,7 @@ Logical event names supported by default: ``console``, ``response``,
 from __future__ import annotations
 
 import itertools
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Callable, Dict, List, Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -184,6 +184,9 @@ class BidiBridge:
         self._subscriptions.pop(subscription.subscription_id, None)
 
     def unsubscribe_all(self) -> None:
+        # NOSONAR S7504 — the list() snapshot is required because
+        # ``self.unsubscribe`` mutates ``self._subscriptions`` during the
+        # iteration, which would raise RuntimeError otherwise.
         for sub in list(self._subscriptions.values()):
             self.unsubscribe(sub)
 

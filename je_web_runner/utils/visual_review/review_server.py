@@ -12,10 +12,10 @@ from __future__ import annotations
 import html as _html
 import shutil
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional
 from urllib.parse import parse_qs, urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -176,6 +176,9 @@ class VisualReviewServer:
             self._thread = None
 
 
+_TEXT_PLAIN = "text/plain"
+
+
 def _make_handler(server: VisualReviewServer) -> Callable:
 
     class _ReviewHandler(BaseHTTPRequestHandler):
@@ -207,30 +210,30 @@ def _make_handler(server: VisualReviewServer) -> Callable:
                 try:
                     target.relative_to(base_resolved)
                 except ValueError:
-                    self._send(404, b"", "text/plain")
+                    self._send(404, b"", _TEXT_PLAIN)
                     return
                 if not target.is_file():
-                    self._send(404, b"", "text/plain")
+                    self._send(404, b"", _TEXT_PLAIN)
                     return
                 self._send(200, target.read_bytes(), "image/png")
                 return
-            self._send(404, b"not found", "text/plain")
+            self._send(404, b"not found", _TEXT_PLAIN)
 
         def do_POST(self):  # noqa: N802
             if self.path != "/accept":
-                self._send(404, b"not found", "text/plain")
+                self._send(404, b"not found", _TEXT_PLAIN)
                 return
             length = int(self.headers.get("Content-Length") or 0)
             body = self.rfile.read(length).decode("utf-8") if length else ""
             params = parse_qs(body)
             names = params.get("name") or []
             if not names:
-                self._send(400, b"missing name", "text/plain")
+                self._send(400, b"missing name", _TEXT_PLAIN)
                 return
             try:
                 accept_baseline(server.baseline_dir, server.current_dir, names[0])
             except VisualReviewError as error:
-                self._send(400, str(error).encode("utf-8"), "text/plain")
+                self._send(400, str(error).encode("utf-8"), _TEXT_PLAIN)
                 return
             server.accepted.append(names[0])
             self.send_response(303)

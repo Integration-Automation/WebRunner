@@ -33,7 +33,7 @@ class TestBootstrapPipeline(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             init_workspace(tmpdir)
             sample = Path(tmpdir) / "actions" / "sample.json"
-            text_a, changed_a = format_file(sample)
+            text_a, _ = format_file(sample)
             text_b, changed_b = format_file(sample)
             self.assertEqual(text_a, text_b)
             self.assertFalse(changed_b)

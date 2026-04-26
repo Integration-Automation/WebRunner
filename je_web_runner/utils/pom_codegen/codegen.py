@@ -13,9 +13,9 @@ from __future__ import annotations
 
 import keyword
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from html.parser import HTMLParser
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, List, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -33,7 +33,7 @@ class DiscoveredElement:
     source: str         # data-testid / id / name
 
 
-_PY_IDENT_SAFE = re.compile(r"[^A-Za-z0-9_]+")
+_PY_IDENT_SAFE = re.compile(r"\W+")
 
 
 def _to_identifier(text: str, fallback: str) -> str:
@@ -130,7 +130,7 @@ def render_pom_module(
     for element in elements:
         value_literal = element.value.replace("\\", "\\\\").replace('"', '\\"')
         comment = f"<{element.tag}> via {element.source}"
-        lines.append(f"    @property")
+        lines.append("    @property")
         lines.append(f"    def {element.name}(self) -> TestObject:")
         lines.append(f'        """{comment}."""')
         lines.append(

@@ -48,7 +48,8 @@ def main() -> int:
                     btn.click()
                     time.sleep(1)
                     break
-            except Exception:  # pylint: disable=broad-except
+            except Exception as miss:  # pylint: disable=broad-except  # nosec B112 — selector probe; log and try next
+                print(f"consent selector miss {selector!r}: {miss!r}", file=sys.stderr)
                 continue
         # Type into the search box and submit.
         box = driver.find_element(By.CSS_SELECTOR, "textarea[name='q'], input[name='q']")
@@ -63,7 +64,8 @@ def main() -> int:
                 first_heading = driver.find_element(By.CSS_SELECTOR, selector)
                 if first_heading.text.strip():
                     break
-            except Exception:  # pylint: disable=broad-except
+            except Exception as miss:  # pylint: disable=broad-except  # nosec B112 — selector probe; log and try next
+                print(f"heading selector miss {selector!r}: {miss!r}", file=sys.stderr)
                 continue
         if first_heading is not None and first_heading.text.strip():
             print(f"first result: {first_heading.text.strip()[:120]!r}")
@@ -73,7 +75,7 @@ def main() -> int:
     finally:
         try:
             webdriver_wrapper_instance.quit()
-        except Exception:  # pylint: disable=broad-except
+        except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort cleanup
             pass
     return 0
 

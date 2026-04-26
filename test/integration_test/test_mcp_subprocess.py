@@ -44,7 +44,7 @@ class TestMcpSubprocess(unittest.TestCase):
             self._send(proc, _LIST)
             self._send(proc, _LOCATOR_CALL)
             self._send(proc, _SHUTDOWN)
-            assert proc.stdin is not None
+            assert proc.stdin is not None  # nosec B101 — typing guard
             proc.stdin.close()
             stdout_data, stderr_data = proc.communicate(timeout=10)
         finally:
@@ -82,7 +82,7 @@ class TestMcpSubprocess(unittest.TestCase):
         )
         try:
             self._send(proc, {"jsonrpc": "2.0", "id": 7, "method": "noSuchMethod"})
-            assert proc.stdin is not None
+            assert proc.stdin is not None  # nosec B101 — typing guard
             proc.stdin.close()
             stdout_data, _stderr = proc.communicate(timeout=10)
         finally:
@@ -95,7 +95,7 @@ class TestMcpSubprocess(unittest.TestCase):
 
     @staticmethod
     def _send(proc, message):
-        assert proc.stdin is not None
+        assert proc.stdin is not None  # nosec B101 — typing guard
         proc.stdin.write(json.dumps(message) + "\n")
         proc.stdin.flush()
 
