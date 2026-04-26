@@ -128,7 +128,7 @@ def _action_kind(element: Dict[str, Optional[str]]) -> str:
     return "click"
 
 
-_PASS_BODY = "        pass"
+_METHOD_STUB_BODY = "        pass"
 
 
 def _render_method(method_name: str, kind: str, locator_constant: str) -> List[str]:
@@ -138,21 +138,21 @@ def _render_method(method_name: str, kind: str, locator_constant: str) -> List[s
             f"    def {method_name}(self, value: str) -> None:",
             f"        \"\"\"Type ``value`` into the {method_name[len('input_to_'):]} field.\"\"\"",
             register_todo,
-            _PASS_BODY,
+            _METHOD_STUB_BODY,
             "",
         ]
     if kind == "select":
         return [
             f"    def {method_name}(self, value: str) -> None:",
             "        # TODO: hook up to your dropdown helper.",
-            _PASS_BODY,
+            _METHOD_STUB_BODY,
             "",
         ]
     return [
         f"    def {method_name}(self) -> None:",
         f"        \"\"\"Click the {method_name[len('click_'):]} element.\"\"\"",
         register_todo,
-        _PASS_BODY,
+        _METHOD_STUB_BODY,
         "",
     ]
 

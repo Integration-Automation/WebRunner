@@ -85,8 +85,10 @@ class TestRefreshGrant(unittest.TestCase):
         with patch("je_web_runner.utils.auth.oauth.requests.post",
                    return_value=_success_response()) as post_mock:
             refresh_token_grant(
-                "https://idp.example/oauth2/token", "id", "secret",
-                refresh_token="rt-xyz",
+                "https://idp.example/oauth2/token",
+                "id",
+                "secret",
+                refresh_token="rt-xyz",  # nosec B106 — fake fixture
             )
             data = post_mock.call_args.kwargs["data"]
             self.assertEqual(data["grant_type"], "refresh_token")

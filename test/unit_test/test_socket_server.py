@@ -48,7 +48,7 @@ class TestSocketServerAuth(unittest.TestCase):
                 pass
 
     def test_request_without_token_is_rejected(self):
-        server, _ = _start_server(auth_token="secret")
+        server, _ = _start_server(auth_token="secret")  # nosec B106 — fake fixture
         try:
             host, port = server.server_address
             with socket.create_connection((host, port)) as client:
@@ -61,7 +61,7 @@ class TestSocketServerAuth(unittest.TestCase):
             server.server_close()
 
     def test_request_with_wrong_token_is_rejected(self):
-        server, _ = _start_server(auth_token="secret")
+        server, _ = _start_server(auth_token="secret")  # nosec B106 — fake fixture
         try:
             host, port = server.server_address
             with socket.create_connection((host, port)) as client:
@@ -74,7 +74,7 @@ class TestSocketServerAuth(unittest.TestCase):
             server.server_close()
 
     def test_quit_with_correct_token_shuts_down(self):
-        server, _ = _start_server(auth_token="secret")
+        server, _ = _start_server(auth_token="secret")  # nosec B106 — fake fixture
         try:
             host, port = server.server_address
             with socket.create_connection((host, port)) as client:

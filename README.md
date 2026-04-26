@@ -302,7 +302,7 @@ actions = [
 execute_action(actions)
 ```
 
-The legacy names (`WR_get_webdriver_manager`, `WR_SaveTestObject`, `WR_quit`, `WR_input_to_element`, …) still work — see [migration helper](#migration-helper) for one-shot rewriting.
+The legacy names (`WR_get_webdriver_manager`, `WR_SaveTestObject`, `WR_quit`, `WR_input_to_element`, …) still work — see [Quality & Security](#quality--security) for the one-shot migration helper.
 
 ### Mixed positional + keyword arguments
 

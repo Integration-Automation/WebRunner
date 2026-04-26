@@ -1,6 +1,6 @@
 import json
 import os
-import subprocess
+import subprocess  # nosec B404 — only used for mocked CompletedProcess
 import tempfile
 import unittest
 from pathlib import Path

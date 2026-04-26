@@ -39,7 +39,8 @@ def parse_shard_spec(spec: str) -> Tuple[int, int]:
 
 
 def _bucket(path: str, total: int) -> int:
-    # NOSONAR — file partitioning, not crypto. SHA-1 is fine here.
+    # File partitioning, not crypto — SHA-1 is fine here. NOSONAR
+    # nosemgrep: python.lang.security.insecure-hash-algorithms.insecure-hash-algorithm-sha1
     digest = hashlib.sha1(path.encode("utf-8"), usedforsecurity=False).hexdigest()  # nosec B324
     return int(digest, 16) % total
 

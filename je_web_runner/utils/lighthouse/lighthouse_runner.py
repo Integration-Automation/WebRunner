@@ -103,6 +103,8 @@ def run_lighthouse(
         target = output_path
     cmd = _build_command(safe_url, target, lighthouse_path, chrome_flags, extra_args)
     try:
+        # cmd is built from a static argv list, never user shell input.
+        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
         result = subprocess.run(  # nosec B603 — explicit list, shell=False
             cmd,
             timeout=timeout,
