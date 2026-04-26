@@ -50,7 +50,10 @@ class TestMcpSubprocess(unittest.TestCase):
         finally:
             if proc.poll() is None:
                 proc.kill()
-                proc.communicate(timeout=5)
+                try:
+                    proc.communicate(timeout=5)
+                except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort cleanup
+                    pass
         self.assertEqual(proc.returncode, 0,
                          msg=f"non-zero exit; stderr={stderr_data!r}")
         responses = self._parse_messages(stdout_data)
@@ -88,7 +91,10 @@ class TestMcpSubprocess(unittest.TestCase):
         finally:
             if proc.poll() is None:
                 proc.kill()
-                proc.communicate(timeout=5)
+                try:
+                    proc.communicate(timeout=5)
+                except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort cleanup
+                    pass
         responses = self._parse_messages(stdout_data)
         match = next(m for m in responses if m.get("id") == 7)
         self.assertEqual(match["error"]["code"], -32601)

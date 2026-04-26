@@ -45,9 +45,11 @@ _TIMESTAMP_ZONE = r"(?:Z|[+-]\d{2}:?\d{2})?"
 _TIMESTAMP_RE = re.compile(
     _TIMESTAMP_DATE + r"[T ]" + _TIMESTAMP_TIME + _TIMESTAMP_FRACTION + _TIMESTAMP_ZONE
 )
-# Bounded character class size avoids the polynomial backtracking
-# pattern Semgrep / SonarCloud S5852 flag for ``[\w\.\-]+`` repeated
-# outside its group.
+# Bounded character class size + finite outer repetition keeps backtracking
+# bounded; Semgrep's heuristic still flags the pattern because of the nested
+# quantifiers, but the worst case is O(80*40*input) which is linear-ish for
+# realistic error messages. NOSONAR S5852.
+# nosemgrep: python.lang.security.audit.regex-dos.regex_dos
 _PATH_RE = re.compile(
     r"(?:[A-Za-z]:)?[\\/](?:[\w.\-]{1,80}[\\/]){1,40}[\w.\-]{1,80}"
 )

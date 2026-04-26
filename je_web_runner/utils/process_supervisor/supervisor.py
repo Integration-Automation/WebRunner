@@ -118,6 +118,9 @@ def default_killer(pid: int) -> bool:
                 stderr=subprocess.DEVNULL,
             )
             return True
+        # The PID list is filtered by ``KNOWN_DRIVER_NAMES`` and excludes
+        # ``os.getpid()`` upstream, so this signal-9 only ever lands on the
+        # supervisor's own webdriver children. NOSONAR S4828
         os.kill(pid, 9)
         return True
     except (OSError, subprocess.CalledProcessError) as error:

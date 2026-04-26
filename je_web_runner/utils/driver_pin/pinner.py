@@ -162,6 +162,9 @@ def _default_fetch(url: str) -> bytes:
 
 
 def _extract_archive(archive_format: str, payload: bytes, target_dir: Path) -> None:
+    # Both branches go through ``_safe_extract_*`` helpers that pre-validate
+    # every member resolves inside ``target_dir``, defending against the
+    # zip-slip / tar-slip class of attacks. NOSONAR S5042
     if archive_format == "zip":
         with zipfile.ZipFile(io.BytesIO(payload)) as zf:
             _safe_extract_zip(zf, target_dir)

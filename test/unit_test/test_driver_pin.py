@@ -60,8 +60,8 @@ class TestPinFile(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "x.json"
             path.write_text(json.dumps({"drivers": [{
-                "name": "g", "version": "1", "url": "ftp://x", "archive_format": "zip",
-                "binary_inside": "g",
+                "name": "g", "version": "1", "url": "ftp://x",  # NOSONAR — fixture: validator must reject
+                "archive_format": "zip", "binary_inside": "g",
             }]}), encoding="utf-8")
             with self.assertRaises(DriverPinError):
                 load_pinfile(path)

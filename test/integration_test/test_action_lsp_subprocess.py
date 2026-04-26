@@ -74,7 +74,10 @@ class TestActionLspSubprocess(unittest.TestCase):
         finally:
             if proc.poll() is None:
                 proc.kill()
-                proc.communicate(timeout=5)
+                try:
+                    proc.communicate(timeout=5)
+                except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort cleanup
+                    pass
         self.assertEqual(proc.returncode, 0,
                          msg=f"stderr={stderr_data!r}")
         messages = _read_messages(stdout_data)
@@ -106,7 +109,10 @@ class TestActionLspSubprocess(unittest.TestCase):
         finally:
             if proc.poll() is None:
                 proc.kill()
-                proc.communicate(timeout=5)
+                try:
+                    proc.communicate(timeout=5)
+                except Exception:  # pylint: disable=broad-except  # nosec B110 — best-effort cleanup
+                    pass
         messages = _read_messages(stdout_data)
         completion = next(m for m in messages if m.get("id") == 2)
         labels = [item["label"] for item in completion["result"]["items"]]

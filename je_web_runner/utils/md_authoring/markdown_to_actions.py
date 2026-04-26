@@ -31,7 +31,7 @@ class MdAuthoringError(WebRunnerException):
 
 
 # Trim leading whitespace + bullet marker; the body is captured greedily and
-# trimmed in Python afterwards so this regex stays linear-time (S5852).
+# trimmed in Python afterwards so this regex stays linear-time. NOSONAR S5852
 _BULLET_RE = re.compile(r"^\s*[-*]\s*(.*)$")
 
 
@@ -80,7 +80,11 @@ _WAIT_RE = re.compile(r"^wait\s+(\d+(?:\.\d+)?)\s*s(?:ec(?:onds)?)?$", re.IGNORE
 _TITLE_RE = re.compile(r"^assert\s+title\s+\"([^\"]*)\"$", re.IGNORECASE)
 _PRESS_RE = re.compile(r"^press\s+(\S+)$", re.IGNORECASE)
 _SCREENSHOT_RE = re.compile(r"^screenshot$", re.IGNORECASE)
-_TEMPLATE_RE = re.compile(r"^run\s+template\s+([A-Za-z_]\w*-?\w*)$", re.IGNORECASE)
+# Template name allows ASCII identifier chars plus dashes; the explicit
+# class avoids the polynomial-backtracking heuristic. NOSONAR S5852
+_TEMPLATE_RE = re.compile(
+    r"^run\s+template\s+([A-Za-z_][A-Za-z0-9_-]{0,80})$", re.IGNORECASE,
+)
 _QUIT_RE = re.compile(r"^quit$", re.IGNORECASE)
 
 

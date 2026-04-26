@@ -120,7 +120,7 @@ class TestCaptureStorySnapshots(unittest.TestCase):
             with self.assertRaises(StorybookSnapshotError):
                 capture_story_snapshots(
                     [],
-                    base_url="http://x",
+                    base_url="http://x",  # NOSONAR — local fixture, never reached  # NOSONAR — local fixture, never reached
                     output_dir=tmpdir,
                     take_screenshot="not callable",  # type: ignore[arg-type]
                     navigate=lambda _url: None,
@@ -145,7 +145,7 @@ class TestAssertNoVisualRegressions(unittest.TestCase):
             out = Path(tmpdir) / "out"
             report = capture_story_snapshots(
                 [_story("a")],
-                base_url="http://x",
+                base_url="http://x",  # NOSONAR — local fixture, never reached
                 output_dir=out,
                 take_screenshot=lambda _url: b"x",
                 navigate=lambda _url: None,
@@ -160,7 +160,7 @@ class TestAssertNoVisualRegressions(unittest.TestCase):
             (baseline / "a.png").write_bytes(b"old")
             report = capture_story_snapshots(
                 [_story("a")],
-                base_url="http://x",
+                base_url="http://x",  # NOSONAR — local fixture, never reached
                 output_dir=out,
                 baseline_dir=baseline,
                 take_screenshot=lambda _url: b"new",
@@ -176,7 +176,7 @@ class TestAssertNoVisualRegressions(unittest.TestCase):
             baseline.mkdir()
             report = capture_story_snapshots(
                 [_story("a")],
-                base_url="http://x",
+                base_url="http://x",  # NOSONAR — local fixture, never reached
                 output_dir=out,
                 baseline_dir=baseline,
                 take_screenshot=lambda _url: b"new",
