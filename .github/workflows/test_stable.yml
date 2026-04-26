@@ -46,6 +46,12 @@ jobs:
       matrix:
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
+    env:
+      # webdriver-manager hits api.github.com for geckodriver/chromedriver
+      # release lookups; share the workflow token to use the authenticated
+      # 5000/h quota instead of the 60/h per-IP limit.
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     steps:
     - uses: actions/checkout@v4
 
