@@ -15,15 +15,152 @@ from je_web_runner.utils.generate_report.generate_html_report import generate_ht
 from je_web_runner.utils.generate_report.generate_json_report import generate_json
 from je_web_runner.utils.generate_report.generate_json_report import generate_json_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
+from je_web_runner.utils.json.json_validator import validate_action_file
+from je_web_runner.utils.json.json_validator import validate_action_files
+from je_web_runner.utils.json.json_validator import validate_action_json
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml_report
+from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml
+from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml_report
+from je_web_runner.utils.generate_report.generate_allure_report import generate_allure
+from je_web_runner.utils.generate_report.generate_allure_report import generate_allure_report
 from je_web_runner.utils.socket_server.web_runner_socket_server import start_web_runner_socket_server
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_class import create_test_object
 from je_web_runner.utils.test_object.test_object_class import get_test_object_type_list
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 from je_web_runner.utils.callback.callback_function_executor import callback_executor
+from je_web_runner.utils.accessibility.axe_audit import (
+    AccessibilityError,
+    load_axe_source,
+    playwright_run_audit,
+    selenium_run_audit,
+    summarise_violations,
+)
+from je_web_runner.utils.cdp.cdp_commands import (
+    CDPError,
+    playwright_cdp,
+    reset_playwright_cdp_sessions,
+    selenium_cdp,
+)
+from je_web_runner.utils.api.http_client import (
+    HttpAssertionError,
+    get_last_response,
+    http_assert_json_contains,
+    http_assert_status,
+    http_delete,
+    http_get,
+    http_patch,
+    http_post,
+    http_put,
+    http_request,
+)
+from je_web_runner.utils.data_driven.data_runner import (
+    DataDrivenError,
+    expand_with_row,
+    load_dataset_csv,
+    load_dataset_json,
+    run_with_dataset,
+)
+from je_web_runner.utils.env_config.env_loader import EnvConfigError, expand_in_action, get_env, load_env
+from je_web_runner.utils.pom_generator.pom_generator import (
+    POMGeneratorError,
+    extract_elements_from_html,
+    generate_pom_class,
+    generate_pom_from_html,
+    generate_pom_from_url,
+    write_pom_to_file,
+)
+from je_web_runner.utils.notifier.webhook_notifier import (
+    NotifierError,
+    notify_run_summary,
+    notify_slack,
+    notify_webhook,
+    summarise_run,
+)
+from je_web_runner.utils.self_healing.healing_locator import (
+    HealingError,
+    HealingRegistry,
+    clear_fallbacks,
+    find_with_healing_playwright,
+    find_with_healing_selenium,
+    healing_registry,
+    register_fallback,
+    register_fallbacks,
+)
 from je_web_runner.utils.project.create_project_structure import create_project_dir
+from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as visual_capture_baseline
+from je_web_runner.utils.visual_regression.visual_diff import compare_with_baseline as visual_compare_with_baseline
+from je_web_runner.webdriver.playwright_wrapper import (
+    PlaywrightBackendError,
+    PlaywrightWrapper,
+    playwright_wrapper_instance,
+    pw_add_cookies,
+    pw_back,
+    pw_check,
+    pw_clear_cookies,
+    pw_click,
+    pw_close_page,
+    pw_content,
+    pw_dblclick,
+    pw_drag_and_drop,
+    pw_evaluate,
+    pw_fill,
+    pw_find_element,
+    pw_find_element_with_test_object_record,
+    pw_find_elements,
+    pw_find_elements_with_test_object_record,
+    pw_forward,
+    pw_get_cookies,
+    pw_hover,
+    pw_keyboard_down,
+    pw_keyboard_press,
+    pw_keyboard_type,
+    pw_keyboard_up,
+    pw_launch,
+    pw_start_har_recording,
+    pw_stop_har_recording,
+    pw_route_mock,
+    pw_route_mock_json,
+    pw_route_unmock,
+    pw_route_clear,
+    pw_mouse_click,
+    pw_mouse_down,
+    pw_mouse_move,
+    pw_mouse_up,
+    pw_new_page,
+    pw_page_count,
+    pw_press,
+    pw_quit,
+    pw_refresh,
+    pw_save_test_object_to_selector,
+    pw_screenshot,
+    pw_screenshot_bytes,
+    pw_select_option,
+    pw_set_default_navigation_timeout,
+    pw_set_default_timeout,
+    pw_set_viewport_size,
+    pw_switch_to_page,
+    pw_title,
+    pw_to_url,
+    pw_type_text,
+    pw_uncheck,
+    pw_url,
+    pw_viewport_size,
+    pw_wait_for_load_state,
+    pw_wait_for_selector,
+    pw_wait_for_timeout,
+    pw_wait_for_url,
+)
+from je_web_runner.webdriver.playwright_element_wrapper import (
+    PlaywrightElementWrapper,
+    playwright_element_wrapper,
+)
+from je_web_runner.utils.recorder.browser_recorder import events_to_actions as recorder_events_to_actions
+from je_web_runner.utils.recorder.browser_recorder import pull_events as recorder_pull_events
+from je_web_runner.utils.recorder.browser_recorder import save_recording as recorder_save_recording
+from je_web_runner.utils.recorder.browser_recorder import start_recording as recorder_start
+from je_web_runner.utils.recorder.browser_recorder import stop_recording as recorder_stop
 __all__ = [
     "web_element_wrapper", "set_webdriver_options_argument",
     "webdriver_wrapper_instance", "get_webdriver_manager",
@@ -32,7 +169,51 @@ __all__ = [
     "generate_html", "generate_html_report",
     "generate_json", "generate_json_report", "read_action_json",
     "generate_xml", "generate_xml_report",
+    "generate_junit_xml", "generate_junit_xml_report",
+    "generate_allure", "generate_allure_report",
     "start_web_runner_socket_server", "get_dir_files_as_list",
     "TestObject", "create_test_object", "get_test_object_type_list",
-    "test_record_instance", "Keys", "callback_executor", "create_project_dir"
+    "test_record_instance", "Keys", "callback_executor", "create_project_dir",
+    "load_env", "get_env", "expand_in_action", "EnvConfigError",
+    "load_dataset_csv", "load_dataset_json", "expand_with_row",
+    "run_with_dataset", "DataDrivenError",
+    "HealingError", "HealingRegistry", "healing_registry",
+    "register_fallback", "register_fallbacks", "clear_fallbacks",
+    "find_with_healing_selenium", "find_with_healing_playwright",
+    "http_request", "http_get", "http_post", "http_put", "http_patch", "http_delete",
+    "http_assert_status", "http_assert_json_contains", "get_last_response",
+    "HttpAssertionError",
+    "AccessibilityError", "load_axe_source", "selenium_run_audit",
+    "playwright_run_audit", "summarise_violations",
+    "CDPError", "selenium_cdp", "playwright_cdp", "reset_playwright_cdp_sessions",
+    "summarise_run", "notify_webhook", "notify_slack", "notify_run_summary",
+    "NotifierError",
+    "POMGeneratorError", "extract_elements_from_html", "generate_pom_class",
+    "generate_pom_from_html", "generate_pom_from_url", "write_pom_to_file",
+    "validate_action_json", "validate_action_file", "validate_action_files",
+    "visual_capture_baseline", "visual_compare_with_baseline",
+    "recorder_start", "recorder_stop", "recorder_pull_events",
+    "recorder_events_to_actions", "recorder_save_recording",
+    "PlaywrightBackendError", "PlaywrightWrapper", "playwright_wrapper_instance",
+    "PlaywrightElementWrapper", "playwright_element_wrapper",
+    "pw_launch", "pw_quit", "pw_start_har_recording", "pw_stop_har_recording",
+    "pw_route_mock", "pw_route_mock_json", "pw_route_unmock", "pw_route_clear",
+    "pw_to_url", "pw_forward", "pw_back", "pw_refresh",
+    "pw_url", "pw_title", "pw_content",
+    "pw_set_default_timeout", "pw_set_default_navigation_timeout",
+    "pw_new_page", "pw_switch_to_page", "pw_close_page", "pw_page_count",
+    "pw_find_element", "pw_find_elements",
+    "pw_find_element_with_test_object_record", "pw_find_elements_with_test_object_record",
+    "pw_save_test_object_to_selector",
+    "pw_click", "pw_dblclick", "pw_hover",
+    "pw_fill", "pw_type_text", "pw_press",
+    "pw_check", "pw_uncheck", "pw_select_option", "pw_drag_and_drop",
+    "pw_evaluate",
+    "pw_get_cookies", "pw_add_cookies", "pw_clear_cookies",
+    "pw_screenshot", "pw_screenshot_bytes",
+    "pw_wait_for_selector", "pw_wait_for_load_state",
+    "pw_wait_for_timeout", "pw_wait_for_url",
+    "pw_set_viewport_size", "pw_viewport_size",
+    "pw_mouse_click", "pw_mouse_move", "pw_mouse_down", "pw_mouse_up",
+    "pw_keyboard_press", "pw_keyboard_type", "pw_keyboard_down", "pw_keyboard_up"
 ]

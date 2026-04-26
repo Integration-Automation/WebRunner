@@ -118,6 +118,24 @@ class CallbackFunctionExecutor(object):
             # Add package
             "WR_add_package_to_executor": package_manager.add_package_to_executor,
             "WR_add_package_to_callback_executor": package_manager.add_package_to_callback_executor,
+
+            # ----- naming aliases (mirror action_executor) ----------------
+            "WR_new_driver": web_runner.new_driver,
+            "WR_quit_all": web_runner.quit,
+            "WR_quit_current": webdriver_wrapper_instance.quit,
+            "WR_explicit_wait": webdriver_wrapper_instance.explict_wait,
+            "WR_save_test_object": test_object_record.save_test_object,
+            "WR_clear_test_objects": test_object_record.clean_record,
+            "WR_find_recorded_element": webdriver_wrapper_instance.find_element_with_test_object_record,
+            "WR_find_recorded_elements": webdriver_wrapper_instance.find_elements_with_test_object_record,
+            "WR_element_input": web_runner.webdriver_element.input_to_element,
+            "WR_element_click": web_runner.webdriver_element.click_element,
+            "WR_element_assert": web_runner.webdriver_element.check_current_web_element,
+
+            # usable Select wrappers
+            "WR_element_select_by_value": web_runner.webdriver_element.select_by_value,
+            "WR_element_select_by_index": web_runner.webdriver_element.select_by_index,
+            "WR_element_select_by_visible_text": web_runner.webdriver_element.select_by_visible_text,
         }
 
     def callback_function(

@@ -239,6 +239,54 @@ class WebElementWrapper(object):
             )
             record_action_to_list("Web element check_current_web_element", param, error)
 
+    def select_by_value(self, value: str) -> None:
+        """
+        以 value 屬性選取 <select> 選項
+        Select an option in the current ``<select>`` element by its ``value``.
+        """
+        web_runner_logger.info(f"WebElementWrapper select_by_value, value: {value}")
+        param = locals()
+        try:
+            Select(self.current_web_element).select_by_value(value)
+            record_action_to_list("Web element select_by_value", param, None)
+        except Exception as error:
+            web_runner_logger.error(
+                f"WebElementWrapper select_by_value, value: {value}, failed: {repr(error)}"
+            )
+            record_action_to_list("Web element select_by_value", param, error)
+
+    def select_by_index(self, index: int) -> None:
+        """
+        以索引選取 <select> 選項
+        Select an option in the current ``<select>`` element by index.
+        """
+        web_runner_logger.info(f"WebElementWrapper select_by_index, index: {index}")
+        param = locals()
+        try:
+            Select(self.current_web_element).select_by_index(int(index))
+            record_action_to_list("Web element select_by_index", param, None)
+        except Exception as error:
+            web_runner_logger.error(
+                f"WebElementWrapper select_by_index, index: {index}, failed: {repr(error)}"
+            )
+            record_action_to_list("Web element select_by_index", param, error)
+
+    def select_by_visible_text(self, text: str) -> None:
+        """
+        以可見文字選取 <select> 選項
+        Select an option in the current ``<select>`` element by visible text.
+        """
+        web_runner_logger.info(f"WebElementWrapper select_by_visible_text, text: {text}")
+        param = locals()
+        try:
+            Select(self.current_web_element).select_by_visible_text(text)
+            record_action_to_list("Web element select_by_visible_text", param, None)
+        except Exception as error:
+            web_runner_logger.error(
+                f"WebElementWrapper select_by_visible_text, text: {text}, failed: {repr(error)}"
+            )
+            record_action_to_list("Web element select_by_visible_text", param, error)
+
     def get_select(self) -> Select | None:
         """
         取得 Select 物件 (用於操作下拉選單)

@@ -1,0 +1,14 @@
+{
+  "json.schemas": [
+    {
+      "fileMatch": [
+        "**/actions/**/*.json",
+        "**/action_*.json"
+      ],
+      "url": "./webrunner-action-schema.json"
+    }
+  ],
+  "files.associations": {
+    "*.action.json": "json"
+  }
+}
