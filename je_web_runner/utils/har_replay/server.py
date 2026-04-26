@@ -202,7 +202,10 @@ def _make_handler(server: HarReplayServer) -> Callable:
                 self.send_header("X-Content-Type-Options", "nosniff")
                 self.send_header("Content-Length", str(len(payload)))
                 self.end_headers()
-                self.wfile.write(payload)
+                # _safe_echo above strips control + HTML-special bytes; this
+                # writes a JSON envelope with nosniff so reflected fragments
+                # can't be sniffed as HTML by the browser.
+                self.wfile.write(payload)  # NOSONAR S5131 — payload sanitised + JSON + nosniff
                 return
             body_bytes = _entry_body_bytes(entry)
             self.send_response(entry.status)

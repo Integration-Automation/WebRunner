@@ -195,29 +195,32 @@ def _make_handler(server: VisualReviewServer) -> Callable:
 
         def do_GET(self):  # noqa: N802
             parsed = urlparse(self.path)
-            if parsed.path == "/" or parsed.path == "/index.html":
+            if parsed.path in {"/", "/index.html"}:
                 self._send(
                     200,
                     render_index(server.baseline_dir, server.current_dir).encode("utf-8"),
                     "text/html; charset=utf-8",
                 )
                 return
-            if parsed.path.startswith("/img/baseline/") or parsed.path.startswith("/img/current/"):
-                bucket, _, name = parsed.path[5:].partition("/")  # strip "/img/"
-                base = server.baseline_dir if bucket == "baseline" else server.current_dir
-                target = (Path(base) / name).resolve()
-                base_resolved = Path(base).resolve()
-                try:
-                    target.relative_to(base_resolved)
-                except ValueError:
-                    self._send(404, b"", _TEXT_PLAIN)
-                    return
-                if not target.is_file():
-                    self._send(404, b"", _TEXT_PLAIN)
-                    return
-                self._send(200, target.read_bytes(), "image/png")
+            if (parsed.path.startswith("/img/baseline/")
+                    or parsed.path.startswith("/img/current/")):
+                self._serve_image(parsed.path)
                 return
             self._send(404, b"not found", _TEXT_PLAIN)
+
+        def _serve_image(self, request_path: str) -> None:
+            bucket, _, name = request_path[5:].partition("/")  # strip "/img/"
+            base = server.baseline_dir if bucket == "baseline" else server.current_dir
+            target = (Path(base) / name).resolve()
+            try:
+                target.relative_to(Path(base).resolve())
+            except ValueError:
+                self._send(404, b"", _TEXT_PLAIN)
+                return
+            if not target.is_file():
+                self._send(404, b"", _TEXT_PLAIN)
+                return
+            self._send(200, target.read_bytes(), "image/png")
 
         def do_POST(self):  # noqa: N802
             if self.path != "/accept":

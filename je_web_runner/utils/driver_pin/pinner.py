@@ -170,8 +170,8 @@ def _extract_archive(archive_format: str, payload: bytes, target_dir: Path) -> N
             _safe_extract_zip(zf, target_dir)  # NOSONAR S5042 — members validated above
         return
     if archive_format == "tar.gz":
-        with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as tf:
-            _safe_extract_tar(tf, target_dir)  # NOSONAR S5042 — members validated above
+        with tarfile.open(fileobj=io.BytesIO(payload), mode="r:gz") as tf:  # NOSONAR S5042 — _safe_extract_tar validates members below
+            _safe_extract_tar(tf, target_dir)
         return
     raise DriverPinError(f"unsupported archive format {archive_format!r}")
 

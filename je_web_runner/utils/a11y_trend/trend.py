@@ -48,23 +48,29 @@ def aggregate_history(history: Iterable[Dict[str, Any]]) -> List[A11yTrendPoint]
         raise A11yTrendError("history must be iterable")
     buckets: Dict[str, A11yTrendPoint] = {}
     for index, entry in enumerate(history):
-        if not isinstance(entry, dict):
-            raise A11yTrendError(f"history[{index}] must be an object")
-        label = _bucket_label(entry.get("timestamp"))
-        violations = entry.get("violations") or []
-        if not isinstance(violations, list):
-            raise A11yTrendError(f"history[{index}].violations must be a list")
-        point = buckets.setdefault(label, A11yTrendPoint(label=label))
-        for violation in violations:
-            if not isinstance(violation, dict):
-                continue
-            impact = str(violation.get("impact") or "unknown")
-            count = 1
-            nodes = violation.get("nodes")
-            if isinstance(nodes, list) and nodes:
-                count = len(nodes)
-            point.impacts[impact] = point.impacts.get(impact, 0) + count
+        _absorb_entry(buckets, index, entry)
     return sorted(buckets.values(), key=lambda p: p.label)
+
+
+def _absorb_entry(buckets: Dict[str, A11yTrendPoint], index: int, entry: Any) -> None:
+    if not isinstance(entry, dict):
+        raise A11yTrendError(f"history[{index}] must be an object")
+    label = _bucket_label(entry.get("timestamp"))
+    violations = entry.get("violations") or []
+    if not isinstance(violations, list):
+        raise A11yTrendError(f"history[{index}].violations must be a list")
+    point = buckets.setdefault(label, A11yTrendPoint(label=label))
+    for violation in violations:
+        _count_violation(point, violation)
+
+
+def _count_violation(point: A11yTrendPoint, violation: Any) -> None:
+    if not isinstance(violation, dict):
+        return
+    impact = str(violation.get("impact") or "unknown")
+    nodes = violation.get("nodes")
+    count = len(nodes) if isinstance(nodes, list) and nodes else 1
+    point.impacts[impact] = point.impacts.get(impact, 0) + count
 
 
 def render_html(points: List[A11yTrendPoint], title: str = "A11y trend") -> str:

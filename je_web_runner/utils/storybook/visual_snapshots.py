@@ -95,39 +95,52 @@ def capture_story_snapshots(
     compare = comparator or _default_comparator
     report = StorybookSnapshotReport()
     for story in stories:
-        if not isinstance(story, StorybookStory):
-            raise StorybookSnapshotError("stories must be StorybookStory instances")
-        url = f"{base_url}/{story.iframe_path}"
-        try:
-            navigate(url)
-            png_bytes = take_screenshot(url)
-        except Exception as error:  # pylint: disable=broad-except
-            raise StorybookSnapshotError(
-                f"snapshot failed for {story.id!r}: {error!r}"
-            ) from error
-        if not isinstance(png_bytes, (bytes, bytearray)) or not png_bytes:
-            raise StorybookSnapshotError(
-                f"take_screenshot returned empty payload for {story.id!r}"
-            )
-        filename = safe_filename(story)
-        target = out_dir / filename
-        target.write_bytes(png_bytes)
-        outcome = SnapshotOutcome(
-            story_id=story.id,
-            image_path=target,
-            matched_baseline=True,
+        outcome = _snapshot_story(
+            story, base_url, out_dir, take_screenshot, navigate,
+            baseline_path_root, compare,
         )
-        if baseline_path_root is not None:
-            baseline = baseline_path_root / filename
-            comparison = compare(bytes(png_bytes), baseline)
-            outcome.matched_baseline = bool(comparison.get("matched"))
-            outcome.diff_percent = float(comparison.get("diff_percent", 0.0))
-            outcome.note = comparison.get("note")
         report.outcomes.append(outcome)
         web_runner_logger.info(
             f"storybook_snapshots story={story.id!r} matched={outcome.matched_baseline}"
         )
     return report
+
+
+def _snapshot_story(
+    story: StorybookStory,
+    base_url: str,
+    out_dir: Path,
+    take_screenshot: Screenshot,
+    navigate: Callable[[str], None],
+    baseline_path_root: Optional[Path],
+    compare: Comparator,
+) -> SnapshotOutcome:
+    if not isinstance(story, StorybookStory):
+        raise StorybookSnapshotError("stories must be StorybookStory instances")
+    url = f"{base_url}/{story.iframe_path}"
+    try:
+        navigate(url)
+        png_bytes = take_screenshot(url)
+    except Exception as error:  # pylint: disable=broad-except
+        raise StorybookSnapshotError(
+            f"snapshot failed for {story.id!r}: {error!r}"
+        ) from error
+    if not isinstance(png_bytes, (bytes, bytearray)) or not png_bytes:
+        raise StorybookSnapshotError(
+            f"take_screenshot returned empty payload for {story.id!r}"
+        )
+    filename = safe_filename(story)
+    target = out_dir / filename
+    target.write_bytes(png_bytes)
+    outcome = SnapshotOutcome(
+        story_id=story.id, image_path=target, matched_baseline=True,
+    )
+    if baseline_path_root is not None:
+        comparison = compare(bytes(png_bytes), baseline_path_root / filename)
+        outcome.matched_baseline = bool(comparison.get("matched"))
+        outcome.diff_percent = float(comparison.get("diff_percent", 0.0))
+        outcome.note = comparison.get("note")
+    return outcome
 
 
 def assert_no_visual_regressions(report: StorybookSnapshotReport,

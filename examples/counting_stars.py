@@ -77,6 +77,48 @@ def _click_first_visible(driver, selectors) -> bool:
     return bool(driver.execute_script(script, selectors))
 
 
+def _force_play(driver) -> None:
+    """Loop the force-play script until the video reports ``playing``."""
+    for _ in range(8):
+        if driver.execute_script(_FORCE_PLAY_JS) == "playing":
+            return
+        time.sleep(1)
+
+
+def _await_ad_clear(driver, max_seconds: float = 30.0) -> bool:
+    """Poll ``_AD_STATE_JS``; click skip-ad if visible. Returns True on skip."""
+    deadline = time.monotonic() + max_seconds
+    while time.monotonic() < deadline:
+        if driver.execute_script(_AD_STATE_JS) != "ad":
+            return False
+        if _click_first_visible(driver, _SKIP_AD_SELECTORS):
+            time.sleep(1)
+            return True
+        time.sleep(1)
+    return False
+
+
+def _wait_out_unskippable_ad(driver, max_seconds: float = 30.0) -> None:
+    """Tick until ``_AD_STATE_JS`` reports ``video`` or budget runs out."""
+    deadline = time.monotonic() + max_seconds
+    while time.monotonic() < deadline:
+        if driver.execute_script(_AD_STATE_JS) != "ad":
+            return
+        time.sleep(1)
+
+
+def _navigate_and_play(driver) -> None:
+    webdriver_wrapper_instance.to_url(COUNTING_STARS_URL)
+    time.sleep(4)
+    _click_first_visible(driver, _DISMISS_BUTTON_SELECTORS)
+    time.sleep(1)
+    _force_play(driver)
+    if not _await_ad_clear(driver):
+        _wait_out_unskippable_ad(driver)
+    # Force-play once more in case the ad transition paused the video.
+    driver.execute_script(_FORCE_PLAY_JS)
+
+
 def main() -> int:
     chrome_args = [
         "--autoplay-policy=no-user-gesture-required",
@@ -91,39 +133,7 @@ def main() -> int:
 
     driver = webdriver_wrapper_instance.current_webdriver
     try:
-        webdriver_wrapper_instance.to_url(COUNTING_STARS_URL)
-        # Let the consent dialog (if any) and the player render.
-        time.sleep(4)
-        # Dismiss EU consent banner if it shows up.
-        _click_first_visible(driver, _DISMISS_BUTTON_SELECTORS)
-        time.sleep(1)
-        # Make sure something is actually playing.
-        for _ in range(8):
-            state = driver.execute_script(_FORCE_PLAY_JS)
-            if state == "playing":
-                break
-            time.sleep(1)
-        # Poll for the skip-ad button for up to 30s; click whatever shows.
-        deadline = time.monotonic() + 30
-        skipped = False
-        while time.monotonic() < deadline:
-            ad_state = driver.execute_script(_AD_STATE_JS)
-            if ad_state != "ad":
-                break
-            if _click_first_visible(driver, _SKIP_AD_SELECTORS):
-                skipped = True
-                time.sleep(1)
-                break
-            time.sleep(1)
-        if not skipped:
-            # Wait out non-skippable pre-roll ads up to ~30s more.
-            deadline = time.monotonic() + 30
-            while time.monotonic() < deadline:
-                if driver.execute_script(_AD_STATE_JS) != "ad":
-                    break
-                time.sleep(1)
-        # Force-play once more in case the ad transition paused the video.
-        driver.execute_script(_FORCE_PLAY_JS)
+        _navigate_and_play(driver)
         time.sleep(LISTEN_SECONDS)
     except Exception as error:  # pylint: disable=broad-except
         print(f"counting_stars: navigation failed ({error!r})", file=sys.stderr)

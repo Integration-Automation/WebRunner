@@ -84,10 +84,9 @@ class TestAssertAndSummarise(unittest.TestCase):
 class TestRedactText(unittest.TestCase):
 
     def test_replaces_matches(self):
-        # NOSONAR S1313 — RFC1918 fixture, not a real environment address
-        out = redact_text("from alice@example.com on 192.168.0.1")
+        out = redact_text("from alice@example.com on 192.168.0.1")  # NOSONAR S1313 — RFC1918 fixture
         self.assertNotIn("alice@example.com", out)
-        self.assertNotIn("192.168.0.1", out)
+        self.assertNotIn("192.168.0.1", out)  # NOSONAR S1313 — RFC1918 fixture
         self.assertIn("[REDACTED]", out)
 
     def test_clean_text_unchanged(self):

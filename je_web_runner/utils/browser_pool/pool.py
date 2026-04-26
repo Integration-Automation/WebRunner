@@ -90,27 +90,28 @@ class BrowserPool:
             raise BrowserPoolError("pool is closed")
         deadline = time.monotonic() + timeout
         while True:
-            try:
-                session = self._available.get_nowait()
-            except Empty:
-                if self._can_grow():
-                    session = self._spawn()
-                else:
-                    remaining = deadline - time.monotonic()
-                    if remaining <= 0:
-                        raise BrowserPoolError(
-                            f"no session available within {timeout}s"
-                        )
-                    try:
-                        session = self._available.get(timeout=remaining)
-                    except Empty:
-                        raise BrowserPoolError(
-                            f"no session available within {timeout}s"
-                        ) from None
+            session = self._acquire_session(timeout, deadline)
             if not self._is_healthy(session):
                 self._destroy(session)
                 continue
             return session
+
+    def _acquire_session(self, timeout: float, deadline: float) -> PooledSession:
+        try:
+            return self._available.get_nowait()
+        except Empty:
+            pass
+        if self._can_grow():
+            return self._spawn()
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise BrowserPoolError(f"no session available within {timeout}s")
+        try:
+            return self._available.get(timeout=remaining)
+        except Empty:
+            raise BrowserPoolError(
+                f"no session available within {timeout}s"
+            ) from None
 
     def checkin(self, session: PooledSession) -> None:
         if self._closed:

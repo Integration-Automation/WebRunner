@@ -96,15 +96,7 @@ def run_fan_out(
     """
     if not tasks:
         raise FanOutError("tasks must be non-empty")
-    parsed: List[tuple] = []
-    for index, entry in enumerate(tasks):
-        if callable(entry):
-            parsed.append((f"task-{index}", entry))
-            continue
-        if isinstance(entry, tuple) and len(entry) == 2 and callable(entry[1]):
-            parsed.append((str(entry[0]), entry[1]))
-            continue
-        raise FanOutError(f"tasks[{index}] must be callable or (name, callable)")
+    parsed = _parse_tasks(tasks)
     workers = max_workers or min(len(parsed), 8)
     result = FanOutResult()
     with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -112,20 +104,37 @@ def run_fan_out(
             pool.submit(_timed_run, name, fn): name
             for name, fn in parsed
         }
-        try:
-            for future in as_completed(future_to_name, timeout=timeout):
-                outcome = future.result()
-                result.outcomes.append(outcome)
-                if fail_fast and not outcome.succeeded:
-                    for pending in future_to_name:
-                        pending.cancel()
-                    break
-        except TimeoutError as error:
-            raise FanOutError(f"fan-out timed out after {timeout}s") from error
+        _collect_results(future_to_name, result, timeout, fail_fast)
     web_runner_logger.info(
         f"fanout completed n={len(result.outcomes)} ok={result.succeeded}"
     )
     return result
+
+
+def _parse_tasks(tasks: Sequence[Any]) -> List[tuple]:
+    parsed: List[tuple] = []
+    for index, entry in enumerate(tasks):
+        if callable(entry):
+            parsed.append((f"task-{index}", entry))
+        elif isinstance(entry, tuple) and len(entry) == 2 and callable(entry[1]):
+            parsed.append((str(entry[0]), entry[1]))
+        else:
+            raise FanOutError(f"tasks[{index}] must be callable or (name, callable)")
+    return parsed
+
+
+def _collect_results(future_to_name: Dict[Any, str], result: FanOutResult,
+                     timeout: Optional[float], fail_fast: bool) -> None:
+    try:
+        for future in as_completed(future_to_name, timeout=timeout):
+            outcome = future.result()
+            result.outcomes.append(outcome)
+            if fail_fast and not outcome.succeeded:
+                for pending in future_to_name:
+                    pending.cancel()
+                break
+    except TimeoutError as error:
+        raise FanOutError(f"fan-out timed out after {timeout}s") from error
 
 
 def _timed_run(name: str, fn: _Task) -> _TaskOutcome:

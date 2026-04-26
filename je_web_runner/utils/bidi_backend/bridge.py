@@ -184,10 +184,11 @@ class BidiBridge:
         self._subscriptions.pop(subscription.subscription_id, None)
 
     def unsubscribe_all(self) -> None:
-        # NOSONAR S7504 — the list() snapshot is required because
-        # ``self.unsubscribe`` mutates ``self._subscriptions`` during the
-        # iteration, which would raise RuntimeError otherwise.
-        for sub in list(self._subscriptions.values()):
+        # The list() snapshot is required because ``self.unsubscribe``
+        # mutates ``self._subscriptions`` during iteration, which would
+        # raise ``RuntimeError`` if iterated lazily.
+        snapshot = list(self._subscriptions.values())  # NOSONAR S7504 — see comment above
+        for sub in snapshot:
             self.unsubscribe(sub)
 
     def active_subscriptions(self) -> List[BidiSubscription]:
