@@ -115,9 +115,7 @@ def _build_insert(table: str, columns: List[str], quote: str) -> str:
     placeholder = ", ".join(f":{col}" for col in columns)
     column_text = ", ".join(f"{quote}{col}{quote}" for col in columns)
     # nosemgrep: python_sql_rule-hardcoded-sql-expression
-    return (  # nosec B608 — identifiers validated by _safe_identifier
-        f"INSERT INTO {quote}{table}{quote} ({column_text}) VALUES ({placeholder})"
-    )
+    return f"INSERT INTO {quote}{table}{quote} ({column_text}) VALUES ({placeholder})"  # nosec B608 — identifiers validated by _safe_identifier
 
 
 def _build_delete(table: str, quote: str) -> str:
