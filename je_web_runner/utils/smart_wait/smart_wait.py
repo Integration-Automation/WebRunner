@@ -56,20 +56,19 @@ _INSTALL_HISTORY_HOOK = """
 
 def install_hooks(driver: Any) -> None:
     """Inject the fetch + history hooks; idempotent."""
-    if hasattr(driver, "execute_script"):
-        driver.execute_script(_INSTALL_FETCH_HOOK)
-        driver.execute_script(_INSTALL_HISTORY_HOOK)
-    elif hasattr(driver, "evaluate"):  # Playwright page
-        driver.evaluate(_INSTALL_FETCH_HOOK)
-        driver.evaluate(_INSTALL_HISTORY_HOOK)
-    else:
-        raise SmartWaitError("driver has neither execute_script nor evaluate")
+    from je_web_runner.utils.driver_dispatch import (
+        DriverDispatchError, run_script,
+    )
+    try:
+        run_script(driver, _INSTALL_FETCH_HOOK)
+        run_script(driver, _INSTALL_HISTORY_HOOK)
+    except DriverDispatchError as error:
+        raise SmartWaitError(str(error)) from error
 
 
 def _read_int(driver: Any, expression: str) -> int:
-    if hasattr(driver, "execute_script"):
-        return int(driver.execute_script(f"return {expression};"))
-    return int(driver.evaluate(f"() => {expression}"))
+    from je_web_runner.utils.driver_dispatch import evaluate_expression
+    return int(evaluate_expression(driver, expression))
 
 
 def wait_until(

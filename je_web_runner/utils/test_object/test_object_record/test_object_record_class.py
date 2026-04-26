@@ -10,6 +10,9 @@ class TestObjectRecord(object):
     Test object record manager
     """
 
+    # Domain class — not a pytest test container.
+    __test__ = False
+
     def __init__(self):
         # 用來儲存測試物件的字典
         # Dictionary to store test objects

@@ -17,6 +17,9 @@ from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 class TestcontainersError(WebRunnerException):
     """Raised when testcontainers is missing or a container fails to start."""
 
+    # Exception class — not a pytest test container.
+    __test__ = False
+
 
 _started: List[Any] = []
 

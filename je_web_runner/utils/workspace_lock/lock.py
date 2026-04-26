@@ -61,10 +61,15 @@ def _python_runtime_version() -> str:
     return f"{info.major}.{info.minor}.{info.micro}"
 
 
-def _python_distributions(allow_distributions: Optional[Iterable[str]] = None) -> List[LockEntry]:
-    entries: List[LockEntry] = []
-    seen: set = set()
-    allow = set(allow_distributions) if allow_distributions else None
+_DISTRIBUTION_CACHE: Optional[List[tuple]] = None
+
+
+def _scan_distributions() -> List[tuple]:
+    """Walk ``importlib.metadata`` once and cache the (name, version) tuples."""
+    global _DISTRIBUTION_CACHE
+    if _DISTRIBUTION_CACHE is not None:
+        return _DISTRIBUTION_CACHE
+    scanned: List[tuple] = []
     for dist in importlib_metadata.distributions():
         try:
             name = dist.metadata.get("Name") or ""
@@ -73,6 +78,22 @@ def _python_distributions(allow_distributions: Optional[Iterable[str]] = None) -
             continue
         if not name or not version:
             continue
+        scanned.append((name, version))
+    _DISTRIBUTION_CACHE = scanned
+    return scanned
+
+
+def reset_distribution_cache() -> None:
+    """Clear the cached distribution list (useful in tests / venv reloads)."""
+    global _DISTRIBUTION_CACHE
+    _DISTRIBUTION_CACHE = None
+
+
+def _python_distributions(allow_distributions: Optional[Iterable[str]] = None) -> List[LockEntry]:
+    entries: List[LockEntry] = []
+    seen: set = set()
+    allow = set(allow_distributions) if allow_distributions else None
+    for name, version in _scan_distributions():
         normalised = name.lower().replace("_", "-")
         if normalised in seen:
             continue

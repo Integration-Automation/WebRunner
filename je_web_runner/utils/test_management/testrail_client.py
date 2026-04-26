@@ -16,6 +16,9 @@ from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 class TestRailError(WebRunnerException):
     """Raised when a TestRail API call fails."""
 
+    # Exception class — not a pytest test container.
+    __test__ = False
+
 
 _DEFAULT_TIMEOUT = 30
 _PASSED, _FAILED = 1, 5  # TestRail status_id values

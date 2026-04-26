@@ -60,20 +60,22 @@ class CspViolationCollector:
         self._violations: List[CspViolation] = []
 
     def install(self, driver: Any) -> None:
-        if hasattr(driver, "execute_script"):
-            driver.execute_script(_INSTALL_LISTENER)
-        elif hasattr(driver, "evaluate"):
-            driver.evaluate(_INSTALL_LISTENER)
-        else:
-            raise CspReporterError("driver has neither execute_script nor evaluate")
+        from je_web_runner.utils.driver_dispatch import (
+            DriverDispatchError, run_script,
+        )
+        try:
+            run_script(driver, _INSTALL_LISTENER)
+        except DriverDispatchError as error:
+            raise CspReporterError(str(error)) from error
 
     def collect(self, driver: Any) -> List[CspViolation]:
-        if hasattr(driver, "execute_script"):
-            payload = driver.execute_script(f"return {_READ_VIOLATIONS};")
-        elif hasattr(driver, "evaluate"):
-            payload = driver.evaluate(f"() => {_READ_VIOLATIONS}")
-        else:
-            raise CspReporterError("driver has neither execute_script nor evaluate")
+        from je_web_runner.utils.driver_dispatch import (
+            DriverDispatchError, evaluate_expression,
+        )
+        try:
+            payload = evaluate_expression(driver, _READ_VIOLATIONS)
+        except DriverDispatchError as error:
+            raise CspReporterError(str(error)) from error
         if not isinstance(payload, str):
             raise CspReporterError(f"unexpected payload type: {type(payload).__name__}")
         try:

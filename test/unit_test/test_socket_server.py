@@ -11,7 +11,8 @@ from je_web_runner.utils.socket_server.web_runner_socket_server import (
 
 def _start_server(auth_token=None):  # nosec B106 — caller passes a fixture token
     server = TCPServer(("127.0.0.1", 0), TCPServerHandler, auth_token=auth_token)
-    thread = threading.Thread(target=server.serve_forever)
+    # Tight poll_interval so ``shutdown()`` returns quickly inside tests.
+    thread = threading.Thread(target=server.serve_forever, kwargs={"poll_interval": 0.02})
     thread.daemon = True
     thread.start()
     return server, thread
@@ -36,10 +37,7 @@ class TestSocketServerAuth(unittest.TestCase):
             host, port = server.server_address
             with socket.create_connection((host, port)) as client:
                 client.sendall(b"quit_server")
-            for _ in range(20):
-                if server.close_flag:
-                    break
-                time.sleep(0.05)
+            self.assertTrue(server.close_event.wait(timeout=2.0))
             self.assertTrue(server.close_flag)
         finally:
             try:
@@ -79,10 +77,7 @@ class TestSocketServerAuth(unittest.TestCase):
             host, port = server.server_address
             with socket.create_connection((host, port)) as client:
                 client.sendall(b"secret\nquit_server")
-            for _ in range(20):
-                if server.close_flag:
-                    break
-                time.sleep(0.05)
+            self.assertTrue(server.close_event.wait(timeout=2.0))
             self.assertTrue(server.close_flag)
         finally:
             try:

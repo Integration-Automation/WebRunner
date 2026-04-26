@@ -30,16 +30,17 @@ def sample_used_heap(driver: Any) -> int:
     讀取 ``performance.memory.usedJSHeapSize``
     Selenium / Playwright friendly heap-size probe. Returns bytes.
     """
+    from je_web_runner.utils.driver_dispatch import (
+        DriverDispatchError, evaluate_expression,
+    )
     expression = (
         "(window.performance && window.performance.memory) "
         "? window.performance.memory.usedJSHeapSize : -1"
     )
-    if hasattr(driver, "execute_script"):
-        value = driver.execute_script(f"return {expression};")
-    elif hasattr(driver, "evaluate"):
-        value = driver.evaluate(f"() => {expression}")
-    else:
-        raise MemoryLeakError("driver has neither execute_script nor evaluate")
+    try:
+        value = evaluate_expression(driver, expression)
+    except DriverDispatchError as error:
+        raise MemoryLeakError(str(error)) from error
     if not isinstance(value, (int, float)) or value < 0:
         raise MemoryLeakError("driver does not expose performance.memory")
     return int(value)
