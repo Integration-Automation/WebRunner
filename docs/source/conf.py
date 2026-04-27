@@ -28,6 +28,10 @@ extensions = [
 
 # Autosummary writes per-module reference pages on every build.
 autosummary_generate = True
+# autosectionlabel collides on common section titles (Overview, Methods,
+# Parameters, plus repeated CJK headings). Prefix every label with the
+# document path so duplicates become unique.
+autosectionlabel_prefix_document = True
 autodoc_default_options = {
     "members": True,
     "undoc-members": False,

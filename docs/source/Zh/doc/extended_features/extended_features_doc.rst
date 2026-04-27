@@ -94,7 +94,7 @@ Appium（行動）
 * HTML — 單一 ``<base>.html``
 * JSON — 拆分 ``<base>_success.json`` + ``<base>_failure.json``
 * XML — 拆分 ``<base>_success.xml`` + ``<base>_failure.xml``
-* JUnit XML — 單一 ``<base>_junit.xml``（CI 原生）
+* JUnit XML — 單一 ``<base>_junit.xml``\ （CI 原生）
 * Allure — 目錄含多個 ``<uuid>-result.json``
 
 ``generate_all_reports(base, allure_dir=None)`` 一次跑完所有 generator 並
