@@ -50,6 +50,10 @@ autodoc_mock_imports = [
     "opentelemetry",
     "axe_selenium_python",
     "testcontainers",
+    "webdriver_manager",
+    "requests",
+    "dotenv",
+    "defusedxml",
 ]
 
 # sphinxcontrib-mermaid renders the ``.. mermaid::`` directive used in
