@@ -128,7 +128,7 @@ def wait_for_spa_route_stable(
 ) -> None:
     """
     等到 ``history.pushState`` / ``replaceState`` / ``popstate``
-    Wait until no history mutation has fired for at least ``quiet_for``s.
+    Wait until no history mutation has fired for at least ``quiet_for``\\ s.
     """
     install_hooks(driver)
     deadline = time.monotonic() + timeout

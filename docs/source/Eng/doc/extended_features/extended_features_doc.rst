@@ -280,8 +280,8 @@ Reliability helpers
 * ``throttler.throttle("payments-api")`` — file-semaphore for cross-shard
   concurrency limits.
 
-Observability
-=============
+Observability tooling
+=====================
 
 * ``observability.timeline.build(spans=, console=, responses=)`` —
   merges three event sources into a chronological list.
