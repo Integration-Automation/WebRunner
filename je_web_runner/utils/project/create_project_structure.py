@@ -58,7 +58,7 @@ def create_template(parent_name: str, project_path: str = None) -> None:
 
     # 建立 executor Python 檔案
     # Create executor Python files
-    if executor_dir_path.exists() and keyword_dir_path.is_dir():
+    if executor_dir_path.exists() and executor_dir_path.is_dir():
         lock.acquire()
         try:
             with open(project_root + EXECUTOR_DIR + "/executor_one_file.py", "w+") as file:

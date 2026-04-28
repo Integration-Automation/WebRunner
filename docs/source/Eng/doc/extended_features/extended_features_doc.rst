@@ -19,8 +19,12 @@ A JSON Schema describing the action JSON format is exported alongside it:
 
 The detailed feature documentation is split across these subtopic pages:
 
+The chapters below own these subtopics in the main TOC; this hidden
+toctree only keeps the cross-references resolvable for older guides
+that link in via ``extended_features``.
+
 .. toctree::
-   :maxdepth: 2
+   :hidden:
 
    ../architecture/architecture_doc.rst
    ../backends/backends_doc.rst
