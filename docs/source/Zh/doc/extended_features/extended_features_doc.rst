@@ -14,10 +14,12 @@ WebRunner 除了原本的 Selenium 包裝，現已附帶 Playwright backend、JS
 
     docs/reference/webrunner-action-schema.json
 
-詳細功能文件已拆分成下列子主題頁：
+詳細功能文件已拆分成下列子主題頁，並在主目錄中歸入對應章節；
+此處僅以隱藏 toctree 保留交互參照，方便舊版指南仍能透過
+``extended_features`` 連到內頁。
 
 .. toctree::
-   :maxdepth: 2
+   :hidden:
 
    ../architecture/architecture_doc.rst
    ../backends/backends_doc.rst
