@@ -69,7 +69,9 @@ def _query_page_ws_url(debugger_address: str) -> str:
     # the ``--remote-debugging-port``, is HTTP-only by browser design, and
     # binds to localhost. Forcing https here would simply fail to connect.
     url = f"http://{debugger_address}/json"  # NOSONAR python:S5332 — DevTools endpoint is HTTP-only by design
-    with urllib.request.urlopen(url, timeout=5) as response:  # noqa: S310 — local devtools endpoint
+    # Bandit B310: scheme is fixed-literal ``http://`` above, not user-controlled — only
+    # ``debugger_address`` (host:port) varies, so no file:// or custom-scheme risk.
+    with urllib.request.urlopen(url, timeout=5) as response:  # nosec B310  # noqa: S310 — local devtools endpoint
         targets = json.loads(response.read())
     pages = [t for t in targets if t.get("type") == "page"]
     if not pages:
@@ -186,8 +188,8 @@ class CDPEventListener:
         if ws is not None:
             try:
                 ws.close()
-            except Exception:  # noqa: BLE001 — best-effort
-                pass
+            except Exception as error:  # noqa: BLE001 — best-effort cleanup
+                web_runner_logger.debug(f"CDPEventListener ws.close failed: {error!r}")
         thread = self._thread
         self._thread = None
         if thread is not None and thread.is_alive():

@@ -158,8 +158,11 @@ class _NavigationMixin:
             if original is not None:
                 try:
                     self.current_webdriver.switch_to.window(original)
-                except Exception:  # noqa: BLE001 — best-effort restore
-                    pass
+                except Exception as restore_error:  # noqa: BLE001 — best-effort restore
+                    web_runner_logger.debug(
+                        f"WebDriverWrapper _switch_to_window_by_attr restore failed: "
+                        f"{repr(restore_error)}"
+                    )
             return False
 
     # page / window metadata
