@@ -1,3 +1,16 @@
+"""
+WebDriverWrapper：以 mixin 組合的 Selenium 包裝器入口。
+WebDriverWrapper: Selenium wrapper assembled from theme-specific mixins.
+
+各主題方法分散在 ``_wrapper_mixins/`` 下，本檔保留：
+This file keeps only:
+
+* 瀏覽器 / Options / webdriver_manager 對應表 (測試會 ``patch.dict`` 這幾個名稱)
+  Browser / Options / webdriver_manager dicts (test code ``patch.dict``s these)
+* ``WebDriverWrapper`` 類別本體 (__init__ + 生命週期 + 元素 + 等待 + quit)
+  The ``WebDriverWrapper`` class itself (lifecycle + element finding + waits + quit)
+* ``webdriver_wrapper_instance`` 全域單例 / module-level singleton
+"""
 from __future__ import annotations
 
 import typing
@@ -5,7 +18,6 @@ from pathlib import Path
 from typing import List, Union
 
 from selenium import webdriver
-from selenium.common import NoAlertPresentException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from selenium.webdriver.chromium.options import ArgOptions as ChromiumOptions
@@ -30,6 +42,13 @@ from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.webdriver._wrapper_mixins import (
+    _ActionsMixin,
+    _CookieMixin,
+    _MediaMixin,
+    _NavigationMixin,
+    _ScriptingMixin,
+)
 from je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_capability_wrapper
 
 # 瀏覽器名稱對應到 WebDriver 類別
@@ -65,10 +84,29 @@ _options_dict = {
 }
 
 
-class WebDriverWrapper(object):
+class WebDriverWrapper(
+    _ScriptingMixin,
+    _NavigationMixin,
+    _CookieMixin,
+    _ActionsMixin,
+    _MediaMixin,
+):
     """
     WebDriver 包裝器
-    WebDriver wrapper to manage browser drivers and options
+    WebDriver wrapper to manage browser drivers and options.
+
+    Mixin 組成 / Mixin composition::
+
+        _ScriptingMixin   — execute / execute_script / execute_cdp_cmd /
+                            BiDi listener / Fetch 攔截 (放最前以提供 execute_cdp_cmd
+                            給其他 mixin 使用)
+        _NavigationMixin  — to_url / forward / back / scroll / switch / window
+        _CookieMixin      — cookies + clear_origin_storage
+        _ActionsMixin     — ActionChains 全集
+        _MediaMixin       — 截圖 / PDF 列印 / get_log
+
+    本類別本身保留：driver 生命週期、元素查找、等待、check / quit。
+    This class itself keeps: driver lifecycle, element finding, waits, check / quit.
     """
 
     def __init__(self):
@@ -81,6 +119,9 @@ class WebDriverWrapper(object):
             webdriver_name: str,
             webdriver_manager_option_dict: dict = None,
             options: List[str] = None,
+            experimental_options: dict = None,
+            extension_paths: List[str] = None,
+            enable_bidi: bool = False,
             **kwargs
     ) -> Union[
         webdriver.Chrome,
@@ -99,6 +140,26 @@ class WebDriverWrapper(object):
                                               Extra options for webdriver_manager (currently unused)
         :param options: 瀏覽器啟動參數 (例如 ["--headless", "--disable-gpu"])
                         Browser startup arguments
+        :param experimental_options: Chromium 系瀏覽器專屬實驗性參數 (Chrome / Chromium / Edge)，
+                                     會逐項經由 ``add_experimental_option`` 傳入。例如
+                                     ``{"excludeSwitches": ["enable-automation"],
+                                     "useAutomationExtension": False,
+                                     "prefs": {"download.default_directory": "/tmp"}}``。
+                                     非 Chromium 系瀏覽器若傳入會拋出例外。
+                                     Browser-specific experimental options for Chromium-family
+                                     browsers (Chrome / Chromium / Edge), each forwarded via
+                                     ``add_experimental_option``. Raises on non-Chromium browsers.
+        :param extension_paths: 要載入的瀏覽器擴充功能檔案路徑 (.crx)。會逐一呼叫
+                                ``Options.add_extension(path)``。僅 Chromium 系與 Firefox 支援；
+                                其他瀏覽器若傳入會拋出例外。
+                                List of browser extension file paths (.crx) to load via
+                                ``Options.add_extension(path)``. Chromium-family and Firefox only.
+        :param enable_bidi: 啟用 W3C WebDriver BiDi (``webSocketUrl=True`` capability)，
+                            供 ``add_console_listener`` / ``add_js_error_listener`` 等 BiDi
+                            事件 API 使用。需 Selenium 4.16+。
+                            Enable W3C WebDriver BiDi (``webSocketUrl=True`` capability) so
+                            ``add_console_listener`` / ``add_js_error_listener`` work.
+                            Requires Selenium 4.16+.
         :param kwargs: 額外傳給 WebDriver 的參數
                        Extra kwargs passed to WebDriver
         :return: 啟動後的 WebDriver 實例
@@ -123,12 +184,37 @@ class WebDriverWrapper(object):
             webdriver_install_manager = _webdriver_manager_dict.get(webdriver_name)
             webdriver_install_manager().install()
 
-            # 如果有傳入 options，則建立對應的 Options 並加入參數
-            if options and len(options) > 0:
-                driver_options = _options_dict.get(webdriver_name)()
-                if driver_options:
-                    for option in options:
-                        driver_options.add_argument(argument=option)
+            # 如果有任一 option-like 參數，則建立對應的 Options 一次傳入
+            # If any option-like arg provided, build a single Options object
+            has_options = bool(options)
+            has_experimental = bool(experimental_options)
+            has_extensions = bool(extension_paths)
+            if has_options or has_experimental or has_extensions or enable_bidi:
+                options_cls = _options_dict.get(webdriver_name)
+                driver_options = options_cls() if options_cls else None
+                if driver_options is None:
+                    self.current_webdriver = webdriver_value(**kwargs)
+                else:
+                    if has_options:
+                        for option in options:
+                            driver_options.add_argument(argument=option)
+                    if has_experimental:
+                        if not hasattr(driver_options, "add_experimental_option"):
+                            raise WebRunnerException(
+                                f"{webdriver_name!r} options do not support experimental_options "
+                                f"(Chromium-family browsers only)"
+                            )
+                        for exp_key, exp_value in experimental_options.items():
+                            driver_options.add_experimental_option(exp_key, exp_value)
+                    if has_extensions:
+                        if not hasattr(driver_options, "add_extension"):
+                            raise WebRunnerException(
+                                f"{webdriver_name!r} options do not support add_extension"
+                            )
+                        for ext_path in extension_paths:
+                            driver_options.add_extension(ext_path)
+                    if enable_bidi:
+                        driver_options.set_capability("webSocketUrl", True)
                     self.current_webdriver = webdriver_value(options=driver_options, **kwargs)
             else:
                 self.current_webdriver = webdriver_value(**kwargs)
@@ -173,6 +259,46 @@ class WebDriverWrapper(object):
             )
             record_action_to_list("webdriver wrapper set_webdriver_options_capability", param, error)
             raise WebRunnerException
+
+    def attach_to_existing_browser(
+            self,
+            debugger_address: str,
+            webdriver_name: str = "chrome",
+            options: List[str] = None,
+            experimental_options: dict = None,
+            **kwargs,
+    ):
+        """
+        附加到一個已啟動且開啟 remote debugging 埠的 Chrome / Edge 實例。
+        Attach to an already-running Chrome / Edge that was started with
+        ``--remote-debugging-port``.
+
+        典型用法（使用者先手動啟動 Chrome）::
+
+            chrome.exe --remote-debugging-port=9222 --user-data-dir="C:/temp/profile"
+
+        然後在腳本中::
+
+            webdriver_wrapper_instance.attach_to_existing_browser("127.0.0.1:9222")
+
+        :param debugger_address: ``host:port``，例如 ``"127.0.0.1:9222"``
+        :param webdriver_name: 預設 ``"chrome"``，亦可為 ``"edge"`` / ``"chromium"``
+        :param options: 額外 CLI 啟動參數 (一般 attach 場景不需要)
+        :param experimental_options: 其他要合併的實驗性參數
+        :return: 已連接的 WebDriver 實例 / attached WebDriver instance
+        """
+        web_runner_logger.info(
+            f"WebDriverWrapper attach_to_existing_browser, debugger_address: {debugger_address}, "
+            f"webdriver_name: {webdriver_name}"
+        )
+        merged_exp = dict(experimental_options or {})
+        merged_exp["debuggerAddress"] = debugger_address
+        return self.set_driver(
+            webdriver_name,
+            options=options,
+            experimental_options=merged_exp,
+            **kwargs,
+        )
 
     # web element
     def find_element(self, test_object: TestObject) -> WebElement | None:
@@ -330,91 +456,6 @@ class WebDriverWrapper(object):
             )
             record_action_to_list("webdriver wrapper explict_wait", param, error)
 
-    # webdriver url redirect
-    def to_url(self, url: str) -> None:
-        """
-        導航到指定 URL
-        Navigate to a given URL
-        """
-        web_runner_logger.info(f"WebDriverWrapper to_url, url: {url}")
-        param = locals()
-        try:
-            self.current_webdriver.get(url)
-            record_action_to_list("webdriver wrapper to_url", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper to_url failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper to_url", param, error)
-
-    def forward(self) -> None:
-        """前進到下一頁 / Navigate forward"""
-        web_runner_logger.info("WebDriverWrapper forward")
-        try:
-            self.current_webdriver.forward()
-            record_action_to_list("webdriver wrapper forward", None, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper forward failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper forward", None, error)
-
-    def back(self) -> None:
-        """返回上一頁 / Navigate back"""
-        web_runner_logger.info("WebDriverWrapper back")
-        try:
-            self.current_webdriver.back()
-            record_action_to_list("webdriver wrapper back", None, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper back failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper back", None, error)
-
-    def refresh(self) -> None:
-        """重新整理頁面 / Refresh current page"""
-        web_runner_logger.info("WebDriverWrapper refresh")
-        try:
-            self.current_webdriver.refresh()
-            record_action_to_list("webdriver wrapper refresh", None, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper refresh failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper refresh", None, error)
-
-    # webdriver new page
-    def switch(self, switch_type: str, switch_target_name: str = None):
-        """
-        切換 WebDriver 的上下文 (frame, window, alert...)
-        Switch WebDriver context (frame, window, alert...)
-
-        :param switch_type: [active_element, default_content, frame, parent_frame, window, alert]
-        :param switch_target_name: 目標名稱 (frame 名稱或 window handle)
-        :return: 切換後的目標物件 / switched target
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper switch, switch_type: {switch_type}, switch_target_name: {switch_target_name}"
-        )
-        param = locals()
-        try:
-            switch_type = switch_type.lower()
-            switch_type_dict = {
-                "active_element": self.current_webdriver.switch_to.active_element,
-                "default_content": self.current_webdriver.switch_to.default_content,
-                "frame": self.current_webdriver.switch_to.frame,
-                "parent_frame": self.current_webdriver.switch_to.parent_frame,
-                "window": self.current_webdriver.switch_to.window,
-            }
-            try:
-                switch_type_dict.update({"alert": self.current_webdriver.switch_to.alert})
-            except NoAlertPresentException as error:
-                switch_type_dict.update({"alert": None})
-                web_runner_logger.error(f"WebDriverWrapper switch alert failed: {repr(error)}")
-
-            record_action_to_list("webdriver wrapper switch", param, None)
-            if switch_type in ["active_element", "alert"]:
-                return switch_type_dict.get(switch_type)
-            elif switch_type in ["default_content", "parent_frame"]:
-                return switch_type_dict.get(switch_type)()
-            else:
-                return switch_type_dict.get(switch_type)(switch_target_name)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper switch failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper switch", param, error)
-
     # timeout
     def set_script_timeout(self, time_to_wait: int) -> None:
         """設定 script 最大執行時間 / Set max script execution time"""
@@ -437,985 +478,6 @@ class WebDriverWrapper(object):
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper set_page_load_timeout failed: {repr(error)}")
             record_action_to_list("webdriver wrapper set_page_load_timeout", param, error)
-
-    # cookie
-    def get_cookies(self) -> list[dict] | None:
-        """
-        取得當前頁面的所有 cookies
-        Get all cookies from the current page
-
-        :return: cookies 清單，每個 cookie 是 dict
-                 list of cookies, each cookie is a dict
-        """
-        web_runner_logger.info("WebDriverWrapper get_cookies")
-        try:
-            record_action_to_list("webdriver wrapper get_cookies", None, None)
-            return self.current_webdriver.get_cookies()
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_cookies, failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper get_cookies", None, error)
-
-    def get_cookie(self, name: str) -> dict | None:
-        """
-        取得指定名稱的 cookie
-        Get a cookie by name
-
-        :param name: cookie 名稱 / cookie name
-        :return: cookie dict
-        """
-        web_runner_logger.info(f"WebDriverWrapper get_cookie, name: {name}")
-        param = locals()
-        try:
-            record_action_to_list("webdriver wrapper get_cookie", param, None)
-            return self.current_webdriver.get_cookie(name)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_cookie, name: {name}, failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper get_cookie", param, error)
-
-    def add_cookie(self, cookie_dict: dict) -> None:
-        """
-        新增 cookie 到當前頁面
-        Add a cookie to the current page
-
-        :param cookie_dict: cookie dict，例如 {"name": "session", "value": "12345"}
-        """
-        web_runner_logger.info(f"WebDriverWrapper add_cookie, cookie_dict: {cookie_dict}")
-        param = locals()
-        try:
-            self.current_webdriver.add_cookie(cookie_dict)
-            record_action_to_list("webdriver wrapper add_cookie", param, None)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper add_cookie, cookie_dict: {cookie_dict}, failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper add_cookie", param, error)
-
-    def delete_cookie(self, name: str) -> None:
-        """
-        刪除指定名稱的 cookie
-        Delete a cookie by name
-
-        :param name: cookie 名稱 / cookie name
-        """
-        web_runner_logger.info(f"WebDriverWrapper delete_cookie, name: {name}")
-        param = locals()
-        try:
-            self.current_webdriver.delete_cookie(name)
-            record_action_to_list("webdriver wrapper delete_cookie", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper delete_cookie, name: {name}, failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper delete_cookie", param, error)
-
-    def delete_all_cookies(self) -> None:
-        """
-        刪除當前頁面的所有 cookies
-        Delete all cookies from the current page
-        """
-        web_runner_logger.info("WebDriverWrapper delete_all_cookies")
-        try:
-            self.current_webdriver.delete_all_cookies()
-            record_action_to_list("webdriver wrapper delete_all_cookies", None, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper delete_all_cookies, failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper delete_all_cookies", None, error)
-
-    # exec selenium command
-    def execute(self, driver_command: str, params: dict = None) -> dict | None:
-        """
-        執行 Selenium WebDriver 的底層命令
-        Execute a raw WebDriver command
-
-        :param driver_command: WebDriver 指令名稱 / WebDriver command name
-        :param params: 指令參數 / command parameters
-        :return: 執行結果 (dict) / execution result as dict
-        """
-        web_runner_logger.info(f"WebDriverWrapper execute, driver_command: {driver_command}, params: {params}")
-        param = locals()
-        try:
-            record_action_to_list("webdriver wrapper execute", param, None)
-            return self.current_webdriver.execute(driver_command, params)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper execute, driver_command: {driver_command}, params: {params}, failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper execute", param, error)
-
-    def execute_script(self, script: str, *args):
-        """
-        在當前頁面執行 JavaScript，回傳 JS 的回傳值。
-        Execute JavaScript on the current page and return the result.
-
-        :param script: JavaScript 程式碼 / JavaScript code
-        :param args: 傳入 JS 的參數 / arguments passed to JS
-        :return: JS 回傳值（dict / list / 字面值 / None）
-                 The value returned by the script (dict / list / literal / None)
-        """
-        web_runner_logger.info(f"WebDriverWrapper execute_script, script: {script}")
-        param = locals()
-        try:
-            value = self.current_webdriver.execute_script(script, *args)
-            record_action_to_list("webdriver wrapper execute_script", param, None)
-            return value
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper execute_script, script: {script}, failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper execute_script", param, error)
-            return None
-
-    def execute_async_script(self, script: str, *args):
-        """
-        執行非同步 JavaScript
-        Execute asynchronous JavaScript
-
-        :param script: 要執行的 JS 程式碼 / JavaScript code to execute
-        :param args: 傳入 JS 的參數 / arguments passed to JS
-        :return: JS 執行結果 (非同步回傳) / result of async JS execution
-        """
-        web_runner_logger.info(f"WebDriverWrapper execute_async_script, script: {script}")
-        param = locals()
-        try:
-            result = self.current_webdriver.execute_async_script(script, *args)
-            record_action_to_list("webdriver wrapper execute_async_script", param, None)
-            return result
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper execute_async_script, script: {script}, failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper execute_async_script", param, error)
-
-    # ActionChains
-    def move_to_element(self, target_element: WebElement) -> None:
-        """
-        將滑鼠移動到指定元素
-        Move mouse to target web element
-
-        :param target_element: 目標 WebElement / target web element
-        """
-        web_runner_logger.info(f"WebDriverWrapper move_to_element, target_element: {target_element}")
-        param = locals()
-        try:
-            self._action_chain.move_to_element(target_element)
-            record_action_to_list("webdriver wrapper move_to_element", param, None)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper move_to_element, target_element: {target_element}, failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper move_to_element", param, error)
-
-    def move_to_element_with_test_object(self, element_name: str):
-        """
-        使用 TestObjectRecord 中的元素名稱，將滑鼠移動到指定元素
-        Move mouse to target element using TestObjectRecord
-
-        :param element_name: 測試物件名稱 / test object name
-        """
-        web_runner_logger.info(f"WebDriverWrapper move_to_element_with_test_object, element_name: {element_name}")
-        param = locals()
-        try:
-            record = test_object_record.test_object_record_dict.get(element_name)
-            if record is None:
-                raise WebRunnerException(f"TestObject '{element_name}' not found")
-            element = self.current_webdriver.find_element(record.test_object_type, record.test_object_name)
-            self._action_chain.move_to_element(element)
-            record_action_to_list("webdriver wrapper move_to_element_with_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper move_to_element_with_test_object, element_name: {element_name}, failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper move_to_element_with_test_object", param, error)
-
-    def move_to_element_with_offset(self, target_element: WebElement, offset_x: int, offset_y: int) -> None:
-        """
-        將滑鼠移動到指定元素，並加上偏移量
-        Move mouse to target element with offset
-
-        :param target_element: 目標 WebElement / target web element
-        :param offset_x: X 軸偏移量 / offset on X axis
-        :param offset_y: Y 軸偏移量 / offset on Y axis
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper move_to_element_with_offset, target_element: {target_element}, "
-            f"offset_x: {offset_x}, offset_y: {offset_y}"
-        )
-        param = locals()
-        try:
-            self._action_chain.move_to_element_with_offset(target_element, offset_x, offset_y)
-            record_action_to_list("webdriver wrapper move_to_element_with_offset", param, None)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper move_to_element_with_offset failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper move_to_element_with_offset", param, error)
-
-    def move_to_element_with_offset_and_test_object(self, element_name: str, offset_x: int, offset_y: int) -> None:
-        """
-        使用 TestObjectRecord 中的元素名稱，將滑鼠移動到指定元素並加上偏移量
-        Move mouse to target element with offset using TestObjectRecord
-
-        :param element_name: 測試物件名稱 / test object name
-        :param offset_x: X 軸偏移量 / offset on X axis
-        :param offset_y: Y 軸偏移量 / offset on Y axis
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper move_to_element_with_offset_and_test_object, element_name: {element_name}, "
-            f"offset_x: {offset_x}, offset_y: {offset_y}"
-        )
-        param = locals()
-        try:
-            record = test_object_record.test_object_record_dict.get(element_name)
-            if record is None:
-                raise WebRunnerException(f"TestObject '{element_name}' not found")
-            element = self.current_webdriver.find_element(record.test_object_type, record.test_object_name)
-            self._action_chain.move_to_element_with_offset(element, offset_x, offset_y)
-            record_action_to_list("webdriver wrapper move_to_element_with_offset_and_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper move_to_element_with_offset_and_test_object failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper move_to_element_with_offset_and_test_object", param, error)
-
-    def drag_and_drop(self, web_element: WebElement, target_element: WebElement) -> None:
-        """
-        拖曳元素到另一個元素上並釋放
-        Drag a web element to another target element and drop
-
-        :param web_element: 要拖曳的元素 / element to drag
-        :param target_element: 目標元素 / target element to drop onto
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper drag_and_drop, web_element: {web_element}, target_element: {target_element}"
-        )
-        param = locals()
-        try:
-            self._action_chain.drag_and_drop(web_element, target_element)
-            record_action_to_list("webdriver wrapper drag_and_drop", param, None)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper drag_and_drop failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper drag_and_drop", param, error)
-
-    def drag_and_drop_with_test_object(self, element_name: str, target_element_name: str) -> None:
-        """
-        使用 TestObjectRecord 中的元素名稱，拖曳元素到另一個元素上
-        Drag a web element to another target element using TestObjectRecord
-
-        :param element_name: 要拖曳的元素名稱 / name of element to drag
-        :param target_element_name: 目標元素名稱 / name of target element
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper drag_and_drop_with_test_object, element_name: {element_name}, "
-            f"target_element_name: {target_element_name}"
-        )
-        param = locals()
-        try:
-            element_record = test_object_record.test_object_record_dict.get(element_name)
-            target_record = test_object_record.test_object_record_dict.get(target_element_name)
-            if element_record is None or target_record is None:
-                raise WebRunnerException(f"TestObject not found: {element_name} or {target_element_name}")
-
-            element = self.current_webdriver.find_element(element_record.test_object_type,
-                                                          element_record.test_object_name)
-            another_element = self.current_webdriver.find_element(target_record.test_object_type,
-                                                                  target_record.test_object_name)
-
-            self._action_chain.drag_and_drop(element, another_element)
-            record_action_to_list("webdriver wrapper drag_and_drop_with_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper drag_and_drop_with_test_object failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper drag_and_drop_with_test_object", param, error)
-
-    def drag_and_drop_offset(self, web_element: WebElement, target_x: int, target_y: int) -> None:
-        """
-        拖曳元素到指定偏移位置
-        Drag a web element to a position with offset
-
-        :param web_element: 要拖曳的元素 / element to drag
-        :param target_x: X 軸偏移量 / offset on X axis
-        :param target_y: Y 軸偏移量 / offset on Y axis
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper drag_and_drop_offset, web_element: {web_element}, "
-            f"target_x: {target_x}, target_y: {target_y}"
-        )
-        param = locals()
-        try:
-            self._action_chain.drag_and_drop_by_offset(web_element, target_x, target_y)
-            record_action_to_list("webdriver wrapper drag_and_drop_offset", param, None)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper drag_and_drop_offset failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper drag_and_drop_offset", param, error)
-
-    def drag_and_drop_offset_with_test_object(self, element_name: str, offset_x: int, offset_y: int) -> None:
-        """
-        使用 TestObjectRecord 中的元素名稱，拖曳元素到指定偏移位置
-        Drag a web element with offset using TestObjectRecord
-
-        :param element_name: 測試物件名稱 / test object name
-        :param offset_x: X 軸偏移量 / offset on X axis
-        :param offset_y: Y 軸偏移量 / offset on Y axis
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper drag_and_drop_offset_with_test_object, element_name: {element_name}, "
-            f"offset_x: {offset_x}, offset_y: {offset_y}"
-        )
-        param = locals()
-        try:
-            record = test_object_record.test_object_record_dict.get(element_name)
-            if record is None:
-                raise WebRunnerException(f"TestObject not found: {element_name}")
-
-            element = self.current_webdriver.find_element(record.test_object_type, record.test_object_name)
-            self._action_chain.drag_and_drop_by_offset(element, offset_x, offset_y)
-            record_action_to_list("webdriver wrapper drag_and_drop_offset_with_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper drag_and_drop_offset_with_test_object failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper drag_and_drop_offset_with_test_object", param, error)
-
-    def perform(self) -> None:
-        """
-        執行累積的 ActionChains 動作
-        Perform all queued ActionChains actions.
-
-        Selenium 的 ActionChains 是「先排隊、後一次執行」模型。
-        ``WR_left_click_and_hold`` / ``WR_move_to_element`` /
-        ``WR_release`` / ``WR_press_key`` 等命令只是把動作排入佇列，
-        必須最後呼叫 ``WR_perform`` 才會真的觸發；中途要清除請用
-        ``WR_reset_actions``。對單純點擊或輸入請改用
-        ``WR_element_click`` / ``WR_element_input`` 直接執行，免用
-        ActionChains。
-
-        Selenium ActionChains is a queue-then-execute model. Commands like
-        ``WR_left_click_and_hold`` / ``WR_move_to_element`` /
-        ``WR_release`` / ``WR_press_key`` only enqueue the action; you must
-        call ``WR_perform`` at the end to actually fire them, and
-        ``WR_reset_actions`` to drop the queue mid-flow. For simple clicks
-        or text input prefer ``WR_element_click`` / ``WR_element_input``,
-        which run synchronously.
-        """
-        web_runner_logger.info("WebDriverWrapper perform")
-        try:
-            self._action_chain.perform()
-            record_action_to_list("webdriver wrapper perform", None, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper perform failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper perform", None, error)
-
-    def reset_actions(self) -> None:
-        """
-        清除目前累積的 ActionChains 動作（搭配 ``WR_perform`` 使用）
-        Clear all queued ActionChains actions.
-
-        Use this together with ``WR_perform`` when you want to abort an
-        ActionChains sequence partway through. See ``perform`` above for
-        the queue-then-execute model.
-        """
-        web_runner_logger.info("WebDriverWrapper reset_actions")
-        try:
-            self._action_chain.reset_actions()
-            record_action_to_list("webdriver wrapper reset_actions", None, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper reset_actions failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper reset_actions", None, error)
-
-    def left_click(self, on_element: WebElement = None) -> None:
-        """
-        滑鼠左鍵點擊 (可指定元素或當前位置)
-        Left click mouse at current position or on a given element
-
-        :param on_element: WebElement 或 None
-        """
-        web_runner_logger.info(f"WebDriverWrapper left_click, on_element: {on_element}")
-        param = locals()
-        try:
-            self._action_chain.click(on_element)
-            record_action_to_list("webdriver wrapper left_click", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_click failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper left_click", param, error)
-
-    def left_click_with_test_object(self, element_name: str = None) -> None:
-        """
-        使用 TestObject 名稱找到元素並左鍵點擊
-        Left click using a TestObject name
-
-        :param element_name: 測試物件名稱 / test object name
-        """
-        web_runner_logger.info(f"WebDriverWrapper left_click_with_test_object, element_name: {element_name}")
-        param = locals()
-        try:
-            if element_name is None:
-                self._action_chain.click(None)
-            else:
-                record = test_object_record.test_object_record_dict.get(element_name)
-                if record is None:
-                    raise WebRunnerException(f"TestObject '{element_name}' not found")
-                element = self.current_webdriver.find_element(record.test_object_type, record.test_object_name)
-                self._action_chain.click(element)
-            record_action_to_list("webdriver wrapper left_click_with_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_click_with_test_object failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper left_click_with_test_object", param, error)
-
-    def left_click_and_hold(self, on_element: WebElement = None) -> None:
-        """
-        滑鼠左鍵按住 (可指定元素或當前位置)
-        Left click and hold mouse at current position or on a given element
-        """
-        web_runner_logger.info(f"WebDriverWrapper left_click_and_hold, on_element: {on_element}")
-        param = locals()
-        try:
-            self._action_chain.click_and_hold(on_element)
-            record_action_to_list("webdriver wrapper left_click_and_hold", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_click_and_hold failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper left_click_and_hold", param, error)
-
-    def left_click_and_hold_with_test_object(self, element_name: str = None) -> None:
-        """
-        使用 TestObject 名稱找到元素並左鍵按住
-        Left click and hold using a TestObject name
-        """
-        web_runner_logger.info(f"WebDriverWrapper left_click_and_hold_with_test_object, element_name: {element_name}")
-        param = locals()
-        try:
-            if element_name is None:
-                self._action_chain.click_and_hold(None)
-            else:
-                record = test_object_record.test_object_record_dict.get(element_name)
-                if record is None:
-                    raise WebRunnerException(f"TestObject '{element_name}' not found")
-                element = self.current_webdriver.find_element(record.test_object_type, record.test_object_name)
-                self._action_chain.click_and_hold(element)
-            record_action_to_list("webdriver wrapper left_click_and_hold_with_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_click_and_hold_with_test_object failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper left_click_and_hold_with_test_object", param, error)
-
-    def right_click(self, on_element: WebElement = None) -> None:
-        """
-        滑鼠右鍵點擊 (可指定元素或當前位置)
-        Right click mouse at current position or on a given element
-        """
-        web_runner_logger.info(f"WebDriverWrapper right_click, on_element: {on_element}")
-        param = locals()
-        try:
-            self._action_chain.context_click(on_element)
-            record_action_to_list("webdriver wrapper right_click", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper right_click failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper right_click", param, error)
-
-    def right_click_with_test_object(self, element_name: str = None) -> None:
-        """
-        使用 TestObject 名稱找到元素並右鍵點擊
-        Right click using a TestObject name
-        """
-        web_runner_logger.info(f"WebDriverWrapper right_click_with_test_object, element_name: {element_name}")
-        param = locals()
-        try:
-            if element_name is None:
-                self._action_chain.context_click(None)
-            else:
-                record = test_object_record.test_object_record_dict.get(element_name)
-                if record is None:
-                    raise WebRunnerException(f"TestObject '{element_name}' not found")
-                element = self.current_webdriver.find_element(record.test_object_type, record.test_object_name)
-                self._action_chain.context_click(element)
-            record_action_to_list("webdriver wrapper right_click_with_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper right_click_with_test_object failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper right_click_with_test_object", param, error)
-
-    def left_double_click(self, on_element: WebElement = None) -> None:
-        """
-        滑鼠左鍵雙擊 (可指定元素或當前位置)
-        Double left click mouse at current position or on a given element
-
-        :param on_element: WebElement 或 None
-        """
-        web_runner_logger.info(f"WebDriverWrapper left_double_click, on_element: {on_element}")
-        param = locals()
-        try:
-            self._action_chain.double_click(on_element)
-            record_action_to_list("webdriver wrapper left_double_click", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_double_click failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper left_double_click", param, error)
-
-    def left_double_click_with_test_object(self, element_name: str = None) -> None:
-        """
-        使用 TestObject 名稱找到元素並左鍵雙擊
-        Double left click using a TestObject name
-
-        :param element_name: 測試物件名稱 / test object name
-        """
-        web_runner_logger.info(f"WebDriverWrapper left_double_click_with_test_object, element_name: {element_name}")
-        param = locals()
-        try:
-            if element_name is None:
-                self._action_chain.double_click(None)
-            else:
-                record = test_object_record.test_object_record_dict.get(element_name)
-                if record is None:
-                    raise WebRunnerException(f"TestObject '{element_name}' not found")
-                web_element_wrapper.current_web_element = self.current_webdriver.find_element(
-                    record.test_object_type, record.test_object_name
-                )
-                self._action_chain.double_click(web_element_wrapper.current_web_element)
-            record_action_to_list("webdriver wrapper left_double_click_with_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_double_click_with_test_object failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper left_double_click_with_test_object", param, error)
-
-    def release(self, on_element: WebElement = None) -> None:
-        """
-        釋放滑鼠 (可指定元素或當前位置)
-        Release mouse button at current position or on a given element
-        """
-        web_runner_logger.info(f"WebDriverWrapper release, on_element: {on_element}")
-        param = locals()
-        try:
-            self._action_chain.release(on_element)
-            record_action_to_list("webdriver wrapper release", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper release failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper release", param, error)
-
-    def release_with_test_object(self, element_name: str = None) -> None:
-        """
-        使用 TestObject 名稱找到元素並釋放滑鼠
-        Release mouse button using a TestObject name
-        """
-        web_runner_logger.info(f"WebDriverWrapper release_with_test_object, element_name: {element_name}")
-        param = locals()
-        try:
-            if element_name is None:
-                self._action_chain.release(None)
-            else:
-                record = test_object_record.test_object_record_dict.get(element_name)
-                if record is None:
-                    raise WebRunnerException(f"TestObject '{element_name}' not found")
-                web_element_wrapper.current_web_element = self.current_webdriver.find_element(
-                    record.test_object_type, record.test_object_name
-                )
-                self._action_chain.release(web_element_wrapper.current_web_element)
-            record_action_to_list("webdriver wrapper release_with_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper release_with_test_object failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper release_with_test_object", param, error)
-
-    def press_key(self, keycode_on_key_class, on_element: WebElement = None) -> None:
-        """
-        按下鍵盤按鍵 (可指定元素或當前位置)
-        Press a key on keyboard, optionally on a given element
-
-        :param keycode_on_key_class: 要按下的鍵 (來自 selenium.webdriver.common.keys.Keys)
-                                     key to press (from selenium.webdriver.common.keys.Keys)
-        :param on_element: WebElement 或 None
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper press_key, keycode_on_key_class: {keycode_on_key_class}, on_element: {on_element}"
-        )
-        param = locals()
-        try:
-            self._action_chain.key_down(keycode_on_key_class, on_element)
-            record_action_to_list("webdriver wrapper press_key", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper press_key failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper press_key", param, error)
-
-    def press_key_with_test_object(self, keycode_on_key_class, element_name: str = None) -> None:
-        """
-        使用 TestObject 名稱找到元素並按下鍵盤按鍵
-        Press a key on keyboard using a TestObject name
-
-        :param keycode_on_key_class: 要按下的鍵 (selenium Keys)
-        :param element_name: 測試物件名稱 / test object name
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper press_key_with_test_object, keycode_on_key_class: {keycode_on_key_class}, element_name: {element_name}"
-        )
-        param = locals()
-        try:
-            if element_name is None:
-                self._action_chain.key_down(keycode_on_key_class, None)
-            else:
-                record = test_object_record.test_object_record_dict.get(element_name)
-                if record is None:
-                    raise WebRunnerException(f"TestObject '{element_name}' not found")
-                web_element_wrapper.current_web_element = self.current_webdriver.find_element(
-                    record.test_object_type, record.test_object_name
-                )
-                self._action_chain.key_down(keycode_on_key_class, web_element_wrapper.current_web_element)
-            record_action_to_list("webdriver wrapper press_key_with_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper press_key_with_test_object failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper press_key_with_test_object", param, error)
-
-    def release_key(self, keycode_on_key_class, on_element: WebElement = None) -> None:
-        """
-        釋放鍵盤按鍵 (可指定元素或當前位置)
-        Release a key on keyboard, optionally on a given element
-
-        :param keycode_on_key_class: 要釋放的鍵 (selenium Keys)
-        :param on_element: WebElement 或 None
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper release_key, keycode_on_key_class: {keycode_on_key_class}, on_element: {on_element}"
-        )
-        param = locals()
-        try:
-            self._action_chain.key_up(keycode_on_key_class, on_element)
-            record_action_to_list("webdriver wrapper release_key", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper release_key failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper release_key", param, error)
-
-    def release_key_with_test_object(self, keycode_on_key_class, element_name: str = None) -> None:
-        """
-        使用 TestObject 名稱找到元素並釋放鍵盤按鍵
-        Release a key on keyboard using a TestObject name
-
-        :param keycode_on_key_class: 要釋放的鍵 (selenium Keys)
-        :param element_name: 測試物件名稱 / test object name
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper release_key_with_test_object, keycode_on_key_class: {keycode_on_key_class}, element_name: {element_name}"
-        )
-        param = locals()
-        try:
-            if element_name is None:
-                self._action_chain.key_up(keycode_on_key_class, None)
-            else:
-                record = test_object_record.test_object_record_dict.get(element_name)
-                if record is None:
-                    raise WebRunnerException(f"TestObject '{element_name}' not found")
-                web_element_wrapper.current_web_element = self.current_webdriver.find_element(
-                    record.test_object_type, record.test_object_name
-                )
-                self._action_chain.key_up(keycode_on_key_class, web_element_wrapper.current_web_element)
-            record_action_to_list("webdriver wrapper release_key_with_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper release_key_with_test_object failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper release_key_with_test_object", param, error)
-
-    def move_by_offset(self, offset_x: int, offset_y: int) -> None:
-        """
-        滑鼠移動指定偏移量
-        Move mouse by offset
-
-        :param offset_x: X 軸偏移量 / offset on X axis
-        :param offset_y: Y 軸偏移量 / offset on Y axis
-        """
-        web_runner_logger.info(f"WebDriverWrapper move_by_offset, offset_x: {offset_x}, offset_y: {offset_y}")
-        param = locals()
-        try:
-            self._action_chain.move_by_offset(offset_x, offset_y)
-            record_action_to_list("webdriver wrapper move_by_offset", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper move_by_offset failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper move_by_offset", param, error)
-
-    def pause(self, seconds: int) -> None:
-        """
-        暫停指定秒數 (注意：可能導致 Selenium 拋出例外)
-        Pause for a number of seconds (may cause Selenium exceptions)
-
-        :param seconds: 暫停秒數 / seconds to pause
-        """
-        web_runner_logger.info(f"WebDriverWrapper pause, seconds: {seconds}")
-        param = locals()
-        try:
-            self._action_chain.pause(seconds)
-            record_action_to_list("webdriver wrapper pause", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper pause failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper pause", param, error)
-
-    def send_keys(self, keys_to_send) -> None:
-        """
-        發送鍵盤按鍵 (按下並釋放)
-        Send (press and release) keyboard keys
-
-        :param keys_to_send: 要發送的鍵 (可多個) / keys to send (can be multiple)
-        """
-        web_runner_logger.info(f"WebDriverWrapper send_keys, keys_to_send: {keys_to_send}")
-        param = locals()
-        try:
-            self._action_chain.send_keys(*keys_to_send)
-            record_action_to_list("webdriver wrapper send_keys", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper send_keys failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper send_keys", param, error)
-
-    def send_keys_to_element(self, element: WebElement, keys_to_send) -> None:
-        """
-        發送鍵盤按鍵到指定元素
-        Send keyboard keys to a given element
-
-        :param element: 目標元素 / target element
-        :param keys_to_send: 要發送的鍵 / keys to send
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper send_keys_to_element, element: {element}, keys_to_send: {keys_to_send}")
-        param = locals()
-        try:
-            self._action_chain.send_keys_to_element(element, keys_to_send)
-            record_action_to_list("webdriver wrapper send_keys_to_element", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper send_keys_to_element failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper send_keys_to_element", param, error)
-
-    def send_keys_to_element_with_test_object(self, element_name: str, keys_to_send) -> None:
-        """
-        使用 TestObject 名稱找到元素並發送鍵盤按鍵
-        Send keyboard keys to an element using a TestObject name
-
-        :param element_name: 測試物件名稱 / test object name
-        :param keys_to_send: 要發送的鍵 / keys to send
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper send_keys_to_element_with_test_object, element_name: {element_name}, keys_to_send: {keys_to_send}"
-        )
-        param = locals()
-        try:
-            record = test_object_record.test_object_record_dict.get(element_name)
-            if record is None:
-                raise WebRunnerException(f"TestObject '{element_name}' not found")
-            web_element_wrapper.current_web_element = self.current_webdriver.find_element(
-                record.test_object_type, record.test_object_name
-            )
-            self._action_chain.send_keys_to_element(web_element_wrapper.current_web_element, *keys_to_send)
-            record_action_to_list("webdriver wrapper send_keys_to_element_with_test_object", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper send_keys_to_element_with_test_object failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper send_keys_to_element_with_test_object", param, error)
-
-    def scroll(self, scroll_x: int, scroll_y: int) -> None:
-        """
-        滾動頁面
-        Scroll the page
-
-        :param scroll_x: 滾動的 X 軸距離 / distance to scroll on X axis
-        :param scroll_y: 滾動的 Y 軸距離 / distance to scroll on Y axis
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper scroll, scroll_x: {scroll_x}, scroll_y: {scroll_y}"
-        )
-        param = locals()
-        try:
-            self._action_chain.scroll_by_amount(scroll_x, scroll_y)
-            record_action_to_list("webdriver wrapper scroll", param, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper scroll failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper scroll", param, error)
-
-    # window
-    def maximize_window(self) -> None:
-        """
-        最大化當前視窗
-        Maximize the current browser window
-        """
-        web_runner_logger.info("WebDriverWrapper maximize_window")
-        try:
-            self.current_webdriver.maximize_window()
-            record_action_to_list("webdriver wrapper maximize_window", None, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper maximize_window failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper maximize_window", None, error)
-
-    def fullscreen_window(self) -> None:
-        """
-        全螢幕顯示當前視窗
-        Fullscreen the current browser window
-        """
-        web_runner_logger.info("WebDriverWrapper fullscreen_window")
-        try:
-            self.current_webdriver.fullscreen_window()
-            record_action_to_list("webdriver wrapper fullscreen_window", None, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper fullscreen_window failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper fullscreen_window", None, error)
-
-    def minimize_window(self) -> None:
-        """
-        最小化當前視窗
-        Minimize the current browser window
-        """
-        web_runner_logger.info("WebDriverWrapper minimize_window")
-        try:
-            self.current_webdriver.minimize_window()
-            record_action_to_list("webdriver wrapper minimize_window", None, None)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper minimize_window failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper minimize_window", None, error)
-
-    def set_window_size(self, width: int, height: int, window_handle: str = 'current') -> None:
-        """
-        設定視窗大小
-        Set the window size
-
-        :param width: 視窗寬度 (像素) / window width in pixels
-        :param height: 視窗高度 (像素) / window height in pixels
-        :param window_handle: 預設為 "current" (w3c 標準)，若非 "current" 可能會拋出例外
-                              normally "current" (w3c), otherwise may raise exception
-        :return: 視窗大小資訊 (dict) / window size info (dict)
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper set_window_size, width: {width}, height: {height}, window_handle: {window_handle}"
-        )
-        param = locals()
-        try:
-            record_action_to_list("webdriver wrapper set_window_size", param, None)
-            self.current_webdriver.set_window_size(width, height, window_handle)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper set_window_size failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper set_window_size", param, error)
-
-    def set_window_position(self, x: int, y: int, window_handle: str = 'current') -> dict | None:
-        """
-        設定視窗位置
-        Set the window position
-
-        :param x: 視窗左上角的 X 座標 / X coordinate of the window
-        :param y: 視窗左上角的 Y 座標 / Y coordinate of the window
-        :param window_handle: 預設為 "current" (w3c 標準)，若非 "current" 可能會拋出例外
-                              normally "current" (w3c), otherwise may raise exception
-        :return: 視窗位置與大小資訊 (dict) / window rect info (dict)
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper set_window_position, x: {x}, y: {y}, window_handle: {window_handle}"
-        )
-        param = locals()
-        try:
-            record_action_to_list("webdriver wrapper set_window_position", param, None)
-            return self.current_webdriver.set_window_position(x, y, window_handle)
-        except Exception as error:
-            web_runner_logger.error(
-                f"WebDriverWrapper set_window_position failed: {repr(error)}"
-            )
-            record_action_to_list("webdriver wrapper set_window_position", param, error)
-
-    def get_window_position(self, window_handle='current') -> dict | None:
-        """
-        取得視窗位置
-        Get window position
-
-        :param window_handle: 預設為 "current" (w3c 標準)，若非 "current" 可能會拋出例外
-        :return: 視窗位置 dict，例如 {"x": 100, "y": 200}
-        """
-        web_runner_logger.info(f"WebDriverWrapper get_window_position, window_handle: {window_handle}")
-        param = locals()
-        try:
-            record_action_to_list("webdriver wrapper get_window_position", param, None)
-            return self.current_webdriver.get_window_position(window_handle)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_window_position failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper get_window_position", param, error)
-
-    def get_window_rect(self) -> dict | None:
-        """
-        取得視窗矩形資訊 (位置與大小)
-        Get window rect (position and size)
-
-        :return: dict, e.g. {"x": 100, "y": 200, "width": 1280, "height": 720}
-        """
-        web_runner_logger.info("WebDriverWrapper get_window_rect")
-        try:
-            record_action_to_list("webdriver wrapper get_window_rect", None, None)
-            return self.current_webdriver.get_window_rect()
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_window_rect failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper get_window_rect", None, error)
-
-    def set_window_rect(self, x: int = None, y: int = None, width: int = None, height: int = None) -> dict | None:
-        """
-        設定視窗矩形 (位置與大小)，僅支援 W3C 相容瀏覽器
-        Set window rect (position and size), only supported for W3C compatible browsers
-
-        :param x: X 座標
-        :param y: Y 座標
-        :param width: 視窗寬度
-        :param height: 視窗高度
-        :return: dict, e.g. {"x": 100, "y": 200, "width": 1280, "height": 720}
-        """
-        web_runner_logger.info(
-            f"WebDriverWrapper set_window_rect, x: {x}, y: {y}, width: {width}, height: {height}")
-        param = locals()
-        try:
-            record_action_to_list("webdriver wrapper set_window_rect", param, None)
-            return self.current_webdriver.set_window_rect(x, y, width, height)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper set_window_rect failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper set_window_rect", param, error)
-
-    # save as file
-    def get_screenshot_as_png(self) -> bytes | None:
-        """
-        取得當前頁面截圖 (PNG 格式)
-        Get current page screenshot as PNG
-
-        :return: PNG 截圖的 bytes
-        """
-        web_runner_logger.info("WebDriverWrapper get_screenshot_as_png")
-        try:
-            record_action_to_list("webdriver wrapper get_screenshot_as_png", None, None)
-            return self.current_webdriver.get_screenshot_as_png()
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_screenshot_as_png failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper get_screenshot_as_png", None, error)
-
-    def get_screenshot_as_base64(self) -> str | None:
-        """
-        取得當前頁面截圖 (Base64 字串)
-        Get current page screenshot as Base64 string
-
-        :return: Base64 字串
-        """
-        web_runner_logger.info("WebDriverWrapper get_screenshot_as_base64")
-        try:
-            record_action_to_list("webdriver wrapper get_screenshot_as_base64", None, None)
-            return self.current_webdriver.get_screenshot_as_base64()
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_screenshot_as_base64 failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper get_screenshot_as_base64", None, error)
-
-    # log
-    def get_log(self, log_type: str):
-        """
-        取得 WebDriver 日誌（``log_type`` 為必填）
-        Get WebDriver logs (``log_type`` is required).
-
-        :param log_type: 必填，需為下列之一：
-                         Required; one of:
-
-                         - ``"browser"`` — JS console output (Chrome/Edge)
-                         - ``"driver"``  — driver-side messages
-                         - ``"client"``  — client-side bindings logs
-                         - ``"server"``  — Selenium server logs
-                         - ``"performance"`` — perf log (only when enabled in capabilities)
-
-                         不同瀏覽器支援的子集不同；Firefox 自 GeckoDriver 後幾乎不再
-                         提供，多數情況請改用 Playwright 的 console-event capture。
-                         Browser support varies; modern Firefox no longer exposes most
-                         of these, prefer Playwright's console-event capture instead.
-        :return: log 資料 (list of dict) / log entries
-        """
-        web_runner_logger.info(f"WebDriverWrapper get_log, log_type: {log_type}")
-        try:
-            record_action_to_list("webdriver wrapper get_log", None, None)
-            return self.current_webdriver.get_log(log_type)
-        except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_log failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper get_log", None, error)
 
     # webdriver wrapper add function
     def check_current_webdriver(self, check_dict: dict) -> None:
