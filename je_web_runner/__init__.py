@@ -43,6 +43,22 @@ from je_web_runner.utils.cdp.cdp_commands import (
     reset_playwright_cdp_sessions,
     selenium_cdp,
 )
+from je_web_runner.utils.cdp.event_loop import (
+    CDPEventListener,
+    CDPEventLoopError,
+    resolve_cdp_ws_url,
+)
+from je_web_runner.utils.cdp.tracing import (
+    TracingError,
+    record_trace,
+)
+from je_web_runner.utils.bidi.network import (
+    BidiNetworkError,
+    add_auth_handler as bidi_add_auth_handler,
+    add_request_handler as bidi_add_request_handler,
+    add_response_handler as bidi_add_response_handler,
+    clear_network_handlers as bidi_clear_network_handlers,
+)
 from je_web_runner.utils.api.http_client import (
     HttpAssertionError,
     get_last_response,
@@ -186,6 +202,11 @@ __all__ = [
     "AccessibilityError", "load_axe_source", "selenium_run_audit",
     "playwright_run_audit", "summarise_violations",
     "CDPError", "selenium_cdp", "playwright_cdp", "reset_playwright_cdp_sessions",
+    "CDPEventListener", "CDPEventLoopError", "resolve_cdp_ws_url",
+    "TracingError", "record_trace",
+    "BidiNetworkError",
+    "bidi_add_request_handler", "bidi_add_response_handler",
+    "bidi_add_auth_handler", "bidi_clear_network_handlers",
     "summarise_run", "notify_webhook", "notify_slack", "notify_run_summary",
     "NotifierError",
     "POMGeneratorError", "extract_elements_from_html", "generate_pom_class",

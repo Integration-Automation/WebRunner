@@ -43,6 +43,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - [Observability](#observability)
 - [Test Orchestration](#test-orchestration)
 - [Quality & Security](#quality--security)
+- [Advanced WebDriverWrapper](#advanced-webdriverwrapper)
 - [Browser Internals](#browser-internals)
 - [Test Data](#test-data)
 - [Auth & APIs](#auth--apis)
@@ -66,6 +67,8 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - **Observability without extra plumbing.** Auto-screenshot on failure, retry policy, OpenTelemetry hook, live HTTP dashboard, replay studio (HTML timeline), HAR capture + diff.
 - **Quality & security guards.** Action linter, migration helper, hard-coded secrets scanner, HTTP security headers audit, axe-core accessibility audit, Lighthouse runner, perf metrics (FCP/LCP/CLS), visual regression, snapshot testing, network throttling, arbitrary-script gate.
 - **Browser internals.** Raw CDP, console + network event capture, localStorage / sessionStorage / IndexedDB, service worker / cache control, Shadow DOM piercing, multi-iframe, file upload / download, browser extension loaders.
+- **Advanced WebDriverWrapper surface.** `set_driver(experimental_options=, extension_paths=, enable_bidi=)`, `attach_to_existing_browser`, native CDP shortcuts (`set_timezone` / `set_locale` / `set_device_metrics` / `set_user_agent` / `set_extra_http_headers` / `set_geolocation` / `set_network_conditions` / `block_urls` / `set_cache_disabled` / `set_download_directory`), Fetch interception primitives (`enable_fetch_interception` / `continue_request` / `fulfill_request` / `fail_request`), W3C BiDi listeners (`add_console_listener` / `add_js_error_listener`), `save_cookies` / `load_cookies` for session reuse, `save_full_page_screenshot`, `print_page` (PDF), `reload(ignore_cache)`, `bring_to_front`, `switch_to_window_by_url|title`, page metadata getters (`get_current_url` / `get_title` / `get_page_source` / `get_window_handles` / `new_window` / `close_window`). All exposed via `WR_*` aliases too.
+- **Standalone CDP / BiDi modules.** Background `CDPEventListener` (WebSocket loop + sync `send` / `on` / context manager), `record_trace(driver, path)` for Chrome DevTools-loadable performance traces, and a `bidi_network` module wrapping `driver.network.add_request_handler` / `add_response_handler` / `add_auth_handler` for cross-browser request interception.
 - **Test data & fixtures.** Faker integration, factory pattern, testcontainers (Postgres / Redis / generic), per-environment `.env` loader with `${ENV.X}` placeholder expansion, CSV/JSON data-driven runner with `${ROW.x}`.
 - **Auth, API, DB.** OAuth2 / OIDC client-credentials / password / refresh-token flows with token cache, HTTP API testing commands with JSON assertions, SQLAlchemy-backed database validation.
 - **Integrations.** TCP socket server with token + TLS, BrowserStack / Sauce Labs / LambdaTest cloud Grid, Appium mobile, JIRA + TestRail, Slack / generic webhook notifier, GitHub Actions inline annotations, Locust load testing.
@@ -687,7 +690,14 @@ WebRunner ships a [Model Context Protocol](https://modelcontextprotocol.io/) ser
 python -m je_web_runner.mcp_server
 ```
 
-The default tool list (19 tools) exposes:
+The default tool list (22 tools) exposes:
+
+Live browser execution:
+- `webrunner_run_actions` — execute any `WR_*` action list. Covers the full ~280-command surface including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
+- `webrunner_run_action_files` — batch-run JSON files on disk
+- `webrunner_list_commands` — discover the full `WR_*` surface
+
+Plus the utility tools below (no live browser):
 
 Action JSON authoring & linting:
 - `webrunner_lint_action`, `webrunner_score_action_locators`, `webrunner_locator_strength`
@@ -834,6 +844,165 @@ Quality / privacy:
 Test orchestration:
 
 - **Test impact analysis** — `impact_analysis.build_index("./actions")` walks every action JSON file and projects locator names, URLs, template names, and `WR_*` commands into a reverse index; `affected_action_files(index, locators=["primary_cta"])` answers "which tests touch this?" so diff-aware shards can go beyond filename matching.
+
+## Advanced WebDriverWrapper
+
+The Selenium wrapper is now composed via mixins under
+`je_web_runner/webdriver/_wrapper_mixins/` (lifecycle / element / wait stay in
+`webdriver_wrapper.py`; cookies / actions / media / navigation / scripting are
+the mixin themes). External imports — `webdriver_wrapper_instance`,
+`WebDriverWrapper`, the `_options_dict` / `_webdriver_dict` /
+`_webdriver_manager_dict` patch targets — are unchanged.
+
+### Stealth / anti-bot launch
+
+```python
+from je_web_runner import webdriver_wrapper_instance
+
+webdriver_wrapper_instance.set_driver(
+    "chrome",
+    options=[
+        "--disable-blink-features=AutomationControlled",
+        f"--user-data-dir={profile_dir}",
+    ],
+    experimental_options={
+        "excludeSwitches": ["enable-automation"],
+        "useAutomationExtension": False,
+    },
+    extension_paths=["/path/to/extension.crx"],  # optional
+    enable_bidi=True,                            # for add_console_listener etc.
+)
+webdriver_wrapper_instance.add_script_to_evaluate_on_new_document(
+    "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
+)
+```
+
+### Attach to a manually started Chrome (session reuse)
+
+```python
+# Step 1 — user starts Chrome themselves:
+#   chrome.exe --remote-debugging-port=9222 --user-data-dir="C:/temp/profile"
+webdriver_wrapper_instance.attach_to_existing_browser("127.0.0.1:9222")
+```
+
+### CDP shortcuts (emulation, network, downloads)
+
+```python
+w = webdriver_wrapper_instance
+w.set_timezone("Asia/Tokyo")
+w.set_locale("ja-JP")
+w.set_device_metrics(390, 844, device_scale_factor=3, mobile=True)
+w.set_user_agent("Mozilla/5.0 (custom)")
+w.set_extra_http_headers({"X-Test-Run": "ci-123"})
+w.set_geolocation(35.68, 139.69, accuracy=50)
+w.set_network_conditions(offline=False, latency=200,
+                          download_throughput=50_000, upload_throughput=10_000)
+w.block_urls(["*.doubleclick.net/*", "*.googletagmanager.com/*"])
+w.set_cache_disabled(True)
+w.set_download_directory("./downloads")
+w.clear_origin_storage("https://example.com")    # cookies + localStorage + IDB + cache
+```
+
+### Session persistence
+
+```python
+w.to_url("https://example.com/")
+# … log in, etc. …
+w.save_cookies("./cookies.json")
+
+# Later (after browser restart):
+w.to_url("https://example.com/")
+added = w.load_cookies("./cookies.json")          # → number of cookies applied
+```
+
+### Fetch interception primitives
+
+```python
+w.enable_fetch_interception(patterns=["*/api/*"])
+# In a Fetch.requestPaused event callback (subscribe via CDPEventListener):
+w.fulfill_request(req_id, response_code=200,
+                  body=b'{"ok": true}',
+                  response_headers={"Content-Type": "application/json"})
+# Or:  w.continue_request(req_id, url=rewritten_url)
+# Or:  w.fail_request(req_id, error_reason="AccessDenied")
+```
+
+### Page metadata + multi-tab navigation
+
+```python
+w.get_current_url(); w.get_title(); w.get_page_source()
+w.get_window_handles(); w.get_current_window_handle()
+w.new_window("tab")
+w.switch_to_window_by_url("checkout")    # restores original if no match
+w.close_window()                         # vs quit() which terminates the driver
+w.reload(ignore_cache=True)              # CDP Page.reload — Ctrl+Shift+R equivalent
+w.bring_to_front()
+w.save_full_page_screenshot("./shot.png")   # full page, beyond viewport
+w.print_page("./page.pdf")
+```
+
+### W3C BiDi listeners (Selenium 4.16+)
+
+```python
+webdriver_wrapper_instance.set_driver("chrome", enable_bidi=True)
+sub_id = webdriver_wrapper_instance.add_console_listener(
+    lambda entry: print(entry.text)
+)
+err_id = webdriver_wrapper_instance.add_js_error_listener(
+    lambda err: print("page exception:", err)
+)
+# …later…
+webdriver_wrapper_instance.remove_console_listener(sub_id)
+webdriver_wrapper_instance.remove_js_error_listener(err_id)
+```
+
+### Background CDP event loop (independent module)
+
+`CDPEventListener` opens its own CDP WebSocket on a worker thread so commands
+and events share the same target session — required because Selenium's
+`execute_cdp_cmd` cannot subscribe to events.
+
+```python
+from je_web_runner import CDPEventListener
+
+with CDPEventListener.from_driver(driver) as listener:
+    listener.on("Fetch.requestPaused", handle_paused)
+    listener.send("Fetch.enable", {"patterns": [{"urlPattern": "*"}]})
+    # … drive the browser …
+```
+
+Requires `pip install websocket-client` (lazy-loaded; a clear `CDPEventLoopError`
+is raised if missing).
+
+### Performance tracing
+
+```python
+from je_web_runner import record_trace
+
+record_trace(
+    driver, "perf.json",
+    categories=["devtools.timeline", "loading"],
+    duration=10.0,
+)
+# Open perf.json in chrome://tracing or DevTools "Performance".
+```
+
+### Cross-browser BiDi network (Selenium 4.16+, Firefox-compatible)
+
+```python
+from je_web_runner import (
+    bidi_add_request_handler,
+    bidi_add_response_handler,
+    bidi_clear_network_handlers,
+)
+
+sub = bidi_add_request_handler(driver, lambda req: print(req.url))
+bidi_clear_network_handlers(driver)
+```
+
+Every method above is also reachable from action JSON via `WR_*` aliases
+(`WR_set_timezone`, `WR_save_cookies`, `WR_enable_fetch_interception`, …) so
+the same surface drives the MCP server too.
 
 ## Browser Internals
 

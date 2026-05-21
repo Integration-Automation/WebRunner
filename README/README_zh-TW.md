@@ -300,6 +300,93 @@ wrapper.switch("default_content")
 wrapper.get_log("browser")
 ```
 
+#### 進階 API（mixin 模組）
+
+`WebDriverWrapper` 本體現以 mixin 組合，主題分散在
+`je_web_runner/webdriver/_wrapper_mixins/`（cookies / actions / media /
+navigation / scripting）；對外 import 不變。以下 API 都同時有對應的
+`WR_*` 別名，可在 action JSON / MCP server 直接呼叫。
+
+**啟動參數（stealth / extension / BiDi）：**
+
+```python
+webdriver_wrapper_instance.set_driver(
+    "chrome",
+    options=["--disable-blink-features=AutomationControlled"],
+    experimental_options={
+        "excludeSwitches": ["enable-automation"],
+        "useAutomationExtension": False,
+    },
+    extension_paths=["/path/to/extension.crx"],
+    enable_bidi=True,                        # 開啟 W3C BiDi 事件支援
+)
+# 連到使用者手動啟動的 Chrome (--remote-debugging-port=9222)：
+webdriver_wrapper_instance.attach_to_existing_browser("127.0.0.1:9222")
+```
+
+**CDP / Fetch / BiDi：**
+
+```python
+w = webdriver_wrapper_instance
+w.execute_cdp_cmd("Page.bringToFront")
+w.add_script_to_evaluate_on_new_document("/* stealth JS */")
+w.set_timezone("Asia/Tokyo"); w.set_locale("ja-JP")
+w.set_device_metrics(390, 844, device_scale_factor=3, mobile=True)
+w.set_user_agent("Mozilla/5.0 (custom)")
+w.set_extra_http_headers({"X-Run": "ci-123"})
+w.set_geolocation(35.68, 139.69)
+w.set_network_conditions(offline=False, latency=200,
+                          download_throughput=50_000, upload_throughput=10_000)
+w.block_urls(["*.doubleclick.net/*"]);    w.set_cache_disabled(True)
+w.set_download_directory("./downloads")
+w.clear_origin_storage("https://example.com")
+
+# CDP Fetch 攔截（要實際收事件請搭配 CDPEventListener）：
+w.enable_fetch_interception(patterns=["*/api/*"])
+# 於 Fetch.requestPaused callback 中：
+#   w.fulfill_request(rid, 200, body=b'{"ok":true}',
+#                     response_headers={"Content-Type": "application/json"})
+#   w.continue_request(rid, url=rewritten)
+#   w.fail_request(rid, "AccessDenied")
+
+# Selenium 4.16+ BiDi listener：
+sub = w.add_console_listener(lambda msg: print(msg.text))
+err = w.add_js_error_listener(lambda e: print("page exception:", e))
+w.remove_console_listener(sub); w.remove_js_error_listener(err)
+```
+
+**頁面 metadata / session reuse / 截圖：**
+
+```python
+w.get_current_url(); w.get_title(); w.get_page_source()
+w.get_window_handles(); w.new_window("tab"); w.close_window()
+w.switch_to_window_by_url("checkout"); w.switch_to_window_by_title("結帳")
+w.reload(ignore_cache=True)
+w.save_cookies("./cookies.json"); w.load_cookies("./cookies.json")
+w.save_full_page_screenshot("./shot.png")     # 全頁截圖 (含可視範圍外)
+w.print_page("./page.pdf")
+```
+
+**獨立模組（CDP 事件迴圈 / 跨瀏覽器 BiDi network / performance trace）：**
+
+```python
+from je_web_runner import CDPEventListener, record_trace, bidi_add_request_handler
+
+# 背景 CDP WebSocket，命令 + 事件共用同一 session
+with CDPEventListener.from_driver(driver) as listener:
+    listener.on("Fetch.requestPaused", handle_paused)
+    listener.send("Fetch.enable", {"patterns": [{"urlPattern": "*"}]})
+
+# 錄製 Chrome DevTools 可載入的 performance trace
+record_trace(driver, "perf.json",
+             categories=["devtools.timeline", "loading"], duration=10.0)
+
+# W3C BiDi network (跨瀏覽器，Selenium 4.16+，需 enable_bidi=True 啟動)
+sub_id = bidi_add_request_handler(driver, lambda req: print(req.url))
+```
+
+`CDPEventListener` 需 `pip install websocket-client`（lazy-import；缺套件會丟 `CDPEventLoopError`）。
+
 ### 網頁元素包裝器
 
 `WebElementWrapper` 提供與已定位元素互動的方法。

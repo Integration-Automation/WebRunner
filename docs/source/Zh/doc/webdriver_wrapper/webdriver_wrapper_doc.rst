@@ -190,3 +190,218 @@ WebDriver 驗證
 .. code-block:: python
 
     wrapper.check_current_webdriver({"name": "chrome"})
+
+進階啟動參數
+------------
+
+``set_driver`` 除了 CLI 參數外還支援三個選用參數：
+
+.. code-block:: python
+
+    wrapper.set_driver(
+        "chrome",
+        options=["--disable-blink-features=AutomationControlled"],
+        experimental_options={                          # 僅 Chromium 系
+            "excludeSwitches": ["enable-automation"],
+            "useAutomationExtension": False,
+            "prefs": {"download.default_directory": "/tmp"},
+        },
+        extension_paths=["/path/to/extension.crx"],     # add_extension
+        enable_bidi=True,                               # webSocketUrl capability
+    )
+
+附加到已啟動的瀏覽器（以 ``--remote-debugging-port=9222`` 開啟）：
+
+.. code-block:: python
+
+    wrapper.attach_to_existing_browser("127.0.0.1:9222")
+
+頁面 / 視窗 metadata
+--------------------
+
+.. code-block:: python
+
+    wrapper.get_current_url()              # → str
+    wrapper.get_title()
+    wrapper.get_page_source()
+    wrapper.get_window_handles()           # → list[str]
+    wrapper.get_current_window_handle()
+    wrapper.new_window("tab")              # 或 "window"
+    wrapper.close_window()                 # 僅關當前 tab；要結束整個 driver 用 quit()
+
+依子字串切換 tab（找不到時自動還原原視窗）：
+
+.. code-block:: python
+
+    wrapper.switch_to_window_by_url("checkout")
+    wrapper.switch_to_window_by_title("結帳")
+
+重整 / 捲動 / 視窗置頂
+----------------------
+
+.. code-block:: python
+
+    wrapper.reload(ignore_cache=False)     # ignore_cache=True → CDP Page.reload (Ctrl+Shift+R)
+    wrapper.scroll_to_element(element)     # JS scrollIntoView({block:'center'})
+    wrapper.scroll_to_top(); wrapper.scroll_to_bottom()
+    wrapper.bring_to_front()               # CDP Page.bringToFront
+
+截圖與 PDF
+----------
+
+.. code-block:: python
+
+    wrapper.save_screenshot("./shot.png")              # → bool
+    wrapper.save_full_page_screenshot("./full.png")    # CDP captureBeyondViewport
+    wrapper.print_page("./page.pdf")                   # Selenium 4 print_page
+    wrapper.get_screenshot_as_png()                    # → bytes (沿用)
+    wrapper.get_screenshot_as_base64()                 # → str (沿用)
+
+Session 持久化
+--------------
+
+.. code-block:: python
+
+    wrapper.to_url("https://example.com/")
+    # … 完成登入 …
+    wrapper.save_cookies("./cookies.json")             # → bool
+
+    # 重啟瀏覽器後：
+    wrapper.to_url("https://example.com/")
+    added = wrapper.load_cookies("./cookies.json")     # → int (成功套用的數量)
+
+    wrapper.clear_origin_storage("https://example.com")  # cookies + localStorage + IDB + cache
+
+CDP 便利方法（僅 Chromium 系）
+------------------------------
+
+.. code-block:: python
+
+    wrapper.execute_cdp_cmd("Page.bringToFront")
+    wrapper.add_script_to_evaluate_on_new_document(
+        "Object.defineProperty(navigator, 'webdriver', {get:()=>undefined});"
+    )
+    wrapper.set_user_agent("Mozilla/5.0 (custom)")
+    wrapper.set_extra_http_headers({"X-Run": "ci-123"})
+    wrapper.set_geolocation(35.68, 139.69, accuracy=50)
+    wrapper.clear_geolocation_override()
+
+    wrapper.set_timezone("Asia/Tokyo")
+    wrapper.set_locale("ja-JP")
+    wrapper.set_device_metrics(390, 844, device_scale_factor=3, mobile=True)
+    wrapper.clear_device_metrics()
+
+    wrapper.set_network_conditions(
+        offline=False, latency=200,
+        download_throughput=50_000, upload_throughput=10_000,
+    )
+    wrapper.block_urls(["*.doubleclick.net/*"])
+    wrapper.unblock_urls()
+    wrapper.set_cache_disabled(True)
+    wrapper.set_download_directory("./downloads")    # headless 下載必備
+
+CDP Fetch 攔截
+--------------
+
+``Fetch.*`` CDP 命令薄包裝。要實際收事件 (``Fetch.requestPaused``) 請使用
+``CDPEventListener``（或 Selenium trio-based devtools listener）自行訂閱：
+
+.. code-block:: python
+
+    wrapper.enable_fetch_interception(patterns=["*/api/*"])
+    # 在事件 callback 中：
+    wrapper.continue_request(req_id, url=rewritten, method="POST",
+                              post_data="...", headers={"X-Test": "1"})
+    wrapper.fulfill_request(req_id, response_code=200,
+                             body=b'{"ok": true}',
+                             response_headers={"Content-Type": "application/json"})
+    wrapper.fail_request(req_id, error_reason="AccessDenied")
+    wrapper.disable_fetch_interception()
+
+W3C BiDi 事件 listener
+----------------------
+
+需 Selenium 4.16+ 且以 ``enable_bidi=True`` 啟動：
+
+.. code-block:: python
+
+    wrapper.set_driver("chrome", enable_bidi=True)
+    sub = wrapper.add_console_listener(lambda entry: print(entry.text))
+    err = wrapper.add_js_error_listener(lambda e: print("exception:", e))
+    wrapper.remove_console_listener(sub)
+    wrapper.remove_js_error_listener(err)
+
+未啟用 BiDi 時呼叫會丟出 ``WebRunnerException`` 並附上修復指引。
+
+獨立 CDP / BiDi 模組
+--------------------
+
+``CDPEventListener`` (``je_web_runner.utils.cdp.event_loop``) 在背景開
+WebSocket，讓命令與事件共用同一個 target session：
+
+.. code-block:: python
+
+    from je_web_runner import CDPEventListener
+
+    with CDPEventListener.from_driver(driver) as listener:
+        listener.on("Fetch.requestPaused", on_paused)
+        listener.send("Fetch.enable", {"patterns": [{"urlPattern": "*"}]})
+
+需 ``pip install websocket-client``；缺套件會丟 ``CDPEventLoopError``。
+
+Performance tracing：
+
+.. code-block:: python
+
+    from je_web_runner import record_trace
+
+    record_trace(
+        driver, "perf.json",
+        categories=["devtools.timeline", "loading"],
+        duration=10.0,
+    )
+    # 用 chrome://tracing 或 DevTools「Performance」面板開啟 perf.json。
+
+跨瀏覽器 BiDi network (Chrome / Edge / Firefox)：
+
+.. code-block:: python
+
+    from je_web_runner import (
+        bidi_add_request_handler,
+        bidi_add_response_handler,
+        bidi_add_auth_handler,
+        bidi_clear_network_handlers,
+    )
+
+    sub = bidi_add_request_handler(driver, lambda req: print(req.url))
+    bidi_clear_network_handlers(driver)
+
+Action JSON 別名
+----------------
+
+以上所有方法都有對應的 ``WR_*`` 別名（``WR_set_timezone`` /
+``WR_save_cookies`` / ``WR_enable_fetch_interception`` /
+``WR_save_full_page_screenshot`` / ``WR_attach_to_existing_browser`` ……），
+所以 MCP server 的 ``webrunner_run_actions`` 工具也能直接驅動。
+
+內部 mixin 拆分
+---------------
+
+``WebDriverWrapper`` 現以 mixin 組合，位於
+``je_web_runner/webdriver/_wrapper_mixins/`` 之下，確保每個檔案不超過專案
+規範的 750 行：
+
+* ``_scripting_mixin.py`` — ``execute`` / ``execute_script`` /
+  ``execute_async_script`` / ``execute_cdp_cmd``、全部 CDP 便利方法、
+  Fetch 原語、BiDi listener
+* ``_navigation_mixin.py`` — 導航、scroll、``switch``、視窗 / tab 管理、
+  視窗大小位置
+* ``_cookie_mixin.py`` — cookies + ``save_cookies`` / ``load_cookies`` /
+  ``clear_origin_storage``
+* ``_actions_mixin.py`` — ActionChains 全集
+* ``_media_mixin.py`` — 截圖、``print_page``、``get_log``
+
+組合後的類別本體、driver 生命週期 (``set_driver``、
+``attach_to_existing_browser``、``quit``)、元素查找、等待都留在
+``webdriver_wrapper.py``。對外的 import (``webdriver_wrapper_instance``、
+``WebDriverWrapper``) 完全不變。
