@@ -44,7 +44,7 @@ class TestRecordTrace(unittest.TestCase):
 
     def test_happy_path_writes_events(self):
         events = [{"name": "a"}, {"name": "b"}]
-        fake_listener, handlers = _make_fake_listener(events)
+        fake_listener, _ = _make_fake_listener(events)
         with patch(
             "je_web_runner.utils.cdp.tracing.CDPEventListener.from_driver",
             return_value=fake_listener,

@@ -67,11 +67,11 @@ class TestSetDriverExperimentalOptions(unittest.TestCase):
 
     def test_experimental_options_without_args_still_builds_options(self):
         fake_options, fake_driver_cls = self._patched_set_driver(
-            experimental_options={"prefs": {"download.default_directory": "/tmp"}},
+            experimental_options={"prefs": {"download.default_directory": "/opt/dl"}},
         )
         fake_options.add_argument.assert_not_called()
         fake_options.add_experimental_option.assert_called_once_with(
-            "prefs", {"download.default_directory": "/tmp"}
+            "prefs", {"download.default_directory": "/opt/dl"}
         )
         _, kwargs = fake_driver_cls.call_args
         self.assertIs(kwargs.get("options"), fake_options)
@@ -157,8 +157,8 @@ class TestSaveScreenshot(unittest.TestCase):
         fake_driver.save_screenshot.return_value = True
         wrapper.current_webdriver = fake_driver
 
-        self.assertTrue(wrapper.save_screenshot("/tmp/out.png"))
-        fake_driver.save_screenshot.assert_called_once_with("/tmp/out.png")
+        self.assertTrue(wrapper.save_screenshot("/opt/out.png"))
+        fake_driver.save_screenshot.assert_called_once_with("/opt/out.png")
 
     def test_returns_false_on_exception(self):
         wrapper = WebDriverWrapper()
@@ -166,7 +166,7 @@ class TestSaveScreenshot(unittest.TestCase):
         fake_driver.save_screenshot.side_effect = RuntimeError("disk full")
         wrapper.current_webdriver = fake_driver
 
-        self.assertFalse(wrapper.save_screenshot("/tmp/out.png"))
+        self.assertFalse(wrapper.save_screenshot("/opt/out.png"))
 
 
 # --- Group A: page / window metadata --------------------------------------
@@ -249,10 +249,10 @@ class TestExtensionsAndAttach(unittest.TestCase):
             wrapper = WebDriverWrapper()
             wrapper.set_driver(
                 "chrome",
-                extension_paths=["/tmp/a.crx", "/tmp/b.crx"],
+                extension_paths=["/opt/a.crx", "/opt/b.crx"],
             )
-        fake_options.add_extension.assert_any_call("/tmp/a.crx")
-        fake_options.add_extension.assert_any_call("/tmp/b.crx")
+        fake_options.add_extension.assert_any_call("/opt/a.crx")
+        fake_options.add_extension.assert_any_call("/opt/b.crx")
         _, kwargs = fake_driver_cls.call_args
         self.assertIs(kwargs.get("options"), fake_options)
 
@@ -280,7 +280,7 @@ class TestExtensionsAndAttach(unittest.TestCase):
         ):
             wrapper = WebDriverWrapper()
             with self.assertRaises(WebRunnerException):
-                wrapper.set_driver("ie", extension_paths=["/tmp/a.crx"])
+                wrapper.set_driver("ie", extension_paths=["/opt/a.crx"])
 
     def test_attach_to_existing_browser_merges_debugger_address(self):
         wrapper = WebDriverWrapper()
@@ -294,7 +294,7 @@ class TestExtensionsAndAttach(unittest.TestCase):
         self.assertEqual(args[0], "chrome")
         merged = kwargs["experimental_options"]
         self.assertEqual(merged["debuggerAddress"], "127.0.0.1:9222")
-        self.assertEqual(merged["detach"], True)
+        self.assertTrue(merged["detach"])
 
 
 # --- Group C: CDP convenience methods -------------------------------------
@@ -564,20 +564,20 @@ class TestDownloadDirectory(unittest.TestCase):
         wrapper = WebDriverWrapper()
         fake_driver = MagicMock()
         wrapper.current_webdriver = fake_driver
-        wrapper.set_download_directory("/tmp/downloads")
+        wrapper.set_download_directory("/opt/downloads")
         fake_driver.execute_cdp_cmd.assert_called_once_with(
             "Browser.setDownloadBehavior",
-            {"behavior": "allow", "downloadPath": "/tmp/downloads"},
+            {"behavior": "allow", "downloadPath": "/opt/downloads"},
         )
 
     def test_set_download_directory_deny(self):
         wrapper = WebDriverWrapper()
         fake_driver = MagicMock()
         wrapper.current_webdriver = fake_driver
-        wrapper.set_download_directory("/tmp/downloads", behavior="deny")
+        wrapper.set_download_directory("/opt/downloads", behavior="deny")
         fake_driver.execute_cdp_cmd.assert_called_once_with(
             "Browser.setDownloadBehavior",
-            {"behavior": "deny", "downloadPath": "/tmp/downloads"},
+            {"behavior": "deny", "downloadPath": "/opt/downloads"},
         )
 
 
@@ -788,7 +788,6 @@ class TestFetchInterception(unittest.TestCase):
             post_data="hello",
             headers={"X-Test": "1", "X-Two": 2},
         )
-        _, kwargs_or_args = self.fake_driver.execute_cdp_cmd.call_args
         args = self.fake_driver.execute_cdp_cmd.call_args.args
         self.assertEqual(args[0], "Fetch.continueRequest")
         params = args[1]

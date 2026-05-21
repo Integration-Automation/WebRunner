@@ -160,9 +160,13 @@ class TestCDPEventListenerDispatch(unittest.TestCase):
     def test_handler_exception_does_not_kill_loop(self):
         fake_ws = FakeWebSocket()
         good = []
+
+        def _explode(_params):
+            raise RuntimeError("boom")
+
         with _patch_websocket(fake_ws):
             with CDPEventListener("ws://fake") as listener:
-                listener.on("X", lambda p: (_ for _ in ()).throw(RuntimeError("boom")))
+                listener.on("X", _explode)
                 listener.on("X", lambda p: good.append(p))
                 fake_ws.push_dict({"method": "X", "params": {"n": 1}})
                 self.assertTrue(_wait_until(lambda: bool(good)))

@@ -6,6 +6,9 @@ import base64
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
+_FULL_PAGE_SCREENSHOT_LOG = "webdriver wrapper save_full_page_screenshot"
+_PRINT_PAGE_LOG = "webdriver wrapper print_page"
+
 
 class _MediaMixin:
     """截圖 / 列印 / log 取得 / Screenshots, printing, and driver log retrieval."""
@@ -66,15 +69,15 @@ class _MediaMixin:
             )
             data_b64 = (result or {}).get("data")
             if not data_b64:
-                record_action_to_list("webdriver wrapper save_full_page_screenshot", param, None)
+                record_action_to_list(_FULL_PAGE_SCREENSHOT_LOG, param, None)
                 return False
             with open(file_path, "wb") as fh:
                 fh.write(base64.b64decode(data_b64))
-            record_action_to_list("webdriver wrapper save_full_page_screenshot", param, None)
+            record_action_to_list(_FULL_PAGE_SCREENSHOT_LOG, param, None)
             return True
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper save_full_page_screenshot failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper save_full_page_screenshot", param, error)
+            record_action_to_list(_FULL_PAGE_SCREENSHOT_LOG, param, error)
             return False
 
     def print_page(self, file_path: str, print_options=None) -> bool:
@@ -96,15 +99,15 @@ class _MediaMixin:
                 else self.current_webdriver.print_page()
             )
             if not data_b64:
-                record_action_to_list("webdriver wrapper print_page", param, None)
+                record_action_to_list(_PRINT_PAGE_LOG, param, None)
                 return False
             with open(file_path, "wb") as fh:
                 fh.write(base64.b64decode(data_b64))
-            record_action_to_list("webdriver wrapper print_page", param, None)
+            record_action_to_list(_PRINT_PAGE_LOG, param, None)
             return True
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper print_page failed: {repr(error)}")
-            record_action_to_list("webdriver wrapper print_page", param, error)
+            record_action_to_list(_PRINT_PAGE_LOG, param, error)
             return False
 
     def get_screenshot_as_base64(self) -> str | None:

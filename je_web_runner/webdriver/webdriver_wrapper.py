@@ -84,6 +84,59 @@ _options_dict = {
 }
 
 
+def _apply_experimental_options(driver_options, webdriver_name, experimental_options) -> None:
+    """逐項套用 Chromium 系實驗性參數，若 Options 不支援則拋出。"""
+    if not hasattr(driver_options, "add_experimental_option"):
+        raise WebRunnerException(
+            f"{webdriver_name!r} options do not support experimental_options "
+            f"(Chromium-family browsers only)"
+        )
+    for exp_key, exp_value in experimental_options.items():
+        driver_options.add_experimental_option(exp_key, exp_value)
+
+
+def _apply_extension_paths(driver_options, webdriver_name, extension_paths) -> None:
+    """逐項載入瀏覽器擴充功能 (.crx)，若 Options 不支援則拋出。"""
+    if not hasattr(driver_options, "add_extension"):
+        raise WebRunnerException(
+            f"{webdriver_name!r} options do not support add_extension"
+        )
+    for ext_path in extension_paths:
+        driver_options.add_extension(ext_path)
+
+
+def _build_driver_options(
+        webdriver_name: str,
+        options: List[str] | None,
+        experimental_options: dict | None,
+        extension_paths: List[str] | None,
+        enable_bidi: bool,
+):
+    """
+    依旗標組裝 Options 物件；若所有參數都空或瀏覽器沒有對應 Options 類別，回傳 None
+    讓呼叫端走 ``webdriver_value(**kwargs)`` 路徑。
+    Build the Options object based on the flag set; return ``None`` when nothing
+    needs to be configured (or the browser has no Options class), so the caller
+    can take the ``webdriver_value(**kwargs)`` path.
+    """
+    if not (options or experimental_options or extension_paths or enable_bidi):
+        return None
+    options_cls = _options_dict.get(webdriver_name)
+    if options_cls is None:
+        return None
+    driver_options = options_cls()
+    if options:
+        for option in options:
+            driver_options.add_argument(argument=option)
+    if experimental_options:
+        _apply_experimental_options(driver_options, webdriver_name, experimental_options)
+    if extension_paths:
+        _apply_extension_paths(driver_options, webdriver_name, extension_paths)
+    if enable_bidi:
+        driver_options.set_capability("webSocketUrl", True)
+    return driver_options
+
+
 class WebDriverWrapper(
     _ScriptingMixin,
     _NavigationMixin,
@@ -144,7 +197,7 @@ class WebDriverWrapper(
                                      會逐項經由 ``add_experimental_option`` 傳入。例如
                                      ``{"excludeSwitches": ["enable-automation"],
                                      "useAutomationExtension": False,
-                                     "prefs": {"download.default_directory": "/tmp"}}``。
+                                     "prefs": {"download.default_directory": "./downloads"}}``。
                                      非 Chromium 系瀏覽器若傳入會拋出例外。
                                      Browser-specific experimental options for Chromium-family
                                      browsers (Chrome / Chromium / Edge), each forwarded via
@@ -184,38 +237,11 @@ class WebDriverWrapper(
             webdriver_install_manager = _webdriver_manager_dict.get(webdriver_name)
             webdriver_install_manager().install()
 
-            # 如果有任一 option-like 參數，則建立對應的 Options 一次傳入
-            # If any option-like arg provided, build a single Options object
-            has_options = bool(options)
-            has_experimental = bool(experimental_options)
-            has_extensions = bool(extension_paths)
-            if has_options or has_experimental or has_extensions or enable_bidi:
-                options_cls = _options_dict.get(webdriver_name)
-                driver_options = options_cls() if options_cls else None
-                if driver_options is None:
-                    self.current_webdriver = webdriver_value(**kwargs)
-                else:
-                    if has_options:
-                        for option in options:
-                            driver_options.add_argument(argument=option)
-                    if has_experimental:
-                        if not hasattr(driver_options, "add_experimental_option"):
-                            raise WebRunnerException(
-                                f"{webdriver_name!r} options do not support experimental_options "
-                                f"(Chromium-family browsers only)"
-                            )
-                        for exp_key, exp_value in experimental_options.items():
-                            driver_options.add_experimental_option(exp_key, exp_value)
-                    if has_extensions:
-                        if not hasattr(driver_options, "add_extension"):
-                            raise WebRunnerException(
-                                f"{webdriver_name!r} options do not support add_extension"
-                            )
-                        for ext_path in extension_paths:
-                            driver_options.add_extension(ext_path)
-                    if enable_bidi:
-                        driver_options.set_capability("webSocketUrl", True)
-                    self.current_webdriver = webdriver_value(options=driver_options, **kwargs)
+            driver_options = _build_driver_options(
+                webdriver_name, options, experimental_options, extension_paths, enable_bidi,
+            )
+            if driver_options is not None:
+                self.current_webdriver = webdriver_value(options=driver_options, **kwargs)
             else:
                 self.current_webdriver = webdriver_value(**kwargs)
 

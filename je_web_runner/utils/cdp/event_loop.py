@@ -62,7 +62,13 @@ def _query_page_ws_url(debugger_address: str) -> str:
     """從 ``http://host:port/json`` 取出第一個 page target 的 WebSocket URL。"""
     import urllib.request
 
-    url = f"http://{debugger_address}/json"
+    # Chrome / Edge DevTools 的 ``/json`` discovery endpoint 只跑在
+    # ``--remote-debugging-port`` 上，協議固定為 HTTP 且只 bind localhost。
+    # 不支援 HTTPS — 換 https 會直接連線失敗。
+    # The Chrome / Edge DevTools ``/json`` discovery endpoint runs only on
+    # the ``--remote-debugging-port``, is HTTP-only by browser design, and
+    # binds to localhost. Forcing https here would simply fail to connect.
+    url = f"http://{debugger_address}/json"  # NOSONAR python:S5332 — DevTools endpoint is HTTP-only by design
     with urllib.request.urlopen(url, timeout=5) as response:  # noqa: S310 — local devtools endpoint
         targets = json.loads(response.read())
     pages = [t for t in targets if t.get("type") == "page"]
