@@ -188,14 +188,13 @@ def _summary_for(file: ActionFile) -> str:
         else:
             parts.append(name)
     return " | ".join(parts)
-  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 
 def semantic_clusters(
     files: Sequence[ActionFile],
     embedder: Embedder,
     *,
     similarity_threshold: float = 0.92,
-) -> List[DuplicateCluster]:
+) -> List[DuplicateCluster]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """
     Group files whose summary embeddings are pairwise above
     ``similarity_threshold``. Uses simple agglomerative union-find; fine

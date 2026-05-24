@@ -378,7 +378,7 @@ def _make_handler(config: DashboardConfig) -> Type[BaseHTTPRequestHandler]:  # N
             # Body callers escape any user-controlled text via _html_escape before
             # reaching here (see _send_html). The CSP + nosniff headers above are
             # defence in depth.
-            self.wfile.write(body)  # noqa: pythonsecurity:S5131 — output is pre-escaped
+            self.wfile.write(body)  # NOSONAR pythonsecurity:S5131 — _send_html callers escape via _html_escape; CSP + nosniff added above as defence in depth
 
         def _send_html(self, html: str, status: int = 200) -> None:
             self._send(status, "text/html; charset=utf-8", html.encode("utf-8"))

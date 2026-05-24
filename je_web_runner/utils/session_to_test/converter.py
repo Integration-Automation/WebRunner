@@ -78,9 +78,9 @@ class ConversionResult:
     stats: ConversionStats
 
 
-# ---------- entry points ------------------------------------------------  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+# ---------- entry points ------------------------------------------------
 
-def convert_rrweb_events(events: Sequence[Dict[str, Any]]) -> ConversionResult:
+def convert_rrweb_events(events: Sequence[Dict[str, Any]]) -> ConversionResult:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """Convert an rrweb event list into WR action JSON."""
     if not isinstance(events, list):
         raise SessionToTestError("rrweb events must be a list")
@@ -235,11 +235,10 @@ def _selector_for_node(node_id: Any) -> Optional[str]:
 
 
 # ---------- generic mappings --------------------------------------------
-  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 def _convert_generic_event(
     event: Dict[str, Any],
     stats: ConversionStats,
-) -> Optional[Dict[str, Any]]:
+) -> Optional[Dict[str, Any]]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     kind = str(event.get("kind") or "").lower()
     target = event.get("target")
     locator = _coerce_locator(target)

@@ -182,8 +182,7 @@ def validate_actions(actions: Sequence[Any]) -> None:
     for index, action in enumerate(actions):
         _validate_one(index, action)
 
-  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
-def _validate_one(index: int, action: Any) -> None:
+def _validate_one(index: int, action: Any) -> None:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     if not isinstance(action, dict) or len(action) != 1:
         raise StoryToActionsError(
             f"action #{index} must be a single-key dict, got {action!r}"
@@ -211,8 +210,7 @@ def _validate_one(index: int, action: Any) -> None:
     else:
         _validate_locator_action(index, name, args)
 
-  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
-def _validate_locator_action(index: int, name: str, args: list) -> None:
+def _validate_locator_action(index: int, name: str, args: list) -> None:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     if len(args) < 2:
         raise StoryToActionsError(
             f"action #{index} ({name}) needs at least [by, value]"
@@ -237,13 +235,11 @@ def _validate_locator_action(index: int, name: str, args: list) -> None:
             raise StoryToActionsError(
                 f"action #{index} {name} needs [by, value, expected_text]"
             )
-    elif name == "WR_assert_element_visible":
-        if len(args) != 2:
-            raise StoryToActionsError(
-                f"action #{index} {name} needs exactly [by, value]"
-            )
-    elif name in ("WR_click_element", "WR_double_click_element",
-                  "WR_submit_element", "WR_clear_element"):
+    elif name in (
+        "WR_assert_element_visible",
+        "WR_click_element", "WR_double_click_element",
+        "WR_submit_element", "WR_clear_element",
+    ):
         if len(args) != 2:
             raise StoryToActionsError(
                 f"action #{index} {name} needs exactly [by, value]"

@@ -219,7 +219,7 @@ def sync_chrome_profile_back(
         try:
             shutil.copy2(src, dst)
             statuses.append(f"copied {rel}")
-        except (OSError, shutil.Error) as error:
+        except OSError as error:  # shutil.Error is a subclass of OSError
             statuses.append(f"skipped {rel}: {error!r}")
     web_runner_logger.info(f"sync_chrome_profile_back: {len(statuses)} entries")
     return statuses

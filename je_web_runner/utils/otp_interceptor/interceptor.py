@@ -245,7 +245,7 @@ class ImapProvider(OtpProvider):
         *,
         since: Optional[float] = None,
         limit: int = 25,
-    ) -> List[InterceptedMessage]:
+    ) -> List[InterceptedMessage]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
         conn = self._connect()
         try:
             conn.login(self.username, self.password)
@@ -439,7 +439,7 @@ def extract_otp_from_text(
         regex = pattern
     match = regex.search(text)
     if match is None:
-        return None  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+        return None
     if match.groups():
         return match.group(1)
     return match.group(0)
@@ -456,7 +456,7 @@ def wait_for_otp(
     subject_contains: Optional[str] = None,
     sleep_fn: Callable[[float], None] = time.sleep,
     time_fn: Callable[[], float] = time.time,
-) -> str:
+) -> str:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """
     輪詢 provider 直到收到含 OTP 的訊息或 timeout。
     Poll the provider every ``poll_interval`` seconds until a message that

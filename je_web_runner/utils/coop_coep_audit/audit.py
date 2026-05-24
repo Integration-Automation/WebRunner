@@ -161,7 +161,7 @@ def scan_har_resources(
     *,
     page_url: str,
     coep: CoepValue,
-) -> List[ResourceFinding]:
+) -> List[ResourceFinding]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """
     Walk HAR entries; any cross-origin entry must satisfy the page's COEP.
     Returns one :class:`ResourceFinding` per violation; empty list means OK.

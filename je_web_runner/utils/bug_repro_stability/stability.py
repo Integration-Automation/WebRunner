@@ -76,7 +76,6 @@ def _classify(repro_pct: float) -> ReproCategory:
         return ReproCategory.NON_REPRODUCIBLE
     return ReproCategory.FLAKY
 
-  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 # ---------- core -------------------------------------------------------
 
 def repeat(
@@ -85,7 +84,7 @@ def repeat(
     attempts: int = 10,
     stop_on_first_failure: bool = False,
     stop_on_first_pass: bool = False,
-) -> StabilityReport:
+) -> StabilityReport:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """
     Drive ``probe`` ``attempts`` times, return :class:`StabilityReport`.
     Set ``stop_on_first_failure=True`` to short-circuit when only

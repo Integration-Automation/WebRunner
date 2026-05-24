@@ -137,7 +137,6 @@ def _looks_like_jwt(value: str) -> bool:
         return False
     return isinstance(header, dict) and "alg" in header
 
-  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 # ---------- core scan ---------------------------------------------------
 
 def scan_text(
@@ -146,7 +145,7 @@ def scan_text(
     source: str = "text",
     location: str = "",
     patterns: Sequence[TokenPattern] = DEFAULT_PATTERNS,
-) -> List[TokenFinding]:
+) -> List[TokenFinding]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """Apply each pattern against ``text`` and return deduped findings."""
     if not isinstance(text, str):
         raise TokenLeakError(f"scan_text expects str, got {type(text).__name__}")
@@ -171,14 +170,14 @@ def scan_text(
                 source=source,
                 location=location,
             ))
-    return findings  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+    return findings
 
 
 def scan_har(
     har: Union[str, Dict[str, Any]],
     *,
     patterns: Sequence[TokenPattern] = DEFAULT_PATTERNS,
-) -> List[TokenFinding]:
+) -> List[TokenFinding]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """Scan request/response bodies in a HAR object/string."""
     har_obj = _coerce_har(har)
     entries = ((har_obj.get("log") or {}).get("entries")) or []

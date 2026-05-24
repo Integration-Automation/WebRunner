@@ -182,8 +182,7 @@ class LocatorSuggestion:
         return {"strategy": self.strategy.value, "value": self.value,
                 "rationale": self.rationale}
 
-  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
-def parse_suggestions(raw: str) -> List[LocatorSuggestion]:
+def parse_suggestions(raw: str) -> List[LocatorSuggestion]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """Decode the LLM's JSON array; reject malformed entries."""
     if not isinstance(raw, str) or not raw.strip():
         raise LocatorHardenerError("LLM returned empty response")

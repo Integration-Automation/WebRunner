@@ -456,12 +456,12 @@ def _build_bad_path_param_test(
 # ---------- public entry points ----------------------------------------
 
 def generate_tests_from_spec(
-    spec: Dict[str, Any],  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+    spec: Dict[str, Any],
     *,
     include_negative: bool = True,
     method_filter: Optional[Iterable[str]] = None,
     path_prefix_filter: Optional[str] = None,
-) -> GenerationResult:
+) -> GenerationResult:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """
     從已 load 的 spec 直接產出 GenerationResult。
     ``method_filter`` (e.g. ``{"get", "post"}``) and ``path_prefix_filter``

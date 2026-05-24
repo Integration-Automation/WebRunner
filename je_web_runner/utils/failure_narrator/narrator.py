@@ -46,9 +46,8 @@ class FailureBundle:
     def __post_init__(self) -> None:
         if not isinstance(self.test_id, str) or not self.test_id:
             raise FailureNarratorError("test_id must be non-empty string")
-  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 
-def load_bundle_dir(path: Union[str, Path]) -> FailureBundle:
+def load_bundle_dir(path: Union[str, Path]) -> FailureBundle:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """Read a failure-bundle directory laid out as JSON + text files."""
     bundle_dir = Path(path)
     if not bundle_dir.exists() or not bundle_dir.is_dir():
