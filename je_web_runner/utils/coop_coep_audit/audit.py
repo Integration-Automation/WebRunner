@@ -156,12 +156,30 @@ def _evaluate_resource(
     return None
 
 
+def _entry_finding(
+    entry: Any, page_url: str, coep: CoepValue,
+) -> Optional[ResourceFinding]:
+    """One HAR entry → optional :class:`ResourceFinding`."""
+    if not isinstance(entry, dict):
+        return None
+    request_url = ((entry.get("request") or {}).get("url")) or ""
+    if not request_url or _same_origin(request_url, page_url):
+        return None
+    headers = _header_lookup(entry)
+    return _evaluate_resource(
+        request_url,
+        corp=headers.get("cross-origin-resource-policy"),
+        cors_origin=headers.get("access-control-allow-origin"),
+        coep=coep,
+    )
+
+
 def scan_har_resources(
     har: Union[str, Dict[str, Any]],
     *,
     page_url: str,
     coep: CoepValue,
-) -> List[ResourceFinding]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+) -> List[ResourceFinding]:
     """
     Walk HAR entries; any cross-origin entry must satisfy the page's COEP.
     Returns one :class:`ResourceFinding` per violation; empty list means OK.
@@ -174,23 +192,12 @@ def scan_har_resources(
     entries = ((har_obj.get("log") or {}).get("entries")) or []
     if not isinstance(entries, list):
         raise CoopCoepAuditError("har log.entries must be a list")
-    findings: List[ResourceFinding] = []
-    for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        request_url = ((entry.get("request") or {}).get("url")) or ""
-        if not request_url or _same_origin(request_url, page_url):
-            continue
-        headers = _header_lookup(entry)
-        finding = _evaluate_resource(
-            request_url,
-            corp=headers.get("cross-origin-resource-policy"),
-            cors_origin=headers.get("access-control-allow-origin"),
-            coep=coep,
+    return [
+        finding for finding in (
+            _entry_finding(entry, page_url, coep) for entry in entries
         )
-        if finding is not None:
-            findings.append(finding)
-    return findings
+        if finding is not None
+    ]
 
 
 def _coerce_har(har: Union[str, Dict[str, Any]]) -> Dict[str, Any]:

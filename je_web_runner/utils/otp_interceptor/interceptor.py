@@ -239,13 +239,33 @@ class ImapProvider(OtpProvider):
         import imaplib  # local import — IMAP is rarely needed
         return (imaplib.IMAP4_SSL if self.use_ssl else imaplib.IMAP4)(self.host, self.port)
 
+    def _fetch_one(self, conn: Any, raw_id: bytes, since: Optional[float]) -> Optional[InterceptedMessage]:
+        _typ, msg_data = conn.fetch(raw_id, "(RFC822)")
+        if not msg_data or not msg_data[0]:
+            return None
+        payload = msg_data[0]
+        raw_bytes = payload[1] if isinstance(payload, tuple) else payload
+        msg = _imap_bytes_to_message(raw_id.decode(), raw_bytes)
+        if msg is None:
+            return None
+        if since and msg.received_at < since:
+            return None
+        return msg
+
+    def _close_quietly(self, conn: Any) -> None:
+        for method_name in ("close", "logout"):
+            try:
+                getattr(conn, method_name)()
+            except Exception:  # noqa: BLE001 # nosec B110 — best-effort cleanup
+                pass
+
     def fetch_messages(
         self,
         recipient: Optional[str] = None,
         *,
         since: Optional[float] = None,
         limit: int = 25,
-    ) -> List[InterceptedMessage]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+    ) -> List[InterceptedMessage]:
         conn = self._connect()
         try:
             conn.login(self.username, self.password)
@@ -255,27 +275,12 @@ class ImapProvider(OtpProvider):
             ids = (ids_data[0].split() if ids_data and ids_data[0] else [])[-limit:]
             messages: List[InterceptedMessage] = []
             for raw_id in reversed(ids):
-                _typ, msg_data = conn.fetch(raw_id, "(RFC822)")
-                if not msg_data or not msg_data[0]:
-                    continue
-                payload = msg_data[0]
-                raw_bytes = payload[1] if isinstance(payload, tuple) else payload
-                msg = _imap_bytes_to_message(raw_id.decode(), raw_bytes)
-                if msg is None:
-                    continue
-                if since and msg.received_at < since:
-                    continue
-                messages.append(msg)
+                msg = self._fetch_one(conn, raw_id, since)
+                if msg is not None:
+                    messages.append(msg)
             return messages
         finally:
-            try:
-                conn.close()
-            except Exception:  # noqa: BLE001 # nosec B110 — best-effort cleanup; swallowing is intentional
-                pass
-            try:
-                conn.logout()
-            except Exception:  # noqa: BLE001 # nosec B110 — best-effort cleanup; swallowing is intentional
-                pass
+            self._close_quietly(conn)
 
 
 def _imap_bytes_to_message(message_id: str, raw_bytes: bytes) -> Optional[InterceptedMessage]:
@@ -445,6 +450,33 @@ def extract_otp_from_text(
     return match.group(0)
 
 
+def _otp_match(
+    msg: InterceptedMessage,
+    *,
+    subject_contains: Optional[str],
+    pattern: Union[str, Pattern[str], None],
+) -> Optional[str]:
+    if subject_contains and subject_contains.lower() not in msg.subject.lower():
+        return None
+    return (
+        extract_otp_from_text(msg.body, pattern)
+        or extract_otp_from_text(msg.subject, pattern)
+    )
+
+
+def _validate_wait_args(
+    provider: OtpProvider, recipient: str, timeout: float, poll_interval: float,
+) -> None:
+    if not isinstance(provider, OtpProvider):
+        raise OtpInterceptError(f"provider must be an OtpProvider, got {type(provider).__name__}")
+    if not recipient:
+        raise OtpInterceptError("recipient is required")
+    if timeout <= 0:
+        raise OtpInterceptError("timeout must be positive")
+    if poll_interval <= 0:
+        raise OtpInterceptError("poll_interval must be positive")
+
+
 def wait_for_otp(
     provider: OtpProvider,
     recipient: str,
@@ -456,7 +488,7 @@ def wait_for_otp(
     subject_contains: Optional[str] = None,
     sleep_fn: Callable[[float], None] = time.sleep,
     time_fn: Callable[[], float] = time.time,
-) -> str:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+) -> str:
     """
     輪詢 provider 直到收到含 OTP 的訊息或 timeout。
     Poll the provider every ``poll_interval`` seconds until a message that
@@ -466,23 +498,14 @@ def wait_for_otp(
     Raises :class:`OtpInterceptError` on timeout. ``since`` defaults to
     "now" so messages already in the inbox don't accidentally match.
     """
-    if not isinstance(provider, OtpProvider):
-        raise OtpInterceptError(f"provider must be an OtpProvider, got {type(provider).__name__}")
-    if not recipient:
-        raise OtpInterceptError("recipient is required")
-    if timeout <= 0:
-        raise OtpInterceptError("timeout must be positive")
-    if poll_interval <= 0:
-        raise OtpInterceptError("poll_interval must be positive")
+    _validate_wait_args(provider, recipient, timeout, poll_interval)
     start = time_fn()
     if since is None:
         since = start
     while True:
         messages = provider.fetch_messages(recipient=recipient, since=since)
         for msg in messages:
-            if subject_contains and subject_contains.lower() not in msg.subject.lower():
-                continue
-            code = extract_otp_from_text(msg.body, pattern) or extract_otp_from_text(msg.subject, pattern)
+            code = _otp_match(msg, subject_contains=subject_contains, pattern=pattern)
             if code:
                 web_runner_logger.info(
                     f"wait_for_otp: matched {recipient} subject={msg.subject!r}"

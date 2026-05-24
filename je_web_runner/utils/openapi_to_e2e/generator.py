@@ -455,25 +455,75 @@ def _build_bad_path_param_test(
 
 # ---------- public entry points ----------------------------------------
 
+def _validate_spec_shape(spec: Any) -> Dict[str, Any]:
+    if not isinstance(spec, dict):
+        raise OpenAPIGeneratorError("spec must be a dict")
+    paths = spec.get("paths")
+    if not isinstance(paths, dict):
+        raise OpenAPIGeneratorError("spec missing 'paths' object")
+    return paths
+
+
+def _spec_title(spec: Dict[str, Any]) -> str:
+    info = spec.get("info")
+    return str(((info or {}).get("title") or "") if isinstance(info, dict) else "")
+
+
+def _build_negative_tests(
+    spec: Dict[str, Any], base_url: str, method: str, path: str,
+    operation: Dict[str, Any], extra_headers: Dict[str, str],
+) -> List[GeneratedTest]:
+    out: List[GeneratedTest] = []
+    missing = _build_missing_body_test(spec, base_url, method, path, operation, extra_headers)
+    if missing:
+        out.append(missing)
+    bad_path = _build_bad_path_param_test(spec, base_url, method, path, operation, extra_headers)
+    if bad_path:
+        out.append(bad_path)
+    return out
+
+
+def _expand_operation(
+    spec: Dict[str, Any], base_url: str, path: str, method: str, operation: Any,
+    extra_headers: Dict[str, str], include_negative: bool,
+    skipped: List[Dict[str, str]],
+) -> List[GeneratedTest]:
+    if not isinstance(operation, dict):
+        skipped.append({"path": path, "method": method, "reason": "operation not a dict"})
+        return []
+    out: List[GeneratedTest] = [
+        _build_happy_test(spec, base_url, method, path, operation, extra_headers),
+    ]
+    if include_negative:
+        out.extend(_build_negative_tests(
+            spec, base_url, method, path, operation, extra_headers,
+        ))
+    return out
+
+
+def _select_method(
+    method: str, methods_lower: set,
+) -> bool:
+    """Return True iff ``method`` should be emitted under the current filter."""
+    lower = method.lower()
+    return lower in SUPPORTED_METHODS and lower in methods_lower
+
+
 def generate_tests_from_spec(
     spec: Dict[str, Any],
     *,
     include_negative: bool = True,
     method_filter: Optional[Iterable[str]] = None,
     path_prefix_filter: Optional[str] = None,
-) -> GenerationResult:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+) -> GenerationResult:
     """
     從已 load 的 spec 直接產出 GenerationResult。
     ``method_filter`` (e.g. ``{"get", "post"}``) and ``path_prefix_filter``
     let callers narrow the surface during big-spec exploration.
     """
-    if not isinstance(spec, dict):
-        raise OpenAPIGeneratorError("spec must be a dict")
-    paths = spec.get("paths")
-    if not isinstance(paths, dict):
-        raise OpenAPIGeneratorError("spec missing 'paths' object")
+    paths = _validate_spec_shape(spec)
     base_url = _base_url(spec)
-    title = ((spec.get("info") or {}).get("title")) if isinstance(spec.get("info"), dict) else ""
+    title = _spec_title(spec)
     extra_headers = _auth_headers(spec)
     methods_lower = (
         {m.lower() for m in method_filter} if method_filter else set(SUPPORTED_METHODS)
@@ -486,31 +536,18 @@ def generate_tests_from_spec(
         if path_prefix_filter and not path.startswith(path_prefix_filter):
             continue
         for method, operation in operations.items():
-            if method.lower() not in SUPPORTED_METHODS:
+            if not _select_method(method, methods_lower):
                 continue
-            if method.lower() not in methods_lower:
-                continue
-            if not isinstance(operation, dict):
-                skipped.append({"path": path, "method": method, "reason": "operation not a dict"})
-                continue
-            tests.append(_build_happy_test(spec, base_url, method, path, operation, extra_headers))
-            if include_negative:
-                missing = _build_missing_body_test(
-                    spec, base_url, method, path, operation, extra_headers,
-                )
-                if missing:
-                    tests.append(missing)
-                bad_path = _build_bad_path_param_test(
-                    spec, base_url, method, path, operation, extra_headers,
-                )
-                if bad_path:
-                    tests.append(bad_path)
+            tests.extend(_expand_operation(
+                spec, base_url, path, method, operation, extra_headers,
+                include_negative, skipped,
+            ))
     web_runner_logger.info(
         f"generate_tests_from_spec: title={title!r} produced={len(tests)} "
         f"skipped={len(skipped)}"
     )
     return GenerationResult(
-        spec_title=str(title or ""),
+        spec_title=title,
         base_url=base_url,
         tests=tests,
         skipped=skipped,

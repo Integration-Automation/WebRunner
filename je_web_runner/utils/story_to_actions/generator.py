@@ -239,11 +239,10 @@ def _validate_locator_action(index: int, name: str, args: list) -> None:  # NOSO
         "WR_assert_element_visible",
         "WR_click_element", "WR_double_click_element",
         "WR_submit_element", "WR_clear_element",
-    ):
-        if len(args) != 2:
-            raise StoryToActionsError(
-                f"action #{index} {name} needs exactly [by, value]"
-            )
+    ) and len(args) != 2:
+        raise StoryToActionsError(
+            f"action #{index} {name} needs exactly [by, value]"
+        )
 
 
 # ---------- output helpers ----------------------------------------------

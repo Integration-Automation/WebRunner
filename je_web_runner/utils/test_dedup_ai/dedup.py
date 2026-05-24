@@ -189,12 +189,45 @@ def _summary_for(file: ActionFile) -> str:
             parts.append(name)
     return " | ".join(parts)
 
+def _embed_one(embedder: Embedder, file: ActionFile) -> List[float]:
+    """Call ``embedder`` for one file and validate the returned vector."""
+    try:
+        vector = embedder(_summary_for(file))
+    except Exception as error:
+        raise TestDedupError(
+            f"embedder failed for {file.path}: {error!r}"
+        ) from error
+    if not isinstance(vector, (list, tuple)) or not vector:
+        raise TestDedupError(
+            f"embedder returned bad vector for {file.path}: {vector!r}"
+        )
+    return list(vector)
+
+
+class _UnionFind:
+    """Tiny union-find for the agglomerative cluster step."""
+
+    def __init__(self, size: int) -> None:
+        self._parent = list(range(size))
+
+    def find(self, i: int) -> int:
+        while self._parent[i] != i:
+            self._parent[i] = self._parent[self._parent[i]]
+            i = self._parent[i]
+        return i
+
+    def union(self, i: int, j: int) -> None:
+        a, b = self.find(i), self.find(j)
+        if a != b:
+            self._parent[a] = b
+
+
 def semantic_clusters(
     files: Sequence[ActionFile],
     embedder: Embedder,
     *,
     similarity_threshold: float = 0.92,
-) -> List[DuplicateCluster]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+) -> List[DuplicateCluster]:
     """
     Group files whose summary embeddings are pairwise above
     ``similarity_threshold``. Uses simple agglomerative union-find; fine
@@ -204,40 +237,16 @@ def semantic_clusters(
         raise TestDedupError("files must be a non-empty sequence")
     if not 0.0 < similarity_threshold <= 1.0:
         raise TestDedupError("similarity_threshold must be in (0, 1]")
-    embeddings: List[Sequence[float]] = []
-    for f in files:
-        try:
-            vector = embedder(_summary_for(f))
-        except Exception as error:
-            raise TestDedupError(
-                f"embedder failed for {f.path}: {error!r}"
-            ) from error
-        if not isinstance(vector, (list, tuple)) or not vector:
-            raise TestDedupError(
-                f"embedder returned bad vector for {f.path}: {vector!r}"
-            )
-        embeddings.append(list(vector))
-    parent = list(range(len(files)))
-
-    def find(i: int) -> int:
-        while parent[i] != i:
-            parent[i] = parent[parent[i]]
-            i = parent[i]
-        return i
-
-    def union(i: int, j: int) -> None:
-        a, b = find(i), find(j)
-        if a != b:
-            parent[a] = b
-
+    embeddings = [_embed_one(embedder, f) for f in files]
+    uf = _UnionFind(len(files))
     for i in range(len(files)):
         for j in range(i + 1, len(files)):
             if _cosine(embeddings[i], embeddings[j]) >= similarity_threshold:
-                union(i, j)
+                uf.union(i, j)
 
     groups: Dict[int, List[int]] = {}
     for i in range(len(files)):
-        groups.setdefault(find(i), []).append(i)
+        groups.setdefault(uf.find(i), []).append(i)
 
     clusters: List[DuplicateCluster] = []
     for indices in groups.values():

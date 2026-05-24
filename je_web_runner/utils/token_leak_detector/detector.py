@@ -139,45 +139,77 @@ def _looks_like_jwt(value: str) -> bool:
 
 # ---------- core scan ---------------------------------------------------
 
+def _extract_token(match: "re.Match[str]") -> str:
+    return match.group(1) if match.groups() else match.group(0)
+
+
+def _accepts_token(pattern: TokenPattern, token: str) -> bool:
+    """Per-pattern post-match filter (length floor + JWT sanity)."""
+    if len(token) < pattern.min_length:
+        return False
+    if pattern.name == "jwt" and not _looks_like_jwt(token):
+        return False
+    return True
+
+
+def _scan_with_pattern(
+    pattern: TokenPattern, text: str, source: str, location: str,
+    seen: set,
+) -> List[TokenFinding]:
+    out: List[TokenFinding] = []
+    for match in pattern.pattern.finditer(text):
+        token = _extract_token(match)
+        if not _accepts_token(pattern, token):
+            continue
+        suffix = _redact(token)
+        dedup_key = (pattern.name, suffix, source, location)
+        if dedup_key in seen:
+            continue
+        seen.add(dedup_key)
+        out.append(TokenFinding(
+            pattern=pattern.name,
+            severity=pattern.severity,
+            token_suffix=suffix,
+            source=source,
+            location=location,
+        ))
+    return out
+
+
 def scan_text(
     text: str,
     *,
     source: str = "text",
     location: str = "",
     patterns: Sequence[TokenPattern] = DEFAULT_PATTERNS,
-) -> List[TokenFinding]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+) -> List[TokenFinding]:
     """Apply each pattern against ``text`` and return deduped findings."""
     if not isinstance(text, str):
         raise TokenLeakError(f"scan_text expects str, got {type(text).__name__}")
     seen: set = set()
     findings: List[TokenFinding] = []
     for pattern in patterns:
-        for match in pattern.pattern.finditer(text):
-            token = match.group(1) if match.groups() else match.group(0)
-            if len(token) < pattern.min_length:
-                continue
-            if pattern.name == "jwt" and not _looks_like_jwt(token):
-                continue
-            suffix = _redact(token)
-            dedup_key = (pattern.name, suffix, source, location)
-            if dedup_key in seen:
-                continue
-            seen.add(dedup_key)
-            findings.append(TokenFinding(
-                pattern=pattern.name,
-                severity=pattern.severity,
-                token_suffix=suffix,
-                source=source,
-                location=location,
-            ))
+        findings.extend(_scan_with_pattern(pattern, text, source, location, seen))
     return findings
+
+
+def _har_body_text(entry: Dict[str, Any], direction: str) -> Optional[str]:
+    """Return the body text of one HAR direction, or None when absent."""
+    if direction == "request":
+        content = (entry.get("request") or {}).get("postData") or {}
+    else:
+        content = (entry.get("response") or {}).get("content") or {}
+    if not isinstance(content, dict):
+        return None
+    text = content.get("text")
+    return text if isinstance(text, str) and text else None
 
 
 def scan_har(
     har: Union[str, Dict[str, Any]],
     *,
     patterns: Sequence[TokenPattern] = DEFAULT_PATTERNS,
-) -> List[TokenFinding]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+) -> List[TokenFinding]:
     """Scan request/response bodies in a HAR object/string."""
     har_obj = _coerce_har(har)
     entries = ((har_obj.get("log") or {}).get("entries")) or []
@@ -187,17 +219,12 @@ def scan_har(
             continue
         url = ((entry.get("request") or {}).get("url")) or ""
         for direction in ("request", "response"):
-            content = ((entry.get(direction) or {}).get("postData")
-                       if direction == "request"
-                       else (entry.get("response") or {}).get("content")) or {}
-            text = content.get("text") if isinstance(content, dict) else None
-            if isinstance(text, str) and text:
-                out.extend(scan_text(
-                    text,
-                    source=f"har.{direction}",
-                    location=url,
-                    patterns=patterns,
-                ))
+            text = _har_body_text(entry, direction)
+            if text is None:
+                continue
+            out.extend(scan_text(
+                text, source=f"har.{direction}", location=url, patterns=patterns,
+            ))
     return out
 
 

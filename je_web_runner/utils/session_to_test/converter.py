@@ -235,43 +235,64 @@ def _selector_for_node(node_id: Any) -> Optional[str]:
 
 
 # ---------- generic mappings --------------------------------------------
+
+def _generic_navigate(event: Dict[str, Any], stats: ConversionStats) -> Optional[Dict[str, Any]]:
+    url = event.get("url")
+    if isinstance(url, str) and url:
+        return {"WR_to_url": [url]}
+    stats.note_skip("navigate without url")
+    return None
+
+
+def _generic_click(locator: Optional[Tuple[str, str]], stats: ConversionStats) -> Optional[Dict[str, Any]]:
+    if locator is None:
+        stats.note_skip("click without target")
+        return None
+    return {"WR_click_element": list(locator)}
+
+
+def _generic_input(event: Dict[str, Any], locator: Optional[Tuple[str, str]], stats: ConversionStats) -> Optional[Dict[str, Any]]:
+    if locator is None:
+        stats.note_skip("input without target")
+        return None
+    value = event.get("value", "")
+    return {"WR_input_to_element": [*locator, str(value)]}
+
+
+def _generic_submit(locator: Optional[Tuple[str, str]]) -> Dict[str, Any]:
+    if locator is None:
+        return {"WR_comment": ["submit form (no target)"]}
+    return {"WR_submit_element": list(locator)}
+
+
+def _generic_wait(event: Dict[str, Any], stats: ConversionStats) -> Optional[Dict[str, Any]]:
+    try:
+        seconds = float(event.get("seconds", 0))
+    except (TypeError, ValueError):
+        stats.note_skip("wait with non-numeric seconds")
+        return None
+    return {"WR_implicitly_wait": [seconds]}
+
+
+_GENERIC_DISPATCH = {
+    "navigate": lambda event, locator, stats: _generic_navigate(event, stats),
+    "click":    lambda event, locator, stats: _generic_click(locator, stats),
+    "input":    lambda event, locator, stats: _generic_input(event, locator, stats),
+    "submit":   lambda event, locator, stats: _generic_submit(locator),
+    "wait":     lambda event, locator, stats: _generic_wait(event, stats),
+}
+
+
 def _convert_generic_event(
     event: Dict[str, Any],
     stats: ConversionStats,
-) -> Optional[Dict[str, Any]]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+) -> Optional[Dict[str, Any]]:
     kind = str(event.get("kind") or "").lower()
-    target = event.get("target")
-    locator = _coerce_locator(target)
-    if kind == "navigate":
-        url = event.get("url")
-        if isinstance(url, str) and url:
-            return {"WR_to_url": [url]}
-        stats.note_skip("navigate without url")
+    handler = _GENERIC_DISPATCH.get(kind)
+    if handler is None:
+        stats.note_skip(f"unknown generic kind {kind!r}")
         return None
-    if kind == "click":
-        if locator is None:
-            stats.note_skip("click without target")
-            return None
-        return {"WR_click_element": list(locator)}
-    if kind == "input":
-        if locator is None:
-            stats.note_skip("input without target")
-            return None
-        value = event.get("value", "")
-        return {"WR_input_to_element": [*locator, str(value)]}
-    if kind == "submit":
-        if locator is None:
-            return {"WR_comment": ["submit form (no target)"]}
-        return {"WR_submit_element": list(locator)}
-    if kind == "wait":
-        try:
-            seconds = float(event.get("seconds", 0))
-        except (TypeError, ValueError):
-            stats.note_skip("wait with non-numeric seconds")
-            return None
-        return {"WR_implicitly_wait": [seconds]}
-    stats.note_skip(f"unknown generic kind {kind!r}")
-    return None
+    return handler(event, _coerce_locator(event.get("target")), stats)
 
 
 def _coerce_locator(target: Any) -> Optional[Tuple[str, str]]:

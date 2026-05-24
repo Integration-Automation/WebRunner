@@ -78,13 +78,54 @@ def _classify(repro_pct: float) -> ReproCategory:
 
 # ---------- core -------------------------------------------------------
 
+@dataclass
+class _StreakState:
+    """Mutable counters carried across iterations of :func:`repeat`."""
+
+    failures: int = 0
+    longest_pass: int = 0
+    longest_fail: int = 0
+    pass_streak: int = 0
+    fail_streak: int = 0
+
+
+def _probe_once(probe: ProbeFn, index: int) -> RunOutcome:
+    try:
+        outcome = probe(index)
+    except Exception as error:
+        raise BugReproStabilityError(
+            f"probe raised at attempt {index}: {error!r}"
+        ) from error
+    if not isinstance(outcome, RunOutcome):
+        raise BugReproStabilityError(
+            f"probe must return RunOutcome, got {type(outcome).__name__}"
+        )
+    return outcome
+
+
+def _record_outcome(
+    outcome: RunOutcome, state: _StreakState, errors: Dict[str, int],
+) -> None:
+    if outcome.passed:
+        state.pass_streak += 1
+        state.fail_streak = 0
+        state.longest_pass = max(state.longest_pass, state.pass_streak)
+    else:
+        state.failures += 1
+        state.fail_streak += 1
+        state.pass_streak = 0
+        state.longest_fail = max(state.longest_fail, state.fail_streak)
+        sig = outcome.error_signature or "(unspecified)"
+        errors[sig] = errors.get(sig, 0) + 1
+
+
 def repeat(
     probe: ProbeFn,
     *,
     attempts: int = 10,
     stop_on_first_failure: bool = False,
     stop_on_first_pass: bool = False,
-) -> StabilityReport:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+) -> StabilityReport:
     """
     Drive ``probe`` ``attempts`` times, return :class:`StabilityReport`.
     Set ``stop_on_first_failure=True`` to short-circuit when only
@@ -95,54 +136,31 @@ def repeat(
     if attempts <= 0:
         raise BugReproStabilityError("attempts must be > 0")
 
-    failures = 0
-    longest_pass = 0
-    longest_fail = 0
-    pass_streak = 0
-    fail_streak = 0
+    state = _StreakState()
     errors: Dict[str, int] = {}
     durations: List[float] = []
     actual_attempts = 0
     for index in range(attempts):
         actual_attempts += 1
-        try:
-            outcome = probe(index)
-        except Exception as error:
-            raise BugReproStabilityError(
-                f"probe raised at attempt {index}: {error!r}"
-            ) from error
-        if not isinstance(outcome, RunOutcome):
-            raise BugReproStabilityError(
-                f"probe must return RunOutcome, got {type(outcome).__name__}"
-            )
+        outcome = _probe_once(probe, index)
         durations.append(outcome.duration_seconds)
-        if outcome.passed:
-            pass_streak += 1
-            fail_streak = 0
-            longest_pass = max(longest_pass, pass_streak)
-            if stop_on_first_pass:
-                break
-        else:
-            failures += 1
-            fail_streak += 1
-            pass_streak = 0
-            longest_fail = max(longest_fail, fail_streak)
-            sig = outcome.error_signature or "(unspecified)"
-            errors[sig] = errors.get(sig, 0) + 1
-            if stop_on_first_failure:
-                break
+        _record_outcome(outcome, state, errors)
+        if outcome.passed and stop_on_first_pass:
+            break
+        if not outcome.passed and stop_on_first_failure:
+            break
         web_runner_logger.debug(
             f"bug_repro_stability attempt {index + 1}/{attempts}: "
             f"passed={outcome.passed}"
         )
-    repro_pct = (failures / actual_attempts) * 100.0
+    repro_pct = (state.failures / actual_attempts) * 100.0
     return StabilityReport(
         attempts=actual_attempts,
-        failures=failures,
+        failures=state.failures,
         repro_pct=round(repro_pct, 2),
         category=_classify(repro_pct),
-        longest_pass_streak=longest_pass,
-        longest_fail_streak=longest_fail,
+        longest_pass_streak=state.longest_pass,
+        longest_fail_streak=state.longest_fail,
         errors=errors,
         durations=[round(d, 4) for d in durations],
     )
