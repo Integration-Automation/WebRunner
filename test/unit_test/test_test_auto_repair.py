@@ -60,6 +60,7 @@ class TestCollectGitDiff(unittest.TestCase):
         self.assertEqual(collect_git_diff("/x", runner=boom), "")
 
     def test_truncates_long_diffs(self):
+        # nosemgrep: dangerous-subprocess-use-audit — fake CompletedProcess for MagicMock; no subprocess is launched.
         fake = MagicMock(return_value=subprocess.CompletedProcess(
             args=[], returncode=0, stdout="x" * 9999, stderr="",
         ))
