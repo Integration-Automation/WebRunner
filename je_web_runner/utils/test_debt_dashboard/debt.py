@@ -14,13 +14,12 @@ mtime) and an owner (best-effort from CODEOWNERS).
 """
 from __future__ import annotations
 
-import os
 import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException

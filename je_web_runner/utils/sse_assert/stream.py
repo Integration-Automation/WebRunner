@@ -190,7 +190,7 @@ def assert_received_event(
         try:
             if predicate(event):
                 return event
-        except Exception:
+        except Exception:  # nosec B112 — user predicate may legitimately raise; skip + continue
             continue
     raise SseAssertError(f"no SSE event matched: {description}")
 

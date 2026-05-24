@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -95,7 +95,7 @@ class StoreSnapshot:
             try:
                 if predicate(r):
                     return r
-            except Exception:
+            except Exception:  # nosec B112 — user predicate may legitimately raise; skip + continue
                 continue
         return None
 

@@ -20,7 +20,7 @@ import threading
 import time
 from dataclasses import asdict, dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Optional
 from urllib.parse import parse_qs, urlsplit
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -80,7 +80,7 @@ def _build_handler(
     class WebhookHandler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
 
-        def log_message(self, format: str, *args: Any) -> None:
+        def log_message(self, format: str, *args: Any) -> None:  # pylint: disable=redefined-builtin — match BaseHTTPRequestHandler signature
             web_runner_logger.debug("webhook " + (format % args))
 
         def _handle(self, method: str) -> None:
@@ -289,7 +289,7 @@ def assert_received_json_matching(
         try:
             if predicate(payload):
                 return request
-        except Exception:
+        except Exception:  # nosec B112 — user predicate may legitimately raise; skip + continue
             continue
     raise WebhookReceiverError(
         f"no JSON webhook matched: {description}"

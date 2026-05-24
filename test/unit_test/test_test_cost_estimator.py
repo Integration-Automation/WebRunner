@@ -6,7 +6,6 @@ from pathlib import Path
 
 from je_web_runner.utils.test_cost_estimator.estimator import (
     DEFAULT_RATE_CARDS,
-    CostEstimate,
     RateCard,
     RunRow,
     TestCostEstimatorError,

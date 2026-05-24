@@ -8,10 +8,9 @@ violations.
 """
 from __future__ import annotations
 
-import json
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, List, Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

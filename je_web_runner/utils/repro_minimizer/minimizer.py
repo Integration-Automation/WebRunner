@@ -13,8 +13,8 @@ minimal subset.
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field
-from typing import Any, Callable, List, Optional, Sequence
+from dataclasses import dataclass
+from typing import Any, Callable, List, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger

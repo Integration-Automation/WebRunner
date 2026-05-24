@@ -3,7 +3,6 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
 
 from je_web_runner.utils.ai_assist.llm_assist import set_llm_callable
 from je_web_runner.utils.failure_bundle.bundle import FailureBundle

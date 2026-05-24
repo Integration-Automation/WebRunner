@@ -4,12 +4,9 @@ import unittest
 from je_web_runner.utils.forced_colors_mode.modes import (
     DEFAULT_PROFILES,
     ColorScheme,
-    Contrast,
-    ForcedColors,
     ForcedColorsModeError,
     MediaProfile,
     ModeAuditReport,
-    ReducedMotion,
     StyleSnapshot,
     apply_profile,
     assert_no_invisible,

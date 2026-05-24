@@ -18,8 +18,8 @@ Outputs:
 from __future__ import annotations
 
 import time
-from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Protocol, Sequence
+from dataclasses import dataclass, field
+from typing import Any, Dict, Iterable, List, Optional, Protocol, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger

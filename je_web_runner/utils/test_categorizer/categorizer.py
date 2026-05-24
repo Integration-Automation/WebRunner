@@ -18,7 +18,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Set, Union
+from typing import Any, Callable, Dict, Iterable, List, Sequence, Set, Union
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

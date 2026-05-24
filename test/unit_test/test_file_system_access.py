@@ -1,5 +1,4 @@
 """Unit tests for je_web_runner.utils.file_system_access."""
-import json
 import unittest
 
 from je_web_runner.utils.file_system_access.mock import (

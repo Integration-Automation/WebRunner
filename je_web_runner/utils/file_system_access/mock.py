@@ -7,8 +7,8 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, List, Optional, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

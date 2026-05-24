@@ -14,8 +14,8 @@ counts + violations.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, Hashable, Iterable, List, Optional, Protocol, Sequence
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, Hashable, List, Optional, Protocol
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

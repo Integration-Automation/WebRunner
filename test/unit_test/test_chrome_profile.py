@@ -1,5 +1,4 @@
 """Unit tests for je_web_runner.utils.chrome_profile."""
-import os
 import sys
 import tempfile
 import unittest

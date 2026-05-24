@@ -94,7 +94,7 @@ def plan_chaos(
     if skip_first < 0 or skip_last < 0:
         raise ChaosHooksError("skip_first / skip_last must be >= 0")
     total = len(step_names)
-    rng = random.Random(seed)
+    rng = random.Random(seed)  # nosec B311 — deterministic test scheduling, not crypto
     events: List[ChaosEvent] = []
     skipped: List[int] = []
     for index, name in enumerate(step_names):

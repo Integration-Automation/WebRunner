@@ -9,7 +9,6 @@ from je_web_runner.utils.locator_health.health_report import (
     FallbackHitTracker,
     LocatorFinding,
     LocatorHealthError,
-    LocatorHealthReport,
     UpgradeSuggestion,
     apply_upgrades,
     build_health_report,

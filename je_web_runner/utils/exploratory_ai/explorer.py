@@ -152,7 +152,7 @@ class RandomPlanner:
     ) -> None:
         if not 0.0 <= type_bias <= 1.0:
             raise ExploratoryAiError("type_bias must be in [0, 1]")
-        self._rng = random.Random(seed)
+        self._rng = random.Random(seed)  # nosec B311 — deterministic fuzz, not crypto
         self._samples = list(sample_strings) or ["x"]
         self._type_bias = type_bias
 
@@ -244,6 +244,8 @@ class Explorer:
 
     def _safe_observe(self, step: int) -> PageObservation:
         try:
+            # pylint: disable=assignment-from-no-return — Protocol body is `...`;
+            # pylint can't see the real implementation's return.
             obs = self.observer.observe(step)
         except Exception as error:
             raise ExploratoryAiError(
@@ -262,6 +264,7 @@ class Explorer:
         repeat_counter: Dict[str, int],
     ) -> Optional[PlannedAction]:
         try:
+            # pylint: disable=assignment-from-no-return — Protocol body is `...`.
             action = self.planner.plan(observation)
         except Exception as error:
             web_runner_logger.warning(f"planner failed; stopping: {error!r}")

@@ -13,8 +13,8 @@ from __future__ import annotations
 import base64
 import json
 import re
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Pattern, Sequence, Union
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, Iterable, List, Pattern, Sequence, Union
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

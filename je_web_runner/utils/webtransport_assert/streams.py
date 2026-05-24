@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Pattern, Sequence
+from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

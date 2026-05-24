@@ -5,8 +5,6 @@ from je_web_runner.utils.long_animation_frame.frames import (
     HARVEST_SCRIPT,
     LoafReport,
     LongAnimationFrameError,
-    LongFrame,
-    ScriptAttribution,
     assert_no_frame_over,
     assert_total_blocking_under,
     build_install_script,

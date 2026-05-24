@@ -6,7 +6,6 @@ from pathlib import Path
 
 from je_web_runner.utils.prompt_drift_monitor.monitor import (
     Baseline,
-    BaselineSample,
     DriftFinding,
     DriftReport,
     PromptDriftError,

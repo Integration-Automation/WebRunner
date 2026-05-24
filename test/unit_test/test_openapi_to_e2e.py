@@ -5,8 +5,6 @@ import unittest
 from pathlib import Path
 
 from je_web_runner.utils.openapi_to_e2e.generator import (
-    GeneratedTest,
-    GenerationResult,
     OpenAPIGeneratorError,
     generate_tests_from_file,
     generate_tests_from_spec,

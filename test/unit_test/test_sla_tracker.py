@@ -6,8 +6,6 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from je_web_runner.utils.sla_tracker.tracker import (
-    BucketResult,
-    SlaReport,
     SlaTarget,
     SlaTrackerError,
     SuiteRun,

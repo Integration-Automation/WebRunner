@@ -5,7 +5,6 @@ from je_web_runner.utils.bug_repro_stability.stability import (
     BugReproStabilityError,
     ReproCategory,
     RunOutcome,
-    StabilityReport,
     assert_deterministic,
     assert_min_repro_pct,
     repeat,

@@ -15,12 +15,14 @@ from je_web_runner.utils.webhook_receiver.receiver import (
 
 def _post(url, body=b"", headers=None):
     req = Request(url, data=body, headers=headers or {}, method="POST")
-    with urlopen(req, timeout=5) as response:
+    # nosec B310 — test fixture talks only to the local WebhookServer (random loopback port).
+    with urlopen(req, timeout=5) as response:  # nosec B310
         return response.status, response.read()
 
 
 def _get(url):
-    with urlopen(url, timeout=5) as response:
+    # nosec B310 — test fixture talks only to the local WebhookServer (random loopback port).
+    with urlopen(url, timeout=5) as response:  # nosec B310
         return response.status, response.read()
 
 

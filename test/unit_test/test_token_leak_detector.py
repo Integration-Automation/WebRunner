@@ -37,6 +37,7 @@ class TestScanText(unittest.TestCase):
         self.assertNotIn("jwt", [f.pattern for f in findings])
 
     def test_aws_access_key(self):
+        # nosemgrep: aws-access-token — test fixture exercising the detector itself, not a real credential
         text = "AKIAIOSFODNN7EXAMPLE in source"
         findings = scan_text(text)
         self.assertTrue(any(f.pattern == "aws_access_key_id" for f in findings))
@@ -117,6 +118,7 @@ class TestScanHar(unittest.TestCase):
                     {
                         "request": {
                             "url": "https://api/x",
+                            # nosemgrep: aws-access-token — fixture exercising the detector itself
                             "postData": {"text": "AKIAIOSFODNN7EXAMPLE"},
                         },
                         "response": {"content": {}},

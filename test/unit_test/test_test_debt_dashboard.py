@@ -1,13 +1,11 @@
 """Unit tests for je_web_runner.utils.test_debt_dashboard."""
 import json
-import os
 import tempfile
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
 
 from je_web_runner.utils.test_debt_dashboard.debt import (
-    CodeownersIndex,
     DebtItem,
     DebtKind,
     DebtReport,

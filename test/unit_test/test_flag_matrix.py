@@ -3,7 +3,6 @@ import unittest
 
 from je_web_runner.utils.flag_matrix.matrix import (
     ComboResult,
-    FlagMatrix,
     FlagMatrixError,
     FlagSpec,
     build_matrix,

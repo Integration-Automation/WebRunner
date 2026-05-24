@@ -270,11 +270,11 @@ class ImapProvider(OtpProvider):
         finally:
             try:
                 conn.close()
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001 # nosec B110 — best-effort cleanup; swallowing is intentional
                 pass
             try:
                 conn.logout()
-            except Exception:  # noqa: BLE001
+            except Exception:  # noqa: BLE001 # nosec B110 — best-effort cleanup; swallowing is intentional
                 pass
 
 

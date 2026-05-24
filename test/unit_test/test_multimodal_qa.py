@@ -7,9 +7,7 @@ from pathlib import Path
 from je_web_runner.utils.multimodal_qa.qa import (
     MultimodalQaError,
     QaRequest,
-    QaResponse,
     Verdict,
-    VisionClient,
     ask,
     ask_path,
     assert_passes,

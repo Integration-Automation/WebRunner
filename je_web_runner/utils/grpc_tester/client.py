@@ -14,12 +14,11 @@ transport-portable.
 """
 from __future__ import annotations
 
-import base64
 import struct
 import time
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -131,6 +130,7 @@ def call(
     except Exception as exc:
         # Try to read .code() like grpc.RpcError; fall back to UNKNOWN.
         code_obj = getattr(exc, "code", None)
+        # pylint: disable=not-callable — guarded by callable() above.
         code_val = code_obj() if callable(code_obj) else code_obj
         status = _coerce_status(code_val)
         error = repr(exc)

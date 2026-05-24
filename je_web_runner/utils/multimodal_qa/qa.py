@@ -22,7 +22,7 @@ import re
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol, Sequence, Union
+from typing import Any, Dict, List, Protocol, Sequence, Union
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -36,7 +36,7 @@ class MultimodalQaError(WebRunnerException):
 class Verdict(str, Enum):
     """Final outcome of a single Q."""
 
-    PASS = "pass"
+    PASS = "pass"  # nosec B105 — verdict label, not a credential
     FAIL = "fail"
     UNCERTAIN = "uncertain"
 

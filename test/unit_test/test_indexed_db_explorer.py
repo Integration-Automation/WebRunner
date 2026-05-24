@@ -4,7 +4,6 @@ import unittest
 from je_web_runner.utils.indexed_db_explorer.explorer import (
     IdbSnapshot,
     IndexedDbExplorerError,
-    SnapshotDiff,
     StoreSnapshot,
     assert_db_exists,
     assert_index_present,

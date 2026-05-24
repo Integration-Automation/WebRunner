@@ -18,8 +18,8 @@ This module:
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from dataclasses import dataclass, field
+from typing import Dict, Iterable, List, Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

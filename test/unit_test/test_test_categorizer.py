@@ -7,7 +7,6 @@ from pathlib import Path
 from je_web_runner.utils.test_categorizer.categorizer import (
     CategoryAssignment,
     Rule,
-    TagDistribution,
     TestCategorizerError,
     aggregate,
     categorize_actions,

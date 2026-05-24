@@ -1,6 +1,6 @@
 """Unit tests for je_web_runner.utils.test_auto_repair."""
 import json
-import subprocess
+import subprocess  # nosec B404 — used only to construct CompletedProcess fakes for MagicMock
 import tempfile
 import unittest
 from pathlib import Path
@@ -40,6 +40,7 @@ _VALID_PAYLOAD = {
 class TestCollectGitDiff(unittest.TestCase):
 
     def test_returns_stdout_on_success(self):
+        # nosemgrep: dangerous-subprocess-use-audit — constructs a fake CompletedProcess for MagicMock; no subprocess is actually launched.
         fake = MagicMock(return_value=subprocess.CompletedProcess(
             args=[], returncode=0, stdout="--- diff text ---", stderr="",
         ))
@@ -148,6 +149,7 @@ class TestRepairFromBundle(unittest.TestCase):
             bundle = FailureBundle(test_name="t", error_repr="boom")
             bundle_path = bundle.write(Path(tmpdir) / "b.zip")
             set_llm_callable(lambda _p: json.dumps(_VALID_PAYLOAD))
+            # nosemgrep: dangerous-subprocess-use-audit — fake CompletedProcess for MagicMock; no subprocess is launched.
             fake_git = MagicMock(return_value=subprocess.CompletedProcess(
                 args=[], returncode=0, stdout="diff --git", stderr="",
             ))

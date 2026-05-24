@@ -1,14 +1,12 @@
 """Unit tests for je_web_runner.utils.flake_detector."""
 import json
 import tempfile
-import time
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from je_web_runner.utils.flake_detector.detector import (
     FlakeDetectorError,
-    FlakeScore,
     QuarantineEntry,
     QuarantineRegistry,
     compute_flake_scores,

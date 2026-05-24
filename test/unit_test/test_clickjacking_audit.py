@@ -2,7 +2,6 @@
 import unittest
 
 from je_web_runner.utils.clickjacking_audit.audit import (
-    AuditReport,
     ClickjackingAuditError,
     HeaderPolicy,
     PROBE_STATUS_SCRIPT,

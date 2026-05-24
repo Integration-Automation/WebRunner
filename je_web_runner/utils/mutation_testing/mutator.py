@@ -275,7 +275,7 @@ def generate_mutations(
     """
     if not isinstance(actions, list):
         raise MutationTestingError(f"actions must be a list, got {type(actions).__name__}")
-    rng = random.Random(seed) if seed is not None else random
+    rng = random.Random(seed) if seed is not None else random  # nosec B311 — mutation sampling, not crypto
     all_mutations: List[Mutation] = []
     for mt in types:
         generator = _GENERATORS.get(mt)

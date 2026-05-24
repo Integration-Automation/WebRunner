@@ -20,9 +20,9 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Protocol, Sequence
+from typing import Any, Dict, List, Protocol
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

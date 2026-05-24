@@ -125,7 +125,7 @@ def build_matrix(  # NOSONAR S3776 — cohesive logic; planned refactor in follo
         raise FlagMatrixError("all combos were filtered out by constraints")
 
     if sample_size is not None and len(filtered) > max(0, sample_size - len(pinned_combos)):
-        rng = random.Random(seed)
+        rng = random.Random(seed)  # nosec B311 — deterministic flag-combo sampling, not crypto
         keep_count = max(0, sample_size - len(pinned_combos))
         # S2245 ok: deterministic seeded sampling for reproducible test combos;
         # not used for any cryptographic / security decision.

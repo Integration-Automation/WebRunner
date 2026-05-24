@@ -6,7 +6,6 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from je_web_runner.utils.quarantine_age_report.report import (
-    AgedEntry,
     AgeReport,
     EscalationTier,
     QuarantineAgeReportError,
