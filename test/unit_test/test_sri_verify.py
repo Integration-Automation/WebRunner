@@ -83,12 +83,10 @@ class TestVerifyTag(unittest.TestCase):
         self.assertEqual(verify_tag(tag).verdict, Verdict.WEAK_ALG)
 
     def test_unknown_format(self):
-        _tag = ResourceTag(
-            tag="script", url="https://cdn/x.js",
-            integrity="not-an-integrity",
-        )
-        # 'not-an-integrity' parses as alg='not', so it falls into WEAK_ALG
-        # (not in strong set). Use a value with no dash for UNKNOWN_FORMAT:
+        # 'not-an-integrity' parses as alg='not', so a ResourceTag built with
+        # that integrity string would fall into WEAK_ALG (not in strong set).
+        # We only need the truly unparseable case below, so we don't bind
+        # a Python variable for the first example.
         tag2 = ResourceTag(
             tag="script", url="https://cdn/x.js", integrity="garbage",
         )

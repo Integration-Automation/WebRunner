@@ -48,6 +48,7 @@ class TestCollectGitDiff(unittest.TestCase):
         self.assertIn("diff text", text)
 
     def test_returns_empty_on_failure(self):
+        # nosemgrep: dangerous-subprocess-use-audit — fake CompletedProcess for MagicMock; no subprocess is launched.
         fake = MagicMock(return_value=subprocess.CompletedProcess(
             args=[], returncode=128, stdout="", stderr="not a git repo",
         ))

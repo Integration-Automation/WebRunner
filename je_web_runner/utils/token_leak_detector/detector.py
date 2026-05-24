@@ -14,7 +14,7 @@ import base64
 import json
 import re
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List, Pattern, Sequence, Union
+from typing import Any, Dict, Iterable, List, Optional, Pattern, Sequence, Union
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

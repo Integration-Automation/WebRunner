@@ -267,8 +267,8 @@ def _write_minimal_pdf(path: Path, text: str) -> None:
         c.save()
         path.write_bytes(buf.getvalue())
     except ImportError:
-        # Fallback: stitch together a near-minimal text page via pypdf.
-        from pypdf import PdfWriter
+        # Fallback: stitch together a near-minimal text page via pypdf
+        # (PdfWriter already imported above).
         writer = PdfWriter()
         writer.add_blank_page(width=200, height=200)
         with open(path, "wb") as fp:
