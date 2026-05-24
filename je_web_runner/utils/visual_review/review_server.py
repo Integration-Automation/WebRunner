@@ -202,8 +202,7 @@ def _make_handler(server: VisualReviewServer) -> Callable:
                     "text/html; charset=utf-8",
                 )
                 return
-            if (parsed.path.startswith("/img/baseline/")
-                    or parsed.path.startswith("/img/current/")):
+            if parsed.path.startswith(("/img/baseline/", "/img/current/")):
                 self._serve_image(parsed.path)
                 return
             self._send(404, b"not found", _TEXT_PLAIN)
