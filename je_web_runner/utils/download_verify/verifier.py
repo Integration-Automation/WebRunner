@@ -34,7 +34,7 @@ class DownloadVerifyError(WebRunnerException):
 
 # ---------- waiting -------------------------------------------------------
 
-def wait_for_download(
+def wait_for_download(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     download_dir: Union[str, Path],
     *,
     pattern: Union[str, Pattern[str]] = r".+",

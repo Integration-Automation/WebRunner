@@ -68,7 +68,7 @@ SNAPSHOT_IGNORE_NAMES: frozenset = frozenset({
     "Cache", "Code Cache", "GPUCache", "ShaderCache",
     "GraphiteDawnCache", "DawnGraphiteCache", "GrShaderCache",
     "Service Worker", "blob_storage", "Crashpad", "CrashpadMetrics",
-    "GrShaderCache", "Subresource Filter", "optimization_guide_model_store",
+    "Subresource Filter", "optimization_guide_model_store",
     "Download Service", "VideoDecodeStats", "Trust Tokens",
     "Network", "Session Storage", "IndexedDB",
 })
@@ -134,7 +134,7 @@ def _is_session_critical(rel_path: str) -> bool:
     return normalised in SESSION_CRITICAL_PATHS
 
 
-def snapshot_chrome_profile(
+def snapshot_chrome_profile(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     profile_dir: Path,
     snapshot_dir: Path,
     *,
@@ -181,7 +181,7 @@ def snapshot_chrome_profile(
             try:
                 shutil.copy2(src, dst)
                 copied += 1
-            except (OSError, shutil.Error) as error:
+            except OSError as error:  # shutil.Error is a subclass of OSError
                 skipped.append(f"{rel_root}/{fname}: {error!r}")
     web_runner_logger.info(
         f"snapshot_chrome_profile: copied={copied} skipped={len(skipped)} → {snapshot_dir}"

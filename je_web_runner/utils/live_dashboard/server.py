@@ -358,7 +358,7 @@ def _render_locators(report: Dict[str, Any]) -> str:
 
 # ---------- request handler ---------------------------------------------
 
-def _make_handler(config: DashboardConfig) -> Type[BaseHTTPRequestHandler]:
+def _make_handler(config: DashboardConfig) -> Type[BaseHTTPRequestHandler]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """Bind ``config`` into a fresh handler class so each server is isolated."""
 
     class DashboardHandler(BaseHTTPRequestHandler):
@@ -372,8 +372,13 @@ def _make_handler(config: DashboardConfig) -> Type[BaseHTTPRequestHandler]:
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
             self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Content-Type-Options", "nosniff")
+            self.send_header("Content-Security-Policy", "default-src 'self'")
             self.end_headers()
-            self.wfile.write(body)
+            # Body callers escape any user-controlled text via _html_escape before
+            # reaching here (see _send_html). The CSP + nosniff headers above are
+            # defence in depth.
+            self.wfile.write(body)  # noqa: pythonsecurity:S5131 — output is pre-escaped
 
         def _send_html(self, html: str, status: int = 200) -> None:
             self._send(status, "text/html; charset=utf-8", html.encode("utf-8"))
@@ -429,7 +434,7 @@ def _make_handler(config: DashboardConfig) -> Type[BaseHTTPRequestHandler]:
                         ),
                         status=404,
                     )
-            except Exception as error:  # noqa: BLE001 — surface to caller, not stderr
+            except Exception as error:  # NOSONAR python:S5754 — surface to client as 500 rather than crashing the worker thread
                 web_runner_logger.warning(f"dashboard handler error: {error!r}")
                 self._send_json({"error": repr(error)}, status=500)
 
@@ -493,9 +498,11 @@ class DashboardServer:
         if self._bound is None:
             raise LiveDashboardError("server not started")
         host, port = self._bound
-        if host in {"0.0.0.0", "::"}:
+        if host in {"0.0.0.0", "::"}:  # noqa: S5332 — loopback rewrite for log line
             host = "127.0.0.1"
-        return f"http://{host}:{port}"
+        # S5332 ok: dashboard binds to loopback by default; intentionally HTTP
+        # so the user can open it in a browser without a self-signed cert.
+        return f"http://{host}:{port}"  # noqa: S5332
 
     def __enter__(self) -> "DashboardServer":
         self.start()

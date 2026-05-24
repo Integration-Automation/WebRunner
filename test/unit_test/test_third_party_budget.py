@@ -163,7 +163,8 @@ class TestEvaluate(unittest.TestCase):
             self._reqs(("https://x/a", 10_000, True, "ga")),
             ThirdPartyBudget(max_blocking_ms=100),
         )
-        # duration_ms = 10_000 / 10 = 1000 > 100
+        # 10_000 bytes mapped to 1000 ms duration via the test helper above,
+        # which exceeds the 100 ms blocking-ms budget.
         self.assertFalse(report.passed())
 
     def test_breach_vendors(self):

@@ -49,7 +49,7 @@ class TestParseCodeowners(unittest.TestCase):
 
     def test_rejects_non_string(self):
         with self.assertRaises(TestOwnersMapError):
-            parse_codeowners(123)  # type: ignore[arg-type]
+            parse_codeowners(123)  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
 
 class TestLookup(unittest.TestCase):

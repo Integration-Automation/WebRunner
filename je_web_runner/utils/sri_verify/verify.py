@@ -44,7 +44,8 @@ class Verdict(str, Enum):
 _SCRIPT_RE = re.compile(r"<script\b([^>]*)>", re.IGNORECASE | re.DOTALL)
 _LINK_RE = re.compile(r"<link\b([^>]*)>", re.IGNORECASE | re.DOTALL)
 _ATTR_RE = re.compile(
-    r"""([a-zA-Z_:][-a-zA-Z0-9_:.]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""",
+    # re.IGNORECASE is set, so [A-Z] also matches lowercase — no need for [a-zA-Z].
+    r"""([A-Z_:][-A-Z0-9_:.]*)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""",
     re.IGNORECASE,
 )
 
@@ -199,7 +200,8 @@ def verify_tag(
 
 def _needs_crossorigin(tag: ResourceTag) -> bool:
     """Cross-origin (URL absolute + scheme present) needs ``crossorigin``."""
-    return tag.url.startswith(("http://", "https://", "//"))
+    # S5332 ok: we are *detecting* an http:// URL here, not making a request.
+    return tag.url.startswith(("http://", "https://", "//"))  # noqa: S5332
 
 
 def verify_html(

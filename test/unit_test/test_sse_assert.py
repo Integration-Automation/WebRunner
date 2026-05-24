@@ -61,7 +61,7 @@ class TestParse(unittest.TestCase):
 
     def test_rejects_non_string(self):
         with self.assertRaises(SseAssertError):
-            parse_sse_stream(123)  # type: ignore[arg-type]
+            parse_sse_stream(123)  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
 
 class TestRecorder(unittest.TestCase):
@@ -96,7 +96,7 @@ class TestRecorder(unittest.TestCase):
 
     def test_rejects_non_string_chunk(self):
         with self.assertRaises(SseAssertError):
-            SseRecorder().feed(123)  # type: ignore[arg-type]
+            SseRecorder().feed(123)  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
 
 class TestAssertCount(unittest.TestCase):

@@ -65,7 +65,7 @@ class TestParseHtml(unittest.TestCase):
 
     def test_rejects_non_string(self):
         with self.assertRaises(SriVerifyError):
-            parse_html(123)  # type: ignore[arg-type]
+            parse_html(123)  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
 
 class TestVerifyTag(unittest.TestCase):
@@ -83,7 +83,7 @@ class TestVerifyTag(unittest.TestCase):
         self.assertEqual(verify_tag(tag).verdict, Verdict.WEAK_ALG)
 
     def test_unknown_format(self):
-        tag = ResourceTag(
+        _tag = ResourceTag(
             tag="script", url="https://cdn/x.js",
             integrity="not-an-integrity",
         )

@@ -20,15 +20,15 @@ from je_web_runner.utils.webrtc_assert.peer import (
 
 
 def _connected_snapshot(**overrides):
-    base = dict(
-        connection_state=ConnectionState.CONNECTED,
-        ice_connection_state=IceState.CONNECTED,
-        signaling_state=SignalingState.STABLE,
-        local_sdp="m=audio 9 UDP/TLS/RTP/SAVPF 111\na=rtpmap:111 opus/48000/2",
-        remote_sdp="m=video 9 UDP/TLS/RTP/SAVPF 96\na=rtpmap:96 VP8/90000",
-        remote_tracks=[TrackInfo(kind="audio"), TrackInfo(kind="video")],
-        local_tracks=[TrackInfo(kind="audio")],
-    )
+    base = {
+        "connection_state": ConnectionState.CONNECTED,
+        "ice_connection_state": IceState.CONNECTED,
+        "signaling_state": SignalingState.STABLE,
+        "local_sdp": "m=audio 9 UDP/TLS/RTP/SAVPF 111\na=rtpmap:111 opus/48000/2",
+        "remote_sdp": "m=video 9 UDP/TLS/RTP/SAVPF 96\na=rtpmap:96 VP8/90000",
+        "remote_tracks": [TrackInfo(kind="audio"), TrackInfo(kind="video")],
+        "local_tracks": [TrackInfo(kind="audio")],
+    }
     base.update(overrides)
     return PeerSnapshot(**base)
 
@@ -154,7 +154,7 @@ class TestAggregateStats(unittest.TestCase):
 
     def test_rejects_non_list(self):
         with self.assertRaises(WebRtcAssertError):
-            aggregate_stats({"type": "inbound-rtp"})  # type: ignore[arg-type]
+            aggregate_stats({"type": "inbound-rtp"})  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
 
 class TestPacketLoss(unittest.TestCase):

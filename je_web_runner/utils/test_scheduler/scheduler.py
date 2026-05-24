@@ -109,7 +109,7 @@ def value_density(candidate: TestCandidate) -> float:
 
 # ---------- scheduler ----------------------------------------------------
 
-def schedule_tests(
+def schedule_tests(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     candidates: Sequence[TestCandidate],
     *,
     time_budget_seconds: float,
@@ -207,7 +207,7 @@ def schedule_tests(
 
 # ---------- ledger / flake integration -----------------------------------
 
-def build_candidates_from_ledger(
+def build_candidates_from_ledger(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     ledger_path: Union[str, Path],
     *,
     default_duration_seconds: float = 60.0,

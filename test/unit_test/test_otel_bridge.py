@@ -159,7 +159,7 @@ class TestBridgedSpan(unittest.TestCase):
     def test_playwright_context_manager_clears(self):
         page = MagicMock()
         with bridged_span_playwright(page, "click"):
-            pass
+            pass  # noqa: S108 — body intentionally empty; we only verify the enter/exit hooks fired below
         # at least one set and one reset call
         self.assertGreaterEqual(page.set_extra_http_headers.call_count, 2)
         last_call = page.set_extra_http_headers.call_args_list[-1].args[0]

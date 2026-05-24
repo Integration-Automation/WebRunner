@@ -44,7 +44,7 @@ class TestExtractOtp(unittest.TestCase):
 
     def test_empty_input(self):
         self.assertIsNone(extract_otp_from_text(""))
-        self.assertIsNone(extract_otp_from_text(None))  # type: ignore[arg-type]
+        self.assertIsNone(extract_otp_from_text(None))  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
 
 class TestInMemoryProvider(unittest.TestCase):
@@ -90,14 +90,14 @@ class TestMailHogProvider(unittest.TestCase):
                 }
             ]
         })
-        provider = MailHogProvider("http://mailhog:8025", http_fetcher=fake_fetch)
+        provider = MailHogProvider("http://mailhog:8025", http_fetcher=fake_fetch)  # noqa: S5332
         out = provider.fetch_messages(recipient="b@x")
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0].subject, "Hi")
         self.assertIn("999111", out[0].body)
 
     def test_non_dict_payload_raises(self):
-        provider = MailHogProvider("http://x", http_fetcher=lambda _u: [])
+        provider = MailHogProvider("http://x", http_fetcher=lambda _u: [])  # noqa: S5332
         with self.assertRaises(OtpInterceptError):
             provider.fetch_messages()
 
@@ -117,7 +117,7 @@ class TestMailpitProvider(unittest.TestCase):
                 }
             ]
         })
-        provider = MailpitProvider("http://mailpit", http_fetcher=fake_fetch)
+        provider = MailpitProvider("http://mailpit", http_fetcher=fake_fetch)  # noqa: S5332
         out = provider.fetch_messages(recipient="b@x")
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0].sender, "a@x")
@@ -131,13 +131,13 @@ class TestWebhookSmsProvider(unittest.TestCase):
             {"id": "s1", "from": "+1000", "to": "+1234",
              "body": "Your code 12345", "received_at": "2026-05-24T10:00:00Z"},
         ])
-        provider = WebhookSmsProvider("http://sms", http_fetcher=fake_fetch)
+        provider = WebhookSmsProvider("http://sms", http_fetcher=fake_fetch)  # noqa: S5332
         out = provider.fetch_messages(recipient="+1234")
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0].recipient, "+1234")
 
     def test_non_list_raises(self):
-        provider = WebhookSmsProvider("http://sms", http_fetcher=lambda _u: {})
+        provider = WebhookSmsProvider("http://sms", http_fetcher=lambda _u: {})  # noqa: S5332
         with self.assertRaises(OtpInterceptError):
             provider.fetch_messages()
 

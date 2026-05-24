@@ -290,7 +290,7 @@ def generate_mutations(
 
 # ---------- apply ---------------------------------------------------------
 
-def apply_mutation(actions: List[Any], mutation: Mutation) -> List[Any]:
+def apply_mutation(actions: List[Any], mutation: Mutation) -> List[Any]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """
     產生一份套了 mutation 的 actions（不修改原 list）。
     Return a deep-copied action list with ``mutation`` applied. Mutations

@@ -311,6 +311,7 @@ def _rest_request(
     if data is not None:
         req.add_header("Content-Type", "application/json")
     context = ssl.create_default_context()
+    context.minimum_version = ssl.TLSVersion.TLSv1_2
     try:
         with urllib.request.urlopen(  # nosec B310 — https-only enforced above
             req, timeout=timeout, context=context,

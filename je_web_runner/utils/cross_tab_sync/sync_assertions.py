@@ -28,6 +28,8 @@ from typing import Any, Callable, Dict, List, Sequence
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
+_PAGE_IS_NONE_MSG = "page is None"
+
 
 class CrossTabSyncError(WebRunnerException):
     """Raised when an expected propagation does not happen in time."""
@@ -48,7 +50,7 @@ def set_storage_value(
     """
     _ensure_storage_name(storage)
     if page is None:
-        raise CrossTabSyncError("page is None")
+        raise CrossTabSyncError(_PAGE_IS_NONE_MSG)
     payload = json.dumps(value)
     script = (
         f"({{ key, raw }}) => window.{storage}.setItem(key, raw)"
@@ -70,7 +72,7 @@ def get_storage_value(
     """Read ``storage[key]`` from the page. Returns ``None`` when absent."""
     _ensure_storage_name(storage)
     if page is None:
-        raise CrossTabSyncError("page is None")
+        raise CrossTabSyncError(_PAGE_IS_NONE_MSG)
     script = f"(key) => window.{storage}.getItem(key)"
     try:
         raw = page.evaluate(script, key)
@@ -123,7 +125,7 @@ def install_broadcast_recorder(page: Any, channel_name: str) -> None:
     Idempotent — installing twice replaces the previous recorder.
     """
     if page is None:
-        raise CrossTabSyncError("page is None")
+        raise CrossTabSyncError(_PAGE_IS_NONE_MSG)
     if not channel_name:
         raise CrossTabSyncError("channel_name is required")
     script = """
@@ -157,7 +159,7 @@ def install_broadcast_recorder(page: Any, channel_name: str) -> None:
 def broadcast_message(page: Any, channel_name: str, data: Any) -> None:
     """Post one message to ``channel_name`` from ``page``."""
     if page is None:
-        raise CrossTabSyncError("page is None")
+        raise CrossTabSyncError(_PAGE_IS_NONE_MSG)
     if not channel_name:
         raise CrossTabSyncError("channel_name is required")
     script = """
@@ -183,7 +185,7 @@ def collect_broadcast_messages(
 ) -> List[Dict[str, Any]]:
     """Return everything the recorder on ``page`` has captured for ``channel_name``."""
     if page is None:
-        raise CrossTabSyncError("page is None")
+        raise CrossTabSyncError(_PAGE_IS_NONE_MSG)
     script = """
         (channelName) => {
             if (!window.__wr_broadcast_log__) return [];
@@ -319,7 +321,7 @@ def post_message_to_page(
 ) -> None:
     """``window.postMessage(data, target_origin)`` on the page's main window."""
     if page is None:
-        raise CrossTabSyncError("page is None")
+        raise CrossTabSyncError(_PAGE_IS_NONE_MSG)
     script = "({ payload, origin }) => window.postMessage(payload, origin)"
     try:
         page.evaluate(script, {"payload": data, "origin": target_origin})

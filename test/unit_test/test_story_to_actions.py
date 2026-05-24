@@ -71,7 +71,7 @@ class TestValidate(unittest.TestCase):
 
     def test_non_list_rejected(self):
         with self.assertRaises(StoryToActionsError):
-            validate_actions({"WR_to_url": ["x"]})  # type: ignore[arg-type]
+            validate_actions({"WR_to_url": ["x"]})  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
     def test_unknown_action_name(self):
         with self.assertRaises(StoryToActionsError):

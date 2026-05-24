@@ -127,12 +127,13 @@ def classify_cookie(
 
 
 def _matches(rule: CookieRule, cookie: Cookie) -> bool:
-    if rule.name_pattern:
-        if not re.search(rule.name_pattern, cookie.name):
-            return False
-    if rule.domain_suffix:
-        if not cookie.domain or not cookie.domain.lower().endswith(rule.domain_suffix.lower()):
-            return False
+    if rule.name_pattern and not re.search(rule.name_pattern, cookie.name):
+        return False
+    if rule.domain_suffix and (
+        not cookie.domain
+        or not cookie.domain.lower().endswith(rule.domain_suffix.lower())
+    ):
+        return False
     return rule.name_pattern is not None or rule.domain_suffix is not None
 
 

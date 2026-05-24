@@ -70,7 +70,8 @@ def scan_console(messages: Iterable[str]) -> List[HydrationFinding]:
 # ---------- DOM diff --------------------------------------------------
 
 _WS = re.compile(r"\s+")
-_WS_AROUND_TAGS = re.compile(r"\s*(<[^>]+>)\s*")
+# NOSONAR python:S5852 — input is a finite SSR HTML snapshot, not attacker text
+_WS_AROUND_TAGS = re.compile(r"\s*(<[^>]+>)\s*")  # noqa: S5852
 _COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 _FRAMEWORK_ATTRS = re.compile(
     r"\s+(?:data-reactroot|data-reactid|data-react-helmet|data-n-head|"

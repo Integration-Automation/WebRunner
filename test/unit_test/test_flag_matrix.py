@@ -92,7 +92,7 @@ class TestBuildMatrix(unittest.TestCase):
         flags = [FlagSpec("a", list(range(5))), FlagSpec("b", list(range(5)))]
         a = build_matrix(flags, sample_size=5, seed=42)
         b = build_matrix(flags, sample_size=5, seed=42)
-        self.assertEqual([c for c in a], [c for c in b])
+        self.assertEqual(list(a), list(b))
         self.assertTrue(a.sampled)
         self.assertEqual(len(a), 5)
 

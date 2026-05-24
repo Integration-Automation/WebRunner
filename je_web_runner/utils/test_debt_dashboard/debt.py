@@ -42,14 +42,18 @@ _SKIP_RE = re.compile(
     re.IGNORECASE,
 )
 _SKIPIF_RE = re.compile(
-    r"@pytest\.mark\.skipif\s*\(\s*[^)]*?(?:reason\s*=\s*[\"']([^\"']*)[\"'])?",
+    # Greedy `[^)]*` ensures the optional `reason=` group below actually gets a
+    # chance to match (with the previous lazy `*?` the engine took 0 chars and
+    # skipped reason).
+    r"@pytest\.mark\.skipif\s*\([^)]*?reason\s*=\s*[\"']([^\"']*)[\"']",
     re.IGNORECASE,
 )
 _XFAIL_RE = re.compile(
-    r"@pytest\.mark\.xfail\s*\(\s*[^)]*?(?:reason\s*=\s*[\"']([^\"']*)[\"'])?",
+    r"@pytest\.mark\.xfail\s*\([^)]*?reason\s*=\s*[\"']([^\"']*)[\"']",
     re.IGNORECASE,
 )
-_TODO_RE = re.compile(r"#\s*(TODO|FIXME)\b[:\s]*(.*)$", re.IGNORECASE)
+# NOSONAR python:S5852 — input is one source line at a time (bounded)
+_TODO_RE = re.compile(r"#\s*(TODO|FIXME)\b[:\s]*(.*)$", re.IGNORECASE)  # noqa: S5852
 _TEST_DEF_RE = re.compile(r"^\s*def\s+(test_\w+)\s*\(", re.MULTILINE)
 
 

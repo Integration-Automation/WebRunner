@@ -249,9 +249,11 @@ class TestChromeProfileSession(unittest.TestCase):
             with patch(
                 "selenium.webdriver.chrome.service.Service"
             ), patch("selenium.webdriver.Chrome", return_value=fake_driver):
-                # should NOT propagate the quit error
+                # Empty body is intentional: we are asserting only that the
+                # quit error swallowed below does NOT propagate out of the
+                # context manager.
                 with chrome_profile_session(profile):
-                    pass
+                    pass  # noqa: S108
 
 
 class TestBuildPlaywrightPersistentContext(unittest.TestCase):

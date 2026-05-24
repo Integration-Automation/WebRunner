@@ -62,7 +62,7 @@ class TestPseudoLocalize(unittest.TestCase):
 
     def test_non_string_rejected(self):
         with self.assertRaises(PseudoLocalizationError):
-            pseudo_localize(123)  # type: ignore[arg-type]
+            pseudo_localize(123)  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
     def test_negative_expansion_rejected(self):
         with self.assertRaises(PseudoLocalizationError):
@@ -79,7 +79,7 @@ class TestPseudoLocalizeDict(unittest.TestCase):
 
     def test_rejects_non_mapping(self):
         with self.assertRaises(PseudoLocalizationError):
-            pseudo_localize_dict([("a", "b")])  # type: ignore[arg-type]
+            pseudo_localize_dict([("a", "b")])  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
     def test_rejects_non_string_value(self):
         with self.assertRaises(PseudoLocalizationError):
@@ -131,7 +131,7 @@ class TestScanForHardcoded(unittest.TestCase):
 
     def test_bad_inputs(self):
         with self.assertRaises(PseudoLocalizationError):
-            scan_for_hardcoded(123, catalogue={})  # type: ignore[arg-type]
+            scan_for_hardcoded(123, catalogue={})  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
         with self.assertRaises(PseudoLocalizationError):
             scan_for_hardcoded("x", catalogue={}, min_length=0)
 

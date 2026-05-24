@@ -128,6 +128,34 @@ def _header_lookup(entry: Dict[str, Any]) -> Dict[str, str]:
     return out
 
 
+def _evaluate_resource(
+    request_url: str, corp: Optional[str], cors_origin: Optional[str],
+    coep: CoepValue,
+) -> Optional[ResourceFinding]:
+    """Decide if one HAR resource violates the page's COEP. None = OK."""
+    if coep == CoepValue.REQUIRE_CORP:
+        if corp == CorpValue.CROSS_ORIGIN.value:
+            return None
+        if cors_origin and cors_origin != "null":
+            return None
+        return ResourceFinding(
+            url=request_url,
+            reason="require-corp: needs CORP cross-origin OR CORS allow",
+            corp=corp, cors_present=bool(cors_origin),
+        )
+    if coep == CoepValue.CREDENTIALLESS:
+        # credentialless allows credentialled requests to fail open but
+        # still requires CORP or CORS for credentialled fetches.
+        if corp or cors_origin:
+            return None
+        return ResourceFinding(
+            url=request_url,
+            reason="credentialless: needs CORP or CORS",
+            corp=corp, cors_present=bool(cors_origin),
+        )
+    return None
+
+
 def scan_har_resources(
     har: Union[str, Dict[str, Any]],
     *,
@@ -154,29 +182,14 @@ def scan_har_resources(
         if not request_url or _same_origin(request_url, page_url):
             continue
         headers = _header_lookup(entry)
-        corp = headers.get("cross-origin-resource-policy")
-        cors_origin = headers.get("access-control-allow-origin")
-        cors_credentials = headers.get("access-control-allow-credentials")
-        if coep == CoepValue.REQUIRE_CORP:
-            if corp == CorpValue.CROSS_ORIGIN.value:
-                continue
-            if cors_origin and cors_origin != "null":
-                continue
-            findings.append(ResourceFinding(
-                url=request_url,
-                reason="require-corp: needs CORP cross-origin OR CORS allow",
-                corp=corp, cors_present=bool(cors_origin),
-            ))
-        elif coep == CoepValue.CREDENTIALLESS:
-            # credentialless allows credentialled requests to fail open but
-            # still requires CORP or CORS for credentialled fetches.
-            if corp or cors_origin:
-                continue
-            findings.append(ResourceFinding(
-                url=request_url,
-                reason="credentialless: needs CORP or CORS",
-                corp=corp, cors_present=bool(cors_origin),
-            ))
+        finding = _evaluate_resource(
+            request_url,
+            corp=headers.get("cross-origin-resource-policy"),
+            cors_origin=headers.get("access-control-allow-origin"),
+            coep=coep,
+        )
+        if finding is not None:
+            findings.append(finding)
     return findings
 
 

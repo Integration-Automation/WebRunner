@@ -28,6 +28,8 @@ from je_web_runner.utils.failure_bundle.bundle import extract_bundle
 from je_web_runner.utils.failure_cluster.clustering import normalise_error
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
+_EMPTY_LABEL = "<empty>"
+
 
 class FailureTriageError(WebRunnerException):
     """Raised when triage input is malformed or LLM output cannot be parsed."""
@@ -69,7 +71,7 @@ def _read_bundle_json(files: Dict[str, bytes], rel: str) -> Any:
         return None
     try:
         return json.loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, ValueError):
+    except ValueError:  # UnicodeDecodeError is a subclass of ValueError
         return None
 
 
@@ -223,12 +225,12 @@ def triage_failure(signals: TriageSignals) -> TriageReport:
     """
     prompt = _TRIAGE_PROMPT.format(
         test_name=signals.test_name,
-        error_signature=signals.error_signature or "<empty>",
-        error_repr=signals.error_repr or "<empty>",
+        error_signature=signals.error_signature or _EMPTY_LABEL,
+        error_repr=signals.error_repr or _EMPTY_LABEL,
         steps=json.dumps(signals.last_steps, ensure_ascii=False, indent=2)[:2500],
         console=json.dumps(signals.console_tail, ensure_ascii=False, indent=2)[:2500],
         network=json.dumps(signals.network_tail, ensure_ascii=False, indent=2)[:2500],
-        dom=signals.dom_excerpt[:_DOM_EXCERPT_CHARS] or "<empty>",
+        dom=signals.dom_excerpt[:_DOM_EXCERPT_CHARS] or _EMPTY_LABEL,
     )
     try:
         raw = _invoke(prompt)

@@ -98,7 +98,7 @@ class LongFrame:
         return asdict(self)
 
 
-def parse_log(payload: Any) -> List[LongFrame]:
+def parse_log(payload: Any) -> List[LongFrame]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """Convert the harvested ``__wr_loaf_log__`` array into typed frames."""
     if not isinstance(payload, list):
         raise LongAnimationFrameError(

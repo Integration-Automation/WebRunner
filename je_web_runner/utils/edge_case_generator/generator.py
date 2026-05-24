@@ -25,6 +25,8 @@ from je_web_runner.utils.ai_assist.llm_assist import LLMAssistError, _invoke
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
+_UNNAMED_LABEL = "<unnamed>"
+
 
 class EdgeCaseGeneratorError(WebRunnerException):
     """Raised when input is malformed or LLM output is unusable."""
@@ -138,7 +140,7 @@ def _parse_case(raw: Any) -> Optional[EdgeCase]:
     actions = raw.get("actions")
     if not isinstance(actions, list):
         return None
-    name = str(raw.get("name") or "").strip() or "<unnamed>"
+    name = str(raw.get("name") or "").strip() or _UNNAMED_LABEL
     return EdgeCase(
         name=name,
         category=_coerce_category(raw.get("category")),
@@ -175,7 +177,7 @@ def generate_edge_cases(
     prompt = _GEN_PROMPT.format(
         n=n,
         categories=cat_names,
-        test_name=test_name or "<unnamed>",
+        test_name=test_name or _UNNAMED_LABEL,
         actions=json.dumps(actions, ensure_ascii=False, indent=2)[:4500],
         context=context or "<none>",
     )
@@ -195,7 +197,7 @@ def generate_edge_cases(
     web_runner_logger.info(
         f"generate_edge_cases: test={test_name!r} requested={n} parsed={len(cases)}"
     )
-    return EdgeCaseSuite(source_test_name=test_name or "<unnamed>", cases=cases)
+    return EdgeCaseSuite(source_test_name=test_name or _UNNAMED_LABEL, cases=cases)
 
 
 def generate_edge_cases_from_file(

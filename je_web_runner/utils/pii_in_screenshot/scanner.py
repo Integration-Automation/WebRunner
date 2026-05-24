@@ -64,7 +64,9 @@ _PHONE_E164 = PiiRule(
 )
 _CREDIT_CARD = PiiRule(
     name="credit_card",
-    pattern=re.compile(r"\b(?:\d[ -]*?){13,19}\b"),
+    # Greedy `[ -]*` consumes any separators eagerly; the outer {13,19} still
+    # forces 13-19 digit groups overall (Luhn validator does the real check).
+    pattern=re.compile(r"\b(?:\d[ -]*){13,19}\b"),
     severity="critical",
     validator=_luhn,
 )

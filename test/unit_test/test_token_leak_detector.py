@@ -86,7 +86,7 @@ class TestScanText(unittest.TestCase):
 
     def test_non_string_rejected(self):
         with self.assertRaises(TokenLeakError):
-            scan_text(123)  # type: ignore[arg-type]
+            scan_text(123)  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
     def test_clean_text_returns_empty(self):
         self.assertEqual(scan_text("nothing interesting here"), [])

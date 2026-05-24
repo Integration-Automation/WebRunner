@@ -35,7 +35,7 @@ class TestNormalisation(unittest.TestCase):
 
     def test_rejects_non_string(self):
         with self.assertRaises(OcrAssertError):
-            normalise_text(123)
+            normalise_text(123)  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
     def test_fuzzy_ratio_identical(self):
         self.assertEqual(fuzzy_ratio("hello", "hello"), 1.0)

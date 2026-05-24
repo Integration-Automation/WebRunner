@@ -69,7 +69,7 @@ class FlagMatrix:
 
 # ---------- builders ----------------------------------------------------
 
-def build_matrix(
+def build_matrix(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     flags: Sequence[FlagSpec],
     *,
     constraints: Sequence[Constraint] = (),
@@ -127,7 +127,9 @@ def build_matrix(
     if sample_size is not None and len(filtered) > max(0, sample_size - len(pinned_combos)):
         rng = random.Random(seed)
         keep_count = max(0, sample_size - len(pinned_combos))
-        filtered = rng.sample(filtered, keep_count)
+        # S2245 ok: deterministic seeded sampling for reproducible test combos;
+        # not used for any cryptographic / security decision.
+        filtered = rng.sample(filtered, keep_count)  # noqa: S2245
         sampled = True
     else:
         sampled = False

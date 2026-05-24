@@ -105,7 +105,7 @@ class TestClassify(unittest.TestCase):
 
     def test_bad_status_type(self):
         with self.assertRaises(OpenRedirectError):
-            classify_response(self._p("x"), None, "302",  # type: ignore[arg-type]
+            classify_response(self._p("x"), None, "302",  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
                               legitimate_host="x.com")
 
     def test_bad_host(self):

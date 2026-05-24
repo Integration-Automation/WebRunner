@@ -186,8 +186,7 @@ class TestUpdateSessionStatus(unittest.TestCase):
             passed=True, reason="all green",
             credentials=creds, request_fn=request_fn,
         )
-        args, _kwargs = request_fn.call_args[:2], request_fn.call_args.kwargs
-        method, url, creds_arg, payload = request_fn.call_args.args
+        method, url, _creds_arg, payload = request_fn.call_args.args
         self.assertEqual(method, "PUT")
         self.assertIn("sid", url)
         self.assertEqual(payload, {"status": "passed", "reason": "all green"})
@@ -200,7 +199,7 @@ class TestUpdateSessionStatus(unittest.TestCase):
             passed=False, reason="boom",
             credentials=creds, request_fn=request_fn,
         )
-        method, url, _creds_arg, payload = request_fn.call_args.args
+        method, _url, _creds_arg, payload = request_fn.call_args.args
         self.assertEqual(method, "PUT")
         self.assertIs(payload["passed"], False)
 

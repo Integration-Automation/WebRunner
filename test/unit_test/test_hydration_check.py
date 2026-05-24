@@ -89,7 +89,7 @@ class TestDiffDom(unittest.TestCase):
 
     def test_rejects_non_string(self):
         with self.assertRaises(HydrationCheckError):
-            diff_dom(123, "<div>x</div>")  # type: ignore[arg-type]
+            diff_dom(123, "<div>x</div>")  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
 
 class TestAudit(unittest.TestCase):

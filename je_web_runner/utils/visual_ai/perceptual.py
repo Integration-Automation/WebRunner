@@ -48,12 +48,12 @@ def _require_pillow():
 
 def _load_image(source: Union[bytes, str, Path, Any]) -> Any:
     """Accept bytes / path / PIL.Image and return an open PIL.Image."""
-    Image = _require_pillow()
+    pil_image = _require_pillow()
     if hasattr(source, "convert") and hasattr(source, "size"):
         return source  # already a PIL Image
     if isinstance(source, (bytes, bytearray)):
         try:
-            return Image.open(BytesIO(bytes(source)))
+            return pil_image.open(BytesIO(bytes(source)))
         except Exception as error:  # noqa: BLE001 — Pillow raises many
             raise VisualAIError(f"cannot decode image bytes: {error!r}") from error
     if isinstance(source, (str, Path)):
@@ -61,7 +61,7 @@ def _load_image(source: Union[bytes, str, Path, Any]) -> Any:
         if not path.is_file():
             raise VisualAIError(f"image not found: {path}")
         try:
-            return Image.open(path)
+            return pil_image.open(path)
         except Exception as error:  # noqa: BLE001
             raise VisualAIError(f"cannot open image {path}: {error!r}") from error
     raise VisualAIError(
@@ -135,8 +135,8 @@ def _load_and_preprocess(
 
 
 def _to_grayscale_pixels(img: Any, size: int) -> List[int]:
-    Image = _require_pillow()
-    resized = img.convert("L").resize((size, size), Image.Resampling.LANCZOS)
+    pil_image = _require_pillow()
+    resized = img.convert("L").resize((size, size), pil_image.Resampling.LANCZOS)
     return list(resized.getdata())
 
 
@@ -310,11 +310,11 @@ def _ssim_proxy(
     NOT a real SSIM but is monotonic for the use cases we care about
     (charts that subtly drift vs ones that don't).
     """
-    Image = _require_pillow()
+    pil_image = _require_pillow()
     img_a = _load_and_preprocess(source_a, crop_box=crop_box, mask_boxes=mask_boxes)
     img_b = _load_and_preprocess(source_b, crop_box=crop_box, mask_boxes=mask_boxes)
-    a = img_a.convert("L").resize((size, size), Image.Resampling.LANCZOS)
-    b = img_b.convert("L").resize((size, size), Image.Resampling.LANCZOS)
+    a = img_a.convert("L").resize((size, size), pil_image.Resampling.LANCZOS)
+    b = img_b.convert("L").resize((size, size), pil_image.Resampling.LANCZOS)
     pa = [p / 255.0 for p in a.getdata()]
     pb = [p / 255.0 for p in b.getdata()]
     n = len(pa)

@@ -122,7 +122,7 @@ def _from_message(msg: Message, *, raw_text: Optional[str] = None) -> CapturedEm
             html_body = body
         else:
             text_body = body
-    headers = {k: v for k, v in msg.items()}
+    headers = dict(msg.items())
     return CapturedEmail(
         message_id=str(msg.get("Message-ID", "")),
         subject=str(msg.get("Subject", "")),

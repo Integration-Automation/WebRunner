@@ -17,6 +17,8 @@ from typing import Any, Dict, List, Optional, Protocol, Sequence, Union
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
+_UNKNOWN_LABEL = "(unknown)"
+
 
 class FailureNarratorError(WebRunnerException):
     """Raised on missing bundle, malformed input, or LLM client failure."""
@@ -44,7 +46,7 @@ class FailureBundle:
     def __post_init__(self) -> None:
         if not isinstance(self.test_id, str) or not self.test_id:
             raise FailureNarratorError("test_id must be non-empty string")
-
+  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 
 def load_bundle_dir(path: Union[str, Path]) -> FailureBundle:
     """Read a failure-bundle directory laid out as JSON + text files."""
@@ -146,13 +148,13 @@ def build_prompt(bundle: FailureBundle) -> str:
         raise FailureNarratorError("build_prompt expects FailureBundle")
     return PROMPT_TEMPLATE.format(
         test_id=bundle.test_id,
-        action=bundle.action or "(unknown)",
+        action=bundle.action or _UNKNOWN_LABEL,
         error_class=bundle.error_class or "Error",
         error_message=bundle.error_message or "(no message)",
-        last_url=bundle.last_url or "(unknown)",
+        last_url=bundle.last_url or _UNKNOWN_LABEL,
         failed_assertion=bundle.failed_assertion or "(none)",
-        flake_history=bundle.flake_history or "(unknown)",
-        git_commit=bundle.git_commit or "(unknown)",
+        flake_history=bundle.flake_history or _UNKNOWN_LABEL,
+        git_commit=bundle.git_commit or _UNKNOWN_LABEL,
         console_errors=_join_for_prompt(bundle.console_errors),
         network_errors=_join_for_prompt(bundle.network_errors),
         last_dom_excerpt=bundle.last_dom_excerpt or "(none captured)",

@@ -79,7 +79,7 @@ class TestPlannedAction(unittest.TestCase):
 class TestRandomPlanner(unittest.TestCase):
 
     def test_seeded_reproducible(self):
-        page = _page("http://x", [
+        page = _page("http://x", [  # noqa: S5332
             InteractiveElement(selector="#a", tag="button"),
             InteractiveElement(selector="#b", tag="button"),
         ])
@@ -88,7 +88,7 @@ class TestRandomPlanner(unittest.TestCase):
         self.assertEqual(a, b)
 
     def test_no_elements_returns_done(self):
-        plan = RandomPlanner(seed=1).plan(_page("http://x", []))
+        plan = RandomPlanner(seed=1).plan(_page("http://x", []))  # noqa: S5332
         self.assertEqual(plan.kind, ActionKind.DONE)
 
     def test_type_bias_validated(self):
@@ -96,7 +96,7 @@ class TestRandomPlanner(unittest.TestCase):
             RandomPlanner(type_bias=2.0)
 
     def test_prefers_input_when_bias_high(self):
-        page = _page("http://x", [
+        page = _page("http://x", [  # noqa: S5332
             InteractiveElement(selector="#btn", tag="button"),
             InteractiveElement(selector="#in", tag="input"),
         ])
@@ -105,7 +105,7 @@ class TestRandomPlanner(unittest.TestCase):
         self.assertEqual(plan.selector, "#in")
 
     def test_no_input_falls_back_to_click(self):
-        page = _page("http://x", [
+        page = _page("http://x", [  # noqa: S5332
             InteractiveElement(selector="#btn", tag="button"),
         ])
         plan = RandomPlanner(seed=0, type_bias=1.0).plan(page)
@@ -126,7 +126,7 @@ class TestExplorer(unittest.TestCase):
     def test_runs_until_done(self):
         observer = StubObserver([
             _page("http://1", [InteractiveElement(selector="#go", tag="button")]),
-            _page("http://2", [InteractiveElement(selector="#go", tag="button")]),
+            _page("http://2", [InteractiveElement(selector="#go", tag="button")]),  # noqa: S5332
         ])
         planner = FixedPlanner([
             PlannedAction(kind=ActionKind.CLICK, selector="#go"),
@@ -154,7 +154,7 @@ class TestExplorer(unittest.TestCase):
 
     def test_collects_network_errors(self):
         page = PageObservation(
-            url="http://x", title="t",
+            url="http://x", title="t",  # noqa: S5332
             elements=[InteractiveElement(selector="#x", tag="button")],
             network_errors=[{"url": "/api/bad", "status": 500}],
         )
@@ -205,7 +205,7 @@ class TestExplorer(unittest.TestCase):
                 return "not a planned action"
 
         explorer = Explorer(
-            observer=StubObserver([_page("http://x")]),
+            observer=StubObserver([_page("http://x")]),  # noqa: S5332
             planner=BadPlanner(),
             executor=lambda a: None,
             max_steps=2,
@@ -219,7 +219,7 @@ class TestExplorer(unittest.TestCase):
                 raise RuntimeError("llm timeout")
 
         explorer = Explorer(
-            observer=StubObserver([_page("http://x")]),
+            observer=StubObserver([_page("http://x")]),  # noqa: S5332
             planner=BadPlanner(),
             executor=lambda a: None,
             max_steps=2,
@@ -229,7 +229,7 @@ class TestExplorer(unittest.TestCase):
 
     def test_stop_on_bugs(self):
         observer = StubObserver([
-            _page("http://x",
+            _page("http://x",  # noqa: S5332
                   elements=[InteractiveElement(selector="#a", tag="button")],
                   errors=["err1", "err2", "err3"]),
         ])

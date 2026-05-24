@@ -87,7 +87,7 @@ class TestHashFunctions(unittest.TestCase):
     def test_hex_round_trip_no_crash(self):
         img = _make_solid((50, 100, 200))
         h = average_hash(img)
-        self.assertTrue(len(h.hex()) > 0)
+        self.assertGreater(len(h.hex()), 0)
 
     def test_identical_images_perfect_similarity(self):
         img = _make_gradient()

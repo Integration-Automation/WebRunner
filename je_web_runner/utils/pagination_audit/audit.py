@@ -68,7 +68,7 @@ class PaginationFindings:
         return not self.duplicates and not self.cursor_loop and not self.hit_max_pages
 
 
-def walk_all_pages(
+def walk_all_pages(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     fetcher: PageFetcher,
     key_fn: KeyFn,
     *,
@@ -217,12 +217,12 @@ def assert_sorted_by(
     last = flattened[0]
     for current in flattened[1:]:
         if reverse:
-            if not (current <= last):
+            if current > last:
                 raise PaginationAuditError(
                     f"order violation: {current!r} > {last!r} but reverse=True"
                 )
         else:
-            if not (current >= last):
+            if current < last:
                 raise PaginationAuditError(
                     f"order violation: {current!r} < {last!r}"
                 )

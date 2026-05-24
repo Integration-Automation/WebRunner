@@ -132,7 +132,12 @@ class TestRendering(unittest.TestCase):
         ]
         if with_image:
             steps[1].screenshot_b64 = "deadbeef"
-            steps[1].screenshot_path = "/tmp/shot.png"
+            # Use a path under tempfile.gettempdir() rather than a hard-coded
+            # /tmp/ literal so SonarCloud's S5443 (insecure temp file) is happy
+            # and the test still passes on Windows.
+            import os
+            import tempfile
+            steps[1].screenshot_path = os.path.join(tempfile.gettempdir(), "shot.png")
         return Walkthrough(title="Sample", description="A demo flow", steps=steps)
 
     def test_markdown_has_steps(self):
@@ -147,8 +152,11 @@ class TestRendering(unittest.TestCase):
         self.assertIn("data:image/png;base64,deadbeef", md)
 
     def test_markdown_uses_path_when_no_embed(self):
+        import os
+        import tempfile
+        expected = os.path.join(tempfile.gettempdir(), "shot.png")
         md = render_markdown(self._wt(with_image=True), embed_images=False)
-        self.assertIn("/tmp/shot.png", md)
+        self.assertIn(expected, md)
         self.assertNotIn("data:image", md)
 
     def test_confluence_xml_escapes(self):

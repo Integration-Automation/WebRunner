@@ -138,7 +138,7 @@ def call(
     record = GrpcCall(
         method=method, request=request, response=response,
         status=status, duration_ms=duration,
-        metadata={k: v for k, v in metadata}, error=error,
+        metadata=dict(metadata), error=error,
     )
     if recorder is not None:
         recorder.record(record)

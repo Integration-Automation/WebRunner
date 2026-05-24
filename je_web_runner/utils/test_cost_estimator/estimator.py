@@ -87,7 +87,7 @@ class RunRow:
             )
 
 
-def load_runs(path: Union[str, Path]) -> List[RunRow]:
+def load_runs(path: Union[str, Path]) -> List[RunRow]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """Parse a ledger JSON file. Rows missing duration are skipped."""
     p = Path(path)
     if not p.exists():

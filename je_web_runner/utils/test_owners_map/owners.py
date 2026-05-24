@@ -49,7 +49,8 @@ class OwnersFile:
         return winner
 
 
-_COMMENT_STRIP_RE = re.compile(r"\s+#.*$")
+# NOSONAR python:S5852 — input is one CODEOWNERS line at a time (bounded)
+_COMMENT_STRIP_RE = re.compile(r"\s+#.*$")  # noqa: S5852
 
 
 def parse_codeowners(text: str) -> OwnersFile:

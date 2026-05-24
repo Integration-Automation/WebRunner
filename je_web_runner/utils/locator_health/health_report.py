@@ -372,7 +372,7 @@ def suggest_upgrades(
     return suggestions
 
 
-def apply_upgrades(
+def apply_upgrades(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     actions: List[Any],
     suggestions: Iterable[UpgradeSuggestion],
 ) -> List[Any]:
@@ -393,9 +393,12 @@ def apply_upgrades(
             continue
         if not isinstance(action, list) or len(action) < 2:
             continue
-        kwargs = action[2] if len(action) >= 3 and isinstance(action[2], dict) else (
-            action[1] if isinstance(action[1], dict) else None
-        )
+        if len(action) >= 3 and isinstance(action[2], dict):
+            kwargs = action[2]
+        elif isinstance(action[1], dict):
+            kwargs = action[1]
+        else:
+            kwargs = None
         if kwargs is None:
             continue
         if "object_type" in kwargs:

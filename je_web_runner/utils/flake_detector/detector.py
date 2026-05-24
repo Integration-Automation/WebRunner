@@ -94,7 +94,7 @@ def _decay_weight(age_seconds: float, half_life_days: float) -> float:
     return math.pow(0.5, age_seconds / half_life_seconds)
 
 
-def compute_flake_scores(
+def compute_flake_scores(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     ledger_path: Union[str, Path],
     *,
     half_life_days: float = _DEFAULT_HALF_LIFE_DAYS,

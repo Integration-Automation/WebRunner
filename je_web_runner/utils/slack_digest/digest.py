@@ -201,7 +201,9 @@ def build_teams_card(inputs: DigestInputs) -> Dict[str, Any]:
         })
     return {
         "type": "AdaptiveCard",
-        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+        # S5332 ok: this is the well-known AdaptiveCards $schema literal that
+        # Microsoft Teams expects verbatim; it is NOT fetched.
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",  # noqa: S5332
         "version": "1.5",
         "body": body,
     }

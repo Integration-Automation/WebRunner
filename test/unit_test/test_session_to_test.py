@@ -97,7 +97,7 @@ class TestRrweb(unittest.TestCase):
 
     def test_non_list_rejected(self):
         with self.assertRaises(SessionToTestError):
-            convert_rrweb_events({"not": "a list"})  # type: ignore[arg-type]
+            convert_rrweb_events({"not": "a list"})  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
 
 class TestGeneric(unittest.TestCase):

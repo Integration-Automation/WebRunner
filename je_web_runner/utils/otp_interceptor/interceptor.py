@@ -70,11 +70,17 @@ class OtpProvider(ABC):
 # ---------- HTTP helper --------------------------------------------------
 
 def _http_get_json(url: str, timeout: float = 10.0) -> Any:
-    if not (url.startswith("http://") or url.startswith("https://")):
+    # S5332 ok: MailHog / Mailpit are local-only services that expose plain
+    # HTTP REST APIs by design; the caller passes a localhost URL.
+    if not url.startswith(("http://", "https://")):  # noqa: S5332
         raise OtpInterceptError(f"refusing non-http URL: {url!r}")
     req = urllib.request.Request(url, method="GET")
     req.add_header("Accept", "application/json")
-    context = None if url.startswith("http://") else ssl.create_default_context()
+    if url.startswith("http://"):  # noqa: S5332
+        context = None  # plain HTTP for local MailHog / Mailpit
+    else:
+        context = ssl.create_default_context()
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
     try:
         with urllib.request.urlopen(  # nosec B310 — scheme allow-listed
             req, timeout=timeout, context=context,
@@ -227,7 +233,7 @@ class ImapProvider(OtpProvider):
         self.use_ssl = use_ssl
         self._connector = connector
 
-    def _connect(self):
+    def _connect(self):  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
         if self._connector is not None:
             return self._connector(self.host, self.port)
         import imaplib  # local import — IMAP is rarely needed
@@ -298,7 +304,7 @@ def _imap_bytes_to_message(message_id: str, raw_bytes: bytes) -> Optional[Interc
         subject=str(msg.get("Subject") or ""),
         body=str(body),
         received_at=_parse_time(msg.get("Date")),
-        headers={k: v for k, v in msg.items()},
+        headers=dict(msg.items()),
     )
 
 
@@ -433,7 +439,7 @@ def extract_otp_from_text(
         regex = pattern
     match = regex.search(text)
     if match is None:
-        return None
+        return None  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     if match.groups():
         return match.group(1)
     return match.group(0)

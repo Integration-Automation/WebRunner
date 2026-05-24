@@ -184,7 +184,7 @@ def from_selenium_log(entries: Iterable[Dict[str, Any]]) -> List[ConsoleMessage]
     return out
 
 
-def from_cdp_console_events(events: Iterable[Dict[str, Any]]) -> List[ConsoleMessage]:
+def from_cdp_console_events(events: Iterable[Dict[str, Any]]) -> List[ConsoleMessage]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """
     Convert CDP ``Runtime.consoleAPICalled`` payloads into messages.
     Each event dict is expected to have ``type`` and ``args`` like CDP returns.

@@ -65,7 +65,7 @@ class TestSnapshotScope(unittest.TestCase):
             def savepoint(self, name):
                 raise RuntimeError("conn dropped")
             def rollback_to(self, name):
-                pass
+                """Stub rollback — body intentionally empty for this test."""
 
         scope = SnapshotScope(backend=BadBackend())
         with self.assertRaises(DbSnapshotError):
@@ -74,7 +74,7 @@ class TestSnapshotScope(unittest.TestCase):
     def test_backend_rollback_failure_wrapped(self):
         class BadBackend:
             def savepoint(self, name):
-                pass
+                """Stub savepoint — body intentionally empty for this test."""
             def rollback_to(self, name):
                 raise RuntimeError("disk full")
 

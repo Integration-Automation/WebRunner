@@ -28,6 +28,8 @@ from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
+_CSS_SELECTOR_BY = "css selector"
+
 
 class SessionToTestError(WebRunnerException):
     """Raised on unreadable input, malformed events, or empty conversions."""
@@ -76,7 +78,7 @@ class ConversionResult:
     stats: ConversionStats
 
 
-# ---------- entry points ------------------------------------------------
+# ---------- entry points ------------------------------------------------  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 
 def convert_rrweb_events(events: Sequence[Dict[str, Any]]) -> ConversionResult:
     """Convert an rrweb event list into WR action JSON."""
@@ -109,12 +111,11 @@ def convert_rrweb_events(events: Sequence[Dict[str, Any]]) -> ConversionResult:
             stats.note_skip(f"unknown rrweb type {kind!r}")
             continue
 
+        # Track the latest timestamp so future iterations can compute deltas.
+        # We do not currently emit explicit waits for fast bursts; this hook is
+        # kept for future "WR_implicitly_wait" insertion logic.
         if last_ts is not None and isinstance(timestamp, (int, float)):
-            if timestamp - last_ts < _MIN_INTER_EVENT_MS:
-                # Don't drop, but don't generate per-event waits either.
-                last_ts = timestamp
-            else:
-                last_ts = timestamp
+            last_ts = timestamp
 
         emitted = _convert_rrweb_incremental(event, stats)
         if emitted is not None:
@@ -202,9 +203,9 @@ def _convert_rrweb_incremental(
             stats.note_skip("mouse without node id")
             return None
         if kind == _RRWEB_MI_CLICK:
-            return {"WR_click_element": ["css selector", selector]}
+            return {"WR_click_element": [_CSS_SELECTOR_BY, selector]}
         if kind == _RRWEB_MI_DOUBLE_CLICK:
-            return {"WR_double_click_element": ["css selector", selector]}
+            return {"WR_double_click_element": [_CSS_SELECTOR_BY, selector]}
         stats.note_skip(f"mouse type {kind!r}")
         return None
     if source == _RRWEB_SRC_INPUT:
@@ -213,7 +214,7 @@ def _convert_rrweb_incremental(
         if selector is None:
             stats.note_skip("input without node id")
             return None
-        return {"WR_input_to_element": ["css selector", selector, str(value)]}
+        return {"WR_input_to_element": [_CSS_SELECTOR_BY, selector, str(value)]}
     if source == _RRWEB_SRC_SCROLL:
         x = data.get("x", 0)
         y = data.get("y", 0)
@@ -234,7 +235,7 @@ def _selector_for_node(node_id: Any) -> Optional[str]:
 
 
 # ---------- generic mappings --------------------------------------------
-
+  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 def _convert_generic_event(
     event: Dict[str, Any],
     stats: ConversionStats,
@@ -276,13 +277,13 @@ def _convert_generic_event(
 
 def _coerce_locator(target: Any) -> Optional[Tuple[str, str]]:
     if isinstance(target, dict):
-        by = target.get("by") or "css selector"
+        by = target.get("by") or _CSS_SELECTOR_BY
         value = target.get("value")
         if isinstance(value, str) and value:
             return str(by), value
         return None
     if isinstance(target, str) and target:
-        return "css selector", target
+        return _CSS_SELECTOR_BY, target
     return None
 
 

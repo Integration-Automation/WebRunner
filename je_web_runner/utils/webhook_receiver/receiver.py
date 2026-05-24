@@ -91,7 +91,7 @@ def _build_handler(
                 method=method,
                 path=url_parts.path,
                 query=parse_qs(url_parts.query),
-                headers={k: v for k, v in self.headers.items()},
+                headers=dict(self.headers.items()),
                 body=body,
             )
             with lock:
@@ -159,7 +159,9 @@ class WebhookServer:
 
     @property
     def base_url(self) -> str:
-        return f"http://{self._host}:{self._port}"
+        # S5332 ok: this is a localhost test-fixture HTTP server with random
+        # port, intentionally plain HTTP so callers can hit it without certs.
+        return f"http://{self._host}:{self._port}"  # noqa: S5332
 
     def start(self) -> "WebhookServer":
         if self._server is not None:

@@ -110,10 +110,9 @@ class TestCategorize(unittest.TestCase):
             categorize_actions([], rules=["not a rule"])  # type: ignore[list-item]
 
     def test_matcher_exception(self):
-        bad_rule = Rule(
-            tag="bad",
-            matcher=lambda a: (_ for _ in ()).throw(RuntimeError("oops")),
-        )
+        def _bad_matcher(_actions):
+            raise RuntimeError("oops")
+        bad_rule = Rule(tag="bad", matcher=_bad_matcher)
         with self.assertRaises(TestCategorizerError):
             categorize_actions([], rules=[bad_rule])
 

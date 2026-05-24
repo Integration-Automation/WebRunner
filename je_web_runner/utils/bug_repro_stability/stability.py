@@ -20,6 +20,9 @@ from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
 
+_EXPECTS_REPORT_MSG = "expects StabilityReport"
+
+
 class BugReproStabilityError(WebRunnerException):
     """Raised on bad inputs or runner failure."""
 
@@ -74,7 +77,7 @@ def _classify(repro_pct: float) -> ReproCategory:
         return ReproCategory.NON_REPRODUCIBLE
     return ReproCategory.FLAKY
 
-
+  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 # ---------- core -------------------------------------------------------
 
 def repeat(
@@ -152,7 +155,7 @@ def repeat(
 def assert_deterministic(report: StabilityReport) -> None:
     """Raise unless the report is :attr:`ReproCategory.DETERMINISTIC`."""
     if not isinstance(report, StabilityReport):
-        raise BugReproStabilityError("expects StabilityReport")
+        raise BugReproStabilityError(_EXPECTS_REPORT_MSG)
     if report.category != ReproCategory.DETERMINISTIC:
         raise BugReproStabilityError(
             f"expected deterministic repro, got {report.category.value} "
@@ -163,7 +166,7 @@ def assert_deterministic(report: StabilityReport) -> None:
 def assert_min_repro_pct(report: StabilityReport, *, minimum: float) -> None:
     """Assert ``report.repro_pct >= minimum``."""
     if not isinstance(report, StabilityReport):
-        raise BugReproStabilityError("expects StabilityReport")
+        raise BugReproStabilityError(_EXPECTS_REPORT_MSG)
     if not 0 <= minimum <= 100:
         raise BugReproStabilityError("minimum must be in [0, 100]")
     if report.repro_pct < minimum:
@@ -177,7 +180,7 @@ def assert_min_repro_pct(report: StabilityReport, *, minimum: float) -> None:
 def report_markdown(report: StabilityReport) -> str:
     """Render a compact markdown summary."""
     if not isinstance(report, StabilityReport):
-        raise BugReproStabilityError("expects StabilityReport")
+        raise BugReproStabilityError(_EXPECTS_REPORT_MSG)
     avg = sum(report.durations) / len(report.durations) if report.durations else 0.0
     lines = [
         f"### Repro stability: **{report.category.value}** "

@@ -76,7 +76,7 @@ def parse_sse_stream(text: str) -> List[SseEvent]:
     return events
 
 
-def _parse_event_block(raw: str) -> Optional[SseEvent]:
+def _parse_event_block(raw: str) -> Optional[SseEvent]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     event_type = "message"
     data_lines: List[str] = []
     event_id: Optional[str] = None

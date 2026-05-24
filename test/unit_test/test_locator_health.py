@@ -88,7 +88,6 @@ class TestScanActionFile(unittest.TestCase):
             ])
             findings = scan_action_file(path)
             self.assertEqual(len(findings), 2)
-            ids = {(f.strategy, f.score) for f in findings}
             id_score = next(f for f in findings if f.strategy == "ID").score
             xpath_score = next(f for f in findings if f.strategy == "XPATH").score
             self.assertGreater(id_score, xpath_score)

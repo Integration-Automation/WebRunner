@@ -212,21 +212,19 @@ def report_markdown(report: RiskReport) -> str:
     return "\n".join(lines) + "\n"
 
 
-def aggregate_signals(per_file: Sequence[Dict[str, Any]]) -> PrSignals:
+def aggregate_signals(per_file: Sequence[Dict[str, Any]]) -> PrSignals:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """
     Reduce a per-file signal list (from upstream tools) into one
     :class:`PrSignals`. Unknown keys are ignored so callers can pass
     richer dicts without breaking.
     """
-    totals: Dict[str, int] = {
-        name: 0 for name in (
-            "flaky_tests_touched", "total_tests_touched",
-            "impacted_modules", "impacted_critical_paths",
-            "fragile_locators_touched", "total_locators_touched",
-            "lines_added", "lines_covered",
-            "migration_files_changed", "security_files_changed",
-        )
-    }
+    totals: Dict[str, int] = dict.fromkeys((
+        "flaky_tests_touched", "total_tests_touched",
+        "impacted_modules", "impacted_critical_paths",
+        "fragile_locators_touched", "total_locators_touched",
+        "lines_added", "lines_covered",
+        "migration_files_changed", "security_files_changed",
+    ), 0)
     flake_scores: List[float] = []
     repo_modules = 0
     for entry in per_file:

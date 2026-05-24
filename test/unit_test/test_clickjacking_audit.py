@@ -113,7 +113,7 @@ class TestProbe(unittest.TestCase):
         with self.assertRaises(ClickjackingAuditError):
             build_probe_page("")
         with self.assertRaises(ClickjackingAuditError):
-            build_probe_page("ftp://x.com")
+            build_probe_page("ftp://x.com")  # noqa: S5332
 
     def test_status_script_constant(self):
         self.assertIn("status", PROBE_STATUS_SCRIPT)

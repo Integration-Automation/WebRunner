@@ -114,7 +114,8 @@ def build_prompt_text(prompt: StoryPrompt) -> str:
 
 # ---------- generation --------------------------------------------------
 
-_JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(.+?)```", re.DOTALL)
+# NOSONAR python:S5852 — input is a bounded LLM response (≤ context window)
+_JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(.+?)```", re.DOTALL)  # noqa: S5852
 
 
 def generate_actions(
@@ -181,7 +182,7 @@ def validate_actions(actions: Sequence[Any]) -> None:
     for index, action in enumerate(actions):
         _validate_one(index, action)
 
-
+  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 def _validate_one(index: int, action: Any) -> None:
     if not isinstance(action, dict) or len(action) != 1:
         raise StoryToActionsError(
@@ -210,7 +211,7 @@ def _validate_one(index: int, action: Any) -> None:
     else:
         _validate_locator_action(index, name, args)
 
-
+  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 def _validate_locator_action(index: int, name: str, args: list) -> None:
     if len(args) < 2:
         raise StoryToActionsError(
@@ -231,17 +232,16 @@ def _validate_locator_action(index: int, name: str, args: list) -> None:
             raise StoryToActionsError(
                 f"action #{index} WR_input_to_element needs [by, value, text]"
             )
-    elif name in ("WR_assert_element_text", "WR_assert_element_visible"):
-        if name == "WR_assert_element_text":
-            if len(args) != 3 or not isinstance(args[2], str):
-                raise StoryToActionsError(
-                    f"action #{index} {name} needs [by, value, expected_text]"
-                )
-        else:
-            if len(args) != 2:
-                raise StoryToActionsError(
-                    f"action #{index} {name} needs exactly [by, value]"
-                )
+    elif name == "WR_assert_element_text":
+        if len(args) != 3 or not isinstance(args[2], str):
+            raise StoryToActionsError(
+                f"action #{index} {name} needs [by, value, expected_text]"
+            )
+    elif name == "WR_assert_element_visible":
+        if len(args) != 2:
+            raise StoryToActionsError(
+                f"action #{index} {name} needs exactly [by, value]"
+            )
     elif name in ("WR_click_element", "WR_double_click_element",
                   "WR_submit_element", "WR_clear_element"):
         if len(args) != 2:

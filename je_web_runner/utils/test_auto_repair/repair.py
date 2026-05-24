@@ -33,6 +33,8 @@ from je_web_runner.utils.failure_triage.triage import (
 )
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
+_EMPTY_LABEL = "<empty>"
+
 
 class TestAutoRepairError(WebRunnerException):
     """Raised when repair input, LLM output, or file I/O is invalid."""
@@ -182,12 +184,12 @@ def propose_repair(
         )
     prompt = _REPAIR_PROMPT.format(
         test_name=signals.test_name or "unknown",
-        error_signature=signals.error_signature or "<empty>",
-        error_repr=signals.error_repr or "<empty>",
+        error_signature=signals.error_signature or _EMPTY_LABEL,
+        error_repr=signals.error_repr or _EMPTY_LABEL,
         diff=diff_text or "<no diff available>",
         actions=json.dumps(actions, ensure_ascii=False, indent=2)[:5000],
         steps=json.dumps(signals.last_steps, ensure_ascii=False, indent=2)[:2500],
-        dom=signals.dom_excerpt[:3500] or "<empty>",
+        dom=signals.dom_excerpt[:3500] or _EMPTY_LABEL,
     )
     try:
         raw = _invoke(prompt)

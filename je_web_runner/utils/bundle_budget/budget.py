@@ -85,7 +85,7 @@ def _kind_of(entry: Dict[str, Any]) -> AssetKind:
     ).split(";")[0].strip().lower()
     if mime.startswith("image/"):
         return AssetKind.IMAGE
-    if mime.startswith("video/") or mime.startswith("audio/"):
+    if mime.startswith(("video/", "audio/")):
         return AssetKind.MEDIA
     return _MIME_KIND_MAP.get(mime, AssetKind.OTHER)
 

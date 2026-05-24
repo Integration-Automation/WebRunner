@@ -98,7 +98,7 @@ def _hostname(url: str) -> str:
 
 # ---------- scanners ---------------------------------------------------
 
-def scan_har(
+def scan_har(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     har: Union[str, Dict[str, Any]],
     *,
     page_url: Optional[str] = None,

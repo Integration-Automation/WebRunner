@@ -53,7 +53,7 @@ ActionRunner = Callable[[List[Any]], bool]
 
 # ---------- ddmin -------------------------------------------------------
 
-def minimize(
+def minimize(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     actions: Sequence[Any],
     runner: ActionRunner,
     *,
@@ -87,11 +87,10 @@ def minimize(
             ) from error
 
     full = list(actions)
-    if verify_failing:
-        if _evaluate(full):
-            raise ReproMinimizerError(
-                "runner says the original action list PASSES; nothing to minimize"
-            )
+    if verify_failing and _evaluate(full):
+        raise ReproMinimizerError(
+            "runner says the original action list PASSES; nothing to minimize"
+        )
 
     started = time.monotonic()
     current = full

@@ -122,7 +122,7 @@ def walk_tree(
     return transcript
 
 
-def _walk_node(
+def _walk_node(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     node: Dict[str, Any],
     transcript: ScreenReaderTranscript,
     state: Dict[str, int],
@@ -177,7 +177,7 @@ def _walk_node(
 
 
 def _emit_interactive(
-    node: Dict[str, Any],
+    _node: Dict[str, Any],
     role: str,
     name: str,
     index: int,

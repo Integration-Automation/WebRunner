@@ -48,7 +48,8 @@ class TestValueModel(unittest.TestCase):
             fail_rate=0.5, impact_score=1.0,
             last_run_age_hours=48, manual_priority=1.0,
         )
-        # value = 0.5*1 + 1.0*1.5 + (48/24)*1 + 1*2 = 0.5 + 1.5 + 2 + 2 = 6.0
+        # Expected breakdown: 0.5 fail-rate term + 1.5 impact term + 2.0
+        # staleness term + 2.0 manual-priority term equals 6.0 overall.
         self.assertAlmostEqual(value_of(c), 6.0)
         self.assertAlmostEqual(value_density(c), 0.6)
 

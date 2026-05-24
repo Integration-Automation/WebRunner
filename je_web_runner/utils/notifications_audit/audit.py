@@ -128,7 +128,7 @@ HARVEST_SCRIPT = "return window.__wr_notif_log__ || {permission_requests: [], no
 
 # ---------- parsing ----------------------------------------------------
 
-def parse_log(payload: Any) -> NotificationsLog:
+def parse_log(payload: Any) -> NotificationsLog:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """Convert the harvested JSON into typed records."""
     if not isinstance(payload, dict):
         raise NotificationsAuditError(

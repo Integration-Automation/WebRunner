@@ -115,7 +115,7 @@ class TestServerLifecycle(unittest.TestCase):
 
     def test_context_manager(self):
         with DashboardServer() as server:
-            self.assertTrue(server.url.startswith("http://"))
+            self.assertTrue(server.url.startswith("http://"))  # noqa: S5332
 
     def test_stop_when_not_started_is_noop(self):
         DashboardServer().stop()

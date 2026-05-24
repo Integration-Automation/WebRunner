@@ -74,7 +74,7 @@ class TestScanText(unittest.TestCase):
 
     def test_non_string_rejected(self):
         with self.assertRaises(PiiInScreenshotError):
-            scan_text_only(123)  # type: ignore[arg-type]
+            scan_text_only(123)  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
     def test_clean_text(self):
         self.assertEqual(scan_text_only("no secrets here"), [])

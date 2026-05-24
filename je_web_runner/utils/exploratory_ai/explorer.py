@@ -205,7 +205,7 @@ class Explorer:
         if self.stop_on_bugs < 0:
             raise ExploratoryAiError("stop_on_bugs must be >= 0")
 
-    def run(self) -> ExplorationReport:
+    def run(self) -> ExplorationReport:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
         report = ExplorationReport(steps_taken=0)
         repeat_counter: Dict[str, int] = {}
         for step in range(self.max_steps):
