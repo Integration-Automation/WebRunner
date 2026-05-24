@@ -45,7 +45,80 @@ je_web_runner/
     ├── socket_server/       # TCP socket server for remote control
     ├── test_object/         # Test object & record classes (Value Object pattern)
     ├── test_record/         # Action recording
-    └── xml/                 # XML utilities
+    ├── xml/                 # XML utilities
+    ├── chrome_profile/      # Persistent Chrome profile + stealth + snapshot/sync-back
+    ├── failure_triage/      # AI failure root-cause analysis on failure bundles
+    ├── flake_detector/      # Time-decayed flake scoring + quarantine registry
+    ├── locator_health/      # Project-wide locator audit + upgrade suggestions
+    ├── device_cloud/        # Real-device cloud (BrowserStack/Sauce/LambdaTest) connector
+    ├── otel_bridge/         # W3C traceparent injection for distributed tracing
+    ├── mutation_testing/    # Action JSON mutation testing (kill rate / score)
+    ├── otp_interceptor/     # MailHog/Mailpit/IMAP/SMS OTP polling for 2FA flows
+    ├── download_verify/     # PDF / CSV / Excel / JSON / SHA256 download assertions
+    ├── test_auto_repair/    # LLM-driven test rewrite from failure + git diff
+    ├── edge_case_generator/ # LLM edge-case variant generator (complement to mutation_testing)
+    ├── openapi_to_e2e/      # OpenAPI/Swagger spec → WR_http_* action JSON
+    ├── cross_tab_sync/      # Multi-page BroadcastChannel / storage propagation asserts
+    ├── visual_ai/           # aHash/dHash/pHash + SSIM-proxy for canvas/chart diff
+    ├── test_scheduler/      # Value-density scheduler under time + cloud budget
+    ├── walkthrough_docs/    # AI step-by-step SOP / Confluence doc from recorded runs
+    ├── live_dashboard/      # Aggregated web UI: runs + flake + quarantine + locators
+    ├── ocr_assert/          # OCR-based text assertion for canvas / WebGL / image content
+    ├── email_render/        # Capture outbound mail (MailHog/Mailpit/EML) + multi-viewport screenshots
+    ├── backend_log_correlator/ # W3C trace_id → Loki/Elasticsearch/file log fetch into failure bundle
+    ├── websocket_assert/    # WebSocket frame recorder + count / payload / pubsub assertions
+    ├── console_error_budget/ # JS console / unhandled-rejection budget with ignore patterns
+    ├── chaos_hooks/         # Seeded chaos injection (offline / throttle / mid-flow reload)
+    ├── pr_risk_score/       # Fuse flake / impact / locator / coverage signals into 0-100 PR risk
+    ├── flag_matrix/         # Feature-flag combo matrix with constraints + minimal failing subset
+    ├── session_to_test/     # rrweb / generic session events → WR action JSON
+    ├── exploratory_ai/      # Agentic exploratory tester (observer/planner protocols + RandomPlanner)
+    ├── story_to_actions/    # LLM-driven user story / Figma frame → validated WR action JSON
+    ├── db_snapshot/         # Per-test DB savepoint/rollback with pluggable backend
+    ├── time_freezer/        # Inject Date/Date.now/performance.now patch via CDP for deterministic time tests
+    ├── persona_runner/      # Same suite × N personas (admin/free/enterprise) matrix
+    ├── token_leak_detector/ # Scan HAR / logs / responses for leaked JWTs, API keys, session tokens
+    ├── consent_audit/       # GDPR/CCPA cookie classification + pre-consent / post-reject violation detection
+    ├── pii_in_screenshot/   # OCR + PII regex (Luhn-validated card, SSN, TWID) scanner over screenshots
+    ├── pseudo_localization/ # ASCII → look-alike + expansion + brackets; detect hard-coded i18n leaks
+    ├── screen_reader_runner/ # Walk a11y tree to simulate NVDA/VoiceOver order + flag a11y violations
+    ├── forced_colors_mode/  # dark / reduced-motion / forced-colors / high-contrast matrix verification
+    ├── sse_assert/          # Server-Sent Events recorder + count/data/JSON-shape/strict-id assertions
+    ├── webrtc_assert/       # PeerConnection state / ICE / track / RTP stats assertions
+    ├── view_transitions/    # Instrumentation + duration/CLS/group assertions for View Transitions API
+    ├── test_dedup_ai/       # Structural + embedding-based semantic dedupe of action JSON files
+    ├── multimodal_qa/       # Send screenshot + question to vision LLM, parse pass/fail/notes envelope
+    ├── prompt_drift_monitor/ # Track LLM-feature output drift via embeddings + lexical anchors
+    ├── git_bisect_flake/    # Ledger-only or probe-driven bisect to find regression commit
+    ├── test_cost_estimator/ # Cloud-minute × rate-card × CO₂ estimate per suite/runner/test
+    ├── slack_digest/        # Render Slack Block-Kit / Teams card / plain-text test digest payload
+    ├── webtransport_assert/ # HTTP/3 WebTransport datagram + stream frame recorder + assertions
+    ├── indexed_db_explorer/ # IndexedDB snapshot harvest + store/key/index/record assertions
+    ├── file_system_access/  # Mock showOpenFilePicker/showSaveFilePicker + record writes
+    ├── notifications_audit/ # Notification.requestPermission timing + permission/spam policy checks
+    ├── mixed_content_audit/ # HTTP-on-HTTPS detection via HAR + console scanner
+    ├── clickjacking_audit/  # X-Frame-Options / frame-ancestors header check + iframe probe
+    ├── open_redirect_detector/ # Probe ?redirect=/?next= params with attacker-host payloads
+    ├── sri_verify/          # Subresource Integrity hash presence + correctness + crossorigin
+    ├── coop_coep_audit/     # crossOriginIsolated COOP/COEP + per-resource CORP/CORS check
+    ├── inp_tracker/         # Interaction to Next Paint instrumentation + p98 + budget
+    ├── hydration_check/     # SSR hydration mismatch detection (DOM diff + console markers)
+    ├── bundle_budget/       # Per-asset-kind byte budget from HAR + biggest-assets ranking
+    ├── third_party_budget/  # Third-party vendor classification + req/byte/blocking-ms budgets
+    ├── long_animation_frame/ # Long Animation Frame API listener + per-script attribution
+    ├── grpc_tester/         # gRPC stub call recorder + gRPC-Web framing/trailer helpers
+    ├── webhook_receiver/    # Threaded HTTP server for catching app's outbound webhooks
+    ├── idempotency_check/   # Run request twice + compare status/body/state/side-effects
+    ├── pagination_audit/    # Walk all pages, detect dups/gaps/cursor-loop/sort violations
+    ├── failure_narrator/    # LLM natural-language failure summary from failure_bundle
+    ├── repro_minimizer/     # Delta-debugging (ddmin) to shrink failing action list to minimum
+    ├── locator_hardener/    # Heuristic fragility score + LLM-suggested stable selectors
+    ├── test_categorizer/    # Auto-tag tests as smoke / regression / perf / a11y / data / api
+    ├── quarantine_age_report/ # Quarantine entries with age + fresh/lingering/stale/abandoned tiers
+    ├── test_debt_dashboard/ # Inventory of skip/xfail/TODO/_skip markers with age + CODEOWNERS
+    ├── sla_tracker/         # % suites finishing under SLA threshold, weekly/daily bucketing
+    ├── bug_repro_stability/ # Repeat probe N times, classify deterministic/flaky/non-reproducible
+    └── test_owners_map/     # CODEOWNERS parser + override layer + unowned-test audit
 ```
 
 ## Design Patterns & Architecture

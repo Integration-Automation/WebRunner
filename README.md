@@ -43,6 +43,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - [Observability](#observability)
 - [Test Orchestration](#test-orchestration)
 - [Quality & Security](#quality--security)
+- [Specialized Modules](#specialized-modules)
 - [Advanced WebDriverWrapper](#advanced-webdriverwrapper)
 - [Browser Internals](#browser-internals)
 - [Test Data](#test-data)
@@ -844,6 +845,229 @@ Quality / privacy:
 Test orchestration:
 
 - **Test impact analysis** — `impact_analysis.build_index("./actions")` walks every action JSON file and projects locator names, URLs, template names, and `WR_*` commands into a reverse index; `affected_action_files(index, locators=["primary_cta"])` answers "which tests touch this?" so diff-aware shards can go beyond filename matching.
+
+## Specialized Modules
+
+A second wave of utility modules, each in its own subpackage under
+`je_web_runner/utils/`, organised by capability area. Each module is
+fully unit-tested and ships independent of the core executor (import
+only what you use).
+
+### Web Platform APIs
+
+- **`webtransport_assert`** — HTTP/3 WebTransport datagram + stream
+  frame recorder with count / payload / JSON-shape / stream-complete
+  assertions (mirror of `websocket_assert` and `sse_assert`).
+- **`indexed_db_explorer`** — Browser-side harvest JS + typed
+  `IdbSnapshot`; assertions cover store existence, record count, key
+  presence, index presence, plus per-store diff.
+- **`file_system_access`** — JS shim mocking `showOpenFilePicker` /
+  `showSaveFilePicker` / `showDirectoryPicker`; records every write
+  performed against the fake handle for later assertion.
+- **`notifications_audit`** — Tracks `Notification.requestPermission`
+  call timing (user-gesture check, min page age) and policy violations
+  (re-prompt after deny, notification spam after deny, tag reuse).
+- **`sse_assert`** — Server-Sent Events stream recorder + chunk-buffer
+  feed + count / data-contains / JSON-shape / strictly-increasing-id
+  assertions.
+- **`websocket_assert`** — WebSocket frame recorder + count / payload /
+  pubsub-pattern / JSON-shape assertions.
+- **`webrtc_assert`** — `PeerSnapshot.from_dict`, `aggregate_stats`
+  (getStats), and connected / track-present / SDP-codec / packet-loss /
+  min-bytes assertions.
+- **`view_transitions`** — Instrumentation snippet for the View
+  Transitions API + duration budget / CLS budget / group-name asserts.
+
+### Security & Headers
+
+- **`mixed_content_audit`** — HAR + console-message scan for HTTP
+  resources on HTTPS pages (active vs passive vs HSTS-upgrade).
+- **`clickjacking_audit`** — X-Frame-Options + `frame-ancestors` parser
+  + iframe-probe page generator; STRICT / SAMEORIGIN / ALLOWED / MISSING
+  verdict.
+- **`open_redirect_detector`** — Eight-payload probe set (`//evil`,
+  `@userinfo`, `javascript:`, `data:`, mixed-case bypass…) +
+  classifier (BLOCKED / ALLOWED / AMBIGUOUS).
+- **`sri_verify`** — Parse `<script>` / `<link rel=stylesheet>` tags →
+  validate `integrity=` strength + crossorigin requirement +
+  recompute hash from a caller-supplied payload provider.
+- **`coop_coep_audit`** — `crossOriginIsolated` page-header check (COOP
+  `same-origin` + COEP `require-corp` / `credentialless`) + per-resource
+  CORP / CORS validator.
+- **`token_leak_detector`** — Scan response bodies / HAR / log lines for
+  leaked JWTs (with header validation), AWS / GitHub / Slack / Stripe /
+  Google / generic-bearer tokens. Deduped by token suffix.
+- **`consent_audit`** — Cookie catalogue (GA / FB pixel / Hotjar /
+  LinkedIn / Mixpanel / Stripe / Intercom / CSRF / session) + pre-consent
+  + post-reject reintroduction detector.
+- **`pii_in_screenshot`** — OCR + PII regex (Luhn-validated card, SSN,
+  ROC ID, IBAN, IPv4, phone, email) over screenshots; reuses
+  `ocr_assert` for the OCR layer.
+
+### Performance Budgets
+
+- **`inp_tracker`** — Interaction-to-Next-Paint instrumentation +
+  p98-INP + good/needs-work/poor rating per Google's thresholds.
+- **`hydration_check`** — SSR hydration mismatch detection (DOM diff
+  with framework-attr/comment stripping + console-marker scan covering
+  React / Vue / Svelte / Astro / Nuxt).
+- **`bundle_budget`** — HAR → per-AssetKind transfer totals (script /
+  stylesheet / image / font / media) + breach detail + biggest-asset
+  ranking.
+- **`third_party_budget`** — Vendor catalogue (GA / FB Pixel / Hotjar /
+  Intercom / Stripe / Segment / Mixpanel / Amplitude / Sentry / etc.) +
+  req / byte / blocking-ms / vendor-count budgets.
+- **`long_animation_frame`** — `long-animation-frame` PerformanceObserver
+  listener + per-script attribution (forced reflow time, pause time).
+- **`console_error_budget`** — JS console / unhandled-rejection budget
+  with regex ignore patterns; Selenium and CDP adapters.
+
+### Backend Integration
+
+- **`grpc_tester`** — gRPC stub method wrapper + gRPC-Web framing
+  (length-prefix encode/decode + trailer parser) + status assertions.
+- **`webhook_receiver`** — Stdlib threaded HTTP server (random port) +
+  `wait_for(predicate)` polling + path / header / JSON-predicate
+  assertion helpers. Drop-in for "did the app POST a webhook?" tests.
+- **`idempotency_check`** — Run a request twice + compare
+  status / body / state / side-effect count. `ignore_body_keys`,
+  `allow_status_change_to` for legitimate 409-on-second.
+- **`pagination_audit`** — Walk all pages via caller-supplied fetcher;
+  detects duplicates across pages, cursor-loop, off-by-one totals, and
+  sort-order violations.
+- **`backend_log_correlator`** — W3C traceparent → fetch matching log
+  lines from Loki / Elasticsearch / JSON-lines file → attach to a
+  failure bundle.
+- **`email_render`** — MailHog / Mailpit / `.eml` capture →
+  cross-viewport screenshot via pluggable render driver.
+
+### AI / Workflow
+
+- **`failure_narrator`** — Load failure-bundle directory → LLM-driven
+  natural-language "why this failed" summary → strict JSON envelope →
+  markdown report. LLM client pluggable.
+- **`repro_minimizer`** — Classic delta-debugging (ddmin) shrinking a
+  failing action list to its smallest still-failing subsequence.
+- **`locator_hardener`** — Heuristic fragility score (nth-of-type /
+  text-xpath / hashed-class / deep-descendant) → LLM-suggested stable
+  selectors with safety filter on the response.
+- **`test_categorizer`** — Regex rules over action-name patterns → auto
+  tag: smoke / regression / perf / a11y / security / payment /
+  data_driven / visual / api.
+- **`exploratory_ai`** — Agentic exploratory tester with `PageObserver`
+  + `ActionPlanner` protocols; ships a deterministic `RandomPlanner` as
+  fuzz fallback, collects `BugSignal`s from observed errors.
+- **`story_to_actions`** — LLM-driven translation of a user story +
+  optional Figma frame hints into validated WR action JSON; validator
+  rejects unsafe action names and bad locator strategies.
+- **`session_to_test`** — rrweb / generic-event-stream → WR action JSON;
+  auto-detects input format.
+- **`test_auto_repair`** — LLM-driven test rewrite from a failure bundle
+  + git diff context.
+- **`edge_case_generator`** — LLM edge-case variant generator
+  (complement to `mutation_testing`).
+- **`multimodal_qa`** — Send screenshot + question to a vision LLM,
+  parse pass/fail/uncertain verdict with confidence floor; useful for
+  UI "is this correct?" checks beyond pixel diff.
+- **`prompt_drift_monitor`** — Track an app-internal LLM feature's
+  output drift via baseline embeddings + must_include / must_exclude
+  lexical anchors.
+- **`test_dedup_ai`** — Structural (canonical fingerprint) + semantic
+  (cosine clustering with pluggable embedder) dedupe of action JSON
+  files.
+- **`walkthrough_docs`** — Generate step-by-step SOP / Confluence-style
+  docs from recorded runs.
+
+### a11y / i18n / Visual
+
+- **`ocr_assert`** — OCR-based text assertion (`contains` / `fuzzy` /
+  `any`) for canvas / WebGL / image content; whitespace + accent
+  normalisation built in.
+- **`screen_reader_runner`** — Walk an accessibility tree to simulate
+  NVDA / VoiceOver reading order + flag unnamed interactive elements,
+  heading-level skips, missing alt, generic link text.
+- **`pseudo_localization`** — Pseudo-localise strings
+  (`__éxámplé strîng__`) + scan rendered page for hard-coded text
+  leaks. Preserves `{name}` / `%d` / `<tag>` placeholders.
+- **`forced_colors_mode`** — CDP-features builder for the four CSS
+  media queries (color-scheme / reduced-motion / forced-colors /
+  contrast) + computed-style diff with "became invisible" detection.
+- **`visual_ai`** — aHash / dHash / pHash + SSIM-proxy for canvas /
+  chart visual diff.
+
+### Governance & Reporting
+
+- **`pr_risk_score`** — Fuses flake / impact-analysis / locator-health /
+  coverage signals into a 0-100 PR risk score with markdown report and
+  is_blocking gate.
+- **`flag_matrix`** — Feature-flag combination matrix with
+  forbid / require constraints, pinned baselines, deterministic
+  sampling, and greedy smallest-failing-subset cover.
+- **`chaos_hooks`** — Seeded chaos injection (offline / throttle /
+  mid-flow reload / tab-background) with deterministic schedule per
+  action list.
+- **`db_snapshot`** — Per-test DB savepoint/rollback isolation with
+  pluggable backend protocol; ships an `InMemoryBackend` for
+  unit-testing the workflow itself.
+- **`time_freezer`** — CDP injection script that overrides
+  `Date` / `Date.now` / `performance.now`; freeze or slow-motion modes
+  for deterministic time-bound tests.
+- **`persona_runner`** — Same suite × N personas (admin / free /
+  enterprise / guest) matrix; summary flags persona-specific vs
+  file-specific regressions.
+- **`git_bisect_flake`** — Ledger-only or probe-driven bisect for the
+  regression commit that caused a test to start failing.
+- **`test_cost_estimator`** — Per-runner rate-card (Sauce / BrowserStack /
+  LambdaTest / GitHub Actions) × ledger minutes → USD + CO₂ estimate
+  per suite / runner / test.
+- **`slack_digest`** — Render Slack Block-Kit + Teams Adaptive Card +
+  plain-text test digest with quarantine activity, top-risk PRs, cost
+  trend, and pass-rate delta.
+- **`quarantine_age_report`** — Add fresh / lingering / stale /
+  abandoned tier per quarantined test + escalation alerts.
+- **`test_debt_dashboard`** — Scan pytest skip / xfail / TODO + JSON
+  `_skip` markers + age + CODEOWNERS-derived owner mapping.
+- **`sla_tracker`** — Weekly / daily bucketed % of suites finishing
+  under an SLA duration threshold + trend.
+- **`bug_repro_stability`** — Repeat a failing probe N times → classify
+  deterministic / flaky / non-reproducible + error-signature grouping +
+  longest pass / fail streak.
+- **`test_owners_map`** — CODEOWNERS parser (last-match-wins glob
+  semantics) + per-test override layer + unowned-test audit.
+- **`failure_triage`** — AI failure root-cause analysis on failure
+  bundles.
+- **`flake_detector`** — Time-decayed flake scoring + quarantine
+  registry.
+- **`locator_health`** — Project-wide locator audit + upgrade
+  suggestions.
+- **`mutation_testing`** — Action JSON mutation testing (kill-rate /
+  score).
+- **`live_dashboard`** — Aggregated web UI: runs + flake + quarantine +
+  locators.
+- **`test_scheduler`** — Value-density scheduler under time + cloud
+  budget.
+
+### Other Specialised Modules
+
+- **`chrome_profile`** — Persistent Chrome profile + stealth +
+  snapshot / sync-back.
+- **`device_cloud`** — Real-device cloud (BrowserStack / Sauce /
+  LambdaTest) connector.
+- **`otel_bridge`** — W3C traceparent injection for distributed
+  tracing.
+- **`otp_interceptor`** — MailHog / Mailpit / IMAP / SMS OTP polling
+  for 2FA flows.
+- **`download_verify`** — PDF / CSV / Excel / JSON / SHA256 download
+  assertions.
+- **`openapi_to_e2e`** — OpenAPI / Swagger spec → `WR_http_*` action
+  JSON generator.
+- **`cross_tab_sync`** — Multi-page BroadcastChannel / storage
+  propagation asserts.
+
+For per-module reference also see [`CLAUDE.md`](CLAUDE.md), the
+auto-generated [`docs/reference/command_reference.md`](docs/reference/command_reference.md),
+and the Sphinx chapter under
+`docs/source/Eng/doc/specialized_modules/`.
 
 ## Advanced WebDriverWrapper
 

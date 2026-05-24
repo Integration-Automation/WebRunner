@@ -127,6 +127,7 @@ testing, and data / auth helpers.
 
     doc/quality_security/quality_security_doc.rst
     doc/data_auth_api/data_auth_api_doc.rst
+    doc/specialized_modules/specialized_modules_doc.rst
 
 .. _eng-tooling:
 
