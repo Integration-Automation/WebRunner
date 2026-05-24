@@ -81,9 +81,10 @@ _TITLE_RE = re.compile(r"^assert\s+title\s+\"([^\"]*)\"$", re.IGNORECASE)
 _PRESS_RE = re.compile(r"^press\s+(\S+)$", re.IGNORECASE)
 _SCREENSHOT_RE = re.compile(r"^screenshot$", re.IGNORECASE)
 # Template name allows ASCII identifier chars plus dashes; the bounded
-# {0,80} caps the worst case at linear in input length.
-_TEMPLATE_RE = re.compile(  # NOSONAR S5852 / S5869 — bounded class, ``\w`` overlap with first class is intentional
-    r"^run\s+template\s+([A-Za-z_][\w-]{0,80})$", re.IGNORECASE,
+# {0,80} caps the worst case at linear in input length. With re.IGNORECASE
+# the first class only needs [A-Z_] — lowercase letters fold in automatically.
+_TEMPLATE_RE = re.compile(
+    r"^run\s+template\s+([A-Z_][\w-]{0,80})$", re.IGNORECASE,
 )
 _QUIT_RE = re.compile(r"^quit$", re.IGNORECASE)
 

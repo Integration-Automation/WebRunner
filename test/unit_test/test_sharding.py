@@ -1,4 +1,5 @@
 import unittest
+from itertools import chain
 
 from je_web_runner.utils.sharding.shard import (
     ShardingError,
@@ -56,7 +57,7 @@ class TestPartition(unittest.TestCase):
     def test_partition_with_spec_round_trip(self):
         files = [f"x{i}.json" for i in range(20)]
         parts = [partition_with_spec(files, f"{i}/4") for i in range(1, 5)]
-        merged = sum(parts, [])
+        merged = list(chain.from_iterable(parts))
         self.assertEqual(set(merged), set(files))
 
 

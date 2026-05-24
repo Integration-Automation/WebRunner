@@ -28,6 +28,11 @@ class McpServerError(WebRunnerException):
 
 
 _MCP_PROTOCOL_VERSION = "2024-11-05"
+
+# Reused error messages — extracted so SonarCloud S1192 stays quiet and
+# downstream tooling can grep for them.
+_ERR_ACTIONS_LIST = "'actions' must be a list"
+_ERR_TEXT_STRING = "'text' must be a string"
 _SERVER_NAME = "webrunner-mcp"
 _SERVER_VERSION = "0.1.0"
 
@@ -144,7 +149,7 @@ def _tool_lint_action(arguments: Dict[str, Any]) -> Any:
     from je_web_runner.utils.linter.action_linter import lint_action
     actions = arguments.get("actions")
     if not isinstance(actions, list):
-        raise McpServerError("'actions' must be a list")
+        raise McpServerError(_ERR_ACTIONS_LIST)
     # ``lint_action`` returns ``List[Dict[str, Any]]`` with ``rule`` /
     # ``severity`` / ``message`` / ``location`` keys; pass through verbatim
     # so MCP clients see the same shape the Python API exposes.
@@ -238,7 +243,7 @@ def _tool_format_actions(arguments: Dict[str, Any]) -> Any:
     from je_web_runner.utils.action_formatter.formatter import format_actions
     actions = arguments.get("actions")
     if not isinstance(actions, list):
-        raise McpServerError("'actions' must be a list")
+        raise McpServerError(_ERR_ACTIONS_LIST)
     return format_actions(actions, indent=int(arguments.get("indent", 2)))
 
 
@@ -246,7 +251,7 @@ def _tool_parse_markdown(arguments: Dict[str, Any]) -> Any:
     from je_web_runner.utils.md_authoring.markdown_to_actions import parse_markdown
     text = arguments.get("text")
     if not isinstance(text, str):
-        raise McpServerError("'text' must be a string")
+        raise McpServerError(_ERR_TEXT_STRING)
     return parse_markdown(text)
 
 
@@ -254,7 +259,7 @@ def _tool_translate_actions_to_playwright(arguments: Dict[str, Any]) -> Any:
     from je_web_runner.utils.sel_to_pw.translator import translate_action_list
     actions = arguments.get("actions")
     if not isinstance(actions, list):
-        raise McpServerError("'actions' must be a list")
+        raise McpServerError(_ERR_ACTIONS_LIST)
     return translate_action_list(actions)
 
 
@@ -295,7 +300,7 @@ def _tool_scan_pii(arguments: Dict[str, Any]) -> Any:
     from je_web_runner.utils.pii_scanner.scanner import scan_text
     text = arguments.get("text")
     if not isinstance(text, str):
-        raise McpServerError("'text' must be a string")
+        raise McpServerError(_ERR_TEXT_STRING)
     categories = arguments.get("categories")
     findings = scan_text(text, categories=categories)
     return [
@@ -309,7 +314,7 @@ def _tool_redact_pii(arguments: Dict[str, Any]) -> Any:
     from je_web_runner.utils.pii_scanner.scanner import redact_text
     text = arguments.get("text")
     if not isinstance(text, str):
-        raise McpServerError("'text' must be a string")
+        raise McpServerError(_ERR_TEXT_STRING)
     return redact_text(
         text,
         replacement=str(arguments.get("replacement", "[REDACTED]")),
@@ -351,7 +356,7 @@ def _tool_score_action_locators(arguments: Dict[str, Any]) -> Any:
     from je_web_runner.utils.linter.locator_strength import score_action_locators
     actions = arguments.get("actions")
     if not isinstance(actions, list):
-        raise McpServerError("'actions' must be a list")
+        raise McpServerError(_ERR_ACTIONS_LIST)
     return list(score_action_locators(actions))
 
 
