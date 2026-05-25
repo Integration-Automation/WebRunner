@@ -155,7 +155,48 @@ je_web_runner/
     ├── webusb_mock/         # WebUSB device shim with control/bulk transfer capture
     ├── webserial_mock/      # Web Serial UART shim + line write capture
     ├── webcodecs_assert/    # WebCodecs chunk codec/resolution/keyframe/framerate assertions
-    └── speech_api_assert/   # SpeechSynthesis/SpeechRecognition mock + spoke/lang assertions
+    ├── speech_api_assert/   # SpeechSynthesis/SpeechRecognition mock + spoke/lang assertions
+    ├── webauthn_mock/       # WebAuthn / FIDO2 / Passkey navigator.credentials shim
+    ├── credential_management/ # navigator.credentials password/federated autofill mock
+    ├── payment_request_assert/ # Payment Request API + Apple/Google Pay sheet validation
+    ├── three_d_secure_flow/ # 3DS challenge / frictionless / fallback path assertions
+    ├── rag_grounding_assert/ # RAG citation + grounding + hallucination phrase scan
+    ├── llm_token_cost_tracker/ # Per-test token/$ ledger + per-model rate card + budget
+    ├── streaming_chat_assert/ # TTFT / inter-token gap / UTF-8 / dup-or-OOS chunk assertions
+    ├── tool_call_assert/    # LLM tool/function call name+order+arg-schema assertions
+    ├── hallucination_probe/ # Ground-truth probe runner + hallucination rate budget
+    ├── web_push_assert/     # VAPID subscription + endpoint + userVisibleOnly + showNotification
+    ├── background_sync_assert/ # Background Sync register/fire/retry/lastChance assertions
+    ├── wake_lock_assert/    # Screen wake lock acquire/release/leak/re-acquire detection
+    ├── pip_assert/          # Picture-in-Picture (video + document) enter/exit/size assertions
+    ├── web_share_assert/    # navigator.share recorder + payload + fallback assertions
+    ├── compression_streams/ # CompressionStream gzip/deflate/brotli round-trip + ratio budget
+    ├── compute_pressure/    # Compute Pressure API fake observer + throttle reaction assertions
+    ├── touch_gesture/       # tap/swipe/pinch/long-press CDP-frame builder + event assertions
+    ├── viewport_audit/      # viewport meta + safe-area-inset + WCAG 1.4.4 scalable audit
+    ├── virtual_keyboard/    # visualViewport before/after + keyboard inset + focused-visible
+    ├── pull_to_refresh/     # overscroll-behavior + threshold + refresh handler + network refetch
+    ├── email_deliverability/ # SPF/DKIM/DMARC + List-Unsubscribe + BCC leak header audit
+    ├── inbox_render_outlook/ # Outlook/Gmail/Apple Mail render compatibility pre-flight
+    ├── push_delivery/       # FCM/APNs payload size + required fields + PII + collapse + TTL
+    ├── lcp_image_audit/     # LCP image preload + no-lazy + fetchpriority=high assertions
+    ├── font_loading_strategy/ # @font-face display + size-adjust + FOIT/FOUT/FOFT verification
+    ├── resource_hints_audit/ # preload/prefetch/preconnect used vs declared + preload-as audit
+    ├── critical_css_audit/  # Inline-CSS-in-head + first-packet budget + preload-blocking-CSS
+    ├── lighthouse_regression/ # Lighthouse score regression vs baseline + CWV metric budget
+    ├── dom_xss_taint/       # source→sink JS instrumentation + canary-based taint detection
+    ├── csp_violation_parser/ # CSP report-uri / report-to parser + recon heuristic
+    ├── hsts_preload_audit/  # HSTS preload-list compliance (max-age + includeSubDomains + preload)
+    ├── tls_cipher_audit/    # Live TLS handshake + version + cipher allowlist + subject check
+    ├── cookie_scope_abuse/  # Session-like cookie scope / HttpOnly / Secure / SameSite audit
+    ├── test_dup_dry/        # Structural action-JSON duplicate + prefix-overlap detection
+    ├── snapshot_diff_approval/ # Baseline/pending/rejected snapshot register + approval workflow
+    ├── failure_cluster_dbscan/ # Failure-message tokeniser + DBSCAN root-cause clustering
+    ├── test_naming_lint/    # should_when / given_when_then / camel_subject naming linter
+    ├── openapi_drift/       # Live API vs spec drift (undocumented / zombie / status / method)
+    ├── api_version_compat/  # Old-client vs new-server backward-compat response/request matrix
+    ├── rate_limit_assert/   # 429 / Retry-After / X-RateLimit headers + recovery assertions
+    └── har_to_openapi/      # HAR → OpenAPI 3.1 path/method/query/schema reverse engineering
 ```
 
 ## Design Patterns & Architecture
