@@ -17,7 +17,7 @@ import base64
 import hashlib
 import secrets
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Optional, Any, Dict, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

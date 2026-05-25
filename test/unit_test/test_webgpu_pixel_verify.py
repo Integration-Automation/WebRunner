@@ -39,8 +39,8 @@ class TestParse(unittest.TestCase):
 
     def test_bad_payload(self):
         with self.assertRaises(WebgpuPixelVerifyError):
-            parse_frame("nope")
-  # NOSONAR python:S5655 - deliberate bad input
+            parse_frame("nope")  # NOSONAR python:S5655 - deliberate bad input
+
     def test_missing_dims(self):
         with self.assertRaises(WebgpuPixelVerifyError):
             parse_frame({"width": 1})

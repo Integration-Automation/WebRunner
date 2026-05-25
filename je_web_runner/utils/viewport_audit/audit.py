@@ -39,20 +39,34 @@ def _parse_meta_content(content: str) -> Dict[str, str]:
     return out
 
 
+_META_TAG_RE = re.compile(r"<meta\b[^>]*>", re.IGNORECASE)
+_ATTR_RE = re.compile(
+    r"""(\w+)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))""",
+    re.IGNORECASE,
+)
+
+
+def _tag_attrs(tag: str) -> Dict[str, str]:
+    out: Dict[str, str] = {}
+    for match in _ATTR_RE.finditer(tag):
+        key = match.group(1).lower()
+        out[key] = match.group(2) or match.group(3) or match.group(4) or ""
+    return out
+
+
 def parse_meta(html: str) -> Optional[ViewportMeta]:
     """Extract the *last* ``<meta name="viewport">`` content from HTML."""
     if not isinstance(html, str):
         raise ViewportAuditError("html must be a string")
-    # Two greedy character classes excluding the next anchor avoid the
-    # nested-quantifier pattern flagged by S5852.
-    matches = re.findall(
-        r'<meta\s[^>]*?name=[\'"]viewport[\'"][^>]*?content=[\'"]([^\'"]*)[\'"]',
-        html, flags=re.IGNORECASE,
-    )
-    if not matches:
+    last_content: Optional[str] = None
+    for tag in _META_TAG_RE.finditer(html):
+        attrs = _tag_attrs(tag.group(0))
+        if attrs.get("name", "").lower() == "viewport" and "content" in attrs:
+            last_content = attrs["content"]
+    if last_content is None:
         return None
-    last = matches[-1]
-    return ViewportMeta(content=last, parsed=_parse_meta_content(last))
+    return ViewportMeta(content=last_content,
+                        parsed=_parse_meta_content(last_content))
 
 
 def assert_meta_present(meta: Optional[ViewportMeta]) -> None:

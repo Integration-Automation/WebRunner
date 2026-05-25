@@ -61,7 +61,7 @@ class TestDetect(unittest.TestCase):
         self.assertEqual(findings[0].repetitions, 6)
 
     def test_error(self):
-        rows = [QueryRow(sql=f"SELECT * FROM x WHERE id = {i}",
+        rows = [QueryRow(sql=_SQL_FIXTURE.replace("%s", str(i)),
                          parent_field="user.posts") for i in range(20)]
         findings = detect(rows, threshold=5)
         self.assertEqual(findings[0].severity, Severity.ERROR)

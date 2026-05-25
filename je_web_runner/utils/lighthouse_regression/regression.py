@@ -14,7 +14,7 @@ and:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Mapping
+from typing import Optional, Any, Dict, List, Mapping
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -61,6 +61,28 @@ def _coerce_metric(key: str, raw: Any) -> Optional[float]:
         ) from exc
 
 
+def _collect_scores(categories: Mapping[str, Any]) -> Dict[str, float]:
+    scores: Dict[str, float] = {}
+    for key in _CATEGORY_KEYS:
+        entry = categories.get(key)
+        if isinstance(entry, Mapping) and "score" in entry:
+            value = _coerce_score(key, entry["score"])
+            if value is not None:
+                scores[key] = value
+    return scores
+
+
+def _collect_metrics(audits: Mapping[str, Any]) -> Dict[str, float]:
+    metrics: Dict[str, float] = {}
+    for key in _METRIC_KEYS:
+        entry = audits.get(key)
+        if isinstance(entry, Mapping):
+            value = _coerce_metric(key, entry.get("numericValue"))
+            if value is not None:
+                metrics[key] = value
+    return metrics
+
+
 def parse_report(report: Any) -> LighthouseSnapshot:
     if not isinstance(report, Mapping):
         raise LighthouseRegressionError("report must be a mapping")
@@ -68,20 +90,10 @@ def parse_report(report: Any) -> LighthouseSnapshot:
     if not isinstance(categories, Mapping):
         raise LighthouseRegressionError("report.categories must be a mapping")
     audits = report.get("audits") or {}
-    snap = LighthouseSnapshot()
-    for key in _CATEGORY_KEYS:
-        entry = categories.get(key)
-        if isinstance(entry, Mapping) and "score" in entry:
-            value = _coerce_score(key, entry["score"])
-            if value is not None:
-                snap.scores[key] = value
-    for key in _METRIC_KEYS:
-        entry = audits.get(key)
-        if isinstance(entry, Mapping):
-            value = _coerce_metric(key, entry.get("numericValue"))
-            if value is not None:
-                snap.metrics[key] = value
-    return snap
+    return LighthouseSnapshot(
+        scores=_collect_scores(categories),
+        metrics=_collect_metrics(audits if isinstance(audits, Mapping) else {}),
+    )
 
 
 @dataclass

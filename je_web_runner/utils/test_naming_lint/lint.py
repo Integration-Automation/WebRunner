@@ -33,17 +33,41 @@ class Convention(str, Enum):
     CAMEL_SUBJECT = "camel_subject"
 
 
-# Patterns avoid nested quantifiers — alternation over a fixed segment set
-# keeps the matcher linear regardless of input length.
-_PATTERNS = {
-    Convention.SHOULD_WHEN: re.compile(
-        r"^test_should_[a-z0-9][a-z0-9_]*_when_[a-z0-9][a-z0-9_]*$",
-    ),
-    Convention.GIVEN_WHEN_THEN: re.compile(
-        r"^test_given_[a-z0-9][a-z0-9_]*_when_[a-z0-9][a-z0-9_]*"
-        r"_then_[a-z0-9][a-z0-9_]*$",
-    ),
-    Convention.CAMEL_SUBJECT: re.compile(r"^test_[a-z][a-z0-9]*[A-Z]\w+$"),
+_SEGMENT_RE = re.compile(r"^[a-z0-9](?:[a-z0-9_]*[a-z0-9])?$")
+
+
+def _matches_should_when(name: str) -> bool:
+    if not name.startswith("test_should_"):
+        return False
+    rest = name[len("test_should_"):]
+    if "_when_" not in rest:
+        return False
+    before, _, after = rest.rpartition("_when_")
+    return bool(_SEGMENT_RE.match(before) and _SEGMENT_RE.match(after))
+
+
+def _matches_given_when_then(name: str) -> bool:
+    if not name.startswith("test_given_"):
+        return False
+    rest = name[len("test_given_"):]
+    if "_when_" not in rest or "_then_" not in rest:
+        return False
+    g_and_w, _, t = rest.rpartition("_then_")
+    g, _, w = g_and_w.rpartition("_when_")
+    return all(_SEGMENT_RE.match(s) for s in (g, w, t))
+
+
+_CAMEL_RE = re.compile(r"^test_[a-z][a-z0-9]*[A-Z]\w+$")
+
+
+def _matches_camel(name: str) -> bool:
+    return bool(_CAMEL_RE.match(name))
+
+
+_MATCHERS = {
+    Convention.SHOULD_WHEN: _matches_should_when,
+    Convention.GIVEN_WHEN_THEN: _matches_given_when_then,
+    Convention.CAMEL_SUBJECT: _matches_camel,
 }
 
 
@@ -81,8 +105,8 @@ def lint_test_name(
             rule="too-long", test=name,
             message=f"name length {len(name)} > {max_length}",
         ))
-    pattern = _PATTERNS[convention]
-    if not pattern.match(name):
+    matcher = _MATCHERS[convention]
+    if not matcher(name):
         findings.append(NamingFinding(
             rule=f"violates-{convention.value}", test=name,
             message=f"does not match {convention.value} pattern",

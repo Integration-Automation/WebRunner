@@ -33,16 +33,18 @@ class FailureRecord:
     message: str
 
 
-# NOSONAR: regex strings only — module never touches the filesystem.
+# These patterns are regex strings used to *strip* noise from failure
+# messages; the module never opens any file or directory.
+# NOSONAR(python:S5443) - "/tmp" / "\Users" appear only as match patterns.
 _NOISE_PATTERNS = (
-    re.compile(r"\b0x[0-9a-fA-F]+\b"),                  # hex addresses
+    re.compile(r"\b0x[0-9a-fA-F]+\b"),
     re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-"
                r"[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-"
-               r"[0-9a-fA-F]{12}\b"),                   # GUIDs
-    re.compile(r"\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\S*"),  # ISO ts
-    re.compile(r"\b\d+\b"),                              # bare numbers
-    re.compile(r"/tmp/\S+"),  # nosec B108 — pattern, not actual /tmp use
-    re.compile(r"\\[A-Za-z]+\\\S+"),                    # Windows paths
+               r"[0-9a-fA-F]{12}\b"),
+    re.compile(r"\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\S*"),
+    re.compile(r"\b\d+\b"),
+    re.compile(r"/tmp/\S+"),  # nosec B108 NOSONAR(python:S5443)
+    re.compile(r"\\[A-Za-z]+\\\S+"),
 )
 
 

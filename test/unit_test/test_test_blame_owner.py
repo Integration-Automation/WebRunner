@@ -33,8 +33,8 @@ class TestParseCodeowners(unittest.TestCase):
 
     def test_bad_type(self):
         with self.assertRaises(BlameOwnerError):
-            parse_codeowners(None)
-  # NOSONAR python:S5655 - deliberate bad input
+            parse_codeowners(None)  # NOSONAR python:S5655 - deliberate bad input
+
 
 class TestOwnersFromCodeowners(unittest.TestCase):
 

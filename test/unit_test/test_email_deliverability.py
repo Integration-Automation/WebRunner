@@ -43,8 +43,8 @@ class TestParse(unittest.TestCase):
 
     def test_bad_type(self):
         with self.assertRaises(EmailDeliverabilityError):
-            parse_headers(123)
-  # NOSONAR python:S5655 - deliberate bad input
+            parse_headers(123)  # NOSONAR python:S5655 - deliberate bad input
+
 
 class TestSpf(unittest.TestCase):
 

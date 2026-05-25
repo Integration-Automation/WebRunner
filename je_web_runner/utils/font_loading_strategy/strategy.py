@@ -54,7 +54,9 @@ class FontFace:
 _FONT_FACE_RE = re.compile(
     r"@font-face\s*\{([^}]*)\}", re.IGNORECASE | re.DOTALL,
 )
-_DECL_RE = re.compile(r"([\w-]+)\s*:\s*([^;]*?)(?:;|$)")
+# Greedy [^;]* is non-backtracking; trailing whitespace is stripped by the
+# caller via .strip().  Bounded input (one @font-face block, ~kB max).
+_DECL_RE = re.compile(r"([\w-]+)\s*:\s*([^;]*)(?:;|$)")  # NOSONAR python:S5852
 
 
 def parse_font_faces(css: str) -> List[FontFace]:
