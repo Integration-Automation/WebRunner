@@ -18,9 +18,9 @@ right branch fired for the right input.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -67,23 +67,33 @@ class Flow:
         return {**asdict(self), "trans_status": self.trans_status.value}
 
 
+def _classify_frictionless(flow: Flow) -> Outcome:
+    if flow.challenge_shown or flow.cres_submitted:
+        return Outcome.INCOMPLETE
+    return (Outcome.FRICTIONLESS_OK if flow.order_finalized
+            else Outcome.INCOMPLETE)
+
+
+def _classify_challenge(flow: Flow) -> Outcome:
+    if not flow.challenge_shown or not flow.cres_submitted:
+        return Outcome.INCOMPLETE
+    return (Outcome.CHALLENGE_OK if flow.order_finalized
+            else Outcome.INCOMPLETE)
+
+
+def _classify_reject(flow: Flow) -> Outcome:
+    return Outcome.INCOMPLETE if flow.order_finalized else Outcome.REJECTED
+
+
 def classify(flow: Flow) -> Outcome:
     """Decide which branch this flow took."""
     s = flow.trans_status
     if s == TransStatus.AUTHENTICATED:
-        if flow.challenge_shown or flow.cres_submitted:
-            return Outcome.INCOMPLETE   # frictionless shouldn't show challenge
-        return Outcome.FRICTIONLESS_OK if flow.order_finalized else Outcome.INCOMPLETE
+        return _classify_frictionless(flow)
     if s == TransStatus.CHALLENGE:
-        if not flow.challenge_shown:
-            return Outcome.INCOMPLETE
-        if not flow.cres_submitted:
-            return Outcome.INCOMPLETE
-        return Outcome.CHALLENGE_OK if flow.order_finalized else Outcome.INCOMPLETE
+        return _classify_challenge(flow)
     if s in (TransStatus.NOT_AUTHENTICATED, TransStatus.REJECTED):
-        if flow.order_finalized:
-            return Outcome.INCOMPLETE   # finalized despite reject = bug
-        return Outcome.REJECTED
+        return _classify_reject(flow)
     if s in (TransStatus.ATTEMPTED, TransStatus.UNAVAILABLE):
         return Outcome.FALLBACK
     return Outcome.INCOMPLETE

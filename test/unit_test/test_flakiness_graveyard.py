@@ -3,7 +3,7 @@ import json
 import os
 import tempfile
 import unittest
-from datetime import date, timedelta
+from datetime import date
 
 from je_web_runner.utils.flakiness_graveyard.graveyard import (
     FlakinessGraveyardError,

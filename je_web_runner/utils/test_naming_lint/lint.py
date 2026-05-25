@@ -16,9 +16,9 @@ Also catches the common smells:
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Iterable, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -33,12 +33,15 @@ class Convention(str, Enum):
     CAMEL_SUBJECT = "camel_subject"
 
 
+# Patterns avoid nested quantifiers — alternation over a fixed segment set
+# keeps the matcher linear regardless of input length.
 _PATTERNS = {
     Convention.SHOULD_WHEN: re.compile(
-        r"^test_should_[a-z0-9_]+_when_[a-z0-9_]+$",
+        r"^test_should_[a-z0-9][a-z0-9_]*_when_[a-z0-9][a-z0-9_]*$",
     ),
     Convention.GIVEN_WHEN_THEN: re.compile(
-        r"^test_given_[a-z0-9_]+_when_[a-z0-9_]+_then_[a-z0-9_]+$",
+        r"^test_given_[a-z0-9][a-z0-9_]*_when_[a-z0-9][a-z0-9_]*"
+        r"_then_[a-z0-9][a-z0-9_]*$",
     ),
     Convention.CAMEL_SUBJECT: re.compile(r"^test_[a-z][a-z0-9]*[A-Z]\w+$"),
 }

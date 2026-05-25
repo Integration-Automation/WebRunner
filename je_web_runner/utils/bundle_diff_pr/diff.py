@@ -7,8 +7,8 @@ Reuses :mod:`bundle_budget` to classify assets.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Sequence, Union
 
 from je_web_runner.utils.bundle_budget.budget import (
     Asset, AssetKind, assets_from_har,

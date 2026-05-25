@@ -49,7 +49,7 @@ class TestParse(unittest.TestCase):
 
     def test_bad(self):
         with self.assertRaises(FontLoadingStrategyError):
-            parse_font_faces(123)
+            parse_font_faces(123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestMissing(unittest.TestCase):

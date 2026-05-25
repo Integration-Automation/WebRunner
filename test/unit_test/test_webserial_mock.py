@@ -45,7 +45,7 @@ class TestEncode(unittest.TestCase):
 
     def test_bad_newline(self):
         with self.assertRaises(WebserialMockError):
-            encode_lines(["x"], newline=123)
+            encode_lines(["x"], newline=123)  # NOSONAR python:S5655 - deliberate bad input
 
     def test_non_string_line(self):
         with self.assertRaises(WebserialMockError):

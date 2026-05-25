@@ -30,6 +30,9 @@ class WebhookSignatureVerifyError(WebRunnerException):
     """Raised when a webhook signature fails verification."""
 
 
+_GITHUB_SIG_PREFIX = "sha256="
+
+
 class Scheme(str, Enum):
     GITHUB = "github"
     STRIPE = "stripe"
@@ -57,11 +60,11 @@ def _verify_github(headers: Mapping[str, str], body: bytes,
     received = headers.get("X-Hub-Signature-256")
     if not received:
         raise WebhookSignatureVerifyError("missing X-Hub-Signature-256 header")
-    if not received.startswith("sha256="):
+    if not received.startswith(_GITHUB_SIG_PREFIX):
         raise WebhookSignatureVerifyError(
             "X-Hub-Signature-256 must start with 'sha256='"
         )
-    expected = "sha256=" + _hex(secret, body)
+    expected = _GITHUB_SIG_PREFIX + _hex(secret, body)
     return VerifyResult(ok=_equal(expected, received), scheme=Scheme.GITHUB)
 
 
@@ -70,7 +73,8 @@ def _verify_stripe(headers: Mapping[str, str], body: bytes, secret: str,
     raw = headers.get("Stripe-Signature")
     if not raw:
         raise WebhookSignatureVerifyError("missing Stripe-Signature header")
-    parts = dict(p.split("=", 1) for p in raw.split(",") if "=" in p)
+    parts = {p.split("=", 1)[0]: p.split("=", 1)[1]
+             for p in raw.split(",") if "=" in p}
     t = parts.get("t")
     v1 = parts.get("v1")
     if not t or not v1:
@@ -163,7 +167,7 @@ def assert_valid(result: VerifyResult) -> None:
 # ----------- helper for tests: produce a signature for a body --------
 
 def sign_github(body: bytes, secret: str) -> str:
-    return "sha256=" + _hex(secret, body)
+    return _GITHUB_SIG_PREFIX + _hex(secret, body)
 
 
 def sign_stripe(body: bytes, secret: str, ts: Optional[int] = None) -> str:

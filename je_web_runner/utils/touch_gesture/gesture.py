@@ -12,9 +12,9 @@ import any specific WebDriver/CDP client.
 from __future__ import annotations
 
 import math
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Sequence, Tuple
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -157,10 +157,12 @@ def parse_touch_events(payload: Any) -> List[RecordedTouch]:
     return out
 
 
-def assert_received(events: Iterable[RecordedTouch], *, type: str) -> None:
-    if not any(e.type == type for e in events):
+def assert_received(
+    events: Iterable[RecordedTouch], *, event_type: str,
+) -> None:
+    if not any(e.type == event_type for e in events):
         raise TouchGestureError(
-            f"page never received {type!r} event"
+            f"page never received {event_type!r} event"
         )
 
 

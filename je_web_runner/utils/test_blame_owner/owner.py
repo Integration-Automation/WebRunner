@@ -15,7 +15,7 @@ from __future__ import annotations
 import fnmatch
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Iterable, List, Optional, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

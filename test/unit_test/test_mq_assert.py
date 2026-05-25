@@ -39,7 +39,7 @@ class TestDrain(unittest.TestCase):
 
     def test_bad_consumer(self):
         with self.assertRaises(MqAssertError):
-            drain_topic(object(), "t")
+            drain_topic(object(), "t")  # NOSONAR python:S5655 - deliberate bad input
 
     def test_non_seq_return(self):
         class C:

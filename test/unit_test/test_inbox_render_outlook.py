@@ -42,7 +42,7 @@ class TestOutlook(unittest.TestCase):
 
     def test_bad_input(self):
         with self.assertRaises(InboxRenderOutlookError):
-            audit_outlook(123)
+            audit_outlook(123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestGmail(unittest.TestCase):

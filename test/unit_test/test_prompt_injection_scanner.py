@@ -68,7 +68,7 @@ class TestScan(unittest.TestCase):
 
     def test_client_missing_ask(self):
         with self.assertRaises(PromptInjectionScannerError):
-            scan(object())  # no .ask method
+            scan(object())  # no .ask method  # NOSONAR python:S5655 - deliberate bad input
 
     def test_empty_payloads(self):
         with self.assertRaises(PromptInjectionScannerError):

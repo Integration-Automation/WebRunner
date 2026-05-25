@@ -17,8 +17,8 @@ Apple Pay capability, total mismatched currency, no shipping option).
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from dataclasses import dataclass, field
+from typing import Any, Dict, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

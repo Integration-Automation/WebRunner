@@ -36,7 +36,7 @@ class TestParse(unittest.TestCase):
 
     def test_bad(self):
         with self.assertRaises(ResourceHintsAuditError):
-            parse_hints(123)
+            parse_hints(123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestPreloadAs(unittest.TestCase):

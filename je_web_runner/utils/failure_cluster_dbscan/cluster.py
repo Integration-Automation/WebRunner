@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import re
 from collections import defaultdict
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -33,6 +33,7 @@ class FailureRecord:
     message: str
 
 
+# NOSONAR: regex strings only — module never touches the filesystem.
 _NOISE_PATTERNS = (
     re.compile(r"\b0x[0-9a-fA-F]+\b"),                  # hex addresses
     re.compile(r"\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-"
@@ -40,8 +41,8 @@ _NOISE_PATTERNS = (
                r"[0-9a-fA-F]{12}\b"),                   # GUIDs
     re.compile(r"\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}\S*"),  # ISO ts
     re.compile(r"\b\d+\b"),                              # bare numbers
-    re.compile(r"/tmp/[^\s]+"),                          # tmp paths
-    re.compile(r"\\[A-Za-z]+\\[^\s]+"),                  # Windows paths
+    re.compile(r"/tmp/\S+"),  # nosec B108 — pattern, not actual /tmp use
+    re.compile(r"\\[A-Za-z]+\\\S+"),                    # Windows paths
 )
 
 
@@ -74,6 +75,72 @@ class Cluster:
         return len(self.members)
 
 
+def _neighbours_fn(tokens: List[Set[str]], eps: float):
+    n = len(tokens)
+    def find(i: int) -> List[int]:
+        return [j for j in range(n)
+                if j != i and _jaccard_distance(tokens[i], tokens[j]) <= eps]
+    return find
+
+
+def _expand_cluster(
+    seed: int, neighbours, labels: List[Optional[int]],
+    cluster_id: int, min_samples: int,
+) -> None:
+    labels[seed] = cluster_id
+    queue = list(neighbours(seed))
+    while queue:
+        j = queue.pop(0)
+        if labels[j] == -1:
+            labels[j] = cluster_id
+        elif labels[j] is None:
+            labels[j] = cluster_id
+            inner = neighbours(j)
+            if len(inner) >= min_samples - 1:
+                queue.extend(k for k in inner if labels[k] in (None, -1))
+
+
+def _assign_labels(
+    tokens: List[Set[str]], eps: float, min_samples: int,
+) -> List[Optional[int]]:
+    labels: List[Optional[int]] = [None] * len(tokens)
+    neighbours = _neighbours_fn(tokens, eps)
+    cluster_id = 0
+    for i in range(len(tokens)):
+        if labels[i] is not None:
+            continue
+        nbs = neighbours(i)
+        if len(nbs) < min_samples - 1:
+            labels[i] = -1
+            continue
+        _expand_cluster(i, neighbours, labels, cluster_id, min_samples)
+        cluster_id += 1
+    return labels
+
+
+def _materialize_clusters(
+    records: Sequence[FailureRecord], labels: List[Optional[int]],
+) -> List[Cluster]:
+    buckets: Dict[int, List[int]] = defaultdict(list)
+    for i, label in enumerate(labels):
+        buckets[label if label is not None else -1].append(i)
+    out: List[Cluster] = []
+    for label, indexes in buckets.items():
+        if label == -1:
+            for i in indexes:
+                out.append(Cluster(
+                    representative=records[i].message,
+                    members=[records[i].test_name],
+                ))
+        else:
+            rep = indexes[0]
+            out.append(Cluster(
+                representative=records[rep].message,
+                members=[records[i].test_name for i in indexes],
+            ))
+    return out
+
+
 def cluster(
     records: Sequence[FailureRecord], *,
     eps: float = 0.3, min_samples: int = 2,
@@ -87,56 +154,9 @@ def cluster(
     if not isinstance(records, (list, tuple)):
         raise FailureClusterDbscanError("records must be a sequence")
     tokens = [_tokenize(r.message) for r in records]
-    n = len(records)
-    labels: List[Optional[int]] = [None] * n
-    cluster_id = 0
-
-    def neighbours(i: int) -> List[int]:
-        return [j for j in range(n)
-                if j != i
-                and _jaccard_distance(tokens[i], tokens[j]) <= eps]
-
-    for i in range(n):
-        if labels[i] is not None:
-            continue
-        nbs = neighbours(i)
-        if len(nbs) < min_samples - 1:
-            labels[i] = -1
-            continue
-        labels[i] = cluster_id
-        queue = list(nbs)
-        while queue:
-            j = queue.pop(0)
-            if labels[j] == -1:
-                labels[j] = cluster_id
-            elif labels[j] is None:
-                labels[j] = cluster_id
-                inner = neighbours(j)
-                if len(inner) >= min_samples - 1:
-                    queue.extend(k for k in inner
-                                 if labels[k] in (None, -1))
-        cluster_id += 1
-
-    buckets: Dict[int, List[int]] = defaultdict(list)
-    for i, label in enumerate(labels):
-        buckets[label if label is not None else -1].append(i)
-
-    clusters: List[Cluster] = []
-    next_singleton_label = max(buckets) + 1 if buckets else 0
-    for label, indexes in buckets.items():
-        if label == -1:
-            for i in indexes:
-                clusters.append(Cluster(
-                    representative=records[i].message,
-                    members=[records[i].test_name],
-                ))
-        else:
-            rep_index = indexes[0]
-            clusters.append(Cluster(
-                representative=records[rep_index].message,
-                members=[records[i].test_name for i in indexes],
-            ))
-    return sorted(clusters, key=lambda c: -c.size)
+    labels = _assign_labels(tokens, eps, min_samples)
+    return sorted(_materialize_clusters(records, labels),
+                  key=lambda c: -c.size)
 
 
 def cluster_summary(clusters: Iterable[Cluster]) -> List[Dict[str, Any]]:

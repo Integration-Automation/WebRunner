@@ -3,7 +3,6 @@ import unittest
 
 from je_web_runner.utils.webcodecs_assert.assertions import (
     ChunkType,
-    EncodedChunk,
     HARVEST_SCRIPT,
     WebcodecsAssertError,
     assert_codec,

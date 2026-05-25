@@ -3,7 +3,6 @@ import base64
 import unittest
 
 from je_web_runner.utils.webgpu_pixel_verify.pixel import (
-    CanvasFrame,
     HARVEST_SCRIPT,
     WebgpuPixelVerifyError,
     assert_mean_in_band,
@@ -41,7 +40,7 @@ class TestParse(unittest.TestCase):
     def test_bad_payload(self):
         with self.assertRaises(WebgpuPixelVerifyError):
             parse_frame("nope")
-
+  # NOSONAR python:S5655 - deliberate bad input
     def test_missing_dims(self):
         with self.assertRaises(WebgpuPixelVerifyError):
             parse_frame({"width": 1})

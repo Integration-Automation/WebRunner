@@ -13,9 +13,9 @@ from __future__ import annotations
 import base64
 import hashlib
 import secrets
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Dict, List, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

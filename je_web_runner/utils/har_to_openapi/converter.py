@@ -16,8 +16,7 @@ from __future__ import annotations
 import json
 import re
 from collections import defaultdict
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional
 from urllib.parse import urlparse, parse_qsl
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -84,60 +83,72 @@ def _schema_from_value(value: Any) -> Dict[str, Any]:
     return {"type": _js_type(value)}
 
 
+def _parse_body(content: Any) -> Any:
+    if not isinstance(content, str):
+        return None
+    try:
+        return json.loads(content)
+    except (ValueError, TypeError):
+        return None
+
+
+def _merge_query_params(op: Dict[str, Any], query: str) -> None:
+    existing = {p["name"] for p in op["parameters"]}
+    for q_name, _ in parse_qsl(query):
+        if q_name not in existing:
+            op["parameters"].append({
+                "name": q_name, "in": "query",
+                "schema": {"type": "string"},
+            })
+            existing.add(q_name)
+
+
+def _merge_response(op: Dict[str, Any], status: str, body: Any) -> None:
+    if body is None:
+        op["responses"].setdefault(status, {"description": "auto-generated"})
+        return
+    op["responses"].setdefault(status, {
+        "description": "auto-generated",
+        "content": {"application/json": {"schema": _schema_from_value(body)}},
+    })
+
+
+def _register_entry(
+    paths: Dict[str, Dict[str, Any]], entry: Dict[str, Any],
+) -> None:
+    req = entry.get("request") or {}
+    res = entry.get("response") or {}
+    url = req.get("url")
+    method = (req.get("method") or "GET").lower()
+    if not url:
+        return
+    parsed = urlparse(url)
+    path_template = _path_template(parsed.path or "/")
+    op = paths[path_template].setdefault(method, {
+        "summary": f"Auto-generated from {method.upper()} {parsed.path}",
+        "parameters": [],
+        "responses": {},
+    })
+    _merge_query_params(op, parsed.query)
+    _merge_response(op, str(res.get("status") or 200),
+                    _parse_body((res.get("content") or {}).get("text")))
+
+
 def convert(har: Mapping[str, Any]) -> Dict[str, Any]:
     if not isinstance(har, Mapping):
         raise HarToOpenapiError("har must be a mapping")
-    entries = (har.get("log") or {}).get("entries") if isinstance(har.get("log"), Mapping) else None
+    log = har.get("log")
+    entries = log.get("entries") if isinstance(log, Mapping) else None
     if not isinstance(entries, list):
         raise HarToOpenapiError("har.log.entries must be a list")
-    paths: Dict[str, Dict[str, Any]] = defaultdict(lambda: {})
+    paths: Dict[str, Dict[str, Any]] = defaultdict(dict)
     for entry in entries:
-        if not isinstance(entry, dict):
-            continue
-        req = entry.get("request") or {}
-        res = entry.get("response") or {}
-        url = req.get("url")
-        method = (req.get("method") or "GET").lower()
-        if not url:
-            continue
-        parsed = urlparse(url)
-        path_template = _path_template(parsed.path or "/")
-        op = paths[path_template].setdefault(method, {
-            "summary": f"Auto-generated from {method.upper()} {parsed.path}",
-            "parameters": [],
-            "responses": {},
-        })
-        # query parameters
-        existing_param_names = {p["name"] for p in op["parameters"]}
-        for q_name, _ in parse_qsl(parsed.query):
-            if q_name not in existing_param_names:
-                op["parameters"].append({
-                    "name": q_name, "in": "query",
-                    "schema": {"type": "string"},
-                })
-                existing_param_names.add(q_name)
-        # response schema
-        status = str(res.get("status") or 200)
-        content = (res.get("content") or {}).get("text")
-        if isinstance(content, str):
-            try:
-                body = json.loads(content)
-            except (ValueError, TypeError):
-                body = None
-        else:
-            body = None
-        if body is not None:
-            schema = _schema_from_value(body)
-            op["responses"].setdefault(status, {
-                "description": "auto-generated",
-                "content": {"application/json": {"schema": schema}},
-            })
-        else:
-            op["responses"].setdefault(status, {"description": "auto-generated"})
+        if isinstance(entry, dict):
+            _register_entry(paths, entry)
     return {
         "openapi": "3.1.0",
         "info": {"title": "Reverse-engineered API", "version": "0.0.1"},
-        "paths": {p: m for p, m in paths.items()},
+        "paths": dict(paths),
     }
 
 

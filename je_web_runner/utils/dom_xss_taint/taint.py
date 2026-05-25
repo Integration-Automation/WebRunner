@@ -14,8 +14,8 @@ checks the captured pairs against an attack payload.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, Iterable, List, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

@@ -13,9 +13,9 @@ priority queue. This module:
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
+from typing import Any, Dict, Iterable, List, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -44,7 +44,16 @@ class Hint:
 
 
 _LINK_RE = re.compile(r"<link\b[^>]*>", re.IGNORECASE)
-_ATTR_RE = re.compile(r'(\w+)\s*=\s*[\'"]?([^\'"\s>]+)[\'"]?', re.IGNORECASE)
+_ATTR_RE = re.compile(r'(\w+)\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))',
+                      re.IGNORECASE)
+
+
+def _parse_attrs(tag: str) -> Dict[str, str]:
+    attrs: Dict[str, str] = {}
+    for match in _ATTR_RE.finditer(tag):
+        key = match.group(1).lower()
+        attrs[key] = match.group(2) or match.group(3) or match.group(4) or ""
+    return attrs
 
 
 def parse_hints(html: str) -> List[Hint]:
@@ -52,7 +61,7 @@ def parse_hints(html: str) -> List[Hint]:
         raise ResourceHintsAuditError("html must be a string")
     out: List[Hint] = []
     for tag in _LINK_RE.findall(html):
-        attrs = {k.lower(): v for k, v in _ATTR_RE.findall(tag)}
+        attrs = _parse_attrs(tag)
         rel = (attrs.get("rel") or "").lower()
         try:
             kind = HintKind(rel)

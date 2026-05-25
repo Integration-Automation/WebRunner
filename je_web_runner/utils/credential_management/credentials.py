@@ -19,7 +19,7 @@ This module installs a shim that:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -132,14 +132,14 @@ def parse_log(payload: Any) -> CmLog:
     )
 
 
-def assert_stored(log: CmLog, *, id: str) -> StoredCall:
-    if not id:
-        raise CredentialManagementError("id must be non-empty")
+def assert_stored(log: CmLog, *, credential_id: str) -> StoredCall:
+    if not credential_id:
+        raise CredentialManagementError("credential_id must be non-empty")
     for s in log.stored:
-        if s.id == id:
+        if s.id == credential_id:
             return s
     raise CredentialManagementError(
-        f"page never called credentials.store for id={id!r}"
+        f"page never called credentials.store for id={credential_id!r}"
     )
 
 

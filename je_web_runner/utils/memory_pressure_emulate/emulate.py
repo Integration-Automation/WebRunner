@@ -5,11 +5,15 @@
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+import logging
+from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
+
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class MemoryPressureError(WebRunnerException):
@@ -128,8 +132,10 @@ def run_under_profile(
         cdp_send("Emulation.setHardwareConcurrencyOverride", {"hardwareConcurrency": 0})
         cdp_send("Emulation.setCPUThrottlingRate", {"rate": 1.0})
         cdp_send("Memory.simulatePressureNotification", {"level": "nominal"})
-    except Exception:
-        pass
+    except Exception as restore_err:  # noqa: BLE001 - best-effort cleanup
+        # Don't mask the test result by re-raising here; CDP restore failure
+        # is logged-only so a successful run isn't downgraded to error.
+        _LOGGER.warning("CDP pressure restore failed: %r", restore_err)
     return PressureRunOutcome(
         profile=profile.name,
         passed=passed,

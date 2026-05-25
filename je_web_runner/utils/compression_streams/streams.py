@@ -13,11 +13,8 @@ with the Compression Streams API can be decompressed by the standard
 from __future__ import annotations
 
 import gzip
-import io
 import zlib
-from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

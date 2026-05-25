@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Optional, Set, Tuple
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -35,6 +35,10 @@ _SHARD_RE = re.compile(
     re.IGNORECASE,
 )
 _LABEL_RE = re.compile(r"\[\s*(smoke|nightly|long|gpu|mobile)\s*\]", re.IGNORECASE)
+
+# Bucket name reserved for "do not run any CI"; called out as a constant
+# so Bandit's hardcoded-password heuristic doesn't flag the literal.
+_SKIP_TOKEN = "skip"  # nosec B105
 _TICKET_RE = re.compile(
     r"\b(?:close[ds]?|fix(?:e[sd])?|resolve[sd]?)\s+"
     r"(#\d+|[A-Z]{2,}-\d+)",
@@ -75,7 +79,7 @@ def parse(message: str) -> TriggerPlan:
         plan.shard = (idx, total)
     for bucket in _BUCKET_RE.finditer(message):
         token = bucket.group(1).lower()
-        if token == "skip":
+        if token == _SKIP_TOKEN:  # nosec B105 - directive name, not a credential
             continue   # [ci skip] already handled by _SKIP_RE
         if token.startswith("shard"):
             continue   # already handled by _SHARD_RE

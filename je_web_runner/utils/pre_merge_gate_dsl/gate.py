@@ -62,23 +62,40 @@ class Rule:
             raise PreMergeGateDslError("rule.require must be non-empty list")
 
 
+_WHEN_RE = re.compile(
+    r"facts\.(?P<name>[A-Za-z_][A-Za-z0-9_]*)"
+    r"(?:\((?P<arg>'[^']*'|\"[^\"]*\")\))?",
+)
+
+
 def _safe_eval_when(expr: str, facts: PrFacts) -> bool:
-    """Tiny safe evaluator: supports ``facts.X``, ``facts.has_path('g')`` and
-    ``facts.is_docs_only`` only — no general-purpose eval."""
+    """Resolve ``facts.<attr>`` or ``facts.<method>("literal")`` by direct
+    attribute / call lookup — no Python ``eval`` involved."""
     if not isinstance(expr, str):
         raise PreMergeGateDslError("when expression must be string")
-    if not re.fullmatch(
-        r"facts\.[A-Za-z_]+(\([^()]*\))?", expr.strip(),
-    ):
+    match = _WHEN_RE.fullmatch(expr.strip())
+    if not match:
         raise PreMergeGateDslError(
             f"unsupported expression {expr!r}; "
             "only 'facts.<attr>' or 'facts.<method>(\"glob\")' allowed"
         )
-    namespace = {"facts": facts}
+    name = match.group("name")
+    if not hasattr(facts, name):
+        raise PreMergeGateDslError(
+            f"failed to evaluate {expr!r}: PrFacts has no {name!r}"
+        )
+    target = getattr(facts, name)
+    arg = match.group("arg")
     try:
-        # Restricted: parser regex above guarantees only attribute access /
-        # single-arg method call. Still pass empty globals to disable builtins.
-        result = eval(expr, {"__builtins__": {}}, namespace)  # nosec B307
+        if arg is None:
+            result = target
+        else:
+            literal = arg[1:-1]
+            if not callable(target):
+                raise PreMergeGateDslError(
+                    f"{name!r} is not callable but expression supplies an argument"
+                )
+            result = target(literal)
     except Exception as error:
         raise PreMergeGateDslError(
             f"failed to evaluate {expr!r}: {error!r}"

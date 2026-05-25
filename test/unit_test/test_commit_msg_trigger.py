@@ -51,7 +51,7 @@ class TestParse(unittest.TestCase):
 
     def test_bad_type(self):
         with self.assertRaises(CommitMsgTriggerError):
-            parse(123)
+            parse(123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestShouldRunJob(unittest.TestCase):

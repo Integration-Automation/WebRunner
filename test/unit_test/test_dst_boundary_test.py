@@ -1,6 +1,6 @@
 """Unit tests for je_web_runner.utils.dst_boundary_test."""
 import unittest
-from datetime import datetime, timedelta
+from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from je_web_runner.utils.dst_boundary_test.boundary import (

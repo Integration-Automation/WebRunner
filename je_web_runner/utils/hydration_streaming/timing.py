@@ -11,8 +11,8 @@ asserts per-boundary budgets.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

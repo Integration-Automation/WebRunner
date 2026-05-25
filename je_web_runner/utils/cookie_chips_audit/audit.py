@@ -95,43 +95,64 @@ def _is_third_party(page_url: str, cookie_url: str) -> bool:
     return bool(p) and bool(c) and _registrable(p) != _registrable(c)
 
 
-def _check_cookie(  # noqa: PLR0912 — flat rule chain, kept linear on purpose
-    cookie: SetCookie,
-    page_url: str,
-    cookie_url: str,
+def _partitioned_findings(
+    cookie: SetCookie, third_party: bool, common: Dict[str, str],
+) -> List[Finding]:
+    out: List[Finding] = []
+    if not cookie.is_secure:
+        out.append(Finding(
+            severity=Severity.ERROR, rule="partitioned-requires-secure",
+            message="Partitioned cookie missing Secure (browser will reject).",
+            **common,
+        ))
+    if cookie.samesite != "none":
+        out.append(Finding(
+            severity=Severity.ERROR, rule="partitioned-requires-samesite-none",
+            message=(f"Partitioned cookie has SameSite="
+                     f"{cookie.samesite or 'unset'} (must be None)."),
+            **common,
+        ))
+    if not third_party:
+        out.append(Finding(
+            severity=Severity.WARN, rule="partitioned-on-first-party",
+            message="First-party cookie sets Partitioned — likely unnecessary.",
+            **common,
+        ))
+    return out
+
+
+def _check_cookie(
+    cookie: SetCookie, page_url: str, cookie_url: str,
 ) -> List[Finding]:
     third_party = _is_third_party(page_url, cookie_url)
-    out: List[Finding] = []
-    common = dict(
-        cookie=cookie.name,
-        page_origin=urlparse(page_url).netloc,
-        cookie_origin=urlparse(cookie_url).netloc,
-    )
+    common = {
+        "cookie": cookie.name,
+        "page_origin": urlparse(page_url).netloc,
+        "cookie_origin": urlparse(cookie_url).netloc,
+    }
     if cookie.is_partitioned:
-        if not cookie.is_secure:
-            out.append(Finding(
-                severity=Severity.ERROR, rule="partitioned-requires-secure",
-                message="Partitioned cookie missing Secure (browser will reject).",
-                **common,
-            ))
-        if cookie.samesite != "none":
-            out.append(Finding(
-                severity=Severity.ERROR, rule="partitioned-requires-samesite-none",
-                message=f"Partitioned cookie has SameSite={cookie.samesite or 'unset'} (must be None).",
-                **common,
-            ))
-        if not third_party:
-            out.append(Finding(
-                severity=Severity.WARN, rule="partitioned-on-first-party",
-                message="First-party cookie sets Partitioned — likely unnecessary.",
-                **common,
-            ))
-    elif third_party:
-        out.append(Finding(
+        return _partitioned_findings(cookie, third_party, common)
+    if third_party:
+        return [Finding(
             severity=Severity.ERROR, rule="third-party-missing-partitioned",
             message="Third-party cookie without Partitioned will be blocked.",
             **common,
-        ))
+        )]
+    return []
+
+
+def _findings_for_entry(entry: Dict[str, Any], page_url: str) -> List[Finding]:
+    out: List[Finding] = []
+    request_url = (entry.get("request") or {}).get("url", "")
+    headers = (entry.get("response") or {}).get("headers", []) or []
+    for header in headers:
+        if (header.get("name") or "").lower() != "set-cookie":
+            continue
+        try:
+            cookie = parse_set_cookie(header.get("value", ""))
+        except CookieChipsAuditError:
+            continue
+        out.extend(_check_cookie(cookie, page_url, request_url))
     return out
 
 
@@ -146,16 +167,7 @@ def audit_har(har: Dict[str, Any], page_url: str) -> List[Finding]:
         raise CookieChipsAuditError("har.log.entries must be a list")
     findings: List[Finding] = []
     for entry in entries:
-        request_url = (entry.get("request") or {}).get("url", "")
-        headers = (entry.get("response") or {}).get("headers", []) or []
-        for header in headers:
-            if (header.get("name") or "").lower() != "set-cookie":
-                continue
-            try:
-                cookie = parse_set_cookie(header.get("value", ""))
-            except CookieChipsAuditError:
-                continue
-            findings.extend(_check_cookie(cookie, page_url, request_url))
+        findings.extend(_findings_for_entry(entry, page_url))
     return findings
 
 

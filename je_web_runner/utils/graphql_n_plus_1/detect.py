@@ -14,9 +14,9 @@ from __future__ import annotations
 
 import re
 from collections import Counter, defaultdict
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

@@ -18,7 +18,7 @@ contract bugs without dragging ``jsonschema`` in.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -99,30 +99,32 @@ def assert_not_called(
         )
 
 
+def _validate_object(args: Any, schema: Mapping[str, Any], path: str) -> None:
+    if not isinstance(args, dict):
+        raise ToolCallAssertError(
+            f"{path or 'arguments'}: expected object, got {type(args).__name__}"
+        )
+    properties = schema.get("properties") or {}
+    required = schema.get("required") or []
+    for key in required:
+        if key not in args:
+            raise ToolCallAssertError(
+                f"{path or 'arguments'}: missing required key {key!r}"
+            )
+    for key, value in args.items():
+        if key in properties:
+            _validate_against_schema(value, properties[key], f"{path}.{key}")
+        elif schema.get("additionalProperties") is False:
+            raise ToolCallAssertError(
+                f"{path or 'arguments'}: unknown key {key!r}"
+            )
+
+
 def _validate_against_schema(args: Mapping[str, Any],
                              schema: Mapping[str, Any], path: str = "") -> None:
     schema_type = schema.get("type")
     if schema_type == "object":
-        properties = schema.get("properties") or {}
-        required = schema.get("required") or []
-        if not isinstance(args, dict):
-            raise ToolCallAssertError(
-                f"{path or 'arguments'}: expected object, got {type(args).__name__}"
-            )
-        for key in required:
-            if key not in args:
-                raise ToolCallAssertError(
-                    f"{path or 'arguments'}: missing required key {key!r}"
-                )
-        for key, value in args.items():
-            if key in properties:
-                _validate_against_schema(
-                    value, properties[key], f"{path}.{key}",
-                )
-            elif schema.get("additionalProperties") is False:
-                raise ToolCallAssertError(
-                    f"{path or 'arguments'}: unknown key {key!r}"
-                )
+        _validate_object(args, schema, path)
         return
     if schema_type and schema_type in JSON_TYPE_MAP:
         expected = JSON_TYPE_MAP[schema_type]

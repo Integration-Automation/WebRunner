@@ -44,7 +44,7 @@ class TestAnalyse(unittest.TestCase):
 
     def test_bad(self):
         with self.assertRaises(CriticalCssAuditError):
-            analyse(123)
+            analyse(123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestInline(unittest.TestCase):

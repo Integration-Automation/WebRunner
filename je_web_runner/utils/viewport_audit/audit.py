@@ -12,8 +12,8 @@ Common mobile bugs this catches:
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional
+from dataclasses import dataclass, field
+from typing import Any, Dict, Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -43,8 +43,10 @@ def parse_meta(html: str) -> Optional[ViewportMeta]:
     """Extract the *last* ``<meta name="viewport">`` content from HTML."""
     if not isinstance(html, str):
         raise ViewportAuditError("html must be a string")
+    # Two greedy character classes excluding the next anchor avoid the
+    # nested-quantifier pattern flagged by S5852.
     matches = re.findall(
-        r'<meta\s+[^>]*name=[\'"]viewport[\'"][^>]*content=[\'"]([^\'"]*)[\'"]',
+        r'<meta\s[^>]*?name=[\'"]viewport[\'"][^>]*?content=[\'"]([^\'"]*)[\'"]',
         html, flags=re.IGNORECASE,
     )
     if not matches:

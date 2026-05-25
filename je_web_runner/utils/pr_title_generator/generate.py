@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 from dataclasses import dataclass
-from typing import Callable, Dict, Iterable, List, Optional, Sequence
+from typing import Callable, List, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

@@ -1,5 +1,4 @@
 """Unit tests for je_web_runner.utils.speculation_rules."""
-import json
 import unittest
 
 from je_web_runner.utils.speculation_rules.rules import (

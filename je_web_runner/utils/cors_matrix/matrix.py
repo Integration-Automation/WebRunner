@@ -13,7 +13,7 @@ This module:
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
 from itertools import product
 from typing import Any, Callable, Dict, List, Optional, Sequence

@@ -98,11 +98,10 @@ class TestLlm(unittest.TestCase):
         self.assertLessEqual(len(title), 72)
 
     def test_propagates(self):
+        def boom(_f, _c):
+            raise RuntimeError("boom")
         with self.assertRaises(PrTitleGeneratorError):
-            suggest_title_with_llm(
-                ["x"], ["y"],
-                titler=lambda f, c: (_ for _ in ()).throw(RuntimeError("boom")),
-            )
+            suggest_title_with_llm(["x"], ["y"], titler=boom)
 
 
 class TestAssertConventional(unittest.TestCase):
@@ -119,7 +118,7 @@ class TestAssertConventional(unittest.TestCase):
 
     def test_bad_type(self):
         with self.assertRaises(PrTitleGeneratorError):
-            assert_conventional(123)
+            assert_conventional(123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 if __name__ == "__main__":

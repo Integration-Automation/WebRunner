@@ -2,8 +2,6 @@
 import unittest
 
 from je_web_runner.utils.cookie_store_api.store import (
-    ChangeEvent,
-    CookieRecord,
     CookieStoreApiError,
     GET_ALL_SCRIPT,
     HARVEST_CHANGES_SCRIPT,

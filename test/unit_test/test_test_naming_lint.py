@@ -80,7 +80,7 @@ class TestArgs(unittest.TestCase):
 
     def test_bad_name(self):
         with self.assertRaises(NamingLintError):
-            lint_test_name(123, convention=Convention.SHOULD_WHEN)
+            lint_test_name(123, convention=Convention.SHOULD_WHEN)  # NOSONAR python:S5655 - deliberate bad input
 
     def test_bad_convention(self):
         with self.assertRaises(NamingLintError):

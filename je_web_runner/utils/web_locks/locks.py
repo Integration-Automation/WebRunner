@@ -12,9 +12,9 @@ a real bug is contention being mis-handled. This module:
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, Iterable, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

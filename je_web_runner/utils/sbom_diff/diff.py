@@ -62,6 +62,32 @@ class SbomReport:
         )
 
 
+def _extract_licenses(component: Dict[str, Any]) -> List[str]:
+    out: List[str] = []
+    for lic in component.get("licenses") or []:
+        if not isinstance(lic, dict):
+            continue
+        inner = lic.get("license") or {}
+        lid = inner.get("id") or inner.get("name") or lic.get("expression")
+        if isinstance(lid, str):
+            out.append(lid)
+    return out
+
+
+def _parse_component(c: Any) -> Optional[Component]:
+    if not isinstance(c, dict):
+        return None
+    name = c.get("name")
+    if not isinstance(name, str) or not name:
+        return None
+    return Component(
+        name=name,
+        version=str(c.get("version") or ""),
+        purl=str(c.get("purl") or ""),
+        licenses=tuple(_extract_licenses(c)),
+    )
+
+
 def _parse_components(sbom: Dict[str, Any]) -> List[Component]:
     if not isinstance(sbom, dict):
         raise SbomDiffError("sbom must be a dict")
@@ -70,27 +96,8 @@ def _parse_components(sbom: Dict[str, Any]) -> List[Component]:
         return []
     if not isinstance(raw, list):
         raise SbomDiffError("sbom.components must be a list")
-    out: List[Component] = []
-    for c in raw:
-        if not isinstance(c, dict):
-            continue
-        name = c.get("name")
-        if not isinstance(name, str) or not name:
-            continue
-        licenses = []
-        for lic in c.get("licenses") or []:
-            if isinstance(lic, dict):
-                inner = lic.get("license") or {}
-                lid = inner.get("id") or inner.get("name") or lic.get("expression")
-                if isinstance(lid, str):
-                    licenses.append(lid)
-        out.append(Component(
-            name=name,
-            version=str(c.get("version") or ""),
-            purl=str(c.get("purl") or ""),
-            licenses=tuple(licenses),
-        ))
-    return out
+    parsed = (_parse_component(c) for c in raw)
+    return [c for c in parsed if c is not None]
 
 
 def _vulnerable_purls(sbom: Dict[str, Any]) -> set:

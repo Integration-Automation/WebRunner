@@ -13,8 +13,8 @@ traffic, detect:
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence, Set
+from dataclasses import dataclass, field
+from typing import Any, Dict, Iterable, List, Mapping, Sequence, Set
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -84,6 +84,43 @@ def _normalize_path(path: str, spec_paths: Iterable[str]) -> str:
     return path
 
 
+def _classify_observation(
+    obs: ApiObservation, spec_map: Dict[str, Dict[str, Set[str]]],
+    report: DriftReport, seen_methods: Dict[str, Set[str]],
+) -> Optional[str]:
+    """Record drift for ``obs``; return the matched spec path if any."""
+    if not isinstance(obs, ApiObservation):
+        raise OpenapiDriftError("observation must be ApiObservation")
+    path = _normalize_path(obs.path, spec_map.keys())
+    method = obs.method.upper()
+    if path not in spec_map:
+        report.undocumented.append(f"{method} {obs.path}")
+        return None
+    if method not in spec_map[path]:
+        report.undocumented_methods.append(f"{method} {path}")
+        return path
+    seen_methods[path].add(method)
+    statuses = spec_map[path][method]
+    if str(obs.status_code) not in statuses and "default" not in statuses:
+        report.undocumented_statuses.append(
+            f"{method} {path} → {obs.status_code}"
+        )
+    return path
+
+
+def _collect_zombies(
+    spec_map: Dict[str, Dict[str, Set[str]]],
+    seen_paths: Set[str], seen_methods: Dict[str, Set[str]],
+) -> List[str]:
+    out: List[str] = []
+    for spec_path, methods in spec_map.items():
+        for method in methods:
+            if (spec_path not in seen_paths
+                    or method not in seen_methods.get(spec_path, set())):
+                out.append(f"{method} {spec_path}")
+    return out
+
+
 def diff(
     spec: Mapping[str, Any], observations: Sequence[ApiObservation],
 ) -> DriftReport:
@@ -92,28 +129,10 @@ def diff(
     seen_paths: Set[str] = set()
     seen_methods: Dict[str, Set[str]] = defaultdict(set)
     for obs in observations:
-        if not isinstance(obs, ApiObservation):
-            raise OpenapiDriftError("observation must be ApiObservation")
-        path = _normalize_path(obs.path, spec_map.keys())
-        method = obs.method.upper()
-        if path not in spec_map:
-            report.undocumented.append(f"{method} {obs.path}")
-            continue
-        seen_paths.add(path)
-        if method not in spec_map[path]:
-            report.undocumented_methods.append(f"{method} {path}")
-            continue
-        seen_methods[path].add(method)
-        if (str(obs.status_code) not in spec_map[path][method]
-                and "default" not in spec_map[path][method]):
-            report.undocumented_statuses.append(
-                f"{method} {path} → {obs.status_code}"
-            )
-    for spec_path, methods in spec_map.items():
-        for method in methods:
-            if (spec_path not in seen_paths
-                    or method not in seen_methods.get(spec_path, set())):
-                report.zombie.append(f"{method} {spec_path}")
+        matched = _classify_observation(obs, spec_map, report, seen_methods)
+        if matched is not None:
+            seen_paths.add(matched)
+    report.zombie = _collect_zombies(spec_map, seen_paths, seen_methods)
     return report
 
 

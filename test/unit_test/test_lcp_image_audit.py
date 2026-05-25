@@ -53,7 +53,7 @@ class TestPreloaded(unittest.TestCase):
 
     def test_bad_html(self):
         with self.assertRaises(LcpImageAuditError):
-            assert_lcp_preloaded(LcpCandidate(url="/x"), html=123)
+            assert_lcp_preloaded(LcpCandidate(url="/x"), html=123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestLazy(unittest.TestCase):
@@ -71,7 +71,7 @@ class TestLazy(unittest.TestCase):
 
     def test_bad_html(self):
         with self.assertRaises(LcpImageAuditError):
-            assert_lcp_not_lazy_loaded(LcpCandidate(url="/x"), html=123)
+            assert_lcp_not_lazy_loaded(LcpCandidate(url="/x"), html=123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestFetchPriority(unittest.TestCase):
@@ -97,7 +97,7 @@ class TestFetchPriority(unittest.TestCase):
 
     def test_bad_html(self):
         with self.assertRaises(LcpImageAuditError):
-            assert_fetchpriority_high(LcpCandidate(url="/x"), html=123)
+            assert_fetchpriority_high(LcpCandidate(url="/x"), html=123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 if __name__ == "__main__":

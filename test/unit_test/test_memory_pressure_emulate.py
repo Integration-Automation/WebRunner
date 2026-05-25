@@ -5,7 +5,6 @@ from je_web_runner.utils.memory_pressure_emulate.emulate import (
     DEFAULT_PROFILES,
     EmulationProfile,
     MemoryPressureError,
-    PressureLevel,
     PressureRunOutcome,
     assert_passed_under_pressure,
     cdp_payloads,

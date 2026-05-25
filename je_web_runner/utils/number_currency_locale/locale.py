@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -27,7 +27,7 @@ class NumberCurrencyLocaleError(WebRunnerException):
 class NumberRules:
     decimal: str
     thousands: str
-    grouping: Tuple[int, ...] = (3,)   # (3,) = western, (3, 2) = Indian
+    grouping: Tuple[int, ...] = (3,)
 
 
 @dataclass(frozen=True)
@@ -62,8 +62,33 @@ CURRENCY_RULES: Dict[str, CurrencyRules] = {
 
 
 def _strip_currency(rendered: str) -> str:
-    return re.sub(r"[^\d.,٫٬  ٠-٩\s-]", "",
-                  rendered).strip()
+    return re.sub(r"[^\d.,٫٬٠-٩\s-]", "", rendered).strip()
+
+
+def _detect_decimal(body: str):
+    """If both '.' and ',' appear, the LAST one is the decimal.
+    If only one appears, treat it as thousands when followed by exactly
+    three digits, otherwise as the decimal."""
+    last_dot = body.rfind(".")
+    last_comma = body.rfind(",")
+    if last_dot == -1 and last_comma == -1:
+        return None
+    if last_dot != -1 and last_comma != -1:
+        return "." if last_dot > last_comma else ","
+    only = "." if last_dot != -1 else ","
+    tail_len = len(body) - body.rfind(only) - 1
+    return None if tail_len == 3 else only
+
+
+def _check_indian_grouping(body: str, rules: "NumberRules", rendered: str) -> None:
+    if rules.grouping != (3, 2) or rules.thousands not in body:
+        return
+    integer_part = body.split(rules.decimal, 1)[0]
+    groups = integer_part.split(rules.thousands)
+    if len(groups) >= 3 and any(len(g) != 2 for g in groups[1:-1]):
+        raise NumberCurrencyLocaleError(
+            f"{rendered!r} not Indian-grouped (groups={groups})"
+        )
 
 
 def assert_number_format(rendered: str, locale: str) -> None:
@@ -78,36 +103,13 @@ def assert_number_format(rendered: str, locale: str) -> None:
         raise NumberCurrencyLocaleError(
             f"no numeric content found in {rendered!r}"
         )
-    # Detect the *decimal* separator: it's the last '.' or ',' in body
-    # whose tail is NOT exactly 3 digits (a 3-digit tail is ambiguous, but
-    # if both separators appear, the LAST one is always the decimal).
-    last_dot = body.rfind(".")
-    last_comma = body.rfind(",")
-    decimal_sep = None
-    if last_dot == -1 and last_comma == -1:
-        decimal_sep = None
-    elif last_dot != -1 and last_comma != -1:
-        decimal_sep = "." if last_dot > last_comma else ","
-    else:
-        only = "." if last_dot != -1 else ","
-        tail_len = len(body) - body.rfind(only) - 1
-        # if the only separator's tail is exactly 3 digits, treat it as
-        # thousands; otherwise treat it as decimal.
-        decimal_sep = None if tail_len == 3 else only
+    decimal_sep = _detect_decimal(body)
     if decimal_sep is not None and decimal_sep != rules.decimal:
         raise NumberCurrencyLocaleError(
             f"{rendered!r} uses {decimal_sep!r} as decimal — "
             f"expected {rules.decimal!r} for {locale}"
         )
-    # Indian grouping: integer part must contain exactly one 3-digit and
-    # then alternating 2-digit groups separated by thousands.
-    if rules.grouping == (3, 2) and rules.thousands in body:
-        integer_part = body.split(rules.decimal, 1)[0]
-        groups = integer_part.split(rules.thousands)
-        if len(groups) >= 3 and any(len(g) != 2 for g in groups[1:-1]):
-            raise NumberCurrencyLocaleError(
-                f"{rendered!r} not Indian-grouped (groups={groups})"
-            )
+    _check_indian_grouping(body, rules, rendered)
 
 
 def assert_currency_symbol(rendered: str, locale: str) -> None:

@@ -2,7 +2,6 @@
 import unittest
 
 from je_web_runner.utils.hsts_preload_audit.audit import (
-    HstsHeader,
     HstsPreloadAuditError,
     assert_preload_ready,
     assert_served_over_https,
@@ -69,7 +68,7 @@ class TestHttps(unittest.TestCase):
     def test_bad_type(self):
         with self.assertRaises(HstsPreloadAuditError):
             assert_served_over_https(123)
-
+  # NOSONAR python:S5655 - deliberate bad input
 
 if __name__ == "__main__":
     unittest.main()

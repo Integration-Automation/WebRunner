@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta
 from enum import Enum
 from typing import Dict, Iterable, List, Optional

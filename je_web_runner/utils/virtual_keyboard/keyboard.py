@@ -14,8 +14,8 @@ the keyboard appears, plus assertions to verify the layout reacted.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional
+from dataclasses import asdict, dataclass
+from typing import Any, Dict
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

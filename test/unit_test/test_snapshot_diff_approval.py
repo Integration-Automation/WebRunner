@@ -27,11 +27,8 @@ class TestCapture(unittest.TestCase):
         self.assertEqual(result.baseline_sha, "")
 
     def test_match_baseline(self):
-        reg = {"hero": SnapshotEntry(name="hero", sha256="x",
-                                     status=Status.BASELINE,
-                                     updated_at="2026-01-01")}
-        # craft a payload whose sha matches "x" — we'll instead use a fresh
-        # baseline produced by capture+approve.
+        # Use a fresh baseline produced by capture+approve so the SHA
+        # matches the payload we'll re-capture below.
         reg2 = {}
         capture(reg2, name="hero", payload=b"abc")
         approve(reg2, name="hero", reviewer="alice")

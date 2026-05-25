@@ -12,9 +12,9 @@ account. It's a *pre-flight* check — not a substitute for visual QA.
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -57,9 +57,12 @@ _GMAIL_RULES = (
 )
 
 
+_HTML_TYPE_ERROR = "html must be a string"
+
+
 def audit_outlook(html: str) -> List[RenderFinding]:
     if not isinstance(html, str):
-        raise InboxRenderOutlookError("html must be a string")
+        raise InboxRenderOutlookError(_HTML_TYPE_ERROR)
     findings: List[RenderFinding] = []
     for pattern in _OUTLOOK_BAD_CSS:
         for match in pattern.finditer(html):
@@ -84,7 +87,7 @@ def audit_outlook(html: str) -> List[RenderFinding]:
 
 def audit_gmail(html: str) -> List[RenderFinding]:
     if not isinstance(html, str):
-        raise InboxRenderOutlookError("html must be a string")
+        raise InboxRenderOutlookError(_HTML_TYPE_ERROR)
     findings: List[RenderFinding] = []
     for pattern in _GMAIL_RULES:
         if pattern.search(html):
@@ -106,7 +109,7 @@ def audit_gmail(html: str) -> List[RenderFinding]:
 
 def audit_apple_mail(html: str) -> List[RenderFinding]:
     if not isinstance(html, str):
-        raise InboxRenderOutlookError("html must be a string")
+        raise InboxRenderOutlookError(_HTML_TYPE_ERROR)
     findings: List[RenderFinding] = []
     if "@media (prefers-color-scheme: dark)" not in html.lower():
         findings.append(RenderFinding(

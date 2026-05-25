@@ -15,9 +15,8 @@ The Python side validates:
 """
 from __future__ import annotations
 
-import base64
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from dataclasses import dataclass, field
+from typing import Any, List
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException

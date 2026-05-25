@@ -12,7 +12,7 @@ invoker.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any, Dict, Iterable, List, Optional
 
@@ -26,10 +26,10 @@ class PopoverAssertError(WebRunnerException):
 class PopoverKind(str, Enum):
     """The two flavors the spec defines."""
 
-    DIALOG = "dialog"        # <dialog>
-    POPOVER_AUTO = "auto"    # <div popover> (or popover="auto")
-    POPOVER_MANUAL = "manual"  # popover="manual"
-    POPOVER_HINT = "hint"    # popover="hint" (newer)
+    DIALOG = "dialog"
+    POPOVER_AUTO = "auto"
+    POPOVER_MANUAL = "manual"
+    POPOVER_HINT = "hint"
 
 
 HARVEST_SCRIPT = """

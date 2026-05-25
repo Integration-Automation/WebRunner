@@ -15,8 +15,8 @@ This module:
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from dataclasses import dataclass
+from typing import Any, List, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -59,9 +59,12 @@ _PRELOAD_RE_REVERSE = re.compile(
 )
 
 
+_HTML_TYPE_ERROR = "html must be a string"
+
+
 def _extract_preloaded_image_urls(html: str) -> List[str]:
     if not isinstance(html, str):
-        raise LcpImageAuditError("html must be a string")
+        raise LcpImageAuditError(_HTML_TYPE_ERROR)
     matches = _PRELOAD_RE.findall(html) + _PRELOAD_RE_REVERSE.findall(html)
     return list(matches)
 
@@ -85,7 +88,7 @@ def assert_lcp_not_lazy_loaded(
     candidate: LcpCandidate, html: str,
 ) -> None:
     if not isinstance(html, str):
-        raise LcpImageAuditError("html must be a string")
+        raise LcpImageAuditError(_HTML_TYPE_ERROR)
     pattern = re.compile(
         rf'<img[^>]*src=[\'"]{re.escape(candidate.url)}[\'"][^>]*'
         rf'loading=[\'"]lazy[\'"]',
@@ -102,7 +105,7 @@ def assert_fetchpriority_high(
     candidate: LcpCandidate, html: str,
 ) -> None:
     if not isinstance(html, str):
-        raise LcpImageAuditError("html must be a string")
+        raise LcpImageAuditError(_HTML_TYPE_ERROR)
     pattern = re.compile(
         rf'<img[^>]*src=[\'"]{re.escape(candidate.url)}[\'"][^>]*'
         rf'fetchpriority=[\'"]high[\'"]',

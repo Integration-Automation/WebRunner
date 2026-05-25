@@ -21,9 +21,9 @@ audits for:
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Iterable, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -52,9 +52,9 @@ class FontFace:
 
 
 _FONT_FACE_RE = re.compile(
-    r"@font-face\s*\{([^}]+)\}", re.IGNORECASE | re.DOTALL,
+    r"@font-face\s*\{([^}]*)\}", re.IGNORECASE | re.DOTALL,
 )
-_DECL_RE = re.compile(r"([\w-]+)\s*:\s*([^;]+?)\s*(?:;|$)")
+_DECL_RE = re.compile(r"([\w-]+)\s*:\s*([^;]*?)(?:;|$)")
 
 
 def parse_font_faces(css: str) -> List[FontFace]:

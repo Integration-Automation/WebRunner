@@ -16,8 +16,8 @@ then checks:
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional
+from dataclasses import dataclass, field
+from typing import Any, Dict, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -78,36 +78,41 @@ class Snapshot:
     selectors: Dict[str, List[ElementBox]] = field(default_factory=dict)
 
 
+def _parse_box(raw: Dict[str, Any]) -> ElementBox:
+    return ElementBox(
+        tag=str(raw.get("tag") or ""),
+        text=str(raw.get("text") or ""),
+        left=float(raw.get("left") or 0),
+        right=float(raw.get("right") or 0),
+        direction=str(raw.get("direction") or "ltr"),
+        writing_mode=str(raw.get("writingMode") or "horizontal-tb"),
+        margin_left=str(raw.get("marginLeft") or "0px"),
+        margin_right=str(raw.get("marginRight") or "0px"),
+        padding_left=str(raw.get("paddingLeft") or "0px"),
+        padding_right=str(raw.get("paddingRight") or "0px"),
+        unicode_bidi=str(raw.get("unicodeBidi") or "normal"),
+        raw=raw,
+    )
+
+
+def _parse_item(item: Any, snap: Snapshot) -> None:
+    if not isinstance(item, dict):
+        return
+    selector = item.get("selector")
+    if not isinstance(selector, str):
+        return
+    snap.selectors[selector] = [
+        _parse_box(raw) for raw in (item.get("boxes") or [])
+        if isinstance(raw, dict)
+    ]
+
+
 def parse_snapshot(payload: Any) -> Snapshot:
     if not isinstance(payload, dict):
         raise RtlLayoutVerifyError("payload must be a dict")
     snap = Snapshot(document_dir=str(payload.get("documentDir") or ""))
     for item in payload.get("items") or []:
-        if not isinstance(item, dict):
-            continue
-        selector = item.get("selector")
-        boxes_raw = item.get("boxes") or []
-        if not isinstance(selector, str):
-            continue
-        boxes: List[ElementBox] = []
-        for raw in boxes_raw:
-            if not isinstance(raw, dict):
-                continue
-            boxes.append(ElementBox(
-                tag=str(raw.get("tag") or ""),
-                text=str(raw.get("text") or ""),
-                left=float(raw.get("left") or 0),
-                right=float(raw.get("right") or 0),
-                direction=str(raw.get("direction") or "ltr"),
-                writing_mode=str(raw.get("writingMode") or "horizontal-tb"),
-                margin_left=str(raw.get("marginLeft") or "0px"),
-                margin_right=str(raw.get("marginRight") or "0px"),
-                padding_left=str(raw.get("paddingLeft") or "0px"),
-                padding_right=str(raw.get("paddingRight") or "0px"),
-                unicode_bidi=str(raw.get("unicodeBidi") or "normal"),
-                raw=raw,
-            ))
-        snap.selectors[selector] = boxes
+        _parse_item(item, snap)
     return snap
 
 

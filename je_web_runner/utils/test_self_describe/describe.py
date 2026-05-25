@@ -12,7 +12,7 @@ Then`` paragraph. Useful for:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Sequence
+from typing import Any, Dict, List, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -61,39 +61,54 @@ def _locator_phrase(action: Dict[str, Any]) -> str:
     return f'"{target}"'
 
 
+def _navigation_sentence(name: str, action: Dict[str, Any]) -> StepSummary:
+    url = action.get("url") or action.get("value") or ""
+    if url:
+        return StepSummary("Given", f"the user opens {url}")
+    if name in ("back", "forward", "refresh"):
+        return StepSummary("When", f"the user presses {name} in the browser")
+    return StepSummary("Given", "the user opens the application")
+
+
+def _wait_sentence(action: Dict[str, Any]) -> StepSummary:
+    seconds = action.get("timeout") or action.get("value") or ""
+    return StepSummary(
+        "When",
+        f"the user waits for {_locator_phrase(action)}"
+        + (f" up to {seconds}s" if seconds else ""),
+    )
+
+
+_SIMPLE_TEMPLATES = {
+    "input": lambda a: StepSummary(
+        "When",
+        f'the user types "{a.get("input_value") or a.get("value") or ""}"'
+        f' into {_locator_phrase(a)}',
+    ),
+    "click": lambda a: StepSummary(
+        "When", f"the user clicks {_locator_phrase(a)}",
+    ),
+    "assert": lambda a: StepSummary(
+        "Then",
+        f'{_locator_phrase(a)} should be / contain '
+        f'"{a.get("expected") or a.get("value") or ""}"',
+    ),
+    "scroll": lambda a: StepSummary(
+        "When", f"the user scrolls to {_locator_phrase(a)}",
+    ),
+}
+
+
 def _sentence_for(action: Dict[str, Any]) -> StepSummary:
     kind = _step_kind(action)
     name = (action.get("action_name") or action.get("function") or "").lower()
     if kind == "navigation":
-        url = action.get("url") or action.get("value") or ""
-        if url:
-            return StepSummary("Given", f"the user opens {url}")
-        if name in ("back", "forward", "refresh"):
-            return StepSummary("When", f"the user presses {name} in the browser")
-        return StepSummary("Given", "the user opens the application")
-    if kind == "input":
-        text = action.get("input_value") or action.get("value") or ""
-        return StepSummary(
-            "When",
-            f'the user types "{text}" into {_locator_phrase(action)}',
-        )
-    if kind == "click":
-        return StepSummary("When", f"the user clicks {_locator_phrase(action)}")
+        return _navigation_sentence(name, action)
     if kind == "wait":
-        seconds = action.get("timeout") or action.get("value") or ""
-        return StepSummary(
-            "When",
-            f"the user waits for {_locator_phrase(action)}"
-            + (f" up to {seconds}s" if seconds else ""),
-        )
-    if kind == "assert":
-        expected = action.get("expected") or action.get("value") or ""
-        return StepSummary(
-            "Then",
-            f'{_locator_phrase(action)} should be / contain "{expected}"',
-        )
-    if kind == "scroll":
-        return StepSummary("When", f"the user scrolls to {_locator_phrase(action)}")
+        return _wait_sentence(action)
+    template = _SIMPLE_TEMPLATES.get(kind)
+    if template:
+        return template(action)
     return StepSummary("When", f"the user performs {name or 'a step'}")
 
 

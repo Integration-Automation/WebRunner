@@ -4,7 +4,6 @@ import unittest
 from je_web_runner.utils.web_locks.locks import (
     HARVEST_LOG_SCRIPT,
     INSTALL_LISTENER_SCRIPT,
-    LockEvent,
     LockOutcome,
     WebLocksError,
     assert_acquired_count,

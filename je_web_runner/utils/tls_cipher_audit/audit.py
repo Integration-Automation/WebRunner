@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import socket
 import ssl
-from dataclasses import asdict, dataclass, field
-from typing import Iterable, List, Optional, Sequence
+from dataclasses import asdict, dataclass
+from typing import Optional, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -57,6 +57,10 @@ def handshake(
     if timeout <= 0:
         raise TlsCipherAuditError("timeout must be > 0")
     ctx = context or ssl.create_default_context()
+    # Pin a modern protocol floor explicitly so older Python interpreters
+    # (pre-3.10, where TLSv1+ would still negotiate) don't downgrade.
+    if hasattr(ctx, "minimum_version") and hasattr(ssl, "TLSVersion"):
+        ctx.minimum_version = ssl.TLSVersion.TLSv1_2
     ctx.check_hostname = True
     ctx.verify_mode = ssl.CERT_REQUIRED
     try:

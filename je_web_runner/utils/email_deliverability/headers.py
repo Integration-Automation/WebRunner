@@ -18,8 +18,8 @@ Optionally validates `List-Unsubscribe` and `List-Unsubscribe-Post`
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

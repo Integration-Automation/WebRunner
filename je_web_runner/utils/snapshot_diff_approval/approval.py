@@ -17,10 +17,10 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

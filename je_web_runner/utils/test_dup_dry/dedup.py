@@ -17,8 +17,8 @@ from __future__ import annotations
 
 import hashlib
 from collections import defaultdict
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from dataclasses import dataclass, field
+from typing import Any, Dict, Iterable, List, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -75,6 +75,15 @@ class PrefixOverlap:
     common_prefix_len: int
 
 
+def _common_prefix(la: List[str], lb: List[str]) -> int:
+    n = 0
+    for x, y in zip(la, lb):
+        if x != y:
+            break
+        n += 1
+    return n
+
+
 def find_prefix_overlap(
     specs: Sequence[DupSpec], *, min_prefix: int = 5,
 ) -> List[PrefixOverlap]:
@@ -88,12 +97,7 @@ def find_prefix_overlap(
     for i, a in enumerate(names):
         for b in names[i + 1:]:
             la, lb = tokens[a], tokens[b]
-            common = 0
-            for x, y in zip(la, lb):
-                if x == y:
-                    common += 1
-                else:
-                    break
+            common = _common_prefix(la, lb)
             if common >= min_prefix and common < min(len(la), len(lb)):
                 out.append(PrefixOverlap(a=a, b=b, common_prefix_len=common))
     return sorted(out, key=lambda o: -o.common_prefix_len)

@@ -14,7 +14,7 @@ and:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from typing import Any, Dict, List, Mapping
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -39,6 +39,28 @@ class LighthouseSnapshot:
         return asdict(self)
 
 
+def _coerce_score(key: str, raw: Any) -> Optional[float]:
+    if raw is None:
+        return None
+    try:
+        return round(float(raw) * 100, 1)
+    except (TypeError, ValueError) as exc:
+        raise LighthouseRegressionError(
+            f"category {key!r} score is non-numeric: {raw!r}"
+        ) from exc
+
+
+def _coerce_metric(key: str, raw: Any) -> Optional[float]:
+    if raw is None:
+        return None
+    try:
+        return float(raw)
+    except (TypeError, ValueError) as exc:
+        raise LighthouseRegressionError(
+            f"metric {key!r} numericValue is non-numeric"
+        ) from exc
+
+
 def parse_report(report: Any) -> LighthouseSnapshot:
     if not isinstance(report, Mapping):
         raise LighthouseRegressionError("report must be a mapping")
@@ -50,24 +72,15 @@ def parse_report(report: Any) -> LighthouseSnapshot:
     for key in _CATEGORY_KEYS:
         entry = categories.get(key)
         if isinstance(entry, Mapping) and "score" in entry:
-            score = entry["score"]
-            if score is None:
-                continue
-            try:
-                snap.scores[key] = round(float(score) * 100, 1)
-            except (TypeError, ValueError) as exc:
-                raise LighthouseRegressionError(
-                    f"category {key!r} score is non-numeric: {score!r}"
-                ) from exc
+            value = _coerce_score(key, entry["score"])
+            if value is not None:
+                snap.scores[key] = value
     for key in _METRIC_KEYS:
         entry = audits.get(key)
-        if isinstance(entry, Mapping) and entry.get("numericValue") is not None:
-            try:
-                snap.metrics[key] = float(entry["numericValue"])
-            except (TypeError, ValueError) as exc:
-                raise LighthouseRegressionError(
-                    f"metric {key!r} numericValue is non-numeric"
-                ) from exc
+        if isinstance(entry, Mapping):
+            value = _coerce_metric(key, entry.get("numericValue"))
+            if value is not None:
+                snap.metrics[key] = value
     return snap
 
 

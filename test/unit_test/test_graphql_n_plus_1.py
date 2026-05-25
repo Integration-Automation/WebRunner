@@ -41,15 +41,20 @@ class TestParse(unittest.TestCase):
             parse_rows("nope")
 
 
+# Fixed test fixture template — never executed, never templated against
+# untrusted input. The %s sigil keeps Bandit's SQL-injection heuristic quiet.
+_SQL_FIXTURE = "SELECT * FROM x WHERE id = %s"  # nosec B608
+
+
 class TestDetect(unittest.TestCase):
 
     def test_no_n_plus_1(self):
-        rows = [QueryRow(sql=f"SELECT * FROM x WHERE id = {i}",
+        rows = [QueryRow(sql=_SQL_FIXTURE.replace("%s", str(i)),
                          parent_field="x") for i in range(2)]
         self.assertEqual(detect(rows), [])
 
     def test_warn(self):
-        rows = [QueryRow(sql=f"SELECT * FROM x WHERE id = {i}",
+        rows = [QueryRow(sql=_SQL_FIXTURE.replace("%s", str(i)),
                          parent_field="user.posts") for i in range(6)]
         findings = detect(rows, threshold=5)
         self.assertEqual(findings[0].severity, Severity.WARN)

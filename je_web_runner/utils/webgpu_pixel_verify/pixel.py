@@ -16,7 +16,7 @@ from __future__ import annotations
 import base64
 import statistics
 from dataclasses import dataclass
-from typing import Iterable, List, Sequence, Tuple
+from typing import List, Tuple
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

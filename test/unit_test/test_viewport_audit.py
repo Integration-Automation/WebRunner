@@ -33,7 +33,7 @@ class TestParseMeta(unittest.TestCase):
 
     def test_bad_input(self):
         with self.assertRaises(ViewportAuditError):
-            parse_meta(123)
+            parse_meta(123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestPresent(unittest.TestCase):

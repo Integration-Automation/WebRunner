@@ -27,7 +27,7 @@ class TestTap(unittest.TestCase):
 
     def test_bad_coord(self):
         with self.assertRaises(TouchGestureError):
-            tap("x", 0)
+            tap("x", 0)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestLongPress(unittest.TestCase):
@@ -99,11 +99,11 @@ class TestParseEvents(unittest.TestCase):
 class TestAssert(unittest.TestCase):
 
     def test_received_pass(self):
-        assert_received([RecordedTouch(type="touchstart")], type="touchstart")
+        assert_received([RecordedTouch(type="touchstart")], event_type="touchstart")
 
     def test_received_fail(self):
         with self.assertRaises(TouchGestureError):
-            assert_received([], type="touchstart")
+            assert_received([], event_type="touchstart")
 
     def test_two_finger_pass(self):
         assert_two_finger([RecordedTouch(type="touchstart", touch_count=2)])

@@ -3,7 +3,6 @@ import unittest
 
 from je_web_runner.utils.email_deliverability.headers import (
     EmailDeliverabilityError,
-    HeaderMap,
     assert_dkim_pass,
     assert_dmarc_pass,
     assert_list_unsubscribe,
@@ -45,7 +44,7 @@ class TestParse(unittest.TestCase):
     def test_bad_type(self):
         with self.assertRaises(EmailDeliverabilityError):
             parse_headers(123)
-
+  # NOSONAR python:S5655 - deliberate bad input
 
 class TestSpf(unittest.TestCase):
 

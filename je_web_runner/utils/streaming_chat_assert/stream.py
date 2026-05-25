@@ -13,8 +13,8 @@ Tests need to confirm:
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
-from typing import Any, Iterable, List, Optional, Sequence
+from dataclasses import dataclass
+from typing import Any, List, Optional, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

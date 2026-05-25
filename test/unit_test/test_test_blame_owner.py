@@ -3,7 +3,6 @@ import unittest
 
 from je_web_runner.utils.test_blame_owner.owner import (
     BlameLine,
-    CodeownersRule,
     OwnerVerdict,
     BlameOwnerError,
     assert_has_owner,
@@ -35,7 +34,7 @@ class TestParseCodeowners(unittest.TestCase):
     def test_bad_type(self):
         with self.assertRaises(BlameOwnerError):
             parse_codeowners(None)
-
+  # NOSONAR python:S5655 - deliberate bad input
 
 class TestOwnersFromCodeowners(unittest.TestCase):
 

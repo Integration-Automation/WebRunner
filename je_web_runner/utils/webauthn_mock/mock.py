@@ -16,8 +16,8 @@ from __future__ import annotations
 import base64
 import hashlib
 import secrets
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from dataclasses import dataclass, field
+from typing import Any, Dict, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -170,6 +170,18 @@ def assert_signed_in(log: CeremonyLog) -> None:
         )
 
 
+def _extract_uv(opts: Any) -> Optional[str]:
+    if not isinstance(opts, dict):
+        return None
+    pk = opts.get("publicKey")
+    if not isinstance(pk, dict):
+        return None
+    sel = pk.get("authenticatorSelection")
+    if isinstance(sel, dict) and sel.get("userVerification"):
+        return sel.get("userVerification")
+    return pk.get("userVerification")
+
+
 def assert_user_verification(
     log: CeremonyLog, *, level: str = "required",
 ) -> None:
@@ -179,11 +191,7 @@ def assert_user_verification(
     for kind, opts_list in (("create", log.created),
                             ("get", log.requested)):
         for opts in opts_list:
-            pk = opts.get("publicKey") if isinstance(opts, dict) else None
-            sel = (pk or {}).get("authenticatorSelection", {}) if pk else {}
-            actual = (sel.get("userVerification")
-                      if isinstance(sel, dict) else None) or (
-                pk.get("userVerification") if isinstance(pk, dict) else None)
+            actual = _extract_uv(opts)
             if actual and actual != level:
                 raise WebauthnMockError(
                     f"{kind} ceremony asked for "

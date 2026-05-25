@@ -4,7 +4,6 @@ import unittest
 from je_web_runner.utils.webauthn_mock.mock import (
     CeremonyLog,
     INSTALL_SCRIPT,
-    MockCredential,
     WebauthnMockError,
     assert_registered,
     assert_signed_in,

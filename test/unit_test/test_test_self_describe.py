@@ -87,7 +87,7 @@ class TestDescribe(unittest.TestCase):
 
     def test_bad_title(self):
         with self.assertRaises(SelfDescribeError):
-            describe([_a("to_url", url="/")], title=123)
+            describe([_a("to_url", url="/")], title=123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestAssertMentions(unittest.TestCase):

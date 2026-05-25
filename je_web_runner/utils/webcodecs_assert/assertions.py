@@ -10,7 +10,7 @@ assertions on resolution / framerate / keyframe interval / codec id.
 from __future__ import annotations
 
 import statistics
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Any, Dict, List, Sequence
 

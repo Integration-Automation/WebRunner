@@ -16,8 +16,8 @@ server.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from dataclasses import dataclass, field
+from typing import Any, Dict, Iterable, List, Mapping
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

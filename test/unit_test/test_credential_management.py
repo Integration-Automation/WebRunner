@@ -1,6 +1,10 @@
 """Unit tests for je_web_runner.utils.credential_management."""
 import unittest
 
+# Test-fixture sentinels — not real credentials.
+_FAKE_PW = "test-fixture-only"  # noqa: S105 - test sentinel
+_LEAK_SENTINEL = "leaked-string"  # noqa: S105 - test sentinel
+
 from je_web_runner.utils.credential_management.credentials import (
     CmLog,
     CredentialManagementError,
@@ -19,7 +23,8 @@ from je_web_runner.utils.credential_management.credentials import (
 class TestBuildSeed(unittest.TestCase):
 
     def test_basic(self):
-        seed = build_seed([SeedCredential(id="alice", password="pw")])
+        seed = build_seed([SeedCredential(id="alice",
+                                          password=_FAKE_PW)])
         self.assertEqual(seed["credentials"][0]["id"], "alice")
 
     def test_bad_list(self):
@@ -41,7 +46,7 @@ class TestScript(unittest.TestCase):
 class TestParse(unittest.TestCase):
 
     def test_basic(self):
-        log = parse_log({"stored": [{"id": "x", "password": "p"}],
+        log = parse_log({"stored": [{"id": "x", "password": _FAKE_PW}],
                          "gets": [{}], "preventCount": 1})
         self.assertEqual(log.stored[0].id, "x")
         self.assertEqual(log.prevent_count, 1)
@@ -62,16 +67,16 @@ class TestParse(unittest.TestCase):
 class TestAssertStored(unittest.TestCase):
 
     def test_pass(self):
-        s = assert_stored(CmLog(stored=[StoredCall(id="a")]), id="a")
+        s = assert_stored(CmLog(stored=[StoredCall(id="a")]), credential_id="a")
         self.assertEqual(s.id, "a")
 
     def test_fail(self):
         with self.assertRaises(CredentialManagementError):
-            assert_stored(CmLog(), id="a")
+            assert_stored(CmLog(), credential_id="a")
 
     def test_empty_id(self):
         with self.assertRaises(CredentialManagementError):
-            assert_stored(CmLog(), id="")
+            assert_stored(CmLog(), credential_id="")
 
 
 class TestNoPlaintext(unittest.TestCase):
@@ -82,7 +87,7 @@ class TestNoPlaintext(unittest.TestCase):
     def test_fail(self):
         with self.assertRaises(CredentialManagementError):
             assert_no_password_in_clear(
-                CmLog(stored=[StoredCall(id="a", password="leak")]),
+                CmLog(stored=[StoredCall(id="a", password=_LEAK_SENTINEL)]),
             )
 
 

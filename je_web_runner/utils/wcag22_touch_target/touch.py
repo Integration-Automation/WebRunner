@@ -23,7 +23,7 @@ from __future__ import annotations
 import math
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -70,7 +70,7 @@ HARVEST_SCRIPT = r"""
 """
 
 
-class Exception_(str, Enum):
+class TargetException(str, Enum):
     INLINE_TEXT = "inline-in-text"
     USER_AGENT = "user-agent-control"
     SPACING = "spacing-circle"

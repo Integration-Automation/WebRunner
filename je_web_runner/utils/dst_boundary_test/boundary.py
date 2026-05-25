@@ -14,10 +14,10 @@ The module is pure-stdlib (``zoneinfo``) — no ``pytz`` dependency.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import List, Sequence
 
 try:
     from zoneinfo import ZoneInfo

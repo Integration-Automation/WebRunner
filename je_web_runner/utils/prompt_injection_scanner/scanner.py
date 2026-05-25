@@ -14,11 +14,9 @@ unit-testable.
 """
 from __future__ import annotations
 
-import json
-import re
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, Iterable, List, Optional, Protocol, Sequence
+from typing import Any, Dict, List, Protocol, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

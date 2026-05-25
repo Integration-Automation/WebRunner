@@ -88,9 +88,10 @@ class TestLlmTags(unittest.TestCase):
             llm_tags(FailureBundle(), lambda b: "nope")
 
     def test_propagates_tagger_error(self):
+        def boom(_bundle):
+            raise RuntimeError("boom")
         with self.assertRaises(FailureAutoTagError):
-            llm_tags(FailureBundle(), lambda b: (_ for _ in ()).throw(
-                RuntimeError("boom")))
+            llm_tags(FailureBundle(), boom)
 
     def test_skips_malformed_items(self):
         tags = llm_tags(FailureBundle(),

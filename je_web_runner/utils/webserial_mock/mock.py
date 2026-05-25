@@ -10,7 +10,7 @@ page and observe what the page writes back.
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from typing import Any, Dict, Iterable, List, Optional, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException

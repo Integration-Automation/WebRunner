@@ -13,8 +13,8 @@ formats) and:
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, Iterable, List
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException

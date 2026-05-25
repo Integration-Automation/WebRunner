@@ -15,9 +15,8 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Dict
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 

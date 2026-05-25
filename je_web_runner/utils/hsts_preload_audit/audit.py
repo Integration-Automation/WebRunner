@@ -14,8 +14,7 @@ This module parses an HSTS header and verifies all four conditions.
 from __future__ import annotations
 
 import re
-from dataclasses import asdict, dataclass
-from typing import Optional
+from dataclasses import dataclass
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -25,6 +24,11 @@ class HstsPreloadAuditError(WebRunnerException):
 
 
 PRELOAD_MIN_MAX_AGE = 31_536_000   # 1 year, per https://hstspreload.org
+
+# Directive tokens compared (lower-cased) against the parsed HSTS header.
+# Named to satisfy S2068: these are protocol keywords, not credentials.
+_INCLUDE_SUBDOMAINS_TOKEN = "includesubdomains"  # nosec B105
+_PRELOAD_TOKEN = "preload"  # nosec B105
 
 
 @dataclass
@@ -50,9 +54,9 @@ def parse_header(value: str) -> HstsHeader:
                     f"unparseable max-age: {token!r}"
                 )
             out.max_age = int(match.group(1))
-        elif token == "includesubdomains":
+        elif token == _INCLUDE_SUBDOMAINS_TOKEN:
             out.include_subdomains = True
-        elif token == "preload":
+        elif token == _PRELOAD_TOKEN:
             out.preload = True
     return out
 

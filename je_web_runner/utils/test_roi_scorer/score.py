@@ -75,7 +75,7 @@ class RoiScore:
 def _find_rate(m: RoiMetrics) -> float:
     if m.runs == 0:
         return 0.0
-    return min(1.0, m.real_failures / m.runs * 10)  # 10% bug-find = full
+    return min(1.0, m.real_failures / m.runs * 10)
 
 
 def _cost_score(m: RoiMetrics) -> float:

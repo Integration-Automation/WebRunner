@@ -9,9 +9,8 @@ a simple ``drain()`` function that returns a list of ``Message`` records.
 from __future__ import annotations
 
 import json
-import re
-from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Protocol, Sequence
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional, Protocol, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -75,24 +74,28 @@ def drain_topic(
     return out
 
 
+def _headers_match(message: Message, header_equals: Dict[str, str]) -> bool:
+    return all(message.headers.get(k) == v for k, v in header_equals.items())
+
+
+def _body_matches(message: Message, body_contains: Dict[str, Any]) -> bool:
+    try:
+        body = message.body_as_dict()
+    except MqAssertError:
+        return False
+    return all(body.get(k) == v for k, v in body_contains.items())
+
+
 def _matches(message: Message, *,
              body_contains: Optional[Dict[str, Any]] = None,
              key_matches: Optional[str] = None,
              header_equals: Optional[Dict[str, str]] = None) -> bool:
     if key_matches is not None and message.key != key_matches:
         return False
-    if header_equals:
-        for k, v in header_equals.items():
-            if message.headers.get(k) != v:
-                return False
-    if body_contains:
-        try:
-            body = message.body_as_dict()
-        except MqAssertError:
-            return False
-        for k, v in body_contains.items():
-            if body.get(k) != v:
-                return False
+    if header_equals and not _headers_match(message, header_equals):
+        return False
+    if body_contains and not _body_matches(message, body_contains):
+        return False
     return True
 
 

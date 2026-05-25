@@ -16,8 +16,8 @@ in production to keep them current.
 from __future__ import annotations
 
 from collections import defaultdict
-from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from dataclasses import asdict, dataclass
+from typing import Any, Dict, Iterable, List, Mapping, Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
