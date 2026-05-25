@@ -494,6 +494,207 @@ CODEOWNERS 解析器(GitHub 語意:最後一條 match 的規則勝出)+ 每
   JSON 產生器。
 * ``cross_tab_sync`` —— 多分頁 BroadcastChannel / storage 傳遞斷言。
 
+現代瀏覽器 API
+==============
+
+涵蓋難以用純 WebDriver 驅動的新瀏覽器表面:
+
+* ``popover_assert`` —— ``<dialog>`` / popover 開合 / invoker /
+  「同時只有一個 modal」斷言。
+* ``cookie_store_api`` —— 非同步 ``cookieStore`` API 擷取 + change
+  事件斷言 + secure-only 強制。
+* ``speculation_rules`` —— Speculation Rules(``prerender`` /
+  ``prefetch``)驗證,prerender 啟動偵測、no-double-fire。
+* ``web_locks`` —— 多分頁 Web Locks 競爭測試,含 deadlock /
+  serialise / acquired-count 斷言。
+* ``storage_buckets`` —— Storage Buckets API 隔離、durability 提示、
+  IDB-per-bucket 隔離檢查。
+* ``hydration_streaming`` —— 串流 SSR 每個 boundary 的 timing
+  (arrival、interactive)+ 順序斷言。
+* ``web_push_assert`` —— Push subscription VAPID key 匹配、endpoint
+  白名單、``userVisibleOnly``、``showNotification`` payload。
+* ``background_sync_assert`` —— Background Sync register / fire /
+  retry / ``lastChance``(quota 耗盡)斷言。
+* ``wake_lock_assert`` —— Screen wake lock acquire / release /
+  漏掉 / 切回前景時 re-acquire 偵測。
+* ``pip_assert`` —— Picture-in-Picture(影片 + Document PiP)
+  進入 / 離開 / 視窗尺寸斷言。
+* ``web_share_assert`` —— ``navigator.share`` payload 紀錄 +
+  fallback UI 斷言。
+* ``compression_streams`` —— ``CompressionStream`` gzip / deflate /
+  brotli 來回 + 壓縮率預算。
+* ``compute_pressure`` —— Compute Pressure API 假 observer + App
+  throttle 反應斷言。
+
+現代認證 / 支付 / 身分
+======================
+
+* ``webauthn_mock`` —— 用於 Passkey / FIDO2 / WebAuthn 流程的
+  ``navigator.credentials`` 確定性 shim;依使用者構建固定 credential。
+* ``credential_management`` —— Password / Federated Credential
+  Management API mock + autofill / ``preventSilentAccess`` 斷言。
+* ``payment_request_assert`` —— Payment Request API shim + Apple
+  Pay / Google Pay 結帳片驗證(幣別、運送、``complete()``)。
+* ``three_d_secure_flow`` —— 3-D Secure 2.x 分支模型
+  (frictionless / challenge / fallback / reject)+ 「靜默完成」
+  偵測。
+
+行動瀏覽器專屬
+==============
+
+* ``touch_gesture`` —— ``tap`` / ``swipe`` / ``pinch`` /
+  ``long_press`` CDP frame builder + event 斷言。
+* ``viewport_audit`` —— viewport meta + safe-area-inset 稽核 +
+  WCAG 1.4.4 user-scalable 稽核。
+* ``virtual_keyboard`` —— ``visualViewport`` before / after +
+  keyboard inset CSS 變數 + focused element 可見性。
+* ``pull_to_refresh`` —— ``overscroll-behavior`` + 觸發 threshold +
+  refresh handler + 網路 refetch 斷言(PWA)。
+
+LLM / AI 功能測試
+=================
+
+* ``rag_grounding_assert`` —— RAG 引用是否在 retrieved chunk 中、
+  詞彙重疊度、未支撐的 phrase 掃描。
+* ``llm_token_cost_tracker`` —— 每個 test 的 token / $ 帳本,
+  含 per-model 費率卡 + 預算斷言。
+* ``streaming_chat_assert`` —— TTFT / inter-token gap / UTF-8 乾淨度
+  / 重複或亂序 chunk 斷言(streaming chat)。
+* ``tool_call_assert`` —— LLM tool / function-call 的名稱 + 順序 +
+  JSON Schema 引數驗證。
+* ``hallucination_probe`` —— Ground-truth probe runner + 拒答偵測
+  + 幻覺率預算。
+
+Email 與通知送達
+================
+
+* ``email_deliverability`` —— SPF / DKIM / DMARC header +
+  ``List-Unsubscribe``(Gmail/Yahoo 大量寄件規則)+ BCC 外洩稽核。
+* ``inbox_render_outlook`` —— Outlook(Word 引擎)/ Gmail / Apple
+  Mail 渲染相容性 pre-flight 檢查。
+* ``push_delivery`` —— FCM / APNs payload 大小 + 必填欄位 + PII
+  掃描 + collapse key + TTL 驗證。
+
+效能預算(續)
+==============
+
+* ``memory_pressure_emulate`` —— CDP 記憶體 / CPU 壓力模擬 profile
+  + run-under-profile 斷言。
+* ``third_party_block_test`` —— 逐 vendor 的封鎖韌性矩陣
+  (no-vendor / blocked / passed)。
+* ``bundle_diff_pr`` —— PR bundle 差異(新增 / 移除 / 長大)+
+  成長閘 + markdown 報告。
+* ``lcp_image_audit`` —— LCP 圖片有 preload + 無 ``loading="lazy"``
+  + ``fetchpriority="high"`` 斷言。
+* ``font_loading_strategy`` —— ``@font-face`` ``font-display``
+  策略 + ``size-adjust`` fallback 的 FOUT / FOIT / FOFT 驗證。
+* ``resource_hints_audit`` —— ``preload`` / ``prefetch`` /
+  ``preconnect`` 實際使用 vs 宣告 + ``preload as=`` 驗證。
+* ``critical_css_audit`` —— Inline CSS in ``<head>`` 預算 +
+  render-blocking 外部樣式 preload 稽核。
+* ``lighthouse_regression`` —— Lighthouse 分數對 baseline 的退化 +
+  Core Web Vitals metric 預算。
+
+安全與標頭(續)
+================
+
+* ``prompt_injection_scanner`` —— LLM jailbreak payload 庫 +
+  canary 外洩偵測。
+* ``cors_matrix`` —— CORS preflight 矩陣 probe + credentials /
+  origin policy 斷言。
+* ``oauth_pkce_replay`` —— 確認授權伺服器會拒絕 replay 的 OAuth
+  state / PKCE verifier。
+* ``cookie_chips_audit`` —— CHIPS Partitioned cookie 合規性
+  (第三方需 Partitioned + Secure + SameSite=None)。
+* ``sbom_diff`` —— CycloneDX SBOM 差異(新增 / 移除 / 升級 /
+  授權 / 漏洞閘)。
+* ``webhook_signature_verify`` —— GitHub / Stripe / Slack / 通用
+  HMAC webhook 簽章驗證。
+* ``dom_xss_taint`` —— 透過 JS instrumentation + canary 的輕量級
+  DOM-XSS taint 追蹤。
+* ``csp_violation_parser`` —— CSP ``report-uri`` / ``report-to``
+  payload 解析 + 偵察行為啟發式。
+* ``hsts_preload_audit`` —— HSTS preload-list 合規
+  (``max-age`` ≥ 1y + ``includeSubDomains`` + ``preload``)。
+* ``tls_cipher_audit`` —— 實際 TLS 握手 + 版本 + cipher 白名單 +
+  憑證 subject 檢查。
+* ``cookie_scope_abuse`` —— session-like cookie scope(apex domain
+  / ``Path=/``)+ ``HttpOnly`` / ``Secure`` / ``SameSite`` 稽核。
+
+後端整合(續)
+==============
+
+* ``graphql_n_plus_1`` —— GraphQL 的 N+1 query 偵測 + 笛卡兒 fanout
+  啟發式。
+* ``mq_assert`` —— Kafka / RabbitMQ / SQS 風格的 message queue
+  publish 斷言(drain + matcher + 冪等 + 順序)。
+* ``grpc_streaming_assert`` —— gRPC streaming(unary / server /
+  client / bidi)frame 數 + 大小 + 順序 + half-close 斷言。
+* ``openapi_drift`` —— 線上 API vs OpenAPI spec 漂移
+  (未文件化的 endpoint / method / status、zombie endpoint)。
+* ``api_version_compat`` —— 舊 client × 新 server 向後相容矩陣
+  (response shape 與 required request fields)。
+* ``rate_limit_assert`` —— 429 + ``Retry-After`` + ``X-RateLimit-*``
+  單調 + 等候後恢復斷言。
+* ``har_to_openapi`` —— HAR → OpenAPI 3.1 反向工程
+  (path template、query 參數、response schema)。
+
+QA 治理與 DevX(續)
+====================
+
+* ``failure_auto_tag`` —— 啟發式 + LLM 的失敗自動標籤
+  (``flaky-locator`` / ``timeout`` / ``js-error`` / ``network-5xx``)。
+* ``test_self_describe`` —— 從 action JSON 反推 Gherkin
+  ``Given / When / Then`` 段落。
+* ``pr_title_generator`` —— 從 diff + commit history 產生
+  Conventional Commits 風格的 PR 標題。
+* ``action_refactor_suggester`` —— Action JSON 重構壞味
+  (hard sleep、positional XPath、重複的 locator、click-wait-click)。
+* ``test_roi_scorer`` —— 「找出 bug 機率 × 成本 × 涵蓋 × 新鮮度」
+  加權的每個 test ROI 分數。
+* ``pre_merge_gate_dsl`` —— 對 ``PrFacts`` 快照宣告
+  ``when`` / ``require`` 的 pre-merge gate 規則。
+* ``commit_msg_trigger`` —— 從 commit message 解析
+  ``[skip ci]`` / ``[ci e2e]`` / ``[ci shard=3/8]`` / ``Closes #123``。
+* ``flakiness_graveyard`` —— Quarantine / revive / bury ledger,
+  附 TTL 用於塵封的 flaky test。
+* ``test_blame_owner`` —— CODEOWNERS + git-blame + HEAD + 預設
+  的 test owner 解析鏈。
+* ``test_dup_dry`` —— 結構式 action JSON 重複 + 共同前綴偵測
+  (擷取 helper 機會)。
+* ``snapshot_diff_approval`` —— Baseline / pending / rejected
+  snapshot 註冊 + approval workflow。
+* ``failure_cluster_dbscan`` —— 失敗訊息 tokeniser + DBSCAN 根因
+  分群(純 Python,不依賴 sklearn)。
+* ``test_naming_lint`` —— ``should_when`` / ``given_when_then`` /
+  ``camel_subject`` 命名規範 linter。
+
+i18n / a11y(續)
+=================
+
+* ``rtl_layout_verify`` —— RTL 方向 + logical property
+  (``margin-inline-start``)+ bidi-isolation 稽核。
+* ``dst_boundary_test`` —— 日光節約時間 spring-forward / fall-back
+  缺口與重疊偵測 + scheduled-fire 模型。
+* ``number_currency_locale`` —— 數字 / 貨幣 / 日期的 locale-format
+  斷言 helper(含印度 lakh 分隔)。
+* ``wcag22_touch_target`` —— WCAG 2.2 SC 2.5.8 觸控目標尺寸稽核
+  含 spacing-circle 例外。
+
+新興科技裝置 API
+================
+
+* ``webgpu_pixel_verify`` —— WebGPU canvas 像素讀回 + 平均 /
+  純色 / tile-diff 斷言。
+* ``webhid_mock`` —— WebHID 裝置 shim + input / output report 擷取。
+* ``webusb_mock`` —— WebUSB 裝置 shim + control / bulk transfer
+  擷取。
+* ``webserial_mock`` —— Web Serial UART shim + line-write 擷取。
+* ``webcodecs_assert`` —— WebCodecs chunk codec / 解析度 /
+  keyframe 間距 / framerate 斷言。
+* ``speech_api_assert`` —— ``SpeechSynthesis`` / ``SpeechRecognition``
+  mock + utterance / 語言 / 音量 斷言。
+
 延伸閱讀
 ========
 

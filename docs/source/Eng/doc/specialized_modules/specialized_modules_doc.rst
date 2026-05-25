@@ -518,6 +518,212 @@ Other Specialised Modules
 * ``cross_tab_sync`` — Multi-page BroadcastChannel / storage
   propagation asserts.
 
+Modern web platform & runtime APIs
+==================================
+
+Modules covering newer browser surfaces that are awkward to drive
+through plain WebDriver:
+
+* ``popover_assert`` — ``<dialog>`` / popover open / close / invoker
+  / "only one modal" assertions.
+* ``cookie_store_api`` — Async ``cookieStore`` API harvest +
+  change-event assertions + secure-only enforcement.
+* ``speculation_rules`` — Speculation Rules (``prerender`` /
+  ``prefetch``) verification, prerendering activation, no-double-fire.
+* ``web_locks`` — Multi-tab Web Locks contention harness with
+  deadlock + serialisation + acquired-count assertions.
+* ``storage_buckets`` — Storage Buckets API isolation, durability
+  hint, and IDB-per-bucket isolation checks.
+* ``hydration_streaming`` — Streaming SSR per-boundary timing
+  (arrival, interactive) + order assertions.
+* ``web_push_assert`` — Push subscription VAPID key match, endpoint
+  allowlist, ``userVisibleOnly``, ``showNotification`` payload.
+* ``background_sync_assert`` — Background Sync register / fire /
+  retry / ``lastChance`` (quota-exhaustion) assertions.
+* ``wake_lock_assert`` — Screen wake lock acquire / release / leak
+  / re-acquire-on-visibility detection.
+* ``pip_assert`` — Picture-in-Picture (video + Document PiP)
+  enter / exit / size assertions.
+* ``web_share_assert`` — ``navigator.share`` payload recording +
+  fallback-UI assertions.
+* ``compression_streams`` — ``CompressionStream`` gzip / deflate /
+  brotli round-trip + compression ratio budget.
+* ``compute_pressure`` — Compute Pressure API fake observer + app
+  throttle-reaction assertions.
+
+Modern auth, payments, identity
+===============================
+
+* ``webauthn_mock`` — Deterministic ``navigator.credentials`` shim
+  for Passkey / FIDO2 / WebAuthn flows; build canned credentials
+  per user.
+* ``credential_management`` — Password / Federated Credential
+  Management API mock + autofill / ``preventSilentAccess`` assertions.
+* ``payment_request_assert`` — Payment Request API shim + Apple Pay
+  / Google Pay sheet validation (currency, shipping, ``complete()``).
+* ``three_d_secure_flow`` — 3-D Secure 2.x branch model
+  (frictionless / challenge / fallback / reject) + silent-finalize
+  detection.
+
+Mobile-web specific
+===================
+
+* ``touch_gesture`` — ``tap`` / ``swipe`` / ``pinch`` /
+  ``long_press`` CDP-frame builder + event assertions.
+* ``viewport_audit`` — Viewport meta + safe-area-inset audit + WCAG
+  1.4.4 user-scalable audit.
+* ``virtual_keyboard`` — ``visualViewport`` before / after + keyboard
+  inset CSS variable + focused-element visibility.
+* ``pull_to_refresh`` — ``overscroll-behavior`` + threshold + refresh
+  handler + network-refetch assertions for PWAs.
+
+LLM / AI feature testing
+========================
+
+* ``rag_grounding_assert`` — RAG citation in retrieved set, lexical
+  overlap, unsupported-claim phrase scan.
+* ``llm_token_cost_tracker`` — Per-test token / $ ledger with
+  per-model rate card + budget assertion.
+* ``streaming_chat_assert`` — TTFT / inter-token gap / UTF-8
+  cleanliness / duplicate-or-OOS chunk assertions for streaming chat.
+* ``tool_call_assert`` — LLM tool / function-call name + ordering +
+  JSON Schema argument validation.
+* ``hallucination_probe`` — Ground-truth probe runner + refusal
+  detection + hallucination-rate budget.
+
+Email & notification delivery
+=============================
+
+* ``email_deliverability`` — SPF / DKIM / DMARC headers +
+  ``List-Unsubscribe`` (Gmail/Yahoo bulk rules) + BCC-leak audit.
+* ``inbox_render_outlook`` — Outlook (Word renderer) / Gmail / Apple
+  Mail render-compatibility pre-flight findings.
+* ``push_delivery`` — FCM / APNs payload size + required fields +
+  PII scan + collapse key + TTL validation.
+
+Performance budgets (cont.)
+===========================
+
+* ``memory_pressure_emulate`` — CDP memory / CPU pressure emulation
+  profiles + run-under-profile assertions.
+* ``third_party_block_test`` — Vendor-by-vendor block-resilience
+  matrix (no-vendor / blocked / passed).
+* ``bundle_diff_pr`` — PR bundle delta (added / removed / grew) +
+  growth-gate + markdown report.
+* ``lcp_image_audit`` — LCP image preloaded + no ``loading="lazy"``
+  + ``fetchpriority="high"`` assertions.
+* ``font_loading_strategy`` — ``@font-face`` ``font-display``
+  strategy + ``size-adjust`` fallback for FOUT / FOIT / FOFT
+  verification.
+* ``resource_hints_audit`` — ``preload`` / ``prefetch`` /
+  ``preconnect`` used vs declared + ``preload as=`` validation.
+* ``critical_css_audit`` — Inline-CSS-in-``<head>`` budget +
+  render-blocking external stylesheet preload audit.
+* ``lighthouse_regression`` — Lighthouse score regression vs baseline
+  + Core Web Vitals metric budgets.
+
+Security & headers (cont.)
+==========================
+
+* ``prompt_injection_scanner`` — LLM jailbreak payload library +
+  canary-leak detection.
+* ``cors_matrix`` — CORS preflight matrix probe + credentials /
+  origin policy assertions.
+* ``oauth_pkce_replay`` — Confirm authorization server rejects
+  replayed OAuth state / PKCE verifier.
+* ``cookie_chips_audit`` — CHIPS Partitioned cookie compliance
+  (third-party requires Partitioned + Secure + SameSite=None).
+* ``sbom_diff`` — CycloneDX SBOM diff (added / removed / upgrade /
+  license / vulnerability gates).
+* ``webhook_signature_verify`` — GitHub / Stripe / Slack / generic
+  HMAC webhook signature verifier.
+* ``dom_xss_taint`` — Lightweight DOM-XSS taint tracking via JS
+  instrumentation + canary detection.
+* ``csp_violation_parser`` — CSP ``report-uri`` / ``report-to``
+  payload parser + recon-attempt heuristic.
+* ``hsts_preload_audit`` — HSTS preload-list compliance
+  (``max-age`` ≥ 1y + ``includeSubDomains`` + ``preload``).
+* ``tls_cipher_audit`` — Live TLS handshake + version + cipher
+  allowlist + certificate subject check.
+* ``cookie_scope_abuse`` — Session-like cookie scope (apex domain /
+  ``Path=/``) + ``HttpOnly`` / ``Secure`` / ``SameSite`` audit.
+
+Backend integration (cont.)
+===========================
+
+* ``graphql_n_plus_1`` — N+1 query detector with per-field SQL
+  template repetition + cartesian-fanout heuristic.
+* ``mq_assert`` — Kafka / RabbitMQ / SQS-style message-queue publish
+  assertions (drain + matcher + idempotency + ordering).
+* ``grpc_streaming_assert`` — gRPC streaming (unary / server /
+  client / bidi) frame count + size + order + half-close assertions.
+* ``openapi_drift`` — Live API vs OpenAPI spec drift (undocumented
+  endpoint / method / status, zombie endpoints).
+* ``api_version_compat`` — Old-client vs new-server backward-compat
+  matrix on response shape + required request fields.
+* ``rate_limit_assert`` — 429 + ``Retry-After`` + ``X-RateLimit-*``
+  monotonic + recovery-after-wait assertions.
+* ``har_to_openapi`` — HAR → OpenAPI 3.1 reverse engineering
+  (path templates, query params, response schemas).
+
+QA governance & DevX (cont.)
+============================
+
+* ``failure_auto_tag`` — Heuristic + LLM failure auto-tagger
+  (``flaky-locator`` / ``timeout`` / ``js-error`` / ``network-5xx``…).
+* ``test_self_describe`` — Reverse-engineer Gherkin
+  ``Given / When / Then`` paragraph from action JSON.
+* ``pr_title_generator`` — Conventional-Commits PR title from diff +
+  commit history.
+* ``action_refactor_suggester`` — Action-JSON refactor smells
+  (hard sleep, positional XPath, duplicated locator,
+  click-wait-click).
+* ``test_roi_scorer`` — Find-rate × cost × coverage × recency
+  weighted ROI score per test.
+* ``pre_merge_gate_dsl`` — Declarative ``when`` / ``require``
+  pre-merge gate rules over a ``PrFacts`` snapshot.
+* ``commit_msg_trigger`` — Parse ``[skip ci]`` / ``[ci e2e]`` /
+  ``[ci shard=3/8]`` / ``Closes #123`` from commit message.
+* ``flakiness_graveyard`` — Quarantine / revive / bury ledger with
+  TTL for stale flaky tests.
+* ``test_blame_owner`` — CODEOWNERS + git-blame + HEAD + default
+  → test-owner resolution chain.
+* ``test_dup_dry`` — Structural action-JSON duplicate + prefix-
+  overlap detection (extract-helper opportunity).
+* ``snapshot_diff_approval`` — Baseline / pending / rejected
+  snapshot register + approval workflow.
+* ``failure_cluster_dbscan`` — Failure-message tokeniser + DBSCAN
+  root-cause clustering (pure-Python, no sklearn).
+* ``test_naming_lint`` — ``should_when`` / ``given_when_then`` /
+  ``camel_subject`` naming convention linter.
+
+i18n / a11y (cont.)
+===================
+
+* ``rtl_layout_verify`` — RTL direction + logical-property
+  (``margin-inline-start``) + bidi-isolation audit.
+* ``dst_boundary_test`` — DST spring-forward / fall-back gap &
+  overlap detection + scheduled-fire model.
+* ``number_currency_locale`` — Number / currency / date locale-
+  format assertion helpers (incl. Indian lakh grouping).
+* ``wcag22_touch_target`` — WCAG 2.2 SC 2.5.8 target-size auditor
+  with spacing-circle exception.
+
+Emerging-tech device APIs
+=========================
+
+* ``webgpu_pixel_verify`` — WebGPU canvas pixel readback + mean /
+  solid-colour / tile-diff assertions.
+* ``webhid_mock`` — WebHID device shim with input / output report
+  capture harness.
+* ``webusb_mock`` — WebUSB device shim with control / bulk transfer
+  capture.
+* ``webserial_mock`` — Web Serial UART shim + line-write capture.
+* ``webcodecs_assert`` — WebCodecs chunk codec / resolution /
+  keyframe-interval / framerate assertions.
+* ``speech_api_assert`` — ``SpeechSynthesis`` / ``SpeechRecognition``
+  mock + utterance / language / volume assertions.
+
 Where to look next
 ==================
 
