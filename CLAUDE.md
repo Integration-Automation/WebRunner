@@ -118,7 +118,44 @@ je_web_runner/
     ├── test_debt_dashboard/ # Inventory of skip/xfail/TODO/_skip markers with age + CODEOWNERS
     ├── sla_tracker/         # % suites finishing under SLA threshold, weekly/daily bucketing
     ├── bug_repro_stability/ # Repeat probe N times, classify deterministic/flaky/non-reproducible
-    └── test_owners_map/     # CODEOWNERS parser + override layer + unowned-test audit
+    ├── test_owners_map/     # CODEOWNERS parser + override layer + unowned-test audit
+    ├── popover_assert/      # <dialog>/popover open/close/invoker assertions
+    ├── cookie_store_api/    # Async cookieStore API harvest + change-event assertions
+    ├── speculation_rules/   # Speculation Rules (prerender/prefetch) verification + no-double-fire
+    ├── web_locks/           # Multi-tab Web Locks contention harness + deadlock/serialise assertions
+    ├── storage_buckets/     # Storage Buckets API isolation + durability + IDB-isolation checks
+    ├── hydration_streaming/ # Streaming SSR per-boundary timing + arrival/interactive assertions
+    ├── memory_pressure_emulate/ # CDP memory/CPU pressure emulation profiles + run-under-profile
+    ├── third_party_block_test/ # Vendor-by-vendor block-resilience matrix
+    ├── bundle_diff_pr/      # PR bundle delta (added/removed/grew) + markdown report + growth gate
+    ├── prompt_injection_scanner/ # LLM jailbreak payload library + canary-leak scan
+    ├── cors_matrix/         # CORS preflight matrix probe + credentials/origin policy assertions
+    ├── oauth_pkce_replay/   # Replay OAuth state/PKCE verifier; confirm server rejects
+    ├── cookie_chips_audit/  # CHIPS Partitioned cookie compliance auditor
+    ├── sbom_diff/           # CycloneDX SBOM diff (added/removed/upgrade/license/vuln)
+    ├── failure_auto_tag/    # Heuristic + LLM failure auto-tagger (flaky-locator/timeout/js-error...)
+    ├── test_self_describe/  # Reverse-engineer Gherkin Given/When/Then from action JSON
+    ├── pr_title_generator/  # Conventional-Commits PR title from diff + commit history
+    ├── action_refactor_suggester/ # Rule-based action-JSON refactor smells (hard sleep / positional xpath...)
+    ├── rtl_layout_verify/   # RTL layout direction / logical-property / bidi-isolation audit
+    ├── dst_boundary_test/   # DST spring-forward/fall-back gap & overlap detection + scheduled-fire model
+    ├── number_currency_locale/ # Number/currency/date locale-format assertion helpers
+    ├── wcag22_touch_target/ # WCAG 2.2 SC 2.5.8 target-size auditor with spacing-circle exception
+    ├── graphql_n_plus_1/    # N+1 query detector for GraphQL operations
+    ├── mq_assert/           # Kafka/RabbitMQ/SQS-style message-queue publish assertions
+    ├── grpc_streaming_assert/ # gRPC streaming (unary/server/client/bidi) frame/status/half-close
+    ├── webhook_signature_verify/ # GitHub/Stripe/Slack/generic HMAC webhook verifier
+    ├── test_roi_scorer/     # Find-rate/cost/coverage/recency-weighted ROI score per test
+    ├── pre_merge_gate_dsl/  # Declarative pre-merge gate rules (when/require) over PrFacts
+    ├── commit_msg_trigger/  # Parse [skip ci]/[ci e2e]/[ci shard=3/8]/tickets from commit message
+    ├── flakiness_graveyard/ # Quarantine/revive/bury ledger with TTL for stale flaky tests
+    ├── test_blame_owner/    # CODEOWNERS + git-blame + HEAD + default → test owner chain
+    ├── webgpu_pixel_verify/ # WebGPU canvas pixel readback + mean/solid/tile-diff assertions
+    ├── webhid_mock/         # WebHID device shim with input/output report harness
+    ├── webusb_mock/         # WebUSB device shim with control/bulk transfer capture
+    ├── webserial_mock/      # Web Serial UART shim + line write capture
+    ├── webcodecs_assert/    # WebCodecs chunk codec/resolution/keyframe/framerate assertions
+    └── speech_api_assert/   # SpeechSynthesis/SpeechRecognition mock + spoke/lang assertions
 ```
 
 ## Design Patterns & Architecture
