@@ -514,7 +514,7 @@ CODEOWNERS 解析器(GitHub 語意:最後一條 match 的規則勝出)+ 每
 * ``web_push_assert`` —— Push subscription VAPID key 匹配、endpoint
   白名單、``userVisibleOnly``、``showNotification`` payload。
 * ``background_sync_assert`` —— Background Sync register / fire /
-  retry / ``lastChance``(quota 耗盡)斷言。
+  retry / ``lastChance``\ (quota 耗盡)斷言。
 * ``wake_lock_assert`` —— Screen wake lock acquire / release /
   漏掉 / 切回前景時 re-acquire 偵測。
 * ``pip_assert`` —— Picture-in-Picture(影片 + Document PiP)
@@ -569,7 +569,7 @@ Email 與通知送達
 ================
 
 * ``email_deliverability`` —— SPF / DKIM / DMARC header +
-  ``List-Unsubscribe``(Gmail/Yahoo 大量寄件規則)+ BCC 外洩稽核。
+  ``List-Unsubscribe``\ (Gmail/Yahoo 大量寄件規則)+ BCC 外洩稽核。
 * ``inbox_render_outlook`` —— Outlook(Word 引擎)/ Gmail / Apple
   Mail 渲染相容性 pre-flight 檢查。
 * ``push_delivery`` —— FCM / APNs payload 大小 + 必填欄位 + PII

@@ -304,7 +304,7 @@ CDP Fetch 攔截
 --------------
 
 ``Fetch.*`` CDP 命令薄包裝。要實際收事件 (``Fetch.requestPaused``) 請使用
-``CDPEventListener``（或 Selenium trio-based devtools listener）自行訂閱：
+``CDPEventListener``\ （或 Selenium trio-based devtools listener）自行訂閱：
 
 .. code-block:: python
 
