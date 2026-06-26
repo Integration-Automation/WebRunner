@@ -59,7 +59,7 @@ def set_webdriver_options_argument(
     param = locals()
     try:
         webdriver_options = _new_options_for(webdriver_name)
-        for index, value in enumerate(argument_iterable):
+        for value in argument_iterable:
             if not isinstance(value, str):
                 raise WebRunnerArgumentWrongTypeException(selenium_wrapper_set_argument_error)
             webdriver_options.add_argument(value)
