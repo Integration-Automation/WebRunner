@@ -79,6 +79,18 @@ class Utterance:
         return asdict(self)
 
 
+def _coerce_float(value: Any, default: float) -> float:
+    """Keep an explicit ``0`` (a muted ``volume`` or lowest ``pitch`` are valid
+    values a falsy-coalesce would wrongly reset to the default); fall back to
+    ``default`` only when the field is absent or non-numeric."""
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
 def parse_spoken(payload: Any) -> list[Utterance]:
     if not isinstance(payload, list):
         raise SpeechApiAssertError("payload must be a list")
@@ -89,9 +101,9 @@ def parse_spoken(payload: Any) -> list[Utterance]:
         out.append(Utterance(
             text=str(raw.get("text") or ""),
             lang=str(raw.get("lang") or ""),
-            rate=float(raw.get("rate") or 1.0),
-            pitch=float(raw.get("pitch") or 1.0),
-            volume=float(raw.get("volume") or 1.0),
+            rate=_coerce_float(raw.get("rate"), 1.0),
+            pitch=_coerce_float(raw.get("pitch"), 1.0),
+            volume=_coerce_float(raw.get("volume"), 1.0),
         ))
     return out
 

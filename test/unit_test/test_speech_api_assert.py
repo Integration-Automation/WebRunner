@@ -30,6 +30,18 @@ class TestParse(unittest.TestCase):
     def test_skip_non_dict(self):
         self.assertEqual(parse_spoken(["x"]), [])
 
+    def test_zero_volume_and_pitch_preserved(self):
+        # A muted utterance (volume 0) / lowest pitch (0) are valid values and
+        # must not be coalesced to the 1.0 default.
+        out = parse_spoken([{"text": "hi", "volume": 0, "pitch": 0}])
+        self.assertEqual(out[0].volume, 0.0)
+        self.assertEqual(out[0].pitch, 0.0)
+
+    def test_missing_rate_defaults_to_one(self):
+        out = parse_spoken([{"text": "hi"}])
+        self.assertEqual(out[0].rate, 1.0)
+        self.assertEqual(out[0].volume, 1.0)
+
 
 class TestAssertSpoke(unittest.TestCase):
 
