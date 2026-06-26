@@ -12,7 +12,26 @@ from unittest.mock import MagicMock, patch
 
 from je_web_runner.utils.cdp.cdp_commands import CDPError
 from je_web_runner.utils.exception.exceptions import WebRunnerException
-from je_web_runner.webdriver.webdriver_wrapper import WebDriverWrapper
+from je_web_runner.webdriver.webdriver_wrapper import (
+    WebDriverWrapper,
+    _webdriver_manager_dict,
+)
+
+
+class TestWebdriverManagerDict(unittest.TestCase):
+    """Every manager entry must be callable with no args — the launch path does
+    ``_webdriver_manager_dict.get(name)().install()``. A pre-built instance
+    (not callable) silently broke chromium with a TypeError."""
+
+    def test_all_entries_callable(self):
+        for name, value in _webdriver_manager_dict.items():
+            self.assertTrue(callable(value), f"{name} manager entry not callable")
+
+    def test_chromium_resolves_to_manager(self):
+        from webdriver_manager.chrome import ChromeDriverManager
+        # Calling the entry (as the launch path does) must construct a manager,
+        # not raise TypeError. ``.install()`` is intentionally not called here.
+        self.assertIsInstance(_webdriver_manager_dict["chromium"](), ChromeDriverManager)
 
 
 class TestSetDriverExperimentalOptions(unittest.TestCase):

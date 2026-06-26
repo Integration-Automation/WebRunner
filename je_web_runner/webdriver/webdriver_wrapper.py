@@ -14,6 +14,7 @@ This file keeps only:
 from __future__ import annotations
 
 import typing
+from functools import partial
 from pathlib import Path
 
 from selenium import webdriver
@@ -63,9 +64,14 @@ _webdriver_dict = {
 
 # 瀏覽器名稱對應到 webdriver_manager 安裝器
 # Mapping browser names to webdriver_manager installers
+# Every value must be *callable with no args* — the caller does
+# ``_webdriver_manager_dict.get(name)().install()``. ``chromium`` needs a
+# constructor kwarg, so wrap it in ``partial`` rather than pre-instantiating
+# it (a bare instance is not callable → ``instance()`` raised TypeError, and
+# pre-building it ran the manager's setup at import time).
 _webdriver_manager_dict = {
     "chrome": ChromeDriverManager,
-    "chromium": ChromeDriverManager(chrome_type=ChromeType.CHROMIUM),
+    "chromium": partial(ChromeDriverManager, chrome_type=ChromeType.CHROMIUM),
     "firefox": GeckoDriverManager,
     "edge": EdgeChromiumDriverManager,
     "ie": IEDriverManager,
