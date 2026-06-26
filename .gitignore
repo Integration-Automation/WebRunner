@@ -123,6 +123,8 @@ dmypy.json
 # Driver
 *.zip
 *.exe
+# webdriver-manager driver cache (set_driver caches drivers under cwd)
+.wdm/
 
 /.claude/
 /.claude
