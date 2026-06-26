@@ -232,9 +232,12 @@ class WebDriverWrapper(
             if webdriver_value is None:
                 raise WebRunnerWebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
 
-            # 使用 webdriver_manager 安裝對應的 driver
+            # 使用 webdriver_manager 安裝對應的 driver；Safari 等沒有對應 manager
+            # 的瀏覽器(driver 內建於系統)直接跳過，避免 None().install() 崩潰。
+            # 傳入 cache_manager 讓 driver 快取落在 cwd(原本建立後卻沒被使用)。
             webdriver_install_manager = _webdriver_manager_dict.get(webdriver_name)
-            webdriver_install_manager().install()
+            if webdriver_install_manager is not None:
+                webdriver_install_manager(cache_manager=cache_manager).install()
 
             driver_options = _build_driver_options(
                 webdriver_name, options, experimental_options, extension_paths, enable_bidi,

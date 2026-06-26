@@ -301,6 +301,21 @@ class TestExtensionsAndAttach(unittest.TestCase):
             with self.assertRaises(WebRunnerException):
                 wrapper.set_driver("ie", extension_paths=["/opt/a.crx"])
 
+    def test_browser_without_manager_skips_install(self):
+        # Safari (and any browser with no webdriver-manager entry) must launch
+        # without crashing at the install step — there is no None() to call.
+        fake_driver = MagicMock(name="SafariDriver")
+        fake_driver_cls = MagicMock(name="SafariDriverClass", return_value=fake_driver)
+        with patch.dict(
+            "je_web_runner.webdriver.webdriver_wrapper._webdriver_dict",
+            {"safari": fake_driver_cls},
+            clear=False,
+        ):
+            wrapper = WebDriverWrapper()
+            result = wrapper.set_driver("safari")
+        self.assertIs(result, fake_driver)
+        fake_driver_cls.assert_called_once()
+
     def test_attach_to_existing_browser_merges_debugger_address(self):
         wrapper = WebDriverWrapper()
         with patch.object(wrapper, "set_driver", return_value=MagicMock()) as set_drv:
