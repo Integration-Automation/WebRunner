@@ -74,7 +74,7 @@ class FragileLocator:
 
 _NTH_PATTERN = re.compile(r":nth-(?:of-type|child)\(\d+\)", re.IGNORECASE)
 # NOSONAR python:S5852 — input is a CSS selector (bounded, internal), not user text
-_DEEP_DESCENDANT = re.compile(r"\s+\S+\s+\S+\s+\S+")  # noqa: S5852
+_DEEP_DESCENDANT = re.compile(r"\s+\S+\s+\S+\s+\S+")
 _HASHED_CLASS = re.compile(r"[._][A-Za-z][\w-]*?-_?\w{4,}\b")
 _TEXT_XPATH = re.compile(r"text\s*\(\s*\)", re.IGNORECASE)
 

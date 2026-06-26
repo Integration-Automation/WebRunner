@@ -29,7 +29,7 @@ def read_action_json(json_file_path: str) -> list:
             # Raise exception if file does not exist or is not a file
             raise WebRunnerJsonException(cant_find_json_error)
     except WebRunnerJsonException:
-        raise WebRunnerJsonException(cant_find_json_error)
+        raise WebRunnerJsonException(cant_find_json_error) from None
     finally:
         lock.release()
 
@@ -47,6 +47,6 @@ def write_action_json(json_save_path: str, action_json: list):
         with open(json_save_path, "w+", encoding="utf-8") as file_to_write:
             file_to_write.write(json.dumps(action_json, indent=4, ensure_ascii=False))
     except WebRunnerJsonException:
-        raise WebRunnerJsonException(cant_save_json_error)
+        raise WebRunnerJsonException(cant_save_json_error) from None
     finally:
         lock.release()

@@ -39,6 +39,8 @@ _EMPTY_LABEL = "<empty>"
 class TestAutoRepairError(WebRunnerException):
     """Raised when repair input, LLM output, or file I/O is invalid."""
 
+    __test__ = False  # domain exception, not a pytest test class
+
 
 # ---------- git diff -----------------------------------------------------
 

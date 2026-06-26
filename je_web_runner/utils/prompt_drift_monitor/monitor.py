@@ -261,7 +261,7 @@ def _embed_or_raise(embedder: Embedder, text: str, *, label: str) -> Sequence[fl
 def _cosine(a: Sequence[float], b: Sequence[float]) -> float:
     if len(a) != len(b) or not a:
         raise PromptDriftError("embeddings must be non-empty and equal-length")
-    dot = sum(float(x) * float(y) for x, y in zip(a, b))
+    dot = sum(float(x) * float(y) for x, y in zip(a, b, strict=False))
     norm_a = math.sqrt(sum(float(x) * float(x) for x in a))
     norm_b = math.sqrt(sum(float(x) * float(x) for x in b))
     if norm_a == 0 or norm_b == 0:

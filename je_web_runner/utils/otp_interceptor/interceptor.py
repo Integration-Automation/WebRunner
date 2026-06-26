@@ -72,11 +72,11 @@ class OtpProvider(ABC):
 def _http_get_json(url: str, timeout: float = 10.0) -> Any:
     # S5332 ok: MailHog / Mailpit are local-only services that expose plain
     # HTTP REST APIs by design; the caller passes a localhost URL.
-    if not url.startswith(("http://", "https://")):  # noqa: S5332
+    if not url.startswith(("http://", "https://")):
         raise OtpInterceptError(f"refusing non-http URL: {url!r}")
     req = urllib.request.Request(url, method="GET")
     req.add_header("Accept", "application/json")
-    if url.startswith("http://"):  # noqa: S5332
+    if url.startswith("http://"):
         context = None  # plain HTTP for local MailHog / Mailpit
     else:
         context = ssl.create_default_context()
@@ -256,7 +256,7 @@ class ImapProvider(OtpProvider):
         for method_name in ("close", "logout"):
             try:
                 getattr(conn, method_name)()
-            except Exception:  # noqa: BLE001 # nosec B110 — best-effort cleanup
+            except Exception:  # nosec B110 — best-effort cleanup
                 pass
 
     def fetch_messages(
@@ -289,7 +289,7 @@ def _imap_bytes_to_message(message_id: str, raw_bytes: bytes) -> Optional[Interc
 
     try:
         msg = email.message_from_bytes(raw_bytes, policy=policy.default)
-    except Exception:  # noqa: BLE001
+    except Exception:
         return None
     body = ""
     if msg.is_multipart():
@@ -300,7 +300,7 @@ def _imap_bytes_to_message(message_id: str, raw_bytes: bytes) -> Optional[Interc
     else:
         try:
             body = msg.get_content()
-        except Exception:  # noqa: BLE001
+        except Exception:
             body = ""
     return InterceptedMessage(
         message_id=message_id,

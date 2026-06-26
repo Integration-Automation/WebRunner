@@ -28,7 +28,7 @@ class _MediaMixin:
             record_action_to_list("webdriver wrapper save_screenshot", param, None)
             return bool(result)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper save_screenshot failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper save_screenshot failed: {error!r}")
             record_action_to_list("webdriver wrapper save_screenshot", param, error)
             return False
 
@@ -44,7 +44,7 @@ class _MediaMixin:
             record_action_to_list("webdriver wrapper get_screenshot_as_png", None, None)
             return self.current_webdriver.get_screenshot_as_png()
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_screenshot_as_png failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper get_screenshot_as_png failed: {error!r}")
             record_action_to_list("webdriver wrapper get_screenshot_as_png", None, error)
 
     def save_full_page_screenshot(self, file_path: str) -> bool:
@@ -76,7 +76,7 @@ class _MediaMixin:
             record_action_to_list(_FULL_PAGE_SCREENSHOT_LOG, param, None)
             return True
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper save_full_page_screenshot failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper save_full_page_screenshot failed: {error!r}")
             record_action_to_list(_FULL_PAGE_SCREENSHOT_LOG, param, error)
             return False
 
@@ -106,7 +106,7 @@ class _MediaMixin:
             record_action_to_list(_PRINT_PAGE_LOG, param, None)
             return True
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper print_page failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper print_page failed: {error!r}")
             record_action_to_list(_PRINT_PAGE_LOG, param, error)
             return False
 
@@ -122,7 +122,7 @@ class _MediaMixin:
             record_action_to_list("webdriver wrapper get_screenshot_as_base64", None, None)
             return self.current_webdriver.get_screenshot_as_base64()
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_screenshot_as_base64 failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper get_screenshot_as_base64 failed: {error!r}")
             record_action_to_list("webdriver wrapper get_screenshot_as_base64", None, error)
 
     def get_log(self, log_type: str):
@@ -150,5 +150,5 @@ class _MediaMixin:
             record_action_to_list("webdriver wrapper get_log", None, None)
             return self.current_webdriver.get_log(log_type)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_log failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper get_log failed: {error!r}")
             record_action_to_list("webdriver wrapper get_log", None, error)

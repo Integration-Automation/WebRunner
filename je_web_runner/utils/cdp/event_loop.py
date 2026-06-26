@@ -71,7 +71,7 @@ def _query_page_ws_url(debugger_address: str) -> str:
     url = f"http://{debugger_address}/json"  # NOSONAR python:S5332 — DevTools endpoint is HTTP-only by design
     # Bandit B310: scheme is fixed-literal ``http://`` above, not user-controlled — only
     # ``debugger_address`` (host:port) varies, so no file:// or custom-scheme risk.
-    with urllib.request.urlopen(url, timeout=5) as response:  # nosec B310  # noqa: S310 — local devtools endpoint
+    with urllib.request.urlopen(url, timeout=5) as response:  # nosec B310
         targets = json.loads(response.read())
     pages = [t for t in targets if t.get("type") == "page"]
     if not pages:
@@ -188,7 +188,7 @@ class CDPEventListener:
         if ws is not None:
             try:
                 ws.close()
-            except Exception as error:  # noqa: BLE001 — best-effort cleanup
+            except Exception as error:
                 web_runner_logger.debug(f"CDPEventListener ws.close failed: {error!r}")
         thread = self._thread
         self._thread = None
@@ -244,7 +244,7 @@ class CDPEventListener:
                 break
             try:
                 raw = ws.recv()
-            except Exception as error:  # noqa: BLE001
+            except Exception as error:
                 if not self._stop_flag.is_set():
                     web_runner_logger.error(f"CDPEventListener recv failed: {error!r}")
                 break
@@ -252,7 +252,7 @@ class CDPEventListener:
                 continue
             try:
                 message = json.loads(raw)
-            except Exception as error:  # noqa: BLE001
+            except Exception as error:
                 web_runner_logger.warning(f"CDPEventListener bad JSON: {error!r}")
                 continue
             self._dispatch(message)
@@ -274,7 +274,7 @@ class CDPEventListener:
         for callback in handlers:
             try:
                 callback(params)
-            except Exception as error:  # noqa: BLE001 — never let a handler kill the loop
+            except Exception as error:
                 web_runner_logger.error(
                     f"CDPEventListener handler for {method!r} raised: {error!r}"
                 )

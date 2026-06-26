@@ -49,7 +49,7 @@ def db_query(
         with engine.connect() as connection:
             result = connection.execute(text(sql), params or {})
             keys = list(result.keys())
-            return [dict(zip(keys, row)) for row in result.fetchall()]
+            return [dict(zip(keys, row, strict=False)) for row in result.fetchall()]
     finally:
         engine.dispose()
 

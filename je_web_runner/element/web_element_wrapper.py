@@ -30,7 +30,7 @@ class WebElementWrapper(object):
             self.current_web_element.submit()
             record_action_to_list("Web element submit", None, None)
         except Exception as error:
-            web_runner_logger.error(f"WebElementWrapper submit, failed: {repr(error)}")
+            web_runner_logger.error(f"WebElementWrapper submit, failed: {error!r}")
             record_action_to_list("Web element submit", None, error)
 
     def clear(self) -> None:
@@ -43,7 +43,7 @@ class WebElementWrapper(object):
             self.current_web_element.clear()
             record_action_to_list("Web element clear", None, None)
         except Exception as error:
-            web_runner_logger.error(f"WebElementWrapper clear, failed: {repr(error)}")
+            web_runner_logger.error(f"WebElementWrapper clear, failed: {error!r}")
             record_action_to_list("Web element clear", None, error)
 
     def get_property(self, name: str) -> None | str | bool | WebElement | dict:
@@ -59,7 +59,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element get_property", param, None)
             return self.current_web_element.get_property(name)
         except Exception as error:
-            web_runner_logger.error(f"WebElementWrapper get_property, name: {name}, failed: {repr(error)}")
+            web_runner_logger.error(f"WebElementWrapper get_property, name: {name}, failed: {error!r}")
             record_action_to_list("Web element get_property", param, error)
 
     def get_dom_attribute(self, name: str) -> str | None:
@@ -75,7 +75,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element get_dom_attribute", param, None)
             return self.current_web_element.get_dom_attribute(name)
         except Exception as error:
-            web_runner_logger.error(f"WebElementWrapper get_dom_attribute, name: {name}, failed: {repr(error)}")
+            web_runner_logger.error(f"WebElementWrapper get_dom_attribute, name: {name}, failed: {error!r}")
             record_action_to_list("Web element get_dom_attribute", param, error)
 
     def get_attribute(self, name: str) -> str | None:
@@ -91,7 +91,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element get_attribute", param, None)
             return self.current_web_element.get_attribute(name)
         except Exception as error:
-            web_runner_logger.error(f"WebElementWrapper get_attribute, name: {name}, failed: {repr(error)}")
+            web_runner_logger.error(f"WebElementWrapper get_attribute, name: {name}, failed: {error!r}")
             record_action_to_list("Web element get_attribute", param, error)
 
     def is_selected(self) -> bool | None:
@@ -105,7 +105,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element is_selected", None, None)
             return self.current_web_element.is_selected()
         except Exception as error:
-            web_runner_logger.error(f"WebElementWrapper is_selected, failed: {repr(error)}")
+            web_runner_logger.error(f"WebElementWrapper is_selected, failed: {error!r}")
             record_action_to_list("Web element is_selected", None, error)
 
     def is_enabled(self) -> bool | None:
@@ -119,7 +119,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element is_enabled", None, None)
             return self.current_web_element.is_enabled()
         except Exception as error:
-            web_runner_logger.error(f"WebElementWrapper is_enabled, failed: {repr(error)}")
+            web_runner_logger.error(f"WebElementWrapper is_enabled, failed: {error!r}")
             record_action_to_list("Web element is_enabled", None, error)
 
     def input_to_element(self, input_value: str) -> None:
@@ -135,7 +135,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element input_to_element", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebElementWrapper input_to_element, input_value: {input_value}, failed: {repr(error)}")
+                f"WebElementWrapper input_to_element, input_value: {input_value}, failed: {error!r}")
             record_action_to_list("Web element input_to_element", param, error)
 
     def click_element(self) -> None:
@@ -148,7 +148,7 @@ class WebElementWrapper(object):
             self.current_web_element.click()
             record_action_to_list("Web element click_element", None, None)
         except Exception as error:
-            web_runner_logger.error(f"WebElementWrapper click_element, failed: {repr(error)}")
+            web_runner_logger.error(f"WebElementWrapper click_element, failed: {error!r}")
             record_action_to_list("Web element click_element", None, error)
 
     def is_displayed(self) -> bool | None:
@@ -162,7 +162,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element is_displayed", None, None)
             return self.current_web_element.is_displayed()
         except Exception as error:
-            web_runner_logger.error(f"WebElementWrapper is_displayed, failed: {repr(error)}")
+            web_runner_logger.error(f"WebElementWrapper is_displayed, failed: {error!r}")
             record_action_to_list("Web element is_displayed", None, error)
 
     def value_of_css_property(self, property_name: str) -> str | None:
@@ -179,7 +179,7 @@ class WebElementWrapper(object):
             return self.current_web_element.value_of_css_property(property_name)
         except Exception as error:
             web_runner_logger.error(
-                f"WebElementWrapper value_of_css_property, property_name: {property_name}, failed: {repr(error)}")
+                f"WebElementWrapper value_of_css_property, property_name: {property_name}, failed: {error!r}")
             record_action_to_list("Web element value_of_css_property", param, error)
 
     def screenshot(self, filename: str) -> bool | None:
@@ -195,7 +195,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element screenshot", param, None)
             return self.current_web_element.screenshot(filename + ".png")
         except Exception as error:
-            web_runner_logger.info(f"WebElementWrapper screenshot, filename: {filename}, failed: {repr(error)}")
+            web_runner_logger.info(f"WebElementWrapper screenshot, filename: {filename}, failed: {error!r}")
             record_action_to_list("Web element screenshot", param, error)
 
     def change_web_element(self, element_index: int) -> None:
@@ -211,7 +211,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element change_web_element", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebElementWrapper change_web_element, element_index: {element_index}, failed: {repr(error)}")
+                f"WebElementWrapper change_web_element, element_index: {element_index}, failed: {error!r}")
             record_action_to_list("Web element change_web_element", param, error)
 
     def check_current_web_element(self, check_dict: dict) -> None:
@@ -237,7 +237,7 @@ class WebElementWrapper(object):
             # 錯誤處理與紀錄
             # Handle and log error
             web_runner_logger.error(
-                f"WebElementWrapper check_current_web_element, check_dict: {check_dict}, failed: {repr(error)}"
+                f"WebElementWrapper check_current_web_element, check_dict: {check_dict}, failed: {error!r}"
             )
             record_action_to_list("Web element check_current_web_element", param, error)
 
@@ -253,7 +253,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element select_by_value", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebElementWrapper select_by_value, value: {value}, failed: {repr(error)}"
+                f"WebElementWrapper select_by_value, value: {value}, failed: {error!r}"
             )
             record_action_to_list("Web element select_by_value", param, error)
 
@@ -269,7 +269,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element select_by_index", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebElementWrapper select_by_index, index: {index}, failed: {repr(error)}"
+                f"WebElementWrapper select_by_index, index: {index}, failed: {error!r}"
             )
             record_action_to_list("Web element select_by_index", param, error)
 
@@ -285,7 +285,7 @@ class WebElementWrapper(object):
             record_action_to_list("Web element select_by_visible_text", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebElementWrapper select_by_visible_text, text: {text}, failed: {repr(error)}"
+                f"WebElementWrapper select_by_visible_text, text: {text}, failed: {error!r}"
             )
             record_action_to_list("Web element select_by_visible_text", param, error)
 
@@ -309,7 +309,7 @@ class WebElementWrapper(object):
         except Exception as error:
             # 錯誤處理與紀錄
             # Handle and log error
-            web_runner_logger.error(f"WebElementWrapper get_select, failed: {repr(error)}")
+            web_runner_logger.error(f"WebElementWrapper get_select, failed: {error!r}")
             record_action_to_list("Web element get_select", None, error)
 
 

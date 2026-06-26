@@ -161,7 +161,7 @@ class WebhookServer:
     def base_url(self) -> str:
         # S5332 ok: this is a localhost test-fixture HTTP server with random
         # port, intentionally plain HTTP so callers can hit it without certs.
-        return f"http://{self._host}:{self._port}"  # noqa: S5332
+        return f"http://{self._host}:{self._port}"
 
     def start(self) -> "WebhookServer":
         if self._server is not None:

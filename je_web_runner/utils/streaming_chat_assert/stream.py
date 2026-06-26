@@ -70,7 +70,7 @@ def max_inter_token_gap_ms(deltas: Sequence[TokenDelta]) -> float:
     if len(text_deltas) < 2:
         return 0.0
     return max(b.ts_ms - a.ts_ms
-               for a, b in zip(text_deltas, text_deltas[1:]))
+               for a, b in zip(text_deltas, text_deltas[1:], strict=False))
 
 
 def assert_ttft_under(deltas: Sequence[TokenDelta], *, max_ms: float) -> None:

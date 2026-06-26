@@ -262,7 +262,7 @@ def connect_real_device(
                 dashboard_url=_dashboard_url(key, session_id),
             )
             return driver, session
-        except Exception as error:  # noqa: BLE001 — cloud connect surface varies
+        except Exception as error:
             last_error = error
             web_runner_logger.warning(
                 f"connect_real_device attempt {attempt + 1} failed: {error!r}"

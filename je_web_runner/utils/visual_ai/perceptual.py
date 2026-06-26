@@ -54,7 +54,7 @@ def _load_image(source: Union[bytes, str, Path, Any]) -> Any:
     if isinstance(source, (bytes, bytearray)):
         try:
             return pil_image.open(BytesIO(bytes(source)))
-        except Exception as error:  # noqa: BLE001 — Pillow raises many
+        except Exception as error:
             raise VisualAIError(f"cannot decode image bytes: {error!r}") from error
     if isinstance(source, (str, Path)):
         path = Path(source)
@@ -62,7 +62,7 @@ def _load_image(source: Union[bytes, str, Path, Any]) -> Any:
             raise VisualAIError(f"image not found: {path}")
         try:
             return pil_image.open(path)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             raise VisualAIError(f"cannot open image {path}: {error!r}") from error
     raise VisualAIError(
         f"unsupported image source: {type(source).__name__}"
@@ -134,10 +134,23 @@ def _load_and_preprocess(
     return _preprocess(img, crop_box=crop_box, mask_boxes=mask_boxes)
 
 
+def _flattened_pixels(image: Any) -> List[int]:
+    """Return a flat list of pixel values for a single-band image.
+
+    Prefers Pillow's ``get_flattened_data`` (the replacement for the
+    deprecated ``Image.getdata``, which is removed in Pillow 14) and falls
+    back to ``getdata`` on older Pillow releases that lack the new method.
+    """
+    flattened_getter = getattr(image, "get_flattened_data", None)
+    if flattened_getter is not None:
+        return list(flattened_getter())
+    return list(image.getdata())
+
+
 def _to_grayscale_pixels(img: Any, size: int) -> List[int]:
     pil_image = _require_pillow()
     resized = img.convert("L").resize((size, size), pil_image.Resampling.LANCZOS)
-    return list(resized.getdata())
+    return _flattened_pixels(resized)
 
 
 # ---------- hashes --------------------------------------------------------
@@ -273,7 +286,7 @@ def hamming_distance(a: HashResult, b: HashResult) -> int:
         raise VisualAIError(
             f"hash lengths differ: {len(a.bits)} vs {len(b.bits)}"
         )
-    return sum(1 for x, y in zip(a.bits, b.bits) if x != y)
+    return sum(1 for x, y in zip(a.bits, b.bits, strict=False) if x != y)
 
 
 def hash_similarity(a: HashResult, b: HashResult) -> float:
@@ -315,8 +328,8 @@ def _ssim_proxy(
     img_b = _load_and_preprocess(source_b, crop_box=crop_box, mask_boxes=mask_boxes)
     a = img_a.convert("L").resize((size, size), pil_image.Resampling.LANCZOS)
     b = img_b.convert("L").resize((size, size), pil_image.Resampling.LANCZOS)
-    pa = [p / 255.0 for p in a.getdata()]
-    pb = [p / 255.0 for p in b.getdata()]
+    pa = [p / 255.0 for p in _flattened_pixels(a)]
+    pb = [p / 255.0 for p in _flattened_pixels(b)]
     n = len(pa)
     if n == 0:
         return 0.0
@@ -324,7 +337,7 @@ def _ssim_proxy(
     mean_b = sum(pb) / n
     var_a = sum((x - mean_a) ** 2 for x in pa) / n
     var_b = sum((y - mean_b) ** 2 for y in pb) / n
-    cov = sum((x - mean_a) * (y - mean_b) for x, y in zip(pa, pb)) / n
+    cov = sum((x - mean_a) * (y - mean_b) for x, y in zip(pa, pb, strict=False)) / n
     c1 = 0.01 ** 2
     c2 = 0.03 ** 2
     num = (2 * mean_a * mean_b + c1) * (2 * cov + c2)

@@ -148,7 +148,7 @@ def inject_headers_selenium(driver: Any, context: TraceContext) -> None:
     try:
         cdp("Network.enable", {})
         cdp("Network.setExtraHTTPHeaders", {"headers": headers})
-    except Exception as error:  # noqa: BLE001 — CDP errors are driver-specific
+    except Exception as error:
         raise TraceBridgeError(f"CDP header injection failed: {error!r}") from error
     web_runner_logger.info(
         f"inject_headers_selenium: trace_id={context.trace_id} span_id={context.span_id}"
@@ -164,7 +164,7 @@ def clear_headers_selenium(driver: Any) -> None:
         return
     try:
         cdp("Network.setExtraHTTPHeaders", {"headers": {}})
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         web_runner_logger.warning(f"clear_headers_selenium failed: {error!r}")
 
 
@@ -181,7 +181,7 @@ def inject_headers_playwright(page: Any, context: TraceContext) -> None:
         raise TraceBridgeError("page has no set_extra_http_headers method")
     try:
         setter(context.as_headers())
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         raise TraceBridgeError(f"Playwright header injection failed: {error!r}") from error
     web_runner_logger.info(
         f"inject_headers_playwright: trace_id={context.trace_id}"
@@ -197,7 +197,7 @@ def clear_headers_playwright(page: Any) -> None:
         return
     try:
         setter({})
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         web_runner_logger.warning(f"clear_headers_playwright failed: {error!r}")
 
 
@@ -234,7 +234,7 @@ def bridged_span_selenium(
         if span_ctx is not None:
             try:
                 span_ctx.__exit__(None, None, None)
-            except Exception as error:  # noqa: BLE001
+            except Exception as error:
                 web_runner_logger.warning(f"span exit failed: {error!r}")
 
 
@@ -263,7 +263,7 @@ def bridged_span_playwright(
         if span_ctx is not None:
             try:
                 span_ctx.__exit__(None, None, None)
-            except Exception as error:  # noqa: BLE001
+            except Exception as error:
                 web_runner_logger.warning(f"span exit failed: {error!r}")
 
 

@@ -98,7 +98,7 @@ def build_matrix(  # NOSONAR S3776 — cohesive logic; planned refactor in follo
 
     all_combos: List[Combo] = []
     for tup in itertools.product(*variant_lists):
-        combo = dict(zip(names, tup))
+        combo = dict(zip(names, tup, strict=False))
         all_combos.append(combo)
 
     pinned_combos: List[Combo] = []
@@ -129,7 +129,7 @@ def build_matrix(  # NOSONAR S3776 — cohesive logic; planned refactor in follo
         keep_count = max(0, sample_size - len(pinned_combos))
         # S2245 ok: deterministic seeded sampling for reproducible test combos;
         # not used for any cryptographic / security decision.
-        filtered = rng.sample(filtered, keep_count)  # noqa: S2245
+        filtered = rng.sample(filtered, keep_count)
         sampled = True
     else:
         sampled = False
@@ -156,7 +156,7 @@ def _validate_pinned(
         raise FlagMatrixError(
             f"pinned combo keys {sorted(combo.keys())} != flag names {sorted(names)}"
         )
-    for name, variants in zip(names, variant_lists):
+    for name, variants in zip(names, variant_lists, strict=False):
         if combo[name] not in variants:
             raise FlagMatrixError(
                 f"pinned combo value {combo[name]!r} for flag {name!r} "

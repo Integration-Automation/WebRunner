@@ -383,10 +383,10 @@ def flaky_quarantine(
                 return fn(*args, **kwargs)
             try:
                 import pytest  # local import keeps decorator pytest-optional
-            except ImportError:
+            except ImportError as import_error:
                 raise FlakeDetectorError(
                     f"test {test_id!r} is quarantined: {entry.reason}"
-                )
+                ) from import_error
             pytest.skip(f"flaky-quarantine: {entry.reason}")
             return None
         return wrapper

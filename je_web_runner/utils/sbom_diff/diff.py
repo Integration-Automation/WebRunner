@@ -180,8 +180,8 @@ def diff_sboms(base: Dict[str, Any], head: Dict[str, Any]) -> SbomReport:
         else:
             report.upgraded.append(change)  # unknown order → treat as change
 
-    base_licenses = {l for c in base_comps for l in c.licenses}
-    head_licenses = {l for c in head_comps for l in c.licenses}
+    base_licenses = {lic for c in base_comps for lic in c.licenses}
+    head_licenses = {lic for c in head_comps for lic in c.licenses}
     report.new_licenses = sorted(head_licenses - base_licenses)
 
     head_vuln_purls = _vulnerable_purls(head)
@@ -202,10 +202,10 @@ def assert_no_new_vulnerable(report: SbomReport) -> None:
 def assert_no_disallowed_licenses(
     report: SbomReport, disallowed: Iterable[str],
 ) -> None:
-    disallowed_set = {l.upper() for l in disallowed}
+    disallowed_set = {lic.upper() for lic in disallowed}
     if not disallowed_set:
         raise SbomDiffError("disallowed list must be non-empty")
-    bad = [l for l in report.new_licenses if l.upper() in disallowed_set]
+    bad = [lic for lic in report.new_licenses if lic.upper() in disallowed_set]
     if bad:
         raise SbomDiffError(f"PR introduces disallowed licenses: {bad}")
 
@@ -237,7 +237,7 @@ def report_markdown(report: SbomReport) -> str:
         )
     if report.new_licenses:
         lines.append("### New licenses")
-        lines.append(", ".join(f"`{l}`" for l in report.new_licenses))
+        lines.append(", ".join(f"`{lic}`" for lic in report.new_licenses))
     if report.new_vulnerable:
         lines.append("### New vulnerable components")
         lines.extend(f"- `{ref}`" for ref in report.new_vulnerable)

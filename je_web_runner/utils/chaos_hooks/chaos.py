@@ -102,9 +102,9 @@ def plan_chaos(
             skipped.append(index)
             continue
         # S2245 ok: deterministic seeded scheduling for tests; not cryptographic.
-        if rng.random() >= fault_rate:  # noqa: S2245
+        if rng.random() >= fault_rate:
             continue
-        fault = rng.choice(list(faults))  # noqa: S2245
+        fault = rng.choice(list(faults))
         events.append(ChaosEvent(step_index=index, step_name=name, fault=fault))
         if max_events is not None and len(events) >= max_events:
             break

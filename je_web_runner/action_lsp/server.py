@@ -111,7 +111,7 @@ class ActionLspServer:
     def _on_did_close(self, params: Dict[str, Any]) -> None:
         uri = str((params.get("textDocument") or {}).get("uri", ""))
         self.documents.pop(uri, None)
-        return None
+        return
 
     def _completion(self, _params: Dict[str, Any]) -> Dict[str, Any]:
         # ``_params`` is part of the LSP request shape but the suggestion

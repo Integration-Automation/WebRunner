@@ -99,7 +99,7 @@ def generate_junit_xml_report(junit_file_name: str = "default_name") -> None:
             file_to_write.write(junit_xml)
     except OSError as error:
         web_runner_logger.error(
-            f"generate_junit_xml_report, junit_file_name: {junit_file_name}, failed: {repr(error)}"
+            f"generate_junit_xml_report, junit_file_name: {junit_file_name}, failed: {error!r}"
         )
     finally:
         _lock.release()

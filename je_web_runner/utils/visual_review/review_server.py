@@ -193,7 +193,7 @@ def _make_handler(server: VisualReviewServer) -> Callable:
             self.end_headers()
             self.wfile.write(body)
 
-        def do_GET(self):  # noqa: N802
+        def do_GET(self):
             parsed = urlparse(self.path)
             if parsed.path in {"/", "/index.html"}:
                 self._send(
@@ -221,7 +221,7 @@ def _make_handler(server: VisualReviewServer) -> Callable:
                 return
             self._send(200, target.read_bytes(), "image/png")
 
-        def do_POST(self):  # noqa: N802
+        def do_POST(self):
             if self.path != "/accept":
                 self._send(404, b"not found", _TEXT_PLAIN)
                 return

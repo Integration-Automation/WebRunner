@@ -298,7 +298,7 @@ def build_stealth_chrome_driver(
     try:
         service = ChromeService(**service_kwargs)
         driver = webdriver.Chrome(service=service, options=opts)
-    except Exception as first_err:  # noqa: BLE001 — Selenium wraps many causes
+    except Exception as first_err:
         if not retry_once:
             raise ChromeProfileError(
                 f"chrome spawn failed: {first_err!r}"
@@ -315,7 +315,7 @@ def build_stealth_chrome_driver(
         try:
             service = ChromeService(**service_kwargs)
             driver = webdriver.Chrome(service=service, options=opts)
-        except Exception as second_err:  # noqa: BLE001
+        except Exception as second_err:
             raise ChromeProfileError(
                 f"chrome spawn failed twice: {second_err!r}"
             ) from second_err
@@ -355,7 +355,7 @@ def chrome_profile_session(
     finally:
         try:
             driver.quit()
-        except Exception as error:  # noqa: BLE001 — best effort on teardown
+        except Exception as error:
             web_runner_logger.warning(f"driver.quit failed: {error!r}")
         if sync_back and snapshot_path is not None:
             try:

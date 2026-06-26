@@ -84,7 +84,7 @@ class _Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def do_GET(self):  # noqa: N802 — http.server convention
+    def do_GET(self):
         if self.path == "/" or self.path == "/index.html":
             self._send(200, _INDEX_HTML.encode("utf-8"), "text/html; charset=utf-8")
             return

@@ -173,7 +173,7 @@ def _try_selenium_screenshot() -> Optional[bytes]:
         if webdriver_wrapper_instance.current_webdriver is None:
             return None
         return webdriver_wrapper_instance.get_screenshot_as_png()
-    except Exception:  # noqa: BLE001 — best-effort fallback path
+    except Exception:
         return None
 
 
@@ -182,7 +182,7 @@ def _try_playwright_screenshot() -> Optional[bytes]:
         if not _pw.playwright_wrapper_instance._pages:
             return None
         return _pw.playwright_wrapper_instance.screenshot_bytes()
-    except Exception:  # noqa: BLE001 — best-effort fallback path
+    except Exception:
         return None
 
 
@@ -839,7 +839,7 @@ class Executor(object):
         for attempt in range(retries + 1):
             try:
                 return self._execute_event(action)
-            except Exception as error:  # noqa: BLE001 — retry layer must catch all
+            except Exception as error:
                 if attempt >= retries:
                     raise
                 if backoff > 0:
@@ -981,7 +981,7 @@ class Executor(object):
         except Exception as error:
             web_runner_logger.error(
                 f"execute_action, action_list: {action_list}, "
-                f"failed: {repr(error)}")
+                f"failed: {error!r}")
 
         # 逐一執行動作
         # Execute each action in the list
@@ -993,12 +993,12 @@ class Executor(object):
             except Exception as error:
                 web_runner_logger.error(
                     f"execute_action, action_list: {action_list}, "
-                    f"action: {action}, failed: {repr(error)}")
+                    f"action: {action}, failed: {error!r}")
                 execute_record = "execute: " + str(action)
                 screenshot_path = self._capture_failure_screenshot(action)
                 if screenshot_path:
                     execute_record_dict.update({
-                        execute_record: f"{repr(error)} (failure screenshot: {screenshot_path})"
+                        execute_record: f"{error!r} (failure screenshot: {screenshot_path})"
                     })
                 else:
                     execute_record_dict.update({execute_record: repr(error)})

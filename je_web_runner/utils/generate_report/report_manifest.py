@@ -86,7 +86,7 @@ def generate_all_reports(
     ):
         try:
             run()
-        except Exception as error:  # noqa: BLE001 — collect all generator errors
+        except Exception as error:
             errors[label] = repr(error)
             web_runner_logger.warning(f"generate_all_reports[{label}] failed: {error!r}")
 
@@ -94,7 +94,7 @@ def generate_all_reports(
     if allure_dir:
         try:
             allure_paths = generate_allure_report(allure_dir) or []
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             errors["allure"] = repr(error)
 
     produced: Dict[str, List[str]] = {

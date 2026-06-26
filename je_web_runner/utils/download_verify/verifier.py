@@ -149,7 +149,7 @@ def extract_pdf_text(
             "PDF text extraction requires pypdf or pdfplumber. "
             "Install one: pip install pypdf"
         ) from error
-    except Exception as error:  # noqa: BLE001 — library-specific parse errors
+    except Exception as error:
         raise DownloadVerifyError(f"failed to extract PDF text from {p}: {error!r}") from error
 
 
@@ -249,7 +249,7 @@ def read_excel_rows(
         ) from error
     try:
         wb = load_workbook(filename=str(p), read_only=True, data_only=True)
-    except Exception as error:  # noqa: BLE001 — openpyxl raises many types
+    except Exception as error:
         raise DownloadVerifyError(f"cannot open {p}: {error!r}") from error
     try:
         if sheet is None:

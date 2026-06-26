@@ -26,6 +26,8 @@ from je_web_runner.utils.exception.exceptions import WebRunnerException
 class TestCategorizerError(WebRunnerException):
     """Raised on malformed action JSON or invalid rules."""
 
+    __test__ = False  # domain exception, not a pytest test class
+
 
 # ---------- rule model -------------------------------------------------
 

@@ -53,7 +53,7 @@ def playwright_cdp(method: str, params: Optional[Dict[str, Any]] = None) -> Any:
     if session is None:
         try:
             session = playwright_wrapper_instance.context.new_cdp_session(page)
-        except Exception as error:  # noqa: BLE001 — surface a friendlier error
+        except Exception as error:
             raise CDPError(f"failed to open CDP session (Chromium only): {error!r}") from error
         _pw_cdp_sessions[session_key] = session
     return session.send(method, params or {})

@@ -33,12 +33,16 @@ from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 class TestSchedulerError(WebRunnerException):
     """Raised on invalid inputs or impossible budgets."""
 
+    __test__ = False  # domain exception, not a pytest test class
+
 
 # ---------- data ---------------------------------------------------------
 
 @dataclass
 class TestCandidate:
     """One test the scheduler can choose to run."""
+
+    __test__ = False  # dataclass, not a pytest test class
 
     test_id: str
     duration_seconds: float

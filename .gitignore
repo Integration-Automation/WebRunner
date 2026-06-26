@@ -129,3 +129,13 @@ dmypy.json
 issues.json
 hotspots.json
 codacy.json
+
+# Static-analysis exports (SonarCloud / Codacy / pyflakes scratch files)
+.codacy_*.json
+.sonar_*.json
+.pyflakes_files*.txt
+
+# Local report-generation scratch output
+default_name*.html
+default_name*.json
+default_name*.xml

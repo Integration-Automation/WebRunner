@@ -216,20 +216,20 @@ def _make_handler(server: HarReplayServer) -> Callable:
             self.end_headers()
             self.wfile.write(body_bytes)
 
-        def do_GET(self):  # noqa: N802
+        def do_GET(self):
             self._serve()
 
-        def do_DELETE(self):  # noqa: N802
+        def do_DELETE(self):
             self._serve()
 
-        def do_POST(self):  # noqa: N802
+        def do_POST(self):
             self._drain_body()
             self._serve()
 
         # do_PUT and do_PATCH share POST's body-drain semantics; alias to
         # avoid SonarCloud S4144 duplicate-method-body findings.
-        do_PUT = do_POST  # noqa: N815
-        do_PATCH = do_POST  # noqa: N815
+        do_PUT = do_POST
+        do_PATCH = do_POST
 
     return _ReplayHandler
 

@@ -364,7 +364,7 @@ def _make_handler(config: DashboardConfig) -> Type[BaseHTTPRequestHandler]:  # N
     class DashboardHandler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
 
-        def log_message(self, format: str, *args: Any) -> None:  # noqa: A003 # pylint: disable=redefined-builtin — match BaseHTTPRequestHandler signature
+        def log_message(self, format: str, *args: Any) -> None:  # pylint: disable=redefined-builtin — match BaseHTTPRequestHandler signature
             web_runner_logger.info(f"dashboard: {format % args}")
 
         def _send(self, status: int, content_type: str, body: bytes) -> None:
@@ -396,7 +396,7 @@ def _make_handler(config: DashboardConfig) -> Type[BaseHTTPRequestHandler]:  # N
                 value = 50
             return max(1, min(value, 5000))
 
-        def do_GET(self) -> None:  # noqa: N802 — http.server requires camelCase
+        def do_GET(self) -> None:
             parsed = urllib.parse.urlparse(self.path)
             path = parsed.path
             try:
@@ -498,11 +498,11 @@ class DashboardServer:
         if self._bound is None:
             raise LiveDashboardError("server not started")
         host, port = self._bound
-        if host in {"0.0.0.0", "::"}:  # noqa: S5332 # nosec B104 — string compare detecting "bind all"; rewritten to 127.0.0.1 in the URL below
+        if host in {"0.0.0.0", "::"}:  # nosec B104 — string compare detecting "bind all"; rewritten to 127.0.0.1 in the URL below
             host = "127.0.0.1"
         # S5332 ok: dashboard binds to loopback by default; intentionally HTTP
         # so the user can open it in a browser without a self-signed cert.
-        return f"http://{host}:{port}"  # noqa: S5332
+        return f"http://{host}:{port}"
 
     def __enter__(self) -> "DashboardServer":
         self.start()

@@ -147,7 +147,7 @@ def _make_oauth_handler(server_state: Dict[str, Any]) -> Callable:
             self.end_headers()
             self.wfile.write(body)
 
-        def do_POST(self):  # noqa: N802 - http.server convention
+        def do_POST(self):
             if self.path == "/token":
                 token = secrets.token_hex(16)
                 server_state["issued"].append(token)

@@ -132,7 +132,7 @@ def run_under_profile(
         cdp_send("Emulation.setHardwareConcurrencyOverride", {"hardwareConcurrency": 0})
         cdp_send("Emulation.setCPUThrottlingRate", {"rate": 1.0})
         cdp_send("Memory.simulatePressureNotification", {"level": "nominal"})
-    except Exception as restore_err:  # noqa: BLE001 - best-effort cleanup
+    except Exception as restore_err:
         # Don't mask the test result by re-raising here; CDP restore failure
         # is logged-only so a successful run isn't downgraded to error.
         _LOGGER.warning("CDP pressure restore failed: %r", restore_err)

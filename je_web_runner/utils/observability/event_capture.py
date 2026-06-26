@@ -60,7 +60,7 @@ class EventCapture:
     def _on_console(self, message: Any) -> None:
         try:
             location = message.location
-        except Exception:  # noqa: BLE001 — older Playwright shapes
+        except Exception:
             location = None
         self.console_messages.append({
             "type": getattr(message, "type", None),

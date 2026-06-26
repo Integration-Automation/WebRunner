@@ -358,7 +358,7 @@ class PlaywrightWrapper:
         try:
             self.page.goto(url, **goto_options)
             _record("to_url", params, None)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"playwright to_url failed: {error!r}")
             _record("to_url", params, error)
 
@@ -561,7 +561,7 @@ class PlaywrightWrapper:
         if "content_type" in response:
             fulfill_kwargs["content_type"] = response["content_type"]
 
-        def _handler(route, request):  # noqa: ARG001 — Playwright requires this signature
+        def _handler(route, request):
             route.fulfill(**fulfill_kwargs)
 
         self.page.route(url_pattern, _handler)

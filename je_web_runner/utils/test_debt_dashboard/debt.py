@@ -28,6 +28,8 @@ from je_web_runner.utils.exception.exceptions import WebRunnerException
 class TestDebtDashboardError(WebRunnerException):
     """Raised on bad input paths."""
 
+    __test__ = False  # domain exception, not a pytest test class
+
 
 class DebtKind(str, Enum):
     SKIP = "skip"
@@ -52,7 +54,7 @@ _XFAIL_RE = re.compile(
     re.IGNORECASE,
 )
 # NOSONAR python:S5852 — input is one source line at a time (bounded)
-_TODO_RE = re.compile(r"#\s*(TODO|FIXME)\b[:\s]*(.*)$", re.IGNORECASE)  # noqa: S5852
+_TODO_RE = re.compile(r"#\s*(TODO|FIXME)\b[:\s]*(.*)$", re.IGNORECASE)
 _TEST_DEF_RE = re.compile(r"^\s*def\s+(test_\w+)\s*\(", re.MULTILINE)
 
 

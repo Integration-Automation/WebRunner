@@ -134,7 +134,7 @@ def estimate_framerate(chunks: Sequence[EncodedChunk]) -> float:
     if len(chunks) < 2:
         return 0.0
     deltas = [b.timestamp_us - a.timestamp_us
-              for a, b in zip(chunks, chunks[1:])
+              for a, b in zip(chunks, chunks[1:], strict=False)
               if b.timestamp_us > a.timestamp_us]
     if not deltas:
         return 0.0

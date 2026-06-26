@@ -53,7 +53,7 @@ class ScheduledRunner:
             try:
                 job["callback"]()
                 self._counts[job["name"]] = self._counts.get(job["name"], 0) + 1
-            except Exception as error:  # noqa: BLE001 — schedulers must keep running
+            except Exception as error:
                 web_runner_logger.error(f"scheduled job {job['name']!r} raised: {error!r}")
             self._enqueue(job)
         self._scheduler.enter(job["interval"], 1, _fire)

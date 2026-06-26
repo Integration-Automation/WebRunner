@@ -72,7 +72,7 @@ def _normalize_path(path: str, spec_paths: Iterable[str]) -> str:
         if len(spec_parts) != len(parts):
             continue
         match = True
-        for s, p in zip(spec_parts, parts):
+        for s, p in zip(spec_parts, parts, strict=False):
             if s == p:
                 continue
             if s.startswith("{") and s.endswith("}"):

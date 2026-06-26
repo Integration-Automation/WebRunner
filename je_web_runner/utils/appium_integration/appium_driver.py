@@ -73,7 +73,7 @@ def build_android_caps(
     device_name: str = "Android Emulator",
     platform_version: str = "13",
     automation_name: str = "UiAutomator2",
-    extra: Dict[str, Any] = None,
+    extra: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     """Convenience: build a capabilities dict for Android."""
     caps: Dict[str, Any] = {
@@ -93,7 +93,7 @@ def build_ios_caps(
     device_name: str = "iPhone 15",
     platform_version: str = "17",
     automation_name: str = "XCUITest",
-    extra: Dict[str, Any] = None,
+    extra: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     caps: Dict[str, Any] = {
         "platformName": "iOS",

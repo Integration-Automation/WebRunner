@@ -103,6 +103,6 @@ def clear_network_handlers(driver) -> bool:
     try:
         clear()
         return True
-    except Exception as error:  # noqa: BLE001 — surface a friendlier wrapper
+    except Exception as error:
         web_runner_logger.error(f"clear_network_handlers failed: {error!r}")
         return False

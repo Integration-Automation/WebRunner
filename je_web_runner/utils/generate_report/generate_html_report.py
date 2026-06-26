@@ -151,16 +151,15 @@ def generate_html() -> str:
         # 若沒有測試紀錄，拋出例外
         # Raise exception if no test records
         raise WebRunnerHTMLException(html_generate_no_data_tag)
-    else:
-        event_str = ""
-        for record_data in test_record_instance.test_record_list:
-            # 根據是否有 exception 決定表格樣式
-            # Choose table style based on exception presence
-            if record_data.get("program_exception") == "None":
-                event_str = make_html_table(event_str, record_data, "event_table_head")
-            else:
-                event_str = make_html_table(event_str, record_data, "failure_table_head")
-        new_html_string = _html_string.format(event_table=event_str)
+    event_str = ""
+    for record_data in test_record_instance.test_record_list:
+        # 根據是否有 exception 決定表格樣式
+        # Choose table style based on exception presence
+        if record_data.get("program_exception") == "None":
+            event_str = make_html_table(event_str, record_data, "event_table_head")
+        else:
+            event_str = make_html_table(event_str, record_data, "failure_table_head")
+    new_html_string = _html_string.format(event_table=event_str)
     return new_html_string
 
 

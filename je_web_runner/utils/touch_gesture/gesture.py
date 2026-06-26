@@ -179,4 +179,4 @@ def gesture_distance_px(frames: Sequence[TouchFrame]) -> float:
     if len(points) < 2:
         return 0.0
     return sum(math.hypot(b.x - a.x, b.y - a.y)
-               for a, b in zip(points, points[1:]))
+               for a, b in zip(points, points[1:], strict=False))

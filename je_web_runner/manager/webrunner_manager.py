@@ -30,7 +30,7 @@ class WebdriverManager(object):
         # Current active WebDriver
         self.current_webdriver: Union[WebDriver, None] = None
 
-    def new_driver(self, webdriver_name: str, options: List[str] = None, **kwargs) -> None:
+    def new_driver(self, webdriver_name: str, options: List[str] | None = None, **kwargs) -> None:
         """
         建立新的 WebDriver 實例
         Create a new WebDriver instance
@@ -52,7 +52,7 @@ class WebdriverManager(object):
             # 錯誤處理與關閉所有 WebDriver
             # Handle error and quit all WebDrivers
             web_runner_logger.error(
-                f"WebdriverManager new_driver, webdriver_name: {webdriver_name}, params: {kwargs}, failed: {repr(error)}"
+                f"WebdriverManager new_driver, webdriver_name: {webdriver_name}, params: {kwargs}, failed: {error!r}"
             )
             record_action_to_list("web runner manager new_driver", param, error)
             self.quit()
@@ -72,7 +72,7 @@ class WebdriverManager(object):
             record_action_to_list("web runner manager change_webdriver", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebdriverManager change_webdriver, index_of_webdriver: {index_of_webdriver}, failed: {repr(error)}")
+                f"WebdriverManager change_webdriver, index_of_webdriver: {index_of_webdriver}, failed: {error!r}")
             record_action_to_list("web runner manager change_webdriver", param, error)
 
     def close_current_webdriver(self) -> None:
@@ -86,7 +86,7 @@ class WebdriverManager(object):
             self.current_webdriver.close()
             record_action_to_list("web runner manager close_current_webdriver", None, None)
         except Exception as error:
-            web_runner_logger.error(f"WebdriverManager close_current_webdriver, failed: {repr(error)}")
+            web_runner_logger.error(f"WebdriverManager close_current_webdriver, failed: {error!r}")
             record_action_to_list("web runner manager close_current_webdriver", None, error)
 
     def close_choose_webdriver(self, webdriver_index: int) -> None:
@@ -104,7 +104,7 @@ class WebdriverManager(object):
             self._current_webdriver_list.remove(self._current_webdriver_list[webdriver_index])
             record_action_to_list("web runner manager close_choose_webdriver", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebdriverManager close_choose_webdriver, failed: {repr(error)}")
+            web_runner_logger.error(f"WebdriverManager close_choose_webdriver, failed: {error!r}")
             record_action_to_list("web runner manager close_choose_webdriver", param, error)
 
     def quit(self) -> None:
@@ -129,9 +129,9 @@ class WebdriverManager(object):
             self._current_webdriver_list = []
             record_action_to_list("web runner manager quit", None, None)
         except Exception as error:
-            web_runner_logger.error(f"WebdriverManager quit, failed: {repr(error)}")
+            web_runner_logger.error(f"WebdriverManager quit, failed: {error!r}")
             record_action_to_list("web runner manager quit", None, error)
-            raise WebDriverException
+            raise WebDriverException from error
 
 
 def get_webdriver_manager(webdriver_name: str, **kwargs) -> WebdriverManager:

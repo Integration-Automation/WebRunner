@@ -24,48 +24,47 @@ def generate_json():
     # Raise exception if no test or error records exist
     if len(test_record_instance.test_record_list) == 0:
         raise WebRunnerGenerateJsonReportException(cant_generate_json_report)
-    else:
-        success_dict = {}
-        failure_dict = {}
+    success_dict = {}
+    failure_dict = {}
 
-        # 計數器與前綴字串
-        # Counters and prefix strings
-        failure_count: int = 1
-        failure_test_str: str = "Failure_Test"
-        success_count: int = 1
-        success_test_str: str = "Success_Test"
+    # 計數器與前綴字串
+    # Counters and prefix strings
+    failure_count: int = 1
+    failure_test_str: str = "Failure_Test"
+    success_count: int = 1
+    success_test_str: str = "Success_Test"
 
-        # 遍歷測試紀錄
-        # Iterate through test records
-        for record_data in test_record_instance.test_record_list:
-            if record_data.get("program_exception", "None") == "None":
-                # 成功紀錄
-                # Success record
-                success_dict.update(
-                    {
-                        success_test_str + str(success_count): {
-                            "function_name": str(record_data.get("function_name")),
-                            "param": str(record_data.get("local_param")),
-                            "time": str(record_data.get("time")),
-                            "exception": str(record_data.get("program_exception")),
-                        }
+    # 遍歷測試紀錄
+    # Iterate through test records
+    for record_data in test_record_instance.test_record_list:
+        if record_data.get("program_exception", "None") == "None":
+            # 成功紀錄
+            # Success record
+            success_dict.update(
+                {
+                    success_test_str + str(success_count): {
+                        "function_name": str(record_data.get("function_name")),
+                        "param": str(record_data.get("local_param")),
+                        "time": str(record_data.get("time")),
+                        "exception": str(record_data.get("program_exception")),
                     }
-                )
-                success_count += 1
-            else:
-                # 失敗紀錄
-                # Failure record
-                failure_dict.update(
-                    {
-                        failure_test_str + str(failure_count): {
-                            "function_name": str(record_data.get("function_name")),
-                            "param": str(record_data.get("local_param")),
-                            "time": str(record_data.get("time")),
-                            "exception": str(record_data.get("program_exception")),
-                        }
+                }
+            )
+            success_count += 1
+        else:
+            # 失敗紀錄
+            # Failure record
+            failure_dict.update(
+                {
+                    failure_test_str + str(failure_count): {
+                        "function_name": str(record_data.get("function_name")),
+                        "param": str(record_data.get("local_param")),
+                        "time": str(record_data.get("time")),
+                        "exception": str(record_data.get("program_exception")),
                     }
-                )
-                failure_count += 1
+                }
+            )
+            failure_count += 1
 
     return success_dict, failure_dict
 
@@ -90,7 +89,7 @@ def generate_json_report(json_file_name: str = "default_name"):
         with open(json_file_name + "_success.json", "w+") as file_to_write:
             json.dump(dict(success_dict), file_to_write, indent=4)
     except Exception as error:
-        web_runner_logger.error(f"generate_json_report, json_file_name: {json_file_name}, failed: {repr(error)}")
+        web_runner_logger.error(f"generate_json_report, json_file_name: {json_file_name}, failed: {error!r}")
     finally:
         _lock.release()
 
@@ -101,6 +100,6 @@ def generate_json_report(json_file_name: str = "default_name"):
         with open(json_file_name + "_failure.json", "w+") as file_to_write:
             json.dump(dict(failure_dict), file_to_write, indent=4)
     except Exception as error:
-        web_runner_logger.error(f"generate_json_report, json_file_name: {json_file_name}, failed: {repr(error)}")
+        web_runner_logger.error(f"generate_json_report, json_file_name: {json_file_name}, failed: {error!r}")
     finally:
         _lock.release()

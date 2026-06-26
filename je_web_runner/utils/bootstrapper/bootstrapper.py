@@ -131,7 +131,7 @@ def starter_files() -> List[StarterFile]:
 def init_workspace(
     directory: str,
     overwrite: bool = False,
-    files_to_write: List[StarterFile] = None,
+    files_to_write: List[StarterFile] | None = None,
 ) -> Dict[str, str]:
     """
     建立 starter 結構。回傳 ``{relative_path: 'created' | 'skipped'}``。

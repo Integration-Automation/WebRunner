@@ -170,10 +170,10 @@ class WebDriverWrapper(
     def set_driver(
             self,
             webdriver_name: str,
-            webdriver_manager_option_dict: dict = None,
-            options: List[str] = None,
-            experimental_options: dict = None,
-            extension_paths: List[str] = None,
+            webdriver_manager_option_dict: dict | None = None,
+            options: List[str] | None = None,
+            experimental_options: dict | None = None,
+            extension_paths: List[str] | None = None,
             enable_bidi: bool = False,
             **kwargs
     ) -> Union[
@@ -254,10 +254,10 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(
                 f"WebDriverWrapper set_driver, webdriver_name: {webdriver_name}, "
-                f"webdriver_manager_option_dict: {webdriver_manager_option_dict}, failed: {repr(error)}"
+                f"webdriver_manager_option_dict: {webdriver_manager_option_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_driver", param, error)
-            raise WebRunnerException
+            raise WebRunnerException from error
 
     def set_webdriver_options_capability(self, key_and_vale_dict: dict) -> Options | None:
         """
@@ -281,17 +281,17 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(
                 f"WebDriverWrapper set_webdriver_options_capability, "
-                f"key_and_vale_dict: {key_and_vale_dict}, failed: {repr(error)}"
+                f"key_and_vale_dict: {key_and_vale_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_webdriver_options_capability", param, error)
-            raise WebRunnerException
+            raise WebRunnerException from error
 
     def attach_to_existing_browser(
             self,
             debugger_address: str,
             webdriver_name: str = "chrome",
-            options: List[str] = None,
-            experimental_options: dict = None,
+            options: List[str] | None = None,
+            experimental_options: dict | None = None,
             **kwargs,
     ):
         """
@@ -348,7 +348,7 @@ class WebDriverWrapper(
             return web_element_wrapper.current_web_element
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper find_element, test_object: {test_object}, failed: {repr(error)}"
+                f"WebDriverWrapper find_element, test_object: {test_object}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_element", param, error)
 
@@ -373,7 +373,7 @@ class WebDriverWrapper(
             return web_element_wrapper.current_web_element_list
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper find_elements, test_object: {test_object}, failed: {repr(error)}"
+                f"WebDriverWrapper find_elements, test_object: {test_object}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_elements", param, error)
 
@@ -402,7 +402,7 @@ class WebDriverWrapper(
             return web_element_wrapper.current_web_element
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper find_element_with_test_object_record, element_name: {element_name}, failed: {repr(error)}"
+                f"WebDriverWrapper find_element_with_test_object_record, element_name: {element_name}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_element_with_test_object_record", param, error)
 
@@ -431,7 +431,7 @@ class WebDriverWrapper(
             return web_element_wrapper.current_web_element_list
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper find_elements_with_test_object_record, element_name: {element_name}, failed: {repr(error)}"
+                f"WebDriverWrapper find_elements_with_test_object_record, element_name: {element_name}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_elements_with_test_object_record", param, error)
 
@@ -450,11 +450,11 @@ class WebDriverWrapper(
             record_action_to_list("webdriver wrapper implicitly_wait", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper implicitly_wait, time_to_wait: {time_to_wait}, failed: {repr(error)}"
+                f"WebDriverWrapper implicitly_wait, time_to_wait: {time_to_wait}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper implicitly_wait", param, error)
 
-    def explict_wait(self, wait_time: int, method: typing.Callable = None, until_type: bool = True):
+    def explict_wait(self, wait_time: int, method: typing.Callable | None = None, until_type: bool = True):
         """
         Selenium 顯式等待
         Selenium explicit wait
@@ -472,13 +472,12 @@ class WebDriverWrapper(
             record_action_to_list("webdriver wrapper explict_wait", param, None)
             if until_type and method:
                 return WebDriverWait(self.current_webdriver, wait_time).until(method)
-            elif until_type is False and method:
+            if until_type is False and method:
                 return WebDriverWait(self.current_webdriver, wait_time).until_not(method)
-            else:
-                return WebDriverWait(self.current_webdriver, wait_time)
+            return WebDriverWait(self.current_webdriver, wait_time)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper explict_wait failed: {repr(error)}"
+                f"WebDriverWrapper explict_wait failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper explict_wait", param, error)
 
@@ -491,7 +490,7 @@ class WebDriverWrapper(
             self.current_webdriver.set_script_timeout(time_to_wait)
             record_action_to_list("webdriver wrapper set_script_timeout", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper set_script_timeout failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper set_script_timeout failed: {error!r}")
             record_action_to_list("webdriver wrapper set_script_timeout", param, error)
 
     def set_page_load_timeout(self, time_to_wait: int) -> None:
@@ -502,7 +501,7 @@ class WebDriverWrapper(
             self.current_webdriver.set_page_load_timeout(time_to_wait)
             record_action_to_list("webdriver wrapper set_page_load_timeout", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper set_page_load_timeout failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper set_page_load_timeout failed: {error!r}")
             record_action_to_list("webdriver wrapper set_page_load_timeout", param, error)
 
     # webdriver wrapper add function
@@ -519,7 +518,7 @@ class WebDriverWrapper(
             check_webdriver_details(self.current_webdriver, check_dict)
             record_action_to_list("webdriver wrapper check_current_webdriver", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper check_current_webdriver failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper check_current_webdriver failed: {error!r}")
             record_action_to_list("webdriver wrapper check_current_webdriver", param, error)
 
     # close event
@@ -535,9 +534,9 @@ class WebDriverWrapper(
             record_action_to_list("webdriver wrapper quit", None, None)
             self.current_webdriver.quit()
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper quit failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper quit failed: {error!r}")
             record_action_to_list("webdriver wrapper quit", None, error)
-            raise WebRunnerException
+            raise WebRunnerException from error
 
 
 # 全域單例，方便直接使用

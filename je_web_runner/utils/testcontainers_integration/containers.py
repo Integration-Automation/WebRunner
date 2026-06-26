@@ -99,7 +99,7 @@ def cleanup_all() -> None:
         container = _started.pop()
         try:
             container.stop()
-        except Exception as error:  # noqa: BLE001 — keep cleaning up the rest
+        except Exception as error:
             web_runner_logger.warning(f"failed to stop container: {error!r}")
 
 

@@ -368,7 +368,7 @@ def run_mutation_testing(
         mutated = apply_mutation(actions, mutation)
         try:
             passed = bool(executor(mutated))
-        except Exception as error:  # noqa: BLE001 — executor may raise
+        except Exception as error:
             results.append(MutationResult(
                 mutation=mutation, killed=True, error=repr(error),
             ))

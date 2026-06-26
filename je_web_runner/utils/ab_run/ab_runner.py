@@ -64,7 +64,7 @@ def diff_records(
         "length_match": len(records_a) == len(records_b),
     }
     differences: List[Dict[str, Any]] = []
-    pairs = zip(records_a, records_b)
+    pairs = zip(records_a, records_b, strict=False)
     for index, (left, right) in enumerate(pairs):
         left_status = _step_status(left)
         right_status = _step_status(right)

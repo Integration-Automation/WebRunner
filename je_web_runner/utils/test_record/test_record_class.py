@@ -61,10 +61,9 @@ def record_action_to_list(function_name: str,
         # 若未啟用紀錄，則直接跳過
         # Skip if recording is disabled
         return
-    else:
-        test_record_instance.test_record_list.append({
-            "function_name": function_name,
-            "local_param": local_param,
-            "time": str(datetime.datetime.now()),
-            "program_exception": repr(program_exception)
-        })
+    test_record_instance.test_record_list.append({
+        "function_name": function_name,
+        "local_param": local_param,
+        "time": str(datetime.datetime.now()),
+        "program_exception": repr(program_exception)
+    })

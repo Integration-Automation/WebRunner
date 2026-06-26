@@ -27,6 +27,8 @@ from je_web_runner.utils.exception.exceptions import WebRunnerException
 class TestDedupError(WebRunnerException):
     """Raised on malformed action files, bad embeddings, or bad config."""
 
+    __test__ = False  # domain exception, not a pytest test class
+
 
 # ---------- canonicalisation -------------------------------------------
 
@@ -75,7 +77,7 @@ def _arg_type_signature(args: List[Any]) -> str:
 def _string_kind(value: str) -> str:
     """Crude bucket: 'locator' / 'url' / 'short' / 'long' so canonical."""
     # S5332 ok: we are *classifying* a string, not making an HTTP request.
-    if value.startswith(("http://", "https://")):  # noqa: S5332
+    if value.startswith(("http://", "https://")):
         return "url"
     if value in {"id", "name", "xpath", "link text", "partial link text",
                  "tag name", "class name", "css selector"}:
@@ -167,7 +169,7 @@ Embedder = Callable[[str], Sequence[float]]
 def _cosine(a: Sequence[float], b: Sequence[float]) -> float:
     if len(a) != len(b) or not a:
         raise TestDedupError("embeddings must be non-empty and equal-length")
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(x * x for x in b))
     if norm_a == 0 or norm_b == 0:

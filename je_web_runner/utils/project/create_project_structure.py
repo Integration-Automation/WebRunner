@@ -32,7 +32,7 @@ def create_dir(dir_name: str) -> None:
     )
 
 
-def create_template(parent_name: str, project_path: str = None) -> None:
+def create_template(parent_name: str, project_path: str | None = None) -> None:
     """
     在專案目錄下建立範本檔案
     Create template files in the project directory
@@ -86,7 +86,7 @@ def create_template(parent_name: str, project_path: str = None) -> None:
             lock.release()
 
 
-def create_project_dir(project_path: str = None, parent_name: str = "WebRunner") -> None:
+def create_project_dir(project_path: str | None = None, parent_name: str = "WebRunner") -> None:
     """
     建立專案資料夾結構，並生成範本檔案
     Create project directory structure and generate template files

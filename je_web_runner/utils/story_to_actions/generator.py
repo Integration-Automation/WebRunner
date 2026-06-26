@@ -115,7 +115,7 @@ def build_prompt_text(prompt: StoryPrompt) -> str:
 # ---------- generation --------------------------------------------------
 
 # NOSONAR python:S5852 — input is a bounded LLM response (≤ context window)
-_JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(.+?)```", re.DOTALL)  # noqa: S5852
+_JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(.+?)```", re.DOTALL)
 
 
 def generate_actions(

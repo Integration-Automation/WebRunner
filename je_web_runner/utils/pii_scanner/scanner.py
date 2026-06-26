@@ -79,7 +79,7 @@ def _taiwan_id_check(value: str) -> bool:
     head = _TAIWAN_LETTER_VALUES[value[0]]
     digits = [head // 10, head % 10] + [int(c) for c in value[1:]]
     weights = [1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1]
-    total = sum(d * w for d, w in zip(digits, weights))
+    total = sum(d * w for d, w in zip(digits, weights, strict=False))
     return total % 10 == 0
 
 

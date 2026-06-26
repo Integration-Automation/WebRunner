@@ -26,7 +26,7 @@ class TestObjectRecord(object):
         """
         self.test_object_record_dict = {}
 
-    def save_test_object(self, test_object_name: str, object_type: str = None, **kwargs) -> None:
+    def save_test_object(self, test_object_name: str, object_type: str | None = None, **kwargs) -> None:
         """
         儲存新的測試物件
         Save a new test object.

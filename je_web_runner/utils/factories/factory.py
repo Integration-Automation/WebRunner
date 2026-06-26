@@ -63,7 +63,7 @@ def _faker_safe(method: str, fallback: Callable[[], Any]) -> Callable[[], Any]:
         try:
             from je_web_runner.utils.test_data.faker_integration import fake_value
             return fake_value(method)
-        except Exception:  # noqa: BLE001 — faker not installed or provider missing
+        except Exception:
             return fallback()
     return _value
 

@@ -203,7 +203,7 @@ def narrate_steps(
     narrations = payload.get("steps")
     if not isinstance(narrations, list):
         raise WalkthroughError("LLM payload missing 'steps' list")
-    for step, narration in zip(walkthrough.steps, narrations):
+    for step, narration in zip(walkthrough.steps, narrations, strict=False):
         step.narration = str(narration or "").strip()
     web_runner_logger.info(
         f"narrate_steps: title={walkthrough.title!r} steps={len(walkthrough.steps)}"

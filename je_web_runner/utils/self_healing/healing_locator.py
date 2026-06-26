@@ -96,7 +96,7 @@ def find_with_healing_selenium(name: str):
             )
             web_element_wrapper.current_web_element = element
             return element
-        except Exception as error:  # noqa: BLE001 — fall through to next candidate
+        except Exception as error:
             last_error = error
     raise HealingError(
         f"no candidate matched for {name!r}; last error: {last_error!r}"
@@ -127,7 +127,7 @@ def find_with_healing_playwright(name: str):
             )
             playwright_element_wrapper.current_element = element
             return element
-        except Exception as error:  # noqa: BLE001 — try the next candidate
+        except Exception as error:
             last_error = error
     raise HealingError(
         f"no Playwright candidate matched for {name!r}; last error: {last_error!r}"

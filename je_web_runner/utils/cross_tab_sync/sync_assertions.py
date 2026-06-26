@@ -57,7 +57,7 @@ def set_storage_value(
     )
     try:
         page.evaluate(script, {"key": key, "raw": payload})
-    except Exception as error:  # noqa: BLE001 — playwright surfaces many
+    except Exception as error:
         raise CrossTabSyncError(f"set_storage_value failed: {error!r}") from error
     web_runner_logger.info(f"set_storage_value: {storage}[{key}] = {payload[:80]}")
 
@@ -76,7 +76,7 @@ def get_storage_value(
     script = f"(key) => window.{storage}.getItem(key)"
     try:
         raw = page.evaluate(script, key)
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         raise CrossTabSyncError(f"get_storage_value failed: {error!r}") from error
     if raw is None:
         return None
@@ -150,7 +150,7 @@ def install_broadcast_recorder(page: Any, channel_name: str) -> None:
     """
     try:
         page.evaluate(script, channel_name)
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         raise CrossTabSyncError(
             f"install_broadcast_recorder failed: {error!r}"
         ) from error
@@ -172,7 +172,7 @@ def broadcast_message(page: Any, channel_name: str, data: Any) -> None:
     """
     try:
         page.evaluate(script, {"channelName": channel_name, "payload": data})
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         raise CrossTabSyncError(f"broadcast_message failed: {error!r}") from error
     web_runner_logger.info(
         f"broadcast_message: channel={channel_name!r}"
@@ -194,7 +194,7 @@ def collect_broadcast_messages(
     """
     try:
         result = page.evaluate(script, channel_name)
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         raise CrossTabSyncError(
             f"collect_broadcast_messages failed: {error!r}"
         ) from error
@@ -225,7 +225,7 @@ def wait_for_broadcast(
             data = entry.get("data") if isinstance(entry, dict) else None
             try:
                 hit = matcher(data)
-            except Exception:  # noqa: BLE001 — matcher should be cheap
+            except Exception:
                 hit = False
             if hit:
                 return entry
@@ -325,5 +325,5 @@ def post_message_to_page(
     script = "({ payload, origin }) => window.postMessage(payload, origin)"
     try:
         page.evaluate(script, {"payload": data, "origin": target_origin})
-    except Exception as error:  # noqa: BLE001
+    except Exception as error:
         raise CrossTabSyncError(f"post_message_to_page failed: {error!r}") from error

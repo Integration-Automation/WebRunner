@@ -79,9 +79,7 @@ class McpServer:
                 result = self._tools_call(params)
             elif method == "resources/list":
                 result = {"resources": []}
-            elif method == "ping":
-                result = {}
-            elif method == "shutdown":
+            elif method == "ping" or method == "shutdown":
                 result = {}
             elif method == "notifications/initialized":
                 self.initialized = True

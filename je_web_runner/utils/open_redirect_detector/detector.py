@@ -52,7 +52,7 @@ def default_payloads(attacker_host: str = "evil.example") -> List[RedirectPayloa
         # S5332 ok: these payloads INTENTIONALLY use http:// — the whole point
         # of an open-redirect probe is to see if the app redirects to them.
         RedirectPayload("absolute_http",
-                        f"http://{attacker_host}/",  # noqa: S5332
+                        f"http://{attacker_host}/",
                         attacker_host),
         RedirectPayload("absolute_https",
                         f"https://{attacker_host}/",

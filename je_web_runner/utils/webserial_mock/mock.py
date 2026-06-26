@@ -120,7 +120,7 @@ def assert_lines_written(
     chunks: Iterable[bytes], *, expected: Sequence[str], newline: str = "\n",
 ) -> None:
     joined = b"".join(chunks).decode("utf-8", errors="replace")
-    actual = [l for l in joined.split(newline) if l != ""]
+    actual = [line for line in joined.split(newline) if line != ""]
     if actual != list(expected):
         raise WebserialMockError(
             f"line mismatch: expected {list(expected)}, got {actual}"

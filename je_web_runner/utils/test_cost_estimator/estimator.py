@@ -23,6 +23,8 @@ from je_web_runner.utils.exception.exceptions import WebRunnerException
 class TestCostEstimatorError(WebRunnerException):
     """Raised on bad ledger / rate-card / inputs."""
 
+    __test__ = False  # domain exception, not a pytest test class
+
 
 # ---------- model -------------------------------------------------------
 

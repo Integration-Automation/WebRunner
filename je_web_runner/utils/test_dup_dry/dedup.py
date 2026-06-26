@@ -77,7 +77,7 @@ class PrefixOverlap:
 
 def _common_prefix(la: List[str], lb: List[str]) -> int:
     n = 0
-    for x, y in zip(la, lb):
+    for x, y in zip(la, lb, strict=False):
         if x != y:
             break
         n += 1

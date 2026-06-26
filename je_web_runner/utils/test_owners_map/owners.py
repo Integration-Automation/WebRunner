@@ -22,6 +22,8 @@ from je_web_runner.utils.exception.exceptions import WebRunnerException
 class TestOwnersMapError(WebRunnerException):
     """Raised on malformed CODEOWNERS / override file / lookup args."""
 
+    __test__ = False  # domain exception, not a pytest test class
+
 
 # ---------- CODEOWNERS parser -----------------------------------------
 
@@ -50,7 +52,7 @@ class OwnersFile:
 
 
 # NOSONAR python:S5852 — input is one CODEOWNERS line at a time (bounded)
-_COMMENT_STRIP_RE = re.compile(r"\s+#.*$")  # noqa: S5852
+_COMMENT_STRIP_RE = re.compile(r"\s+#.*$")
 
 
 def parse_codeowners(text: str) -> OwnersFile:

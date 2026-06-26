@@ -134,7 +134,7 @@ def _run_one_file(path: str) -> bool:
     failed = False
     try:
         execute_action(read_action_json(path))
-    except Exception:  # noqa: BLE001 — record and continue (or rethrow caller-side)
+    except Exception:
         failed = True
     new_records = test_record_instance.test_record_list[baseline:]
     if any(record.get(failure_marker, "None") != "None" for record in new_records):
