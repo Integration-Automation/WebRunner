@@ -86,14 +86,12 @@ def convert_rrweb_events(events: Sequence[dict[str, Any]]) -> ConversionResult: 
         raise SessionToTestError("rrweb events must be a list")
     stats = ConversionStats(input_events=len(events))
     actions: list[dict[str, Any]] = []
-    last_ts: int | None = None
 
     for event in events:
         if not isinstance(event, dict):
             stats.note_skip("non-dict event")
             continue
         kind = event.get("type")
-        timestamp = event.get("timestamp")
         if kind == _RRWEB_META and isinstance(event.get("data"), dict):
             url = event["data"].get("href")
             if isinstance(url, str) and url:
@@ -101,21 +99,13 @@ def convert_rrweb_events(events: Sequence[dict[str, Any]]) -> ConversionResult: 
                 stats.actions_emitted += 1
             else:
                 stats.note_skip("meta without href")
-            last_ts = timestamp
             continue
         if kind == _RRWEB_FULL_SNAPSHOT:
             stats.note_skip("full snapshot (no action)")
-            last_ts = timestamp
             continue
         if kind != _RRWEB_INCREMENTAL:
             stats.note_skip(f"unknown rrweb type {kind!r}")
             continue
-
-        # Track the latest timestamp so future iterations can compute deltas.
-        # We do not currently emit explicit waits for fast bursts; this hook is
-        # kept for future "WR_implicitly_wait" insertion logic.
-        if last_ts is not None and isinstance(timestamp, (int, float)):
-            last_ts = timestamp
 
         emitted = _convert_rrweb_incremental(event, stats)
         if emitted is not None:
