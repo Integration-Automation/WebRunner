@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -64,7 +64,7 @@ class MediaProfile:
     forced_colors: ForcedColors = ForcedColors.NONE
     contrast: Contrast = Contrast.NO_PREFERENCE
 
-    def to_cdp_features(self) -> List[Dict[str, str]]:
+    def to_cdp_features(self) -> list[dict[str, str]]:
         """Render the ``features`` payload for ``Emulation.setEmulatedMedia``."""
         return [
             {"name": "prefers-color-scheme", "value": self.color_scheme.value},
@@ -90,7 +90,7 @@ DEFAULT_PROFILES: Sequence[MediaProfile] = (
 
 # ---------- CDP integration --------------------------------------------
 
-CdpEmulate = Callable[[List[Dict[str, str]]], Any]
+CdpEmulate = Callable[[list[dict[str, str]]], Any]
 """Callable that pushes a features list to ``Emulation.setEmulatedMedia``."""
 
 
@@ -134,7 +134,7 @@ class ElementDiff:
     baseline_mode: str
     other_mode: str
     became_invisible: bool
-    changed_fields: Dict[str, Any] = field(default_factory=dict)
+    changed_fields: dict[str, Any] = field(default_factory=dict)
 
 
 def diff_snapshot(
@@ -143,11 +143,11 @@ def diff_snapshot(
     other_mode: str,
     baseline: StyleSnapshot,
     other: StyleSnapshot,
-) -> Optional[ElementDiff]:
+) -> ElementDiff | None:
     """Return a :class:`ElementDiff` iff the snapshots meaningfully differ."""
     if not isinstance(baseline, StyleSnapshot) or not isinstance(other, StyleSnapshot):
         raise ForcedColorsModeError("snapshots must be StyleSnapshot instances")
-    changed: Dict[str, Any] = {}
+    changed: dict[str, Any] = {}
     for field_name in asdict(baseline):
         a = getattr(baseline, field_name)
         b = getattr(other, field_name)
@@ -171,8 +171,8 @@ def diff_snapshot(
 class ModeAuditReport:
     """Roll-up returned by :func:`audit_modes`."""
 
-    diffs: List[ElementDiff] = field(default_factory=list)
-    invisible_in_modes: Dict[str, List[str]] = field(default_factory=dict)
+    diffs: list[ElementDiff] = field(default_factory=list)
+    invisible_in_modes: dict[str, list[str]] = field(default_factory=dict)
 
     def passed(self) -> bool:
         return not self.invisible_in_modes
@@ -180,7 +180,7 @@ class ModeAuditReport:
 
 def audit_modes(
     baseline_mode: str,
-    snapshots_by_mode: Dict[str, Dict[str, StyleSnapshot]],
+    snapshots_by_mode: dict[str, dict[str, StyleSnapshot]],
 ) -> ModeAuditReport:
     """
     Given per-mode { selector → StyleSnapshot }, diff every non-baseline

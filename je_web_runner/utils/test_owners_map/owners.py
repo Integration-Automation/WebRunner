@@ -14,7 +14,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List, Union
+from typing import Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -32,19 +32,19 @@ class CodeownersRule:
     """One CODEOWNERS line."""
 
     pattern: str
-    owners: List[str] = field(default_factory=list)
+    owners: list[str] = field(default_factory=list)
 
 
 @dataclass
 class OwnersFile:
     """Parsed CODEOWNERS body. Lookups use *last-matching* glob (Github)."""
 
-    rules: List[CodeownersRule] = field(default_factory=list)
+    rules: list[CodeownersRule] = field(default_factory=list)
 
-    def lookup(self, path: str) -> List[str]:
+    def lookup(self, path: str) -> list[str]:
         if not isinstance(path, str) or not path:
             raise TestOwnersMapError("path must be non-empty string")
-        winner: List[str] = []
+        winner: list[str] = []
         for rule in self.rules:
             if _matches(rule.pattern, path):
                 winner = list(rule.owners)
@@ -61,7 +61,7 @@ def parse_codeowners(text: str) -> OwnersFile:
         raise TestOwnersMapError(
             f"parse_codeowners expects str, got {type(text).__name__}"
         )
-    rules: List[CodeownersRule] = []
+    rules: list[CodeownersRule] = []
     for raw in text.splitlines():
         # Strip trailing comments (but keep '#' inside owners like @owner#1)
         line = _COMMENT_STRIP_RE.sub("", raw).strip()
@@ -74,7 +74,7 @@ def parse_codeowners(text: str) -> OwnersFile:
     return OwnersFile(rules=rules)
 
 
-def load_codeowners_file(path: Union[str, Path]) -> OwnersFile:
+def load_codeowners_file(path: str | Path) -> OwnersFile:
     """Read and parse a CODEOWNERS file from disk."""
     p = Path(path)
     if not p.exists():
@@ -107,9 +107,9 @@ class OwnersMap:
     """Combined CODEOWNERS + per-test override lookup."""
 
     codeowners: OwnersFile
-    overrides: Dict[str, List[str]] = field(default_factory=dict)
+    overrides: dict[str, list[str]] = field(default_factory=dict)
 
-    def owners_for(self, test_id: str) -> List[str]:
+    def owners_for(self, test_id: str) -> list[str]:
         if not isinstance(test_id, str) or not test_id:
             raise TestOwnersMapError("test_id must be non-empty string")
         if test_id in self.overrides:
@@ -117,7 +117,7 @@ class OwnersMap:
         return self.codeowners.lookup(test_id)
 
 
-def load_overrides(path: Union[str, Path]) -> Dict[str, List[str]]:
+def load_overrides(path: str | Path) -> dict[str, list[str]]:
     """
     Load a per-test override JSON file. Schema:
     ``{"<test_id>": ["@owner1", "@owner2"], ...}``.
@@ -131,7 +131,7 @@ def load_overrides(path: Union[str, Path]) -> Dict[str, List[str]]:
         raise TestOwnersMapError(f"overrides not JSON: {error}") from error
     if not isinstance(data, dict):
         raise TestOwnersMapError("overrides JSON must be an object")
-    out: Dict[str, List[str]] = {}
+    out: dict[str, list[str]] = {}
     for key, value in data.items():
         if not isinstance(key, str):
             continue
@@ -150,8 +150,8 @@ class OwnerAudit:
     """Outcome of :func:`audit_unowned`."""
 
     total_tests: int
-    unowned: List[str] = field(default_factory=list)
-    by_owner: Dict[str, int] = field(default_factory=dict)
+    unowned: list[str] = field(default_factory=list)
+    by_owner: dict[str, int] = field(default_factory=dict)
 
     def passed(self) -> bool:
         return not self.unowned

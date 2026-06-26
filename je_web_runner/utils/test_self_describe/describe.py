@@ -12,7 +12,7 @@ Then`` paragraph. Useful for:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -36,7 +36,7 @@ class StepSummary:
     sentence: str       # natural-language sentence
 
 
-def _step_kind(action: Dict[str, Any]) -> str:
+def _step_kind(action: dict[str, Any]) -> str:
     name = (action.get("action_name") or action.get("function") or "").lower()
     if name in _NAVIGATION:
         return "navigation"
@@ -53,7 +53,7 @@ def _step_kind(action: Dict[str, Any]) -> str:
     return "other"
 
 
-def _locator_phrase(action: Dict[str, Any]) -> str:
+def _locator_phrase(action: dict[str, Any]) -> str:
     target = (action.get("element_name") or action.get("test_object")
               or action.get("locator") or action.get("by_value") or "")
     if not target:
@@ -61,7 +61,7 @@ def _locator_phrase(action: Dict[str, Any]) -> str:
     return f'"{target}"'
 
 
-def _navigation_sentence(name: str, action: Dict[str, Any]) -> StepSummary:
+def _navigation_sentence(name: str, action: dict[str, Any]) -> StepSummary:
     url = action.get("url") or action.get("value") or ""
     if url:
         return StepSummary("Given", f"the user opens {url}")
@@ -70,7 +70,7 @@ def _navigation_sentence(name: str, action: Dict[str, Any]) -> StepSummary:
     return StepSummary("Given", "the user opens the application")
 
 
-def _wait_sentence(action: Dict[str, Any]) -> StepSummary:
+def _wait_sentence(action: dict[str, Any]) -> StepSummary:
     seconds = action.get("timeout") or action.get("value") or ""
     return StepSummary(
         "When",
@@ -99,7 +99,7 @@ _SIMPLE_TEMPLATES = {
 }
 
 
-def _sentence_for(action: Dict[str, Any]) -> StepSummary:
+def _sentence_for(action: dict[str, Any]) -> StepSummary:
     kind = _step_kind(action)
     name = (action.get("action_name") or action.get("function") or "").lower()
     if kind == "navigation":
@@ -112,12 +112,12 @@ def _sentence_for(action: Dict[str, Any]) -> StepSummary:
     return StepSummary("When", f"the user performs {name or 'a step'}")
 
 
-def summarise(actions: Sequence[Dict[str, Any]]) -> List[StepSummary]:
+def summarise(actions: Sequence[dict[str, Any]]) -> list[StepSummary]:
     if not isinstance(actions, (list, tuple)):
         raise SelfDescribeError("actions must be a sequence")
     if not actions:
         raise SelfDescribeError("actions must be non-empty")
-    out: List[StepSummary] = []
+    out: list[StepSummary] = []
     for i, action in enumerate(actions):
         if not isinstance(action, dict):
             raise SelfDescribeError(f"action #{i} is not a dict")
@@ -125,10 +125,10 @@ def summarise(actions: Sequence[Dict[str, Any]]) -> List[StepSummary]:
     return out
 
 
-def describe(actions: Sequence[Dict[str, Any]], title: str = "") -> str:
+def describe(actions: Sequence[dict[str, Any]], title: str = "") -> str:
     """Render Gherkin-style paragraph with optional title heading."""
     summaries = summarise(actions)
-    lines: List[str] = []
+    lines: list[str] = []
     if title:
         if not isinstance(title, str):
             raise SelfDescribeError("title must be string")

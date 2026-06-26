@@ -6,7 +6,7 @@ against a headers dict or a freshly fetched URL.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 
@@ -18,7 +18,7 @@ class SecurityHeadersError(WebRunnerException):
     """Raised on operational problems (e.g. fetch failure)."""
 
 
-_DEFAULT_REQUIRED: List[Dict[str, Any]] = [
+_DEFAULT_REQUIRED: list[dict[str, Any]] = [
     {"name": "Strict-Transport-Security", "rule": "presence_and_max_age"},
     {"name": "Content-Security-Policy", "rule": "presence"},
     {"name": "X-Frame-Options", "rule": "deny_or_sameorigin"},
@@ -28,7 +28,7 @@ _DEFAULT_REQUIRED: List[Dict[str, Any]] = [
 ]
 
 
-def _lookup_header(headers: Dict[str, str], name: str) -> Optional[str]:
+def _lookup_header(headers: dict[str, str], name: str) -> str | None:
     lower_name = name.lower()
     for header_name, value in headers.items():
         if header_name.lower() == lower_name:
@@ -36,7 +36,7 @@ def _lookup_header(headers: Dict[str, str], name: str) -> Optional[str]:
     return None
 
 
-def _check_rule(rule: str, value: Optional[str]) -> Optional[str]:
+def _check_rule(rule: str, value: str | None) -> str | None:
     """Return a problem string when the rule is violated; None if OK."""
     if value is None:
         return "missing"
@@ -59,9 +59,9 @@ def _check_rule(rule: str, value: Optional[str]) -> Optional[str]:
 
 
 def audit_headers(
-    headers: Dict[str, str],
-    required: Optional[List[Dict[str, Any]]] = None,
-) -> List[Dict[str, Any]]:
+    headers: dict[str, str],
+    required: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     """
     對 headers dict 套用規則表，回傳所有違反項目
     Apply the rule table against ``headers`` and return findings.
@@ -70,7 +70,7 @@ def audit_headers(
     :return: list of {header, rule, problem, value} dicts
     """
     rules = required if required is not None else _DEFAULT_REQUIRED
-    findings: List[Dict[str, Any]] = []
+    findings: list[dict[str, Any]] = []
     for rule in rules:
         header_name = rule["name"]
         value = _lookup_header(headers, header_name)
@@ -89,8 +89,8 @@ def audit_headers(
 def audit_url(
     url: str,
     timeout: int = 30,
-    required: Optional[List[Dict[str, Any]]] = None,
-) -> List[Dict[str, Any]]:
+    required: list[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     """
     GET ``url`` 並稽核回應 headers
     Issue a GET request and audit the response headers.

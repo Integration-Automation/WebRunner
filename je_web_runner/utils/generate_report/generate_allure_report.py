@@ -17,7 +17,7 @@ import time
 import uuid
 from pathlib import Path
 from threading import Lock
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exception_tags import cant_generate_json_report
 from je_web_runner.utils.exception.exceptions import WebRunnerGenerateJsonReportException
@@ -45,7 +45,7 @@ def _parse_record_time(value: str) -> int:
     return int(timestamp * 1000 + micro_seconds // 1000)
 
 
-def _step_from_record(record: Dict[str, Any]) -> Dict[str, Any]:
+def _step_from_record(record: dict[str, Any]) -> dict[str, Any]:
     failed = record.get("program_exception", _NO_EXCEPTION_MARKER) != _NO_EXCEPTION_MARKER
     start = _parse_record_time(record.get("time", ""))
     return {
@@ -63,7 +63,7 @@ def _step_from_record(record: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def generate_allure() -> List[Dict[str, Any]]:
+def generate_allure() -> list[dict[str, Any]]:
     """
     將目前的 record list 包成單一 Allure test case
     Wrap the current record list into a single Allure test case (with one
@@ -95,7 +95,7 @@ def generate_allure() -> List[Dict[str, Any]]:
     return [case]
 
 
-def generate_allure_report(output_dir: str = "allure-results") -> List[str]:
+def generate_allure_report(output_dir: str = "allure-results") -> list[str]:
     """
     把 test cases 寫成 ``<uuid>-result.json``
     Write the generated test cases as ``<uuid>-result.json`` files.
@@ -107,7 +107,7 @@ def generate_allure_report(output_dir: str = "allure-results") -> List[str]:
     cases = generate_allure()
     target_dir = Path(output_dir)
     target_dir.mkdir(parents=True, exist_ok=True)
-    written: List[str] = []
+    written: list[str] = []
     for case in cases:
         out_path = target_dir / f"{case['uuid']}-result.json"
         try:

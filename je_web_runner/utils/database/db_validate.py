@@ -12,7 +12,7 @@ UI flow really wrote to the backing store.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -35,8 +35,8 @@ def _require_sqlalchemy():
 def db_query(
     connection_url: str,
     sql: str,
-    params: Optional[Dict[str, Any]] = None,
-) -> List[Dict[str, Any]]:
+    params: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     """
     對 ``connection_url`` 執行帶 bound params 的 SQL，回傳結果（list of dict）
     Run a parameterised SQL statement against ``connection_url`` and return
@@ -58,7 +58,7 @@ def db_assert_count(
     connection_url: str,
     sql: str,
     expected: int,
-    params: Optional[Dict[str, Any]] = None,
+    params: dict[str, Any] | None = None,
 ) -> None:
     """斷言 SQL 回傳列數等於 ``expected``。"""
     rows = db_query(connection_url, sql, params=params)
@@ -74,7 +74,7 @@ def db_assert_value(
     column: str,
     expected: Any,
     row_index: int = 0,
-    params: Optional[Dict[str, Any]] = None,
+    params: dict[str, Any] | None = None,
 ) -> None:
     """斷言指定列、指定欄位的值等於 ``expected``。"""
     rows = db_query(connection_url, sql, params=params)
@@ -99,7 +99,7 @@ def db_assert_value(
 def db_assert_exists(
     connection_url: str,
     sql: str,
-    params: Optional[Dict[str, Any]] = None,
+    params: dict[str, Any] | None = None,
 ) -> None:
     """斷言查詢回傳至少一列。"""
     rows = db_query(connection_url, sql, params=params)
@@ -110,7 +110,7 @@ def db_assert_exists(
 def db_assert_empty(
     connection_url: str,
     sql: str,
-    params: Optional[Dict[str, Any]] = None,
+    params: dict[str, Any] | None = None,
 ) -> None:
     """斷言查詢沒有任何結果。"""
     rows = db_query(connection_url, sql, params=params)

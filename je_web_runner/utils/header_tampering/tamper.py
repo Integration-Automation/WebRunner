@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Pattern
+from typing import Any, Pattern
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -28,8 +28,8 @@ class HeaderRule:
     name: str  # diagnostic label
     header: str
     action: str  # "set" | "remove" | "append"
-    value: Optional[str] = None
-    url_match: Optional[Pattern] = None
+    value: str | None = None
+    url_match: Pattern | None = None
 
     def __post_init__(self) -> None:
         if not self.header:
@@ -51,10 +51,10 @@ def _matches(rule: HeaderRule, url: str) -> bool:
 
 
 def apply_to_request_headers(
-    headers: Dict[str, str],
+    headers: dict[str, str],
     url: str,
-    rules: List[HeaderRule],
-) -> Dict[str, str]:
+    rules: list[HeaderRule],
+) -> dict[str, str]:
     """Return a new headers dict with all matching rules applied."""
     next_headers = dict(headers)
     for rule in rules:
@@ -75,11 +75,11 @@ def apply_to_request_headers(
 class HeaderTampering:
     """Track a list of rules and attach to a Playwright page."""
 
-    rules: List[HeaderRule] = field(default_factory=list)
+    rules: list[HeaderRule] = field(default_factory=list)
 
     def set_header(self, header: str, value: str,
-                   url_substring: Optional[str] = None,
-                   name: Optional[str] = None) -> HeaderRule:
+                   url_substring: str | None = None,
+                   name: str | None = None) -> HeaderRule:
         rule = HeaderRule(
             name=name or f"set:{header}",
             header=header,
@@ -91,7 +91,7 @@ class HeaderTampering:
         return rule
 
     def remove_header(self, header: str,
-                      url_substring: Optional[str] = None) -> HeaderRule:
+                      url_substring: str | None = None) -> HeaderRule:
         rule = HeaderRule(
             name=f"remove:{header}",
             header=header,

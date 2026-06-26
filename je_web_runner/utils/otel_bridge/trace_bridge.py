@@ -18,7 +18,7 @@ from __future__ import annotations
 import secrets
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Iterator
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -38,13 +38,13 @@ class TraceContext:
     span_id: str  # 16 hex chars
     sampled: bool = True
     version: str = "00"
-    tracestate: Optional[str] = None
+    tracestate: str | None = None
 
     def to_traceparent(self) -> str:
         flags = "01" if self.sampled else "00"
         return f"{self.version}-{self.trace_id}-{self.span_id}-{flags}"
 
-    def as_headers(self) -> Dict[str, str]:
+    def as_headers(self) -> dict[str, str]:
         headers = {"traceparent": self.to_traceparent()}
         if self.tracestate:
             headers["tracestate"] = self.tracestate
@@ -98,7 +98,7 @@ def parse_traceparent(header: str) -> TraceContext:
 
 # ---------- pull context from active OpenTelemetry span ------------------
 
-def current_otel_context() -> Optional[TraceContext]:
+def current_otel_context() -> TraceContext | None:
     """
     若有 active OTel span 就把它包成 TraceContext；沒 OTel 或無 active span 回 None。
     Return the active OpenTelemetry span's context as a :class:`TraceContext`
@@ -208,7 +208,7 @@ def bridged_span_selenium(
     driver: Any,
     span_name: str,
     *,
-    fallback_context: Optional[TraceContext] = None,
+    fallback_context: TraceContext | None = None,
 ) -> Iterator[TraceContext]:
     """
     用 OTel span 包住一段 selenium 動作，並把 traceparent 注入瀏覽器。
@@ -217,7 +217,7 @@ def bridged_span_selenium(
     If OTel isn't installed, ``fallback_context`` is used (or a fresh
     synthetic context if both are missing).
     """
-    span_ctx: Optional[Any] = None
+    span_ctx: Any | None = None
     try:
         from opentelemetry import trace  # type: ignore[import-not-found]
         tracer = trace.get_tracer("je_web_runner.otel_bridge")
@@ -243,10 +243,10 @@ def bridged_span_playwright(
     page: Any,
     span_name: str,
     *,
-    fallback_context: Optional[TraceContext] = None,
+    fallback_context: TraceContext | None = None,
 ) -> Iterator[TraceContext]:
     """Playwright twin of :func:`bridged_span_selenium`."""
-    span_ctx: Optional[Any] = None
+    span_ctx: Any | None = None
     try:
         from opentelemetry import trace  # type: ignore[import-not-found]
         tracer = trace.get_tracer("je_web_runner.otel_bridge")
@@ -272,9 +272,9 @@ def bridged_span_playwright(
 def trace_link(
     context: TraceContext,
     *,
-    jaeger_base: Optional[str] = None,
-    tempo_base: Optional[str] = None,
-) -> Optional[str]:
+    jaeger_base: str | None = None,
+    tempo_base: str | None = None,
+) -> str | None:
     """
     給定 trace context 與後端 base URL，回傳可點擊的 trace 連結。
     Build a direct UI link to the trace in Jaeger / Tempo. Returns the

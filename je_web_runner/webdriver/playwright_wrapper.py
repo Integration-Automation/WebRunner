@@ -17,7 +17,7 @@ webdriver_manager bootstrap intentionally do not exist here).
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -58,7 +58,7 @@ _RUNTIME_NOT_STARTED = "Playwright runtime not started"
 _CLOCK_API_UNAVAILABLE = "Playwright clock API unavailable; upgrade Playwright"
 
 
-def _record(name: str, params, error: Optional[Exception]) -> None:
+def _record(name: str, params, error: Exception | None) -> None:
     record_action_to_list(f"Playwright {name}", params, error)
 
 
@@ -69,11 +69,11 @@ class PlaywrightWrapper:
     one context / multiple pages.
     """
 
-    def __init__(self, element_wrapper: Optional[PlaywrightElementWrapper] = None) -> None:
+    def __init__(self, element_wrapper: PlaywrightElementWrapper | None = None) -> None:
         self._playwright = None
         self._browser = None
         self._context = None
-        self._pages: List[Any] = []
+        self._pages: list[Any] = []
         self._page_index: int = -1
         self.element_wrapper = element_wrapper or playwright_element_wrapper
 
@@ -101,7 +101,7 @@ class PlaywrightWrapper:
         self,
         browser: str = "chromium",
         headless: bool = True,
-        record_har_path: Optional[str] = None,
+        record_har_path: str | None = None,
         record_har_content: str = "omit",
         **launch_options: Any,
     ) -> None:
@@ -128,9 +128,9 @@ class PlaywrightWrapper:
 
     def _build_context(
         self,
-        record_har_path: Optional[str] = None,
+        record_har_path: str | None = None,
         record_har_content: str = "omit",
-        extra_options: Optional[dict] = None,
+        extra_options: dict | None = None,
     ):
         """Create a context, optionally configured with HAR recording / extras."""
         kwargs = dict(extra_options or {})
@@ -185,19 +185,19 @@ class PlaywrightWrapper:
         self,
         latitude: float,
         longitude: float,
-        accuracy: Optional[float] = None,
+        accuracy: float | None = None,
     ) -> None:
         """Set the page geolocation; remember to grant ``geolocation`` permission first."""
         web_runner_logger.info(f"playwright set_geolocation: {latitude}, {longitude}")
-        coords: Dict[str, float] = {"latitude": latitude, "longitude": longitude}
+        coords: dict[str, float] = {"latitude": latitude, "longitude": longitude}
         if accuracy is not None:
             coords["accuracy"] = accuracy
         self.context.set_geolocation(coords)
 
     def grant_permissions(
         self,
-        permissions: List[str],
-        origin: Optional[str] = None,
+        permissions: list[str],
+        origin: str | None = None,
     ) -> None:
         """Grant browser permissions (e.g. ``geolocation`` / ``clipboard-read``)."""
         if origin is None:
@@ -223,7 +223,7 @@ class PlaywrightWrapper:
         self._pages = [page]
         self._page_index = 0
 
-    def clock_install(self, fake_now_ms: Optional[float] = None) -> None:
+    def clock_install(self, fake_now_ms: float | None = None) -> None:
         """Install Playwright's clock (requires Playwright 1.45+)."""
         clock = getattr(self.context, "clock", None)
         if clock is None:
@@ -248,7 +248,7 @@ class PlaywrightWrapper:
     def set_locale(
         self,
         locale: str,
-        accept_language: Optional[str] = None,
+        accept_language: str | None = None,
     ) -> None:
         """
         切換 ``locale`` 與 ``Accept-Language``（重建 context）
@@ -258,7 +258,7 @@ class PlaywrightWrapper:
         web_runner_logger.info(f"playwright set_locale: {locale}")
         if self._browser is None:
             raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        options: Dict[str, Any] = {"locale": locale}
+        options: dict[str, Any] = {"locale": locale}
         if accept_language:
             options["extra_http_headers"] = {"Accept-Language": accept_language}
         if self._context is not None:
@@ -268,7 +268,7 @@ class PlaywrightWrapper:
         self._pages = [page]
         self._page_index = 0
 
-    def list_device_names(self) -> List[str]:
+    def list_device_names(self) -> list[str]:
         """Return all device names known to the active Playwright runtime."""
         if self._playwright is None:
             raise PlaywrightBackendError(_RUNTIME_NOT_STARTED)
@@ -336,7 +336,7 @@ class PlaywrightWrapper:
             raise PlaywrightBackendError(f"page index {index} out of range")
         self._page_index = index
 
-    def close_page(self, index: Optional[int] = None) -> None:
+    def close_page(self, index: int | None = None) -> None:
         target_index = self._page_index if index is None else index
         if target_index < 0 or target_index >= len(self._pages):
             raise PlaywrightBackendError(f"page index {target_index} out of range")
@@ -392,7 +392,7 @@ class PlaywrightWrapper:
         web_runner_logger.info(f"playwright find_element: {selector}")
         return self.page.query_selector(selector)
 
-    def find_elements(self, selector: str) -> List[Any]:
+    def find_elements(self, selector: str) -> list[Any]:
         web_runner_logger.info(f"playwright find_elements: {selector}")
         return self.page.query_selector_all(selector)
 
@@ -442,7 +442,7 @@ class PlaywrightWrapper:
     def uncheck(self, selector: str) -> None:
         self.page.uncheck(selector)
 
-    def select_option(self, selector: str, value: Any) -> List[str]:
+    def select_option(self, selector: str, value: Any) -> list[str]:
         return self.page.select_option(selector, value)
 
     def drag_and_drop(self, source_selector: str, target_selector: str, **options: Any) -> None:
@@ -460,10 +460,10 @@ class PlaywrightWrapper:
 
     # ----- cookies -----------------------------------------------------
 
-    def get_cookies(self) -> List[dict]:
+    def get_cookies(self) -> list[dict]:
         return self.context.cookies()
 
-    def add_cookies(self, cookies: List[dict]) -> None:
+    def add_cookies(self, cookies: list[dict]) -> None:
         self.context.add_cookies(cookies)
 
     def clear_cookies(self) -> None:
@@ -480,12 +480,12 @@ class PlaywrightWrapper:
 
     # ----- waits -------------------------------------------------------
 
-    def wait_for_selector(self, selector: str, timeout: Optional[float] = None, state: str = "visible"):
+    def wait_for_selector(self, selector: str, timeout: float | None = None, state: str = "visible"):
         if timeout is None:
             return self.page.wait_for_selector(selector, state=state)
         return self.page.wait_for_selector(selector, timeout=timeout, state=state)
 
-    def wait_for_load_state(self, state: str = "load", timeout: Optional[float] = None) -> None:
+    def wait_for_load_state(self, state: str = "load", timeout: float | None = None) -> None:
         if timeout is None:
             self.page.wait_for_load_state(state)
         else:
@@ -494,7 +494,7 @@ class PlaywrightWrapper:
     def wait_for_timeout(self, timeout_ms: float) -> None:
         self.page.wait_for_timeout(timeout_ms)
 
-    def wait_for_url(self, url: str, timeout: Optional[float] = None) -> None:
+    def wait_for_url(self, url: str, timeout: float | None = None) -> None:
         if timeout is None:
             self.page.wait_for_url(url)
         else:
@@ -505,7 +505,7 @@ class PlaywrightWrapper:
     def set_viewport_size(self, width: int, height: int) -> None:
         self.page.set_viewport_size({"width": width, "height": height})
 
-    def viewport_size(self) -> Optional[dict]:
+    def viewport_size(self) -> dict | None:
         return self.page.viewport_size
 
     # ----- mouse / keyboard -------------------------------------------
@@ -536,7 +536,7 @@ class PlaywrightWrapper:
 
     # ----- frames ------------------------------------------------------
 
-    def frames(self) -> List[Any]:
+    def frames(self) -> list[Any]:
         return list(self.page.frames)
 
     def main_frame(self) -> Any:
@@ -630,15 +630,15 @@ def pw_stop_emulate() -> None:
     playwright_wrapper_instance.stop_emulation()
 
 
-def pw_list_devices() -> List[str]:
+def pw_list_devices() -> list[str]:
     return playwright_wrapper_instance.list_device_names()
 
 
-def pw_set_geolocation(latitude: float, longitude: float, accuracy: Optional[float] = None) -> None:
+def pw_set_geolocation(latitude: float, longitude: float, accuracy: float | None = None) -> None:
     playwright_wrapper_instance.set_geolocation(latitude, longitude, accuracy=accuracy)
 
 
-def pw_grant_permissions(permissions: List[str], origin: Optional[str] = None) -> None:
+def pw_grant_permissions(permissions: list[str], origin: str | None = None) -> None:
     playwright_wrapper_instance.grant_permissions(permissions, origin=origin)
 
 
@@ -650,7 +650,7 @@ def pw_set_timezone(timezone_id: str) -> None:
     playwright_wrapper_instance.set_timezone(timezone_id)
 
 
-def pw_clock_install(fake_now_ms: Optional[float] = None) -> None:
+def pw_clock_install(fake_now_ms: float | None = None) -> None:
     playwright_wrapper_instance.clock_install(fake_now_ms)
 
 
@@ -662,7 +662,7 @@ def pw_clock_run_for(duration_ms: float) -> None:
     playwright_wrapper_instance.clock_run_for(duration_ms)
 
 
-def pw_set_locale(locale: str, accept_language: Optional[str] = None) -> None:
+def pw_set_locale(locale: str, accept_language: str | None = None) -> None:
     playwright_wrapper_instance.set_locale(locale, accept_language=accept_language)
 
 
@@ -714,7 +714,7 @@ def pw_switch_to_page(index: int) -> None:
     playwright_wrapper_instance.switch_to_page(index)
 
 
-def pw_close_page(index: Optional[int] = None) -> None:
+def pw_close_page(index: int | None = None) -> None:
     playwright_wrapper_instance.close_page(index)
 
 
@@ -726,7 +726,7 @@ def pw_find_element(selector: str):
     return playwright_wrapper_instance.find_element(selector)
 
 
-def pw_find_elements(selector: str) -> List[Any]:
+def pw_find_elements(selector: str) -> list[Any]:
     return playwright_wrapper_instance.find_elements(selector)
 
 
@@ -770,7 +770,7 @@ def pw_uncheck(selector: str) -> None:
     playwright_wrapper_instance.uncheck(selector)
 
 
-def pw_select_option(selector: str, value: Any) -> List[str]:
+def pw_select_option(selector: str, value: Any) -> list[str]:
     return playwright_wrapper_instance.select_option(selector, value)
 
 
@@ -782,11 +782,11 @@ def pw_evaluate(expression: str, arg: Any = None):
     return playwright_wrapper_instance.evaluate(expression, arg)
 
 
-def pw_get_cookies() -> List[dict]:
+def pw_get_cookies() -> list[dict]:
     return playwright_wrapper_instance.get_cookies()
 
 
-def pw_add_cookies(cookies: List[dict]) -> None:
+def pw_add_cookies(cookies: list[dict]) -> None:
     playwright_wrapper_instance.add_cookies(cookies)
 
 
@@ -802,11 +802,11 @@ def pw_screenshot_bytes(full_page: bool = False) -> bytes:
     return playwright_wrapper_instance.screenshot_bytes(full_page=full_page)
 
 
-def pw_wait_for_selector(selector: str, timeout: Optional[float] = None, state: str = "visible"):
+def pw_wait_for_selector(selector: str, timeout: float | None = None, state: str = "visible"):
     return playwright_wrapper_instance.wait_for_selector(selector, timeout=timeout, state=state)
 
 
-def pw_wait_for_load_state(state: str = "load", timeout: Optional[float] = None) -> None:
+def pw_wait_for_load_state(state: str = "load", timeout: float | None = None) -> None:
     playwright_wrapper_instance.wait_for_load_state(state, timeout=timeout)
 
 
@@ -814,7 +814,7 @@ def pw_wait_for_timeout(timeout_ms: float) -> None:
     playwright_wrapper_instance.wait_for_timeout(timeout_ms)
 
 
-def pw_wait_for_url(url: str, timeout: Optional[float] = None) -> None:
+def pw_wait_for_url(url: str, timeout: float | None = None) -> None:
     playwright_wrapper_instance.wait_for_url(url, timeout=timeout)
 
 
@@ -822,7 +822,7 @@ def pw_set_viewport_size(width: int, height: int) -> None:
     playwright_wrapper_instance.set_viewport_size(width, height)
 
 
-def pw_viewport_size() -> Optional[dict]:
+def pw_viewport_size() -> dict | None:
     return playwright_wrapper_instance.viewport_size()
 
 

@@ -12,7 +12,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -41,7 +41,7 @@ class _Bucket:
         return self.total_duration / self.total if self.total else 0.0
 
 
-def compute_trend(ledger_path: str) -> Dict[str, Any]:
+def compute_trend(ledger_path: str) -> dict[str, Any]:
     """
     依日期分桶，回傳 ``{daily: [...], totals: {...}}``
     Bucket the ledger by day and return per-day pass / fail / duration.
@@ -56,7 +56,7 @@ def compute_trend(ledger_path: str) -> Dict[str, Any]:
     runs = data.get("runs")
     if not isinstance(runs, list):
         raise TrendDashboardError("ledger missing 'runs' list")
-    buckets: Dict[str, _Bucket] = defaultdict(lambda: _Bucket(label="?"))
+    buckets: dict[str, _Bucket] = defaultdict(lambda: _Bucket(label="?"))
     for entry in runs:
         if not isinstance(entry, dict):
             continue
@@ -96,7 +96,7 @@ def compute_trend(ledger_path: str) -> Dict[str, Any]:
     }
 
 
-def _bucket_label(timestamp: Optional[str]) -> str:
+def _bucket_label(timestamp: str | None) -> str:
     if not isinstance(timestamp, str):
         return "unknown"
     try:
@@ -105,10 +105,10 @@ def _bucket_label(timestamp: Optional[str]) -> str:
         return timestamp[:10] if len(timestamp) >= 10 else "unknown"
 
 
-def render_html(trend: Dict[str, Any], title: str = "WebRunner trend") -> str:
+def render_html(trend: dict[str, Any], title: str = "WebRunner trend") -> str:
     """Render a self-contained HTML dashboard from :func:`compute_trend`."""
     daily = trend.get("daily") or []
-    rows: List[str] = []
+    rows: list[str] = []
     for entry in daily:
         rows.append(
             f"<tr><td>{_html.escape(entry['label'])}</td>"
@@ -140,7 +140,7 @@ def render_html(trend: Dict[str, Any], title: str = "WebRunner trend") -> str:
     return body
 
 
-def _render_pass_rate_svg(daily: List[Dict[str, Any]]) -> str:
+def _render_pass_rate_svg(daily: list[dict[str, Any]]) -> str:
     if not daily:
         return "<p><em>No runs recorded yet.</em></p>"
     width = 720
@@ -172,7 +172,7 @@ def _render_pass_rate_svg(daily: List[Dict[str, Any]]) -> str:
     )
 
 
-def write_dashboard(trend: Dict[str, Any], output_path: str,
+def write_dashboard(trend: dict[str, Any], output_path: str,
                     title: str = "WebRunner trend") -> Path:
     text = render_html(trend, title=title)
     target = Path(output_path)

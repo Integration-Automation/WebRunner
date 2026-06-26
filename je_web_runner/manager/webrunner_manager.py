@@ -1,4 +1,3 @@
-from typing import List, Union
 
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -12,7 +11,7 @@ from je_web_runner.utils.test_record.test_record_class import record_action_to_l
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 
-class WebdriverManager(object):
+class WebdriverManager:
     def __init__(self, **kwargs):
         # 當前 WebDriver 實例清單
         # List of current WebDriver instances
@@ -28,9 +27,9 @@ class WebdriverManager(object):
 
         # 當前使用的 WebDriver
         # Current active WebDriver
-        self.current_webdriver: Union[WebDriver, None] = None
+        self.current_webdriver: WebDriver | None = None
 
-    def new_driver(self, webdriver_name: str, options: List[str] | None = None, **kwargs) -> None:
+    def new_driver(self, webdriver_name: str, options: list[str] | None = None, **kwargs) -> None:
         """
         建立新的 WebDriver 實例
         Create a new WebDriver instance

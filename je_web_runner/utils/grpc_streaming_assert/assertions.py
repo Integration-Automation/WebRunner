@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -45,7 +45,7 @@ class StatusCode(str, Enum):
 @dataclass
 class StreamFrame:
     payload_size: int = 0
-    body: Dict[str, Any] = field(default_factory=dict)
+    body: dict[str, Any] = field(default_factory=dict)
     ts_ms: float = 0
     direction: str = "in"   # "in" (server → client) | "out"
 
@@ -54,20 +54,20 @@ class StreamFrame:
 class StreamRecord:
     method: str
     mode: Mode
-    frames: List[StreamFrame] = field(default_factory=list)
+    frames: list[StreamFrame] = field(default_factory=list)
     status: StatusCode = StatusCode.OK
-    half_closed_ts_ms: Optional[float] = None
+    half_closed_ts_ms: float | None = None
     duration_ms: float = 0
 
     @property
-    def inbound(self) -> List[StreamFrame]:
+    def inbound(self) -> list[StreamFrame]:
         return [f for f in self.frames if f.direction == "in"]
 
     @property
-    def outbound(self) -> List[StreamFrame]:
+    def outbound(self) -> list[StreamFrame]:
         return [f for f in self.frames if f.direction == "out"]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             **asdict(self),
             "mode": self.mode.value,

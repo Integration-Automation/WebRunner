@@ -16,7 +16,7 @@ import re
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -57,14 +57,14 @@ class Finding:
     template: str
     note: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "severity": self.severity.value}
 
 
-def parse_rows(payload: Any) -> List[QueryRow]:
+def parse_rows(payload: Any) -> list[QueryRow]:
     if not isinstance(payload, list):
         raise GraphqlNPlus1Error("payload must be a list of dicts")
-    out: List[QueryRow] = []
+    out: list[QueryRow] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -77,14 +77,14 @@ def parse_rows(payload: Any) -> List[QueryRow]:
     return out
 
 
-def detect(rows: Sequence[QueryRow], threshold: int = 5) -> List[Finding]:
+def detect(rows: Sequence[QueryRow], threshold: int = 5) -> list[Finding]:
     """Find SQL templates repeated >= ``threshold`` times under one field."""
     if threshold < 2:
         raise GraphqlNPlus1Error("threshold must be >= 2")
-    per_field: Dict[str, Counter] = defaultdict(Counter)
+    per_field: dict[str, Counter] = defaultdict(Counter)
     for row in rows:
         per_field[row.parent_field][row.sql_template] += 1
-    findings: List[Finding] = []
+    findings: list[Finding] = []
     for field_name, counter in per_field.items():
         for template, count in counter.items():
             if count >= threshold:
@@ -102,12 +102,12 @@ def detect(rows: Sequence[QueryRow], threshold: int = 5) -> List[Finding]:
     return findings
 
 
-def detect_cartesian(rows: Sequence[QueryRow]) -> List[Finding]:
+def detect_cartesian(rows: Sequence[QueryRow]) -> list[Finding]:
     """Flag fields whose total queries > parent_field's queries * 10."""
     per_field: Counter = Counter()
     for row in rows:
         per_field[row.parent_field] += 1
-    findings: List[Finding] = []
+    findings: list[Finding] = []
     if not per_field:
         return findings
     parent_count = min(per_field.values())

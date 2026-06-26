@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -21,7 +21,7 @@ class LocatorScore:
     strategy: str
     value: str
     score: int
-    reasons: List[str]
+    reasons: list[str]
 
 
 _TEST_ID_HINTS = ("data-testid", "data-test", "data-qa", "data-cy")
@@ -29,7 +29,7 @@ _NTH_PATTERN = re.compile(r":nth-child|:nth-of-type")
 _DYNAMIC_CLASS_PATTERN = re.compile(r"\b[a-z]+-[A-Za-z0-9]{6,}\b")
 
 
-def _score_id(value: str) -> Tuple[int, List[str]]:
+def _score_id(value: str) -> tuple[int, list[str]]:
     if not value:
         return 0, ["empty id"]
     if any(ch.isdigit() for ch in value) and len(value) >= 12:
@@ -37,14 +37,14 @@ def _score_id(value: str) -> Tuple[int, List[str]]:
     return 95, []
 
 
-def _score_test_id_attr(value: str) -> Tuple[int, List[str]]:
+def _score_test_id_attr(value: str) -> tuple[int, list[str]]:
     if any(hint in value for hint in _TEST_ID_HINTS):
         return 90, []
     return 75, ["no data-test* attribute"]
 
 
-def _score_css(value: str) -> Tuple[int, List[str]]:
-    reasons: List[str] = []
+def _score_css(value: str) -> tuple[int, list[str]]:
+    reasons: list[str] = []
     score = 75
     depth = value.count(">") + value.count(" ")
     if depth >= 4:
@@ -61,8 +61,8 @@ def _score_css(value: str) -> Tuple[int, List[str]]:
     return max(20, score), reasons
 
 
-def _score_xpath(value: str) -> Tuple[int, List[str]]:
-    reasons: List[str] = []
+def _score_xpath(value: str) -> tuple[int, list[str]]:
+    reasons: list[str] = []
     score = 55
     depth = value.count("/")
     if depth >= 5:
@@ -80,7 +80,7 @@ def _score_xpath(value: str) -> Tuple[int, List[str]]:
     return max(15, min(score, 90)), reasons
 
 
-def _score_text(value: str) -> Tuple[int, List[str]]:
+def _score_text(value: str) -> tuple[int, list[str]]:
     score = 35 if value else 0
     reasons = ["text-only locator (locale-fragile)"]
     return score, reasons
@@ -124,12 +124,12 @@ def score_locator(strategy: str, value: str) -> LocatorScore:
     return LocatorScore(strategy=strategy, value=value, score=score, reasons=reasons)
 
 
-def score_action_locators(actions: Iterable[Any]) -> List[Dict[str, Any]]:
+def score_action_locators(actions: Iterable[Any]) -> list[dict[str, Any]]:
     """
     從 action JSON 中抽取 ``{test_object_name, object_type}`` 評分
     Walk an action list and score every locator definition encountered.
     """
-    findings: List[Dict[str, Any]] = []
+    findings: list[dict[str, Any]] = []
     for index, action in enumerate(actions):
         if not isinstance(action, list) or not action:
             continue
@@ -153,7 +153,7 @@ def score_action_locators(actions: Iterable[Any]) -> List[Dict[str, Any]]:
     return findings
 
 
-def _extract_kwargs(action: List[Any]) -> Dict[str, Any]:
+def _extract_kwargs(action: list[Any]) -> dict[str, Any]:
     if len(action) >= 3 and isinstance(action[2], dict):
         return action[2]
     if len(action) >= 2 and isinstance(action[1], dict):
@@ -161,13 +161,13 @@ def _extract_kwargs(action: List[Any]) -> Dict[str, Any]:
     return {}
 
 
-def weakest(findings: Iterable[Dict[str, Any]], threshold: int = 50) -> List[Dict[str, Any]]:
+def weakest(findings: Iterable[dict[str, Any]], threshold: int = 50) -> list[dict[str, Any]]:
     """Return entries scoring at or below ``threshold``."""
     return [f for f in findings if isinstance(f.get("score"), int) and f["score"] <= threshold]
 
 
-def assert_strength(findings: Iterable[Dict[str, Any]], minimum: int = 50,
-                    raise_on_fail: bool = True) -> Optional[List[Dict[str, Any]]]:
+def assert_strength(findings: Iterable[dict[str, Any]], minimum: int = 50,
+                    raise_on_fail: bool = True) -> list[dict[str, Any]] | None:
     """Raise (or return) entries below ``minimum``."""
     bad = weakest(findings, threshold=minimum - 1)
     if bad and raise_on_fail:

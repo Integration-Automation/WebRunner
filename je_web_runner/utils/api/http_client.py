@@ -11,7 +11,7 @@ browser automation in the same script.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -24,7 +24,7 @@ class HttpAssertionError(WebRunnerException):
 
 
 _DEFAULT_TIMEOUT = 30
-_state: Dict[str, Any] = {"last_response": None}
+_state: dict[str, Any] = {"last_response": None}
 
 
 def _allowed_url(url: str) -> str:
@@ -35,9 +35,9 @@ def _allowed_url(url: str) -> str:
     return url
 
 
-def _summarise(response: requests.Response) -> Dict[str, Any]:
+def _summarise(response: requests.Response) -> dict[str, Any]:
     """Return a JSON-friendly dict capturing the response state we care about."""
-    summary: Dict[str, Any] = {
+    summary: dict[str, Any] = {
         "status_code": response.status_code,
         "headers": dict(response.headers),
         "elapsed_ms": int(response.elapsed.total_seconds() * 1000),
@@ -55,12 +55,12 @@ def http_request(
     method: str,
     url: str,
     timeout: int = _DEFAULT_TIMEOUT,
-    headers: Optional[Dict[str, str]] = None,
-    params: Optional[Dict[str, Any]] = None,
+    headers: dict[str, str] | None = None,
+    params: dict[str, Any] | None = None,
     json_body: Any = None,
     data: Any = None,
     **request_kwargs: Any,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     通用 HTTP 請求；其他 ``http_*`` 命令皆呼叫此函式
     Generic HTTP entry point; the verb-specific helpers delegate here.
@@ -80,27 +80,27 @@ def http_request(
     return _summarise(response)
 
 
-def http_get(url: str, **kwargs: Any) -> Dict[str, Any]:
+def http_get(url: str, **kwargs: Any) -> dict[str, Any]:
     return http_request("GET", url, **kwargs)
 
 
-def http_post(url: str, **kwargs: Any) -> Dict[str, Any]:
+def http_post(url: str, **kwargs: Any) -> dict[str, Any]:
     return http_request("POST", url, **kwargs)
 
 
-def http_put(url: str, **kwargs: Any) -> Dict[str, Any]:
+def http_put(url: str, **kwargs: Any) -> dict[str, Any]:
     return http_request("PUT", url, **kwargs)
 
 
-def http_patch(url: str, **kwargs: Any) -> Dict[str, Any]:
+def http_patch(url: str, **kwargs: Any) -> dict[str, Any]:
     return http_request("PATCH", url, **kwargs)
 
 
-def http_delete(url: str, **kwargs: Any) -> Dict[str, Any]:
+def http_delete(url: str, **kwargs: Any) -> dict[str, Any]:
     return http_request("DELETE", url, **kwargs)
 
 
-def get_last_response() -> Optional[Dict[str, Any]]:
+def get_last_response() -> dict[str, Any] | None:
     """Return the most recent ``_summarise`` output (or ``None``)."""
     return _state["last_response"]
 

@@ -6,7 +6,6 @@ and CDP Fetch interception primitives.
 from __future__ import annotations
 
 import base64
-from typing import List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -239,7 +238,7 @@ class _ScriptingMixin:
             },
         )
 
-    def block_urls(self, patterns: List[str]) -> None:
+    def block_urls(self, patterns: list[str]) -> None:
         """
         透過 CDP ``Network.setBlockedURLs`` 阻擋符合任一 pattern 的請求。
         Block requests matching any pattern via CDP ``Network.setBlockedURLs``.

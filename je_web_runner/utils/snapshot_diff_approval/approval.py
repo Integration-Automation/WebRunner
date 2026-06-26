@@ -20,7 +20,7 @@ import os
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -44,7 +44,7 @@ class SnapshotEntry:
     approved_by: str = ""
     note: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "status": self.status.value}
 
 
@@ -69,18 +69,18 @@ class DiffResult:
         return self.baseline_sha != self.head_sha
 
 
-def load(path: str) -> Dict[str, SnapshotEntry]:
+def load(path: str) -> dict[str, SnapshotEntry]:
     if not isinstance(path, str) or not path:
         raise SnapshotDiffApprovalError("path must be non-empty string")
     if not os.path.exists(path):
         return {}
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         raw = json.load(fh)
     if not isinstance(raw, dict):
         raise SnapshotDiffApprovalError(
             f"registry file {path!r} must contain a JSON object"
         )
-    out: Dict[str, SnapshotEntry] = {}
+    out: dict[str, SnapshotEntry] = {}
     for name, item in raw.items():
         if not isinstance(item, dict):
             continue
@@ -95,7 +95,7 @@ def load(path: str) -> Dict[str, SnapshotEntry]:
     return out
 
 
-def save(path: str, registry: Dict[str, SnapshotEntry]) -> None:
+def save(path: str, registry: dict[str, SnapshotEntry]) -> None:
     if not isinstance(path, str) or not path:
         raise SnapshotDiffApprovalError("path must be non-empty string")
     serialised = {name: e.to_dict() for name, e in registry.items()}
@@ -104,7 +104,7 @@ def save(path: str, registry: Dict[str, SnapshotEntry]) -> None:
 
 
 def capture(
-    registry: Dict[str, SnapshotEntry], *, name: str, payload: bytes,
+    registry: dict[str, SnapshotEntry], *, name: str, payload: bytes,
 ) -> DiffResult:
     """Compare ``payload`` against baseline. If no baseline exists, the
     snapshot enters as ``pending``."""
@@ -130,7 +130,7 @@ def capture(
 
 
 def approve(
-    registry: Dict[str, SnapshotEntry], *, name: str, reviewer: str,
+    registry: dict[str, SnapshotEntry], *, name: str, reviewer: str,
 ) -> SnapshotEntry:
     entry = registry.get(name)
     if entry is None:
@@ -148,7 +148,7 @@ def approve(
 
 
 def reject(
-    registry: Dict[str, SnapshotEntry], *, name: str,
+    registry: dict[str, SnapshotEntry], *, name: str,
     reviewer: str, note: str = "",
 ) -> SnapshotEntry:
     entry = registry.get(name)
@@ -164,11 +164,11 @@ def reject(
     return entry
 
 
-def list_pending(registry: Dict[str, SnapshotEntry]) -> List[SnapshotEntry]:
+def list_pending(registry: dict[str, SnapshotEntry]) -> list[SnapshotEntry]:
     return [e for e in registry.values() if e.status == Status.PENDING]
 
 
-def assert_no_pending(registry: Dict[str, SnapshotEntry]) -> None:
+def assert_no_pending(registry: dict[str, SnapshotEntry]) -> None:
     pending = list_pending(registry)
     if pending:
         names = [e.name for e in pending]

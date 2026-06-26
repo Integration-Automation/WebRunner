@@ -15,7 +15,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Protocol, Sequence, Union
+from typing import Any, Protocol, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -55,8 +55,8 @@ class FigmaHint:
 
     name: str
     type: str  # 'button' | 'input' | 'text' | ...
-    selector_hint: Optional[str] = None  # e.g. data-test-id from layer metadata
-    text: Optional[str] = None
+    selector_hint: str | None = None  # e.g. data-test-id from layer metadata
+    text: str | None = None
 
 
 @dataclass
@@ -64,9 +64,9 @@ class StoryPrompt:
     """The user story + optional structured context."""
 
     story: str
-    start_url: Optional[str] = None
-    figma_hints: List[FigmaHint] = field(default_factory=list)
-    style_notes: List[str] = field(default_factory=list)  # extra constraints
+    start_url: str | None = None
+    figma_hints: list[FigmaHint] = field(default_factory=list)
+    style_notes: list[str] = field(default_factory=list)  # extra constraints
 
     def __post_init__(self) -> None:
         if not isinstance(self.story, str) or not self.story.strip():
@@ -85,7 +85,7 @@ class StoryClient(Protocol):
 
 def build_prompt_text(prompt: StoryPrompt) -> str:
     """Render a deterministic prompt the LLM client will see verbatim."""
-    parts: List[str] = []
+    parts: list[str] = []
     parts.append("# Task")
     parts.append(
         "Translate the user story below into a WebRunner action JSON list. "
@@ -121,7 +121,7 @@ _JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(.+?)```", re.DOTALL)
 def generate_actions(
     prompt: StoryPrompt,
     client: StoryClient,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Build prompt → ask client → parse → validate. Returns the action list."""
     prompt_text = build_prompt_text(prompt)
     try:
@@ -144,7 +144,7 @@ def generate_actions(
     return actions
 
 
-def _parse_json_response(raw: str) -> List[Dict[str, Any]]:
+def _parse_json_response(raw: str) -> list[dict[str, Any]]:
     text = raw.strip()
     match = _JSON_BLOCK_RE.search(text)
     if match:
@@ -162,7 +162,7 @@ def _parse_json_response(raw: str) -> List[Dict[str, Any]]:
     return loaded
 
 
-def _starts_with_navigate(actions: Sequence[Dict[str, Any]], url: str) -> bool:
+def _starts_with_navigate(actions: Sequence[dict[str, Any]], url: str) -> bool:
     if not actions:
         return False
     first = actions[0]
@@ -248,8 +248,8 @@ def _validate_locator_action(index: int, name: str, args: list) -> None:  # NOSO
 # ---------- output helpers ----------------------------------------------
 
 def write_actions_json(
-    actions: Sequence[Dict[str, Any]],
-    output_path: Union[str, Path],
+    actions: Sequence[dict[str, Any]],
+    output_path: str | Path,
 ) -> Path:
     """Persist validated actions to disk in WebRunner action JSON format."""
     validate_actions(actions)

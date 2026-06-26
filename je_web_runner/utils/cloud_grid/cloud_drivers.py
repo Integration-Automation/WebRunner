@@ -12,7 +12,7 @@ and Remote drivers for BrowserStack, Sauce Labs, and LambdaTest.
 from __future__ import annotations
 
 import urllib.parse
-from typing import Any, Dict, Optional
+from typing import Any
 
 from selenium import webdriver
 from selenium.webdriver.remote.webdriver import WebDriver
@@ -26,7 +26,7 @@ class CloudGridError(WebRunnerException):
     """Raised when a cloud Remote driver cannot be started."""
 
 
-_DEFAULT_HUBS: Dict[str, str] = {
+_DEFAULT_HUBS: dict[str, str] = {
     "browserstack": "https://hub-cloud.browserstack.com/wd/hub",
     "saucelabs": "https://ondemand.us-west-1.saucelabs.com:443/wd/hub",
     "lambdatest": "https://hub.lambdatest.com/wd/hub",
@@ -52,20 +52,20 @@ def build_browserstack_capabilities(
     browser_version: str = "latest",
     os_name: str = "Windows",
     os_version: str = "11",
-    project: Optional[str] = None,
-    build: Optional[str] = None,
-    name: Optional[str] = None,
-    extra: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    project: str | None = None,
+    build: str | None = None,
+    name: str | None = None,
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Build a W3C-style capability dict for BrowserStack."""
-    bstack: Dict[str, Any] = {"os": os_name, "osVersion": os_version}
+    bstack: dict[str, Any] = {"os": os_name, "osVersion": os_version}
     if project:
         bstack["projectName"] = project
     if build:
         bstack["buildName"] = build
     if name:
         bstack["sessionName"] = name
-    caps: Dict[str, Any] = {
+    caps: dict[str, Any] = {
         "browserName": browser_name,
         "browserVersion": browser_version,
         "bstack:options": bstack,
@@ -79,16 +79,16 @@ def build_saucelabs_capabilities(
     browser_name: str = "chrome",
     browser_version: str = "latest",
     platform_name: str = "Windows 11",
-    build: Optional[str] = None,
-    name: Optional[str] = None,
-    extra: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
-    sauce: Dict[str, Any] = {}
+    build: str | None = None,
+    name: str | None = None,
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    sauce: dict[str, Any] = {}
     if build:
         sauce["build"] = build
     if name:
         sauce["name"] = name
-    caps: Dict[str, Any] = {
+    caps: dict[str, Any] = {
         "browserName": browser_name,
         "browserVersion": browser_version,
         "platformName": platform_name,
@@ -103,16 +103,16 @@ def build_lambdatest_capabilities(
     browser_name: str = "Chrome",
     browser_version: str = "latest",
     platform_name: str = "Windows 11",
-    build: Optional[str] = None,
-    name: Optional[str] = None,
-    extra: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
-    lt: Dict[str, Any] = {}
+    build: str | None = None,
+    name: str | None = None,
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    lt: dict[str, Any] = {}
     if build:
         lt["build"] = build
     if name:
         lt["name"] = name
-    caps: Dict[str, Any] = {
+    caps: dict[str, Any] = {
         "browserName": browser_name,
         "browserVersion": browser_version,
         "platformName": platform_name,
@@ -125,7 +125,7 @@ def build_lambdatest_capabilities(
 
 def start_remote_driver(
     hub_url: str,
-    capabilities: Dict[str, Any],
+    capabilities: dict[str, Any],
     register: bool = True,
 ) -> WebDriver:
     """
@@ -144,7 +144,7 @@ def start_remote_driver(
 
 
 def _connect(provider: str, username: str, access_key: str,
-             capabilities: Dict[str, Any], hub_url: Optional[str]) -> WebDriver:
+             capabilities: dict[str, Any], hub_url: str | None) -> WebDriver:
     target_hub = hub_url or _DEFAULT_HUBS[provider]
     return start_remote_driver(_hub_url_with_credentials(target_hub, username, access_key), capabilities)
 
@@ -152,8 +152,8 @@ def _connect(provider: str, username: str, access_key: str,
 def connect_browserstack(
     username: str,
     access_key: str,
-    capabilities: Optional[Dict[str, Any]] = None,
-    hub_url: Optional[str] = None,
+    capabilities: dict[str, Any] | None = None,
+    hub_url: str | None = None,
 ) -> WebDriver:
     return _connect(
         "browserstack",
@@ -167,8 +167,8 @@ def connect_browserstack(
 def connect_saucelabs(
     username: str,
     access_key: str,
-    capabilities: Optional[Dict[str, Any]] = None,
-    hub_url: Optional[str] = None,
+    capabilities: dict[str, Any] | None = None,
+    hub_url: str | None = None,
 ) -> WebDriver:
     return _connect(
         "saucelabs",
@@ -182,8 +182,8 @@ def connect_saucelabs(
 def connect_lambdatest(
     username: str,
     access_key: str,
-    capabilities: Optional[Dict[str, Any]] = None,
-    hub_url: Optional[str] = None,
+    capabilities: dict[str, Any] | None = None,
+    hub_url: str | None = None,
 ) -> WebDriver:
     return _connect(
         "lambdatest",

@@ -17,7 +17,7 @@ deletion candidates to ``flakiness_graveyard``, or render dashboards in
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Iterable, List, Sequence
+from typing import Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -134,7 +134,7 @@ def score_one(m: RoiMetrics, weights: Weights | None = None) -> RoiScore:
 
 def score_many(
     metrics: Sequence[RoiMetrics], weights: Weights | None = None,
-) -> List[RoiScore]:
+) -> list[RoiScore]:
     if not isinstance(metrics, (list, tuple)):
         raise RoiScorerError("metrics must be a sequence")
     if weights is None:
@@ -145,7 +145,7 @@ def score_many(
 
 def removal_candidates(
     scores: Iterable[RoiScore], *, max_score: float = 0.3,
-) -> List[RoiScore]:
+) -> list[RoiScore]:
     if not 0 <= max_score <= 1:
         raise RoiScorerError("max_score must be in [0, 1]")
     return [s for s in scores if s.score <= max_score]

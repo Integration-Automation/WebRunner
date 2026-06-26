@@ -15,7 +15,7 @@ import socketserver
 import threading
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -30,7 +30,7 @@ class MockServiceError(WebRunnerException):
 class MockS3Storage:
     """In-memory key-value store mimicking S3 ``put_object`` / ``get_object``."""
 
-    buckets: Dict[str, Dict[str, bytes]] = field(default_factory=dict)
+    buckets: dict[str, dict[str, bytes]] = field(default_factory=dict)
 
     def create_bucket(self, name: str) -> None:
         self.buckets.setdefault(name, {})
@@ -48,7 +48,7 @@ class MockS3Storage:
         except KeyError as error:
             raise MockServiceError(f"object {key!r} not found in {bucket!r}") from error
 
-    def list_objects(self, bucket: str) -> List[str]:
+    def list_objects(self, bucket: str) -> list[str]:
         return sorted(self.buckets.get(bucket, {}).keys())
 
 
@@ -62,7 +62,7 @@ class _SmtpHandler(socketserver.StreamRequestHandler):
     def handle(self) -> None:  # pragma: no cover - exercised via integration paths
         server: Any = self.server  # type: ignore[assignment]
         self.wfile.write(b"220 mock SMTP\r\n")
-        state: Dict[str, Any] = {"in_data": False, "lines": []}
+        state: dict[str, Any] = {"in_data": False, "lines": []}
         while True:
             line = self.rfile.readline()
             if not line:
@@ -74,7 +74,7 @@ class _SmtpHandler(socketserver.StreamRequestHandler):
                 break
 
 
-def _handle_command(handler: Any, decoded: str, state: Dict[str, Any]) -> bool:
+def _handle_command(handler: Any, decoded: str, state: dict[str, Any]) -> bool:
     """Process one command line; return False to close the connection."""
     upper = decoded.upper().strip()
     if upper == "QUIT":
@@ -88,7 +88,7 @@ def _handle_command(handler: Any, decoded: str, state: Dict[str, Any]) -> bool:
     return True
 
 
-def _handle_data_line(handler: Any, server: Any, state: Dict[str, Any], decoded: str) -> None:
+def _handle_data_line(handler: Any, server: Any, state: dict[str, Any], decoded: str) -> None:
     if decoded.strip() == ".":
         server.captured.append("".join(state["lines"]))
         state["lines"] = []
@@ -104,9 +104,9 @@ class MockSmtpServer:
     def __init__(self, host: str = "127.0.0.1", port: int = 0) -> None:
         self.host = host
         self.port = port
-        self.captured: List[str] = []
-        self._server: Optional[socketserver.TCPServer] = None
-        self._thread: Optional[threading.Thread] = None
+        self.captured: list[str] = []
+        self._server: socketserver.TCPServer | None = None
+        self._thread: threading.Thread | None = None
 
     def start(self) -> int:
         if self._server is not None:
@@ -130,7 +130,7 @@ class MockSmtpServer:
 
 # ----- OAuth token issuer ----------------------------------------------------
 
-def _make_oauth_handler(server_state: Dict[str, Any]) -> Callable:
+def _make_oauth_handler(server_state: dict[str, Any]) -> Callable:
 
     class _OAuthRequestHandler(BaseHTTPRequestHandler):
 
@@ -139,7 +139,7 @@ def _make_oauth_handler(server_state: Dict[str, Any]) -> Callable:
             # silence stdlib-driven access logging.
             return
 
-        def _send(self, status: int, payload: Dict[str, Any]) -> None:
+        def _send(self, status: int, payload: dict[str, Any]) -> None:
             body = json.dumps(payload).encode("utf-8")
             self.send_response(status)
             self.send_header("Content-Type", "application/json")
@@ -168,10 +168,10 @@ class MockOAuthServer:
     def __init__(self, host: str = "127.0.0.1", port: int = 0) -> None:
         self.host = host
         self.port = port
-        self.issued: List[str] = []
-        self._state: Dict[str, Any] = {"issued": self.issued}
-        self._server: Optional[HTTPServer] = None
-        self._thread: Optional[threading.Thread] = None
+        self.issued: list[str] = []
+        self._state: dict[str, Any] = {"issued": self.issued}
+        self._server: HTTPServer | None = None
+        self._thread: threading.Thread | None = None
 
     def start(self) -> str:
         if self._server is not None:

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional, Sequence, Set, Union
+from typing import Any, Sequence
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -57,14 +57,14 @@ class ThirdPartyRequest:
     duration_ms: float
     blocking: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 def _classify_vendor(
     hostname: str,
-    extra_vendors: Dict[str, Sequence[str]],
-) -> Optional[str]:
+    extra_vendors: dict[str, Sequence[str]],
+) -> str | None:
     hostname = hostname.lower()
     for vendor, hosts in {**_VENDOR_CATALOGUE, **extra_vendors}.items():
         for h in hosts:
@@ -74,11 +74,11 @@ def _classify_vendor(
 
 
 def classify_har(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
-    har: Union[str, Dict[str, Any]],
+    har: str | dict[str, Any],
     *,
     first_party_hostname: str,
-    extra_vendors: Optional[Dict[str, Sequence[str]]] = None,
-) -> List[ThirdPartyRequest]:
+    extra_vendors: dict[str, Sequence[str]] | None = None,
+) -> list[ThirdPartyRequest]:
     """Return one :class:`ThirdPartyRequest` per non-first-party HAR entry."""
     if not isinstance(first_party_hostname, str) or not first_party_hostname:
         raise ThirdPartyBudgetError("first_party_hostname must be non-empty")
@@ -88,7 +88,7 @@ def classify_har(  # NOSONAR S3776 — cohesive logic; planned refactor in follo
         raise ThirdPartyBudgetError("har log.entries must be a list")
     extra = extra_vendors or {}
     first = first_party_hostname.lower()
-    out: List[ThirdPartyRequest] = []
+    out: list[ThirdPartyRequest] = []
     for entry in entries:
         if not isinstance(entry, dict):
             continue
@@ -126,7 +126,7 @@ def _is_first_party(hostname: str, first_party: str) -> bool:
     return hostname == first_party or hostname.endswith("." + first_party)
 
 
-def _coerce_har(har: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
+def _coerce_har(har: str | dict[str, Any]) -> dict[str, Any]:
     if isinstance(har, str):
         try:
             parsed = json.loads(har)
@@ -148,10 +148,10 @@ def _coerce_har(har: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
 class ThirdPartyBudget:
     """Caps for third-party traffic."""
 
-    max_requests: Optional[int] = None
-    max_bytes: Optional[int] = None
-    max_blocking_ms: Optional[float] = None
-    max_vendors: Optional[int] = None
+    max_requests: int | None = None
+    max_bytes: int | None = None
+    max_blocking_ms: float | None = None
+    max_vendors: int | None = None
 
     def __post_init__(self) -> None:
         for name in ("max_requests", "max_bytes", "max_blocking_ms", "max_vendors"):
@@ -167,8 +167,8 @@ class ThirdPartyReport:
     total_requests: int = 0
     total_bytes: int = 0
     blocking_ms: float = 0.0
-    by_vendor: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    breaches: List[str] = field(default_factory=list)
+    by_vendor: dict[str, dict[str, Any]] = field(default_factory=dict)
+    breaches: list[str] = field(default_factory=list)
 
     def passed(self) -> bool:
         return not self.breaches
@@ -182,7 +182,7 @@ def evaluate(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     if not isinstance(budget, ThirdPartyBudget):
         raise ThirdPartyBudgetError("budget must be ThirdPartyBudget")
     report = ThirdPartyReport()
-    vendors: Set[str] = set()
+    vendors: set[str] = set()
     for r in requests:
         if not isinstance(r, ThirdPartyRequest):
             raise ThirdPartyBudgetError(

@@ -5,7 +5,7 @@ plus assertion helpers (``no console errors`` / ``no 5xx``).
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -20,10 +20,10 @@ class EventCapture:
     """Buffer console + response events from a Playwright page."""
 
     def __init__(self) -> None:
-        self.console_messages: List[Dict[str, Any]] = []
-        self.network_responses: List[Dict[str, Any]] = []
-        self._page: Optional[Any] = None
-        self._handlers: Dict[str, Callable] = {}
+        self.console_messages: list[dict[str, Any]] = []
+        self.network_responses: list[dict[str, Any]] = []
+        self._page: Any | None = None
+        self._handlers: dict[str, Callable] = {}
 
     def attach(self, page: Any) -> None:
         """Hook ``console`` and ``response`` listeners on ``page``."""
@@ -110,11 +110,11 @@ def stop_event_capture() -> None:
     event_capture.detach()
 
 
-def get_console_messages() -> List[Dict[str, Any]]:
+def get_console_messages() -> list[dict[str, Any]]:
     return list(event_capture.console_messages)
 
 
-def get_network_responses() -> List[Dict[str, Any]]:
+def get_network_responses() -> list[dict[str, Any]]:
     return list(event_capture.network_responses)
 
 

@@ -8,7 +8,7 @@ Postgres / Redis up for a single run.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -21,7 +21,7 @@ class TestcontainersError(WebRunnerException):
     __test__ = False
 
 
-_started: List[Any] = []
+_started: list[Any] = []
 
 
 def _require(module: str, attribute: str) -> Any:
@@ -67,7 +67,7 @@ def start_redis(image: str = "redis:7-alpine") -> Any:
     return container
 
 
-def start_generic(image: str, ports: Optional[Dict[int, int]] = None) -> Any:
+def start_generic(image: str, ports: dict[int, int] | None = None) -> Any:
     """
     啟動任意 Docker image
     Start any Docker image. ``ports`` is a {container_port: host_port} map.

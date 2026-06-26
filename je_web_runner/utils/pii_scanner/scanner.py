@@ -20,7 +20,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Sequence
+from typing import Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -89,7 +89,7 @@ def _redact(value: str) -> str:
     return value[:2] + "*" * (len(value) - 4) + value[-2:]
 
 
-def scan_text(text: str, categories: Optional[Sequence[str]] = None) -> List[PiiFinding]:
+def scan_text(text: str, categories: Sequence[str] | None = None) -> list[PiiFinding]:
     """
     對 ``text`` 跑全部或指定的 PII 偵測類別
     Run every (or a filtered subset of) PII detector against ``text``.
@@ -97,7 +97,7 @@ def scan_text(text: str, categories: Optional[Sequence[str]] = None) -> List[Pii
     if not isinstance(text, str):
         raise PiiScannerError("text must be str")
     allowed = set(categories) if categories else None
-    findings: List[PiiFinding] = []
+    findings: list[PiiFinding] = []
     for category, regex, validator in _DETECTORS:
         if allowed is not None and category not in allowed:
             continue
@@ -130,8 +130,8 @@ def summarise(findings: Iterable[PiiFinding]) -> Counter:
     return Counter(f.category for f in findings)
 
 
-def assert_no_pii(text: str, categories: Optional[Sequence[str]] = None,
-                  allow_categories: Optional[Sequence[str]] = None) -> None:
+def assert_no_pii(text: str, categories: Sequence[str] | None = None,
+                  allow_categories: Sequence[str] | None = None) -> None:
     """
     斷言文本中沒有指定類別的 PII；``allow_categories`` 可白名單跳過。
     Raise :class:`PiiScannerError` when any non-allowed category is found.
@@ -148,12 +148,12 @@ def assert_no_pii(text: str, categories: Optional[Sequence[str]] = None,
 
 
 def redact_text(text: str, replacement: str = "[REDACTED]",
-                categories: Optional[Sequence[str]] = None) -> str:
+                categories: Sequence[str] | None = None) -> str:
     """Return ``text`` with each PII match replaced by ``replacement``."""
     findings = scan_text(text, categories=categories)
     if not findings:
         return text
-    pieces: List[str] = []
+    pieces: list[str] = []
     cursor = 0
     for finding in findings:
         if finding.start < cursor:

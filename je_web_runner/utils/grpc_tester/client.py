@@ -18,7 +18,7 @@ import struct
 import time
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -52,10 +52,10 @@ class GrpcCall:
     response: Any
     status: GrpcStatus
     duration_ms: float
-    metadata: Dict[str, str] = field(default_factory=dict)
-    error: Optional[str] = None
+    metadata: dict[str, str] = field(default_factory=dict)
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "status": self.status.name}
 
 
@@ -65,7 +65,7 @@ class GrpcCallRecorder:
     """In-memory recorder of calls."""
 
     def __init__(self) -> None:
-        self._calls: List[GrpcCall] = []
+        self._calls: list[GrpcCall] = []
 
     def __len__(self) -> int:
         return len(self._calls)
@@ -83,10 +83,10 @@ class GrpcCallRecorder:
     def calls(
         self,
         *,
-        method: Optional[str] = None,
-        status: Optional[GrpcStatus] = None,
-    ) -> List[GrpcCall]:
-        out: List[GrpcCall] = []
+        method: str | None = None,
+        status: GrpcStatus | None = None,
+    ) -> list[GrpcCall]:
+        out: list[GrpcCall] = []
         for c in self._calls:
             if method is not None and c.method != method:
                 continue
@@ -103,9 +103,9 @@ def call(
     stub_method: Callable[..., Any],
     request: Any,
     *,
-    recorder: Optional[GrpcCallRecorder] = None,
-    metadata: Optional[Sequence[Tuple[str, str]]] = None,
-    timeout: Optional[float] = None,
+    recorder: GrpcCallRecorder | None = None,
+    metadata: Sequence[tuple[str, str]] | None = None,
+    timeout: float | None = None,
 ) -> GrpcCall:
     """
     Call a generated gRPC stub method, capturing response / status.
@@ -119,9 +119,9 @@ def call(
     started = time.monotonic()
     status = GrpcStatus.OK
     response = None
-    error: Optional[str] = None
+    error: str | None = None
     try:
-        kwargs: Dict[str, Any] = {}
+        kwargs: dict[str, Any] = {}
         if metadata:
             kwargs["metadata"] = metadata
         if timeout is not None:
@@ -174,11 +174,11 @@ def encode_grpc_web_message(payload: bytes) -> bytes:
     return b"\x00" + struct.pack(">I", len(payload)) + bytes(payload)
 
 
-def decode_grpc_web_message(framed: bytes) -> List[Tuple[int, bytes]]:
+def decode_grpc_web_message(framed: bytes) -> list[tuple[int, bytes]]:
     """Decode a (possibly multi-message) framed gRPC-Web body."""
     if not isinstance(framed, (bytes, bytearray)):
         raise GrpcTesterError("framed must be bytes")
-    out: List[Tuple[int, bytes]] = []
+    out: list[tuple[int, bytes]] = []
     pos = 0
     buf = bytes(framed)
     while pos < len(buf):
@@ -194,12 +194,12 @@ def decode_grpc_web_message(framed: bytes) -> List[Tuple[int, bytes]]:
     return out
 
 
-def parse_trailer(trailer_bytes: bytes) -> Dict[str, str]:
+def parse_trailer(trailer_bytes: bytes) -> dict[str, str]:
     """Parse a ``grpc-status`` / ``grpc-message`` trailer payload."""
     if not isinstance(trailer_bytes, (bytes, bytearray)):
         raise GrpcTesterError("trailer_bytes must be bytes")
     text = bytes(trailer_bytes).decode("utf-8", errors="replace")
-    out: Dict[str, str] = {}
+    out: dict[str, str] = {}
     for line in text.split("\r\n"):
         line = line.strip()
         if not line or ":" not in line:

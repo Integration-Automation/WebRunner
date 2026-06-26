@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import List, Optional
 
 from selenium.webdriver.common.by import By
 
@@ -55,7 +54,7 @@ def playwright_upload_file(input_selector: str, file_path: str) -> None:
 _PARTIAL_SUFFIXES = (".crdownload", ".part")
 
 
-def _is_completed_match(name: str, seen: set, suffix_lower: Optional[str]) -> bool:
+def _is_completed_match(name: str, seen: set, suffix_lower: str | None) -> bool:
     """Per-file predicate extracted to keep ``wait_for_download`` simple."""
     if name in seen:
         return False
@@ -69,7 +68,7 @@ def _is_completed_match(name: str, seen: set, suffix_lower: Optional[str]) -> bo
 def wait_for_download(
     directory: str,
     timeout: float = 60.0,
-    suffix: Optional[str] = None,
+    suffix: str | None = None,
     poll_seconds: float = 0.5,
 ) -> str:
     """
@@ -98,7 +97,7 @@ def wait_for_download(
     )
 
 
-def list_new_downloads(directory: str, before: List[str]) -> List[str]:
+def list_new_downloads(directory: str, before: list[str]) -> list[str]:
     """
     回傳 ``directory`` 內目前存在但不在 ``before`` 清單中的檔案
     Diff helper: list paths currently in ``directory`` that were not in the
@@ -116,7 +115,7 @@ def list_new_downloads(directory: str, before: List[str]) -> List[str]:
     ]
 
 
-def snapshot_directory(directory: str) -> List[str]:
+def snapshot_directory(directory: str) -> list[str]:
     """Take a snapshot of resolved file paths under ``directory``."""
     base = Path(directory)
     if not base.is_dir():

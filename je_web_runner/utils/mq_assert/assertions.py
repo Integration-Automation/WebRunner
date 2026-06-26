@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Protocol, Sequence
+from typing import Any, Protocol, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -23,10 +23,10 @@ class MqAssertError(WebRunnerException):
 class Message:
     topic: str
     body: Any
-    key: Optional[str] = None
-    headers: Dict[str, str] = field(default_factory=dict)
+    key: str | None = None
+    headers: dict[str, str] = field(default_factory=dict)
 
-    def body_as_dict(self) -> Dict[str, Any]:
+    def body_as_dict(self) -> dict[str, Any]:
         if isinstance(self.body, dict):
             return self.body
         if isinstance(self.body, (bytes, str)):
@@ -48,7 +48,7 @@ class Consumer(Protocol):
 
 def drain_topic(
     consumer: Consumer, topic: str, timeout: float = 5.0,
-) -> List[Message]:
+) -> list[Message]:
     if not topic:
         raise MqAssertError("topic must be non-empty")
     if not hasattr(consumer, "drain"):
@@ -56,7 +56,7 @@ def drain_topic(
     raw = consumer.drain(topic, timeout=timeout)
     if not isinstance(raw, (list, tuple)):
         raise MqAssertError("consumer.drain must return a sequence")
-    out: List[Message] = []
+    out: list[Message] = []
     for m in raw:
         if isinstance(m, Message):
             out.append(m)
@@ -74,11 +74,11 @@ def drain_topic(
     return out
 
 
-def _headers_match(message: Message, header_equals: Dict[str, str]) -> bool:
+def _headers_match(message: Message, header_equals: dict[str, str]) -> bool:
     return all(message.headers.get(k) == v for k, v in header_equals.items())
 
 
-def _body_matches(message: Message, body_contains: Dict[str, Any]) -> bool:
+def _body_matches(message: Message, body_contains: dict[str, Any]) -> bool:
     try:
         body = message.body_as_dict()
     except MqAssertError:
@@ -87,9 +87,9 @@ def _body_matches(message: Message, body_contains: Dict[str, Any]) -> bool:
 
 
 def _matches(message: Message, *,
-             body_contains: Optional[Dict[str, Any]] = None,
-             key_matches: Optional[str] = None,
-             header_equals: Optional[Dict[str, str]] = None) -> bool:
+             body_contains: dict[str, Any] | None = None,
+             key_matches: str | None = None,
+             header_equals: dict[str, str] | None = None) -> bool:
     if key_matches is not None and message.key != key_matches:
         return False
     if header_equals and not _headers_match(message, header_equals):
@@ -102,9 +102,9 @@ def _matches(message: Message, *,
 def assert_message_published(
     messages: Sequence[Message],
     *,
-    body_contains: Optional[Dict[str, Any]] = None,
-    key_matches: Optional[str] = None,
-    header_equals: Optional[Dict[str, str]] = None,
+    body_contains: dict[str, Any] | None = None,
+    key_matches: str | None = None,
+    header_equals: dict[str, str] | None = None,
 ) -> Message:
     """Find one matching message or raise."""
     if not isinstance(messages, (list, tuple)):
@@ -123,8 +123,8 @@ def assert_message_published(
 def assert_no_message(
     messages: Sequence[Message],
     *,
-    topic: Optional[str] = None,
-    body_contains: Optional[Dict[str, Any]] = None,
+    topic: str | None = None,
+    body_contains: dict[str, Any] | None = None,
 ) -> None:
     """Useful for `should NOT have published anything sensitive`."""
     for m in messages:

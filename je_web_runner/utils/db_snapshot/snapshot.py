@@ -15,7 +15,7 @@ from __future__ import annotations
 import contextlib
 import uuid
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Protocol
+from typing import Any, Callable, Protocol
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -44,8 +44,8 @@ class InMemoryBackend:
     `--dry-run` style unit tests.
     """
 
-    tables: Dict[str, Dict[Any, Any]] = field(default_factory=dict)
-    _snapshots: Dict[str, Dict[str, Dict[Any, Any]]] = field(default_factory=dict)
+    tables: dict[str, dict[Any, Any]] = field(default_factory=dict)
+    _snapshots: dict[str, dict[str, dict[Any, Any]]] = field(default_factory=dict)
 
     def insert(self, table: str, key: Any, value: Any) -> None:
         self.tables.setdefault(table, {})[key] = value
@@ -87,7 +87,7 @@ class SnapshotScope:
 
     backend: SnapshotBackend
     prefix: str = "wr_snap"
-    _stack: List[SnapshotHandle] = field(default_factory=list)
+    _stack: list[SnapshotHandle] = field(default_factory=list)
 
     def create(self) -> SnapshotHandle:
         name = f"{self.prefix}_{uuid.uuid4().hex[:12]}"

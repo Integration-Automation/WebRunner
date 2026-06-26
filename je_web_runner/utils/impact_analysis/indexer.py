@@ -12,7 +12,7 @@ import json
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Set, Union
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -26,31 +26,31 @@ class ImpactAnalysisError(WebRunnerException):
 class ImpactIndex:
     """Reverse index ``{kind: {token: {file_paths}}}``."""
 
-    by_locator: Dict[str, Set[str]] = field(default_factory=lambda: defaultdict(set))
-    by_url: Dict[str, Set[str]] = field(default_factory=lambda: defaultdict(set))
-    by_template: Dict[str, Set[str]] = field(default_factory=lambda: defaultdict(set))
-    by_command: Dict[str, Set[str]] = field(default_factory=lambda: defaultdict(set))
+    by_locator: dict[str, set[str]] = field(default_factory=lambda: defaultdict(set))
+    by_url: dict[str, set[str]] = field(default_factory=lambda: defaultdict(set))
+    by_template: dict[str, set[str]] = field(default_factory=lambda: defaultdict(set))
+    by_command: dict[str, set[str]] = field(default_factory=lambda: defaultdict(set))
 
-    def files_for_locator(self, name: str) -> List[str]:
+    def files_for_locator(self, name: str) -> list[str]:
         return sorted(self.by_locator.get(name, set()))
 
-    def files_for_url(self, fragment: str) -> List[str]:
+    def files_for_url(self, fragment: str) -> list[str]:
         return sorted({
             file for url, files in self.by_url.items()
             for file in files if fragment in url
         })
 
-    def files_for_template(self, name: str) -> List[str]:
+    def files_for_template(self, name: str) -> list[str]:
         return sorted(self.by_template.get(name, set()))
 
-    def files_for_command(self, command: str) -> List[str]:
+    def files_for_command(self, command: str) -> list[str]:
         return sorted(self.by_command.get(command, set()))
 
 
 _ACTIONS_GLOB = "**/*.json"
 
 
-def build_index(directory: Union[str, Path], glob: str = _ACTIONS_GLOB) -> ImpactIndex:
+def build_index(directory: str | Path, glob: str = _ACTIONS_GLOB) -> ImpactIndex:
     """
     走訪 ``directory`` 下所有 action JSON 檔，建立反查表
     Walk ``directory`` for ``*.json`` files and project each one's locators,
@@ -74,7 +74,7 @@ def build_index(directory: Union[str, Path], glob: str = _ACTIONS_GLOB) -> Impac
     return index
 
 
-def _index_actions(index: ImpactIndex, file_path: str, actions: List[Any]) -> None:
+def _index_actions(index: ImpactIndex, file_path: str, actions: list[Any]) -> None:
     for action in actions:
         if not isinstance(action, list) or not action:
             continue
@@ -92,7 +92,7 @@ def _index_actions(index: ImpactIndex, file_path: str, actions: List[Any]) -> No
                 index.by_template[value].add(file_path)
 
 
-def _extract_kwargs(action: List[Any]) -> Dict[str, Any]:
+def _extract_kwargs(action: list[Any]) -> dict[str, Any]:
     if len(action) >= 3 and isinstance(action[2], dict):
         return action[2]
     if len(action) >= 2 and isinstance(action[1], dict):
@@ -102,16 +102,16 @@ def _extract_kwargs(action: List[Any]) -> Dict[str, Any]:
 
 def affected_action_files(
     index: ImpactIndex,
-    locators: Optional[Iterable[str]] = None,
-    urls: Optional[Iterable[str]] = None,
-    templates: Optional[Iterable[str]] = None,
-    commands: Optional[Iterable[str]] = None,
-) -> List[str]:
+    locators: Iterable[str] | None = None,
+    urls: Iterable[str] | None = None,
+    templates: Iterable[str] | None = None,
+    commands: Iterable[str] | None = None,
+) -> list[str]:
     """
     Given changed locator/URL/template/command names, return every action
     JSON file that touches at least one of them.
     """
-    affected: Set[str] = set()
+    affected: set[str] = set()
     for name in locators or []:
         affected.update(index.files_for_locator(name))
     for fragment in urls or []:

@@ -17,7 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import List, Sequence
+from typing import Sequence
 
 try:
     from zoneinfo import ZoneInfo
@@ -53,7 +53,7 @@ class DstBoundary:
 
 def find_boundaries(
     tz_name: str, start_year: int, end_year: int,
-) -> List[DstBoundary]:
+) -> list[DstBoundary]:
     """Walk ``[start_year, end_year]`` and detect every offset change."""
     if not isinstance(tz_name, str) or not tz_name:
         raise DstBoundaryError("tz_name must be non-empty string")
@@ -66,7 +66,7 @@ def find_boundaries(
     except Exception as error:
         raise DstBoundaryError(f"unknown timezone: {tz_name!r}") from error
 
-    boundaries: List[DstBoundary] = []
+    boundaries: list[DstBoundary] = []
     cursor = datetime(start_year, 1, 1, tzinfo=tz)
     end = datetime(end_year, 12, 31, 23, 59, tzinfo=tz)
     step = timedelta(hours=1)
@@ -125,7 +125,7 @@ class ScheduledFire:
 
 def expected_fires_around_boundary(
     boundary: DstBoundary, wall_clock_hour: int = 2, wall_clock_minute: int = 30,
-) -> List[ScheduledFire]:
+) -> list[ScheduledFire]:
     """For a "daily 02:30 local" job, return what should fire on this date."""
     if not 0 <= wall_clock_hour <= 23 or not 0 <= wall_clock_minute <= 59:
         raise DstBoundaryError("wall_clock_hour/minute out of range")

@@ -18,7 +18,7 @@ Apple Pay capability, total mismatched currency, no shipping option).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -70,9 +70,9 @@ INSTALL_SCRIPT = r"""
 
 @dataclass
 class ConstructedPaymentRequest:
-    method_data: List[Dict[str, Any]] = field(default_factory=list)
-    details: Dict[str, Any] = field(default_factory=dict)
-    options: Dict[str, Any] = field(default_factory=dict)
+    method_data: list[dict[str, Any]] = field(default_factory=list)
+    details: dict[str, Any] = field(default_factory=dict)
+    options: dict[str, Any] = field(default_factory=dict)
 
     def supports_method(self, method: str) -> bool:
         return any((m.get("supportedMethods") or "") == method
@@ -86,14 +86,14 @@ class CompletedPayment:
 
 @dataclass
 class PaymentLog:
-    constructed: List[ConstructedPaymentRequest] = field(default_factory=list)
-    completed: List[CompletedPayment] = field(default_factory=list)
+    constructed: list[ConstructedPaymentRequest] = field(default_factory=list)
+    completed: list[CompletedPayment] = field(default_factory=list)
 
 
 def parse_log(payload: Any) -> PaymentLog:
     if not isinstance(payload, dict):
         raise PaymentRequestAssertError("payload must be dict")
-    constructed: List[ConstructedPaymentRequest] = []
+    constructed: list[ConstructedPaymentRequest] = []
     for raw in payload.get("constructed") or []:
         if not isinstance(raw, dict):
             continue
@@ -102,7 +102,7 @@ def parse_log(payload: Any) -> PaymentLog:
             details=dict(raw.get("details") or {}),
             options=dict(raw.get("options") or {}),
         ))
-    completed: List[CompletedPayment] = []
+    completed: list[CompletedPayment] = []
     for raw in payload.get("completed") or []:
         if not isinstance(raw, dict):
             continue

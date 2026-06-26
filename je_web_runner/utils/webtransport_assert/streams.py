@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -42,7 +42,7 @@ class WtFrame:
     direction: str
     channel: str
     payload: bytes
-    stream_id: Optional[int] = None
+    stream_id: int | None = None
     fin: bool = False
     timestamp: float = field(default_factory=time.time)
 
@@ -74,7 +74,7 @@ class WtFrame:
                 f"frame payload is not JSON ({error}): {self.payload[:40]!r}"
             ) from error
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
         out["payload_b64"] = bytes(self.payload).hex()
         out.pop("payload", None)
@@ -87,7 +87,7 @@ class WtFrameRecorder:
     """In-memory recorder for one WT session."""
 
     def __init__(self) -> None:
-        self._frames: List[WtFrame] = []
+        self._frames: list[WtFrame] = []
 
     def __len__(self) -> int:
         return len(self._frames)
@@ -124,15 +124,15 @@ class WtFrameRecorder:
     def frames(
         self,
         *,
-        direction: Optional[str] = None,
-        channel: Optional[str] = None,
-        stream_id: Optional[int] = None,
-    ) -> List[WtFrame]:
+        direction: str | None = None,
+        channel: str | None = None,
+        stream_id: int | None = None,
+    ) -> list[WtFrame]:
         if direction is not None and direction not in _DIRECTIONS:
             raise WebTransportAssertError(f"unknown direction {direction!r}")
         if channel is not None and channel not in _CHANNELS:
             raise WebTransportAssertError(f"unknown channel {channel!r}")
-        out: List[WtFrame] = []
+        out: list[WtFrame] = []
         for frame in self._frames:
             if direction is not None and frame.direction != direction:
                 continue
@@ -143,7 +143,7 @@ class WtFrameRecorder:
             out.append(frame)
         return out
 
-    def stream_ids(self) -> List[int]:
+    def stream_ids(self) -> list[int]:
         return sorted({f.stream_id for f in self._frames if f.stream_id is not None})
 
 
@@ -152,9 +152,9 @@ class WtFrameRecorder:
 def assert_datagram_count(
     recorder: WtFrameRecorder,
     *,
-    direction: Optional[str] = None,
+    direction: str | None = None,
     minimum: int = 0,
-    maximum: Optional[int] = None,
+    maximum: int | None = None,
 ) -> int:
     """Assert ``minimum <= datagram_count <= maximum``."""
     if minimum < 0:
@@ -197,8 +197,8 @@ def assert_payload_contains(
     recorder: WtFrameRecorder,
     needle: bytes,
     *,
-    direction: Optional[str] = None,
-    channel: Optional[str] = None,
+    direction: str | None = None,
+    channel: str | None = None,
 ) -> WtFrame:
     """Assert at least one frame's payload contains ``needle``."""
     if not isinstance(needle, (bytes, bytearray)) or not needle:
@@ -216,7 +216,7 @@ def assert_json_shape(
     recorder: WtFrameRecorder,
     required_keys: Sequence[str],
     *,
-    direction: Optional[str] = RECEIVED,
+    direction: str | None = RECEIVED,
 ) -> WtFrame:
     """Assert a JSON-decodable frame whose top-level dict has every key."""
     if not required_keys:

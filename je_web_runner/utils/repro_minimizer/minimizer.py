@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, List, Sequence
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -31,7 +31,7 @@ class MinimizationResult:
     """Outcome returned by :func:`minimize`."""
 
     original_size: int
-    minimized_actions: List[Any]
+    minimized_actions: list[Any]
     minimized_size: int
     iterations: int = 0
     eval_count: int = 0
@@ -48,7 +48,7 @@ class MinimizationResult:
 
 # Runner returns True if the (sub)sequence still *passes* the test
 # (i.e. doesn't reproduce the failure), False if it still fails.
-ActionRunner = Callable[[List[Any]], bool]
+ActionRunner = Callable[[list[Any]], bool]
 
 
 # ---------- ddmin -------------------------------------------------------
@@ -77,7 +77,7 @@ def minimize(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
 
     counter = {"evals": 0}
 
-    def _evaluate(subset: List[Any]) -> bool:
+    def _evaluate(subset: list[Any]) -> bool:
         counter["evals"] += 1
         try:
             return bool(runner(subset))

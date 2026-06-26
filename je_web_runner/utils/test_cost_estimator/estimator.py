@@ -15,7 +15,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Union
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -62,9 +62,9 @@ DEFAULT_RATE_CARDS: Sequence[RateCard] = (
 )
 
 
-def rate_card_index(cards: Sequence[RateCard]) -> Dict[str, RateCard]:
+def rate_card_index(cards: Sequence[RateCard]) -> dict[str, RateCard]:
     """Build a lookup keyed by runner name; rejects duplicates."""
-    out: Dict[str, RateCard] = {}
+    out: dict[str, RateCard] = {}
     for card in cards:
         if card.runner in out:
             raise TestCostEstimatorError(f"duplicate runner {card.runner!r}")
@@ -89,7 +89,7 @@ class RunRow:
             )
 
 
-def load_runs(path: Union[str, Path]) -> List[RunRow]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+def load_runs(path: str | Path) -> list[RunRow]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """Parse a ledger JSON file. Rows missing duration are skipped."""
     p = Path(path)
     if not p.exists():
@@ -100,7 +100,7 @@ def load_runs(path: Union[str, Path]) -> List[RunRow]:  # NOSONAR S3776 — cohe
         raise TestCostEstimatorError(f"ledger not JSON: {error}") from error
     if not isinstance(data, dict) or "runs" not in data:
         raise TestCostEstimatorError("ledger missing 'runs' key")
-    out: List[RunRow] = []
+    out: list[RunRow] = []
     for raw in data["runs"]:
         if not isinstance(raw, dict):
             continue
@@ -145,12 +145,12 @@ class CostEstimate:
     total_billed_minutes: float
     total_usd: float
     total_grams_co2: float
-    by_runner: Dict[str, CostBreakdown] = field(default_factory=dict)
-    by_test: Dict[str, float] = field(default_factory=dict)
-    unknown_runners: List[str] = field(default_factory=list)
+    by_runner: dict[str, CostBreakdown] = field(default_factory=dict)
+    by_test: dict[str, float] = field(default_factory=dict)
+    unknown_runners: list[str] = field(default_factory=list)
     generated_at: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "total_runs": self.total_runs,
             "total_billed_minutes": round(self.total_billed_minutes, 4),

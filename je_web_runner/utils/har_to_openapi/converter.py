@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import re
 from collections import defaultdict
-from typing import Any, Dict, List, Mapping, Optional
+from typing import Any, Mapping
 from urllib.parse import urlparse, parse_qsl
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -33,7 +33,7 @@ _UUID_RE = re.compile(
 )
 
 
-def _classify_segment(seg: str) -> Optional[str]:
+def _classify_segment(seg: str) -> str | None:
     if _NUMERIC_RE.match(seg):
         return "{id}"
     if _UUID_RE.match(seg):
@@ -43,7 +43,7 @@ def _classify_segment(seg: str) -> Optional[str]:
 
 def _path_template(path: str) -> str:
     parts = path.split("/")
-    out: List[str] = []
+    out: list[str] = []
     for seg in parts:
         if not seg:
             out.append(seg)
@@ -69,7 +69,7 @@ def _js_type(value: Any) -> str:
     return "null"
 
 
-def _schema_from_value(value: Any) -> Dict[str, Any]:
+def _schema_from_value(value: Any) -> dict[str, Any]:
     if isinstance(value, dict):
         return {
             "type": "object",
@@ -92,7 +92,7 @@ def _parse_body(content: Any) -> Any:
         return None
 
 
-def _merge_query_params(op: Dict[str, Any], query: str) -> None:
+def _merge_query_params(op: dict[str, Any], query: str) -> None:
     existing = {p["name"] for p in op["parameters"]}
     for q_name, _ in parse_qsl(query):
         if q_name not in existing:
@@ -103,7 +103,7 @@ def _merge_query_params(op: Dict[str, Any], query: str) -> None:
             existing.add(q_name)
 
 
-def _merge_response(op: Dict[str, Any], status: str, body: Any) -> None:
+def _merge_response(op: dict[str, Any], status: str, body: Any) -> None:
     if body is None:
         op["responses"].setdefault(status, {"description": "auto-generated"})
         return
@@ -114,7 +114,7 @@ def _merge_response(op: Dict[str, Any], status: str, body: Any) -> None:
 
 
 def _register_entry(
-    paths: Dict[str, Dict[str, Any]], entry: Dict[str, Any],
+    paths: dict[str, dict[str, Any]], entry: dict[str, Any],
 ) -> None:
     req = entry.get("request") or {}
     res = entry.get("response") or {}
@@ -134,14 +134,14 @@ def _register_entry(
                     _parse_body((res.get("content") or {}).get("text")))
 
 
-def convert(har: Mapping[str, Any]) -> Dict[str, Any]:
+def convert(har: Mapping[str, Any]) -> dict[str, Any]:
     if not isinstance(har, Mapping):
         raise HarToOpenapiError("har must be a mapping")
     log = har.get("log")
     entries = log.get("entries") if isinstance(log, Mapping) else None
     if not isinstance(entries, list):
         raise HarToOpenapiError("har.log.entries must be a list")
-    paths: Dict[str, Dict[str, Any]] = defaultdict(dict)
+    paths: dict[str, dict[str, Any]] = defaultdict(dict)
     for entry in entries:
         if isinstance(entry, dict):
             _register_entry(paths, entry)

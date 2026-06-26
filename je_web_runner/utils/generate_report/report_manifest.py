@@ -18,7 +18,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.generate_report.generate_allure_report import generate_allure_report
@@ -33,13 +33,13 @@ class ReportManifestError(WebRunnerException):
     """Raised when manifest generation cannot proceed."""
 
 
-def expected_paths(base_name: str, allure_dir: Optional[str] = None) -> Dict[str, List[str]]:
+def expected_paths(base_name: str, allure_dir: str | None = None) -> dict[str, list[str]]:
     """
     回傳每個格式預期寫出的路徑（實際是否存在由 manifest 確認）
     Return the paths every generator is expected to produce. Whether each
     file actually got written is confirmed in :func:`generate_all_reports`.
     """
-    paths: Dict[str, List[str]] = {
+    paths: dict[str, list[str]] = {
         "json": [f"{base_name}_success.json", f"{base_name}_failure.json"],
         "xml": [f"{base_name}_success.xml", f"{base_name}_failure.xml"],
         "html": [f"{base_name}.html"],
@@ -50,15 +50,15 @@ def expected_paths(base_name: str, allure_dir: Optional[str] = None) -> Dict[str
     return paths
 
 
-def _existing(paths: List[str]) -> List[str]:
+def _existing(paths: list[str]) -> list[str]:
     return [path for path in paths if Path(path).exists()]
 
 
 def generate_all_reports(
     base_name: str,
-    allure_dir: Optional[str] = None,
+    allure_dir: str | None = None,
     write_manifest: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     依預設慣例產出所有報告；回傳 ``{format: [paths produced]}`` 與 manifest 路徑
     Run every report generator under a single base name and return a dict of
@@ -75,7 +75,7 @@ def generate_all_reports(
     """
     web_runner_logger.info(f"generate_all_reports base={base_name}")
     plan = expected_paths(base_name, allure_dir=allure_dir)
-    errors: Dict[str, str] = {}
+    errors: dict[str, str] = {}
 
     # Each generator may raise when there are no records; track but continue.
     for label, run in (
@@ -90,14 +90,14 @@ def generate_all_reports(
             errors[label] = repr(error)
             web_runner_logger.warning(f"generate_all_reports[{label}] failed: {error!r}")
 
-    allure_paths: List[str] = []
+    allure_paths: list[str] = []
     if allure_dir:
         try:
             allure_paths = generate_allure_report(allure_dir) or []
         except Exception as error:
             errors["allure"] = repr(error)
 
-    produced: Dict[str, List[str]] = {
+    produced: dict[str, list[str]] = {
         "json": _existing(plan["json"]),
         "xml": _existing(plan["xml"]),
         "html": _existing(plan["html"]),
@@ -106,7 +106,7 @@ def generate_all_reports(
     if allure_dir:
         produced["allure"] = allure_paths or _existing(plan.get("allure", []))
 
-    manifest_path: Optional[str] = None
+    manifest_path: str | None = None
     if write_manifest:
         manifest_path = f"{base_name}.manifest.json"
         try:

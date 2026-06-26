@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -46,7 +46,7 @@ class LedgerEntry:
             raise GitBisectFlakeError("LedgerEntry.test_id must be non-empty string")
 
 
-def load_ledger(path: Union[str, Path]) -> List[LedgerEntry]:
+def load_ledger(path: str | Path) -> list[LedgerEntry]:
     """Read the standard ledger JSON. Schema: ``{"runs": [{commit, path/test_id, passed}]}``."""
     p = Path(path)
     if not p.exists():
@@ -60,7 +60,7 @@ def load_ledger(path: Union[str, Path]) -> List[LedgerEntry]:
     runs = data["runs"]
     if not isinstance(runs, list):
         raise GitBisectFlakeError("ledger 'runs' must be a list")
-    entries: List[LedgerEntry] = []
+    entries: list[LedgerEntry] = []
     for raw in runs:
         if not isinstance(raw, dict):
             continue
@@ -84,13 +84,13 @@ class BisectResult:
     """Outcome of either bisect mode."""
 
     test_id: str
-    last_good_commit: Optional[str]
-    first_bad_commit: Optional[str]
+    last_good_commit: str | None
+    first_bad_commit: str | None
     probes: int = 0
     method: str = "ledger"  # 'ledger' | 'probe'
-    history: List[Dict[str, Any]] = field(default_factory=list)
+    history: list[dict[str, Any]] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -110,16 +110,16 @@ def bisect_from_ledger(
         raise GitBisectFlakeError("commit_order must be a non-empty sequence")
     if not test_id:
         raise GitBisectFlakeError("test_id must be a non-empty string")
-    by_commit: Dict[str, LedgerEntry] = {}
+    by_commit: dict[str, LedgerEntry] = {}
     for entry in entries:
         if entry.test_id != test_id:
             continue
         by_commit[entry.commit] = entry
     if not by_commit:
         raise GitBisectFlakeError(f"no ledger rows for test_id {test_id!r}")
-    last_good: Optional[str] = None
-    first_bad: Optional[str] = None
-    history: List[Dict[str, Any]] = []
+    last_good: str | None = None
+    first_bad: str | None = None
+    history: list[dict[str, Any]] = []
     for commit in commit_order:
         entry = by_commit.get(commit)
         if entry is None:
@@ -154,8 +154,8 @@ def bisect_with_probe(
     test_id: str,
     probe: CommitProbe,
     *,
-    known_good: Optional[str] = None,
-    known_bad: Optional[str] = None,
+    known_good: str | None = None,
+    known_bad: str | None = None,
 ) -> BisectResult:
     """
     Classic bisect using ``probe``. ``known_good`` / ``known_bad`` clamp
@@ -181,7 +181,7 @@ def bisect_with_probe(
         raise GitBisectFlakeError("known_good must come before known_bad in commit_order")
 
     probes = 0
-    history: List[Dict[str, Any]] = []
+    history: list[dict[str, Any]] = []
     while high - low > 1:
         mid = (low + high) // 2
         commit = commit_order[mid]

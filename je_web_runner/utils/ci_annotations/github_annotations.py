@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import IO, Iterable, List, Optional
+from typing import IO, Iterable
 
 # defusedxml-protected XML reader; CLAUDE.md requires this for parsing.
 from defusedxml import ElementTree as DefusedET
@@ -35,16 +35,16 @@ def _escape(message: str) -> str:
 
 def format_error_annotation(
     message: str,
-    file: Optional[str] = None,
-    line: Optional[int] = None,
-    col: Optional[int] = None,
-    title: Optional[str] = None,
+    file: str | None = None,
+    line: int | None = None,
+    col: int | None = None,
+    title: str | None = None,
 ) -> str:
     """
     產出 ``::error file=...::message`` 行
     Format a single ``::error …::message`` workflow command line.
     """
-    parts: List[str] = []
+    parts: list[str] = []
     if file:
         parts.append(f"file={file}")
     if line is not None:
@@ -58,9 +58,9 @@ def format_error_annotation(
 
 
 def emit_failure_annotations(
-    stream: Optional[IO[str]] = None,
-    file: Optional[str] = None,
-) -> List[str]:
+    stream: IO[str] | None = None,
+    file: str | None = None,
+) -> list[str]:
     """
     對 ``test_record_instance`` 內每個失敗紀錄輸出一行 annotation
     Emit one annotation per failure in ``test_record_instance``.
@@ -71,7 +71,7 @@ def emit_failure_annotations(
     """
     web_runner_logger.info("emit_failure_annotations")
     out_stream = stream if stream is not None else sys.stdout
-    lines: List[str] = []
+    lines: list[str] = []
     for record in test_record_instance.test_record_list:
         if record.get("program_exception", _NO_EXCEPTION) == _NO_EXCEPTION:
             continue
@@ -87,8 +87,8 @@ def emit_failure_annotations(
 
 def emit_from_junit_xml(
     junit_path: str,
-    stream: Optional[IO[str]] = None,
-) -> List[str]:
+    stream: IO[str] | None = None,
+) -> list[str]:
     """
     讀取 JUnit XML 並對其中每個 ``<failure>`` 輸出一行 annotation
     Parse a JUnit XML report and emit ``::error::`` annotations for each
@@ -103,7 +103,7 @@ def emit_from_junit_xml(
     except DefusedET.ParseError as error:
         raise AnnotationError(f"failed to parse JUnit XML: {error}") from error
     root = tree.getroot()
-    lines: List[str] = []
+    lines: list[str] = []
     for testcase in _iter_testcases(root):
         failure = testcase.find("failure")
         if failure is None:

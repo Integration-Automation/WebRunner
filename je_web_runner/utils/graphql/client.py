@@ -13,7 +13,7 @@ import json
 import ssl
 import urllib.request
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -39,7 +39,7 @@ _INTROSPECTION_QUERY = """
 @dataclass
 class GraphQLClient:
     endpoint: str
-    headers: Optional[Dict[str, str]] = None
+    headers: dict[str, str] | None = None
     timeout: float = 10.0
 
     def __post_init__(self) -> None:
@@ -53,9 +53,9 @@ class GraphQLClient:
     def execute(
         self,
         query: str,
-        variables: Optional[Dict[str, Any]] = None,
-        operation_name: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        variables: dict[str, Any] | None = None,
+        operation_name: str | None = None,
+    ) -> dict[str, Any]:
         request = self._build_request(query, variables, operation_name)
         payload = self._send(request)
         web_runner_logger.info(
@@ -68,8 +68,8 @@ class GraphQLClient:
     def _build_request(
         self,
         query: str,
-        variables: Optional[Dict[str, Any]],
-        operation_name: Optional[str],
+        variables: dict[str, Any] | None,
+        operation_name: str | None,
     ) -> urllib.request.Request:
         body = json.dumps(
             {"query": query, "variables": variables or {}, "operationName": operation_name},
@@ -82,7 +82,7 @@ class GraphQLClient:
             request.add_header(name, value)
         return request
 
-    def _send(self, request: urllib.request.Request) -> Dict[str, Any]:
+    def _send(self, request: urllib.request.Request) -> dict[str, Any]:
         ssl_context = ssl.create_default_context()  # NOSONAR — Py3.10+ default enforces TLS 1.2+
         try:
             with urllib.request.urlopen(  # nosec B310 — scheme already validated
@@ -92,11 +92,11 @@ class GraphQLClient:
         except (OSError, ValueError) as error:
             raise GraphQLError(f"GraphQL transport failed: {error!r}") from error
 
-    def introspect(self) -> Dict[str, Any]:
+    def introspect(self) -> dict[str, Any]:
         return self.execute(_INTROSPECTION_QUERY)
 
 
-def extract_field(payload: Dict[str, Any], path: str) -> Any:
+def extract_field(payload: dict[str, Any], path: str) -> Any:
     """
     用 ``a.b.c[0].d`` 形式的路徑從 GraphQL 回應中取值
     Pluck a value out of ``payload['data']`` using a dotted path with optional
@@ -139,7 +139,7 @@ def _get_index(cursor: Any, index: int, path: str) -> Any:
     return cursor[index]
 
 
-def introspect_types(payload: Dict[str, Any]) -> List[str]:
+def introspect_types(payload: dict[str, Any]) -> list[str]:
     """Return the list of type names from an introspection payload."""
     schema = payload.get("data", {}).get("__schema", {})
     return [t.get("name") for t in schema.get("types", []) if t.get("name")]

@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -94,17 +94,17 @@ class LockEvent:
     steal: bool = False
     time_ms: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "outcome": self.outcome.value}
 
 
-def parse_log(payload: Any) -> List[LockEvent]:
+def parse_log(payload: Any) -> list[LockEvent]:
     """Convert the harvested log into typed events."""
     if not isinstance(payload, list):
         raise WebLocksError(
             f"payload must be list, got {type(payload).__name__}"
         )
-    out: List[LockEvent] = []
+    out: list[LockEvent] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -131,7 +131,7 @@ def parse_log(payload: Any) -> List[LockEvent]:
 
 def assert_no_deadlock(events: Iterable[LockEvent]) -> None:
     """Assert every acquired lock was released (no held-forever leaks)."""
-    acquired: Dict[str, LockEvent] = {}
+    acquired: dict[str, LockEvent] = {}
     for event in events:
         if event.outcome == LockOutcome.ACQUIRED:
             acquired[event.id] = event

@@ -15,7 +15,7 @@ the keyboard appears, plus assertions to verify the layout reacted.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Dict
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -47,7 +47,7 @@ class ViewportSnapshot:
     offset_top: float = 0
     keyboard_inset: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 

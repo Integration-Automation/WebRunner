@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -20,7 +20,7 @@ class ActionLinterError(WebRunnerException):
 
 
 # Map legacy → suggested replacement (mirrors the aliases added in fix #3-#11).
-_LEGACY_NAMES: Dict[str, str] = {
+_LEGACY_NAMES: dict[str, str] = {
     "WR_get_webdriver_manager": "WR_new_driver",
     "WR_quit": "WR_quit_all",
     "WR_single_quit": "WR_quit_current",
@@ -49,7 +49,7 @@ _DANGEROUS_SCRIPT_COMMANDS = frozenset({
 _HARDCODED_URL_RE = re.compile(r"https?://[^\s${}]+")
 
 
-def _walk_args(value: Any, location: str, findings: List[Dict[str, Any]]) -> None:
+def _walk_args(value: Any, location: str, findings: list[dict[str, Any]]) -> None:
     """Recursively scan args for hard-coded URLs."""
     if isinstance(value, str):
         if _HARDCODED_URL_RE.search(value) and "${ENV." not in value and "${ROW." not in value:
@@ -69,7 +69,7 @@ def _walk_args(value: Any, location: str, findings: List[Dict[str, Any]]) -> Non
             _walk_args(sub, f"{location}[{index}]", findings)
 
 
-def _check_action(action: Any, index: int, findings: List[Dict[str, Any]]) -> None:
+def _check_action(action: Any, index: int, findings: list[dict[str, Any]]) -> None:
     location = f"action[{index}]"
     if not isinstance(action, list) or not action or not isinstance(action[0], str):
         # The validator covers structural problems; the linter only adds
@@ -105,7 +105,7 @@ def _check_action(action: Any, index: int, findings: List[Dict[str, Any]]) -> No
         _walk_args(action[slot_index], f"{location}.args[{slot_index - 1}]", findings)
 
 
-def _check_duplicates(action_list: List[Any], findings: List[Dict[str, Any]]) -> None:
+def _check_duplicates(action_list: list[Any], findings: list[dict[str, Any]]) -> None:
     """Flag two identical consecutive actions."""
     for index in range(1, len(action_list)):
         if action_list[index] == action_list[index - 1]:
@@ -117,9 +117,9 @@ def _check_duplicates(action_list: List[Any], findings: List[Dict[str, Any]]) ->
             })
 
 
-def lint_action(data: Any) -> List[Dict[str, Any]]:
+def lint_action(data: Any) -> list[dict[str, Any]]:
     """Walk an action structure and return the findings list."""
-    findings: List[Dict[str, Any]] = []
+    findings: list[dict[str, Any]] = []
     if isinstance(data, dict):
         action_list = data.get("webdriver_wrapper")
         meta = data.get("meta") or {}
@@ -140,7 +140,7 @@ def lint_action(data: Any) -> List[Dict[str, Any]]:
     return findings
 
 
-def lint_action_file(path: str) -> List[Dict[str, Any]]:
+def lint_action_file(path: str) -> list[dict[str, Any]]:
     """Read ``path`` (UTF-8 JSON) and lint the contents."""
     file_path = Path(path)
     if not file_path.exists():
@@ -154,9 +154,9 @@ def lint_action_file(path: str) -> List[Dict[str, Any]]:
     return lint_action(data)
 
 
-def severity_counts(findings: List[Dict[str, Any]]) -> Dict[str, int]:
+def severity_counts(findings: list[dict[str, Any]]) -> dict[str, int]:
     """Aggregate ``{warning: N, info: M}`` for reporting."""
-    counts: Dict[str, int] = {"warning": 0, "info": 0}
+    counts: dict[str, int] = {"warning": 0, "info": 0}
     for finding in findings:
         sev = finding.get("severity", "info")
         counts[sev] = counts.get(sev, 0) + 1

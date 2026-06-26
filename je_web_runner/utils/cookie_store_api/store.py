@@ -6,7 +6,7 @@ HttpOnly cookie 也看不到 `change` event。
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -23,13 +23,13 @@ class CookieRecord:
 
     name: str
     value: str
-    domain: Optional[str] = None
+    domain: str | None = None
     path: str = "/"
     secure: bool = True
     same_site: str = "strict"
-    expires: Optional[int] = None  # epoch ms
+    expires: int | None = None  # epoch ms
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -37,8 +37,8 @@ class CookieRecord:
 class ChangeEvent:
     """One ``cookiechange`` event observed via cookieStore subscription."""
 
-    changed: List[CookieRecord] = field(default_factory=list)
-    deleted: List[str] = field(default_factory=list)
+    changed: list[CookieRecord] = field(default_factory=list)
+    deleted: list[str] = field(default_factory=list)
     timestamp_ms: float = 0.0
 
 
@@ -80,13 +80,13 @@ HARVEST_CHANGES_SCRIPT = "return window.__wr_cs__ || [];"
 
 # ---------- parsing -----------------------------------------------------
 
-def parse_cookies(payload: Any) -> List[CookieRecord]:
+def parse_cookies(payload: Any) -> list[CookieRecord]:
     """Convert ``cookieStore.getAll()`` result to typed records."""
     if not isinstance(payload, list):
         raise CookieStoreApiError(
             f"cookies payload must be list, got {type(payload).__name__}"
         )
-    out: List[CookieRecord] = []
+    out: list[CookieRecord] = []
     for raw in payload:
         if not isinstance(raw, dict) or "name" not in raw:
             continue
@@ -102,13 +102,13 @@ def parse_cookies(payload: Any) -> List[CookieRecord]:
     return out
 
 
-def parse_change_events(payload: Any) -> List[ChangeEvent]:
+def parse_change_events(payload: Any) -> list[ChangeEvent]:
     """Convert harvested change-event log to typed records."""
     if not isinstance(payload, list):
         raise CookieStoreApiError(
             f"change events payload must be list, got {type(payload).__name__}"
         )
-    out: List[ChangeEvent] = []
+    out: list[ChangeEvent] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -123,7 +123,7 @@ def parse_change_events(payload: Any) -> List[ChangeEvent]:
 # ---------- assertions --------------------------------------------------
 
 def assert_cookie_present(
-    cookies: Iterable[CookieRecord], *, name: str, value: Optional[str] = None,
+    cookies: Iterable[CookieRecord], *, name: str, value: str | None = None,
 ) -> CookieRecord:
     """Assert a cookie with name (and optional value) is present."""
     if not isinstance(name, str) or not name:

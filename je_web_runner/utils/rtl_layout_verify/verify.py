@@ -17,7 +17,7 @@ then checks:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -69,16 +69,16 @@ class ElementBox:
     padding_left: str = "0px"
     padding_right: str = "0px"
     unicode_bidi: str = "normal"
-    raw: Dict[str, Any] = field(default_factory=dict)
+    raw: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class Snapshot:
     document_dir: str
-    selectors: Dict[str, List[ElementBox]] = field(default_factory=dict)
+    selectors: dict[str, list[ElementBox]] = field(default_factory=dict)
 
 
-def _parse_box(raw: Dict[str, Any]) -> ElementBox:
+def _parse_box(raw: dict[str, Any]) -> ElementBox:
     return ElementBox(
         tag=str(raw.get("tag") or ""),
         text=str(raw.get("text") or ""),

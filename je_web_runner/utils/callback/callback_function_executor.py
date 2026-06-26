@@ -14,7 +14,7 @@ from je_web_runner.utils.test_record.test_record_class import test_record_instan
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 
-class CallbackFunctionExecutor(object):
+class CallbackFunctionExecutor:
 
     def __init__(self):
         # 事件字典：將字串名稱對應到實際可執行的函式
@@ -142,7 +142,7 @@ class CallbackFunctionExecutor(object):
             self,
             trigger_function_name: str,
             callback_function: typing.Callable,
-            callback_function_param: typing.Union[dict, None] = None,
+            callback_function_param: dict | None = None,
             callback_param_method: str = "kwargs",
             **kwargs
     ):

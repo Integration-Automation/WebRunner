@@ -15,7 +15,7 @@ import keyword
 import re
 from dataclasses import dataclass
 from html.parser import HTMLParser
-from typing import Any, Dict, List, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -56,10 +56,10 @@ class _ElementCollector(HTMLParser):
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
-        self.elements: List[DiscoveredElement] = []
-        self._used_names: Dict[str, int] = {}
+        self.elements: list[DiscoveredElement] = []
+        self._used_names: dict[str, int] = {}
 
-    def handle_starttag(self, tag: str, attrs: List[Any]) -> None:
+    def handle_starttag(self, tag: str, attrs: list[Any]) -> None:
         attr_dict = {name: value for name, value in attrs if isinstance(name, str)}
         for source in _PRIORITY_KEYS:
             value = attr_dict.get(source)
@@ -90,7 +90,7 @@ class _ElementCollector(HTMLParser):
         ))
 
 
-def discover_elements_from_html(html: str) -> List[DiscoveredElement]:
+def discover_elements_from_html(html: str) -> list[DiscoveredElement]:
     """Collect every wrap-worthy element from the HTML snapshot."""
     if not isinstance(html, str):
         raise PomCodegenError("html must be str")

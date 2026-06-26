@@ -19,7 +19,7 @@ import time
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Iterator, List, Optional, Sequence, Tuple
+from typing import Any, Iterator, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -33,7 +33,7 @@ class ChromeProfileError(WebRunnerException):
 # sees any of these will refuse to launch with the same profile
 # (SessionNotCreatedException). Removing them is safe — they do NOT contain
 # cookies or login data.
-SINGLETON_LOCK_FILES: Tuple[str, ...] = (
+SINGLETON_LOCK_FILES: tuple[str, ...] = (
     "SingletonLock",
     "SingletonCookie",
     "SingletonSocket",
@@ -44,7 +44,7 @@ SINGLETON_LOCK_FILES: Tuple[str, ...] = (
 # Relative paths inside the profile that we treat as session-critical:
 # everything we need to preserve a logged-in session. The journal sidecar
 # files are SQLite WAL artefacts and must be copied alongside the main DB.
-SESSION_CRITICAL_PATHS: Tuple[str, ...] = (
+SESSION_CRITICAL_PATHS: tuple[str, ...] = (
     "Default/Cookies",
     "Default/Cookies-journal",
     "Default/Login Data",
@@ -91,14 +91,14 @@ class StealthFlags:
     """
     user_agent: str = DEFAULT_USER_AGENT
     language: str = "en-US"
-    window_size: Optional[Tuple[int, int]] = None
+    window_size: tuple[int, int] | None = None
     disable_blink_features: bool = True
     exclude_automation_switches: bool = True
     headless: bool = False
-    extra_args: List[str] = field(default_factory=list)
+    extra_args: list[str] = field(default_factory=list)
 
 
-def cleanup_chrome_locks(profile_dir: Path) -> List[str]:
+def cleanup_chrome_locks(profile_dir: Path) -> list[str]:
     """
     清理 SingletonLock / lockfile 等殘留檔。Locked file 改用 rename 規避。
     Remove the singleton lock files Chrome leaves behind. Files held by the
@@ -108,7 +108,7 @@ def cleanup_chrome_locks(profile_dir: Path) -> List[str]:
     profile_dir = Path(profile_dir)
     if not profile_dir.exists():
         return []
-    statuses: List[str] = []
+    statuses: list[str] = []
     for fname in SINGLETON_LOCK_FILES:
         target = profile_dir / fname
         if not target.exists() and not target.is_symlink():
@@ -165,7 +165,7 @@ def snapshot_chrome_profile(  # NOSONAR S3776 — cohesive logic; planned refact
     snapshot_dir.mkdir(parents=True, exist_ok=True)
 
     copied = 0
-    skipped: List[str] = []
+    skipped: list[str] = []
     profile_root_str = str(profile_dir)
     for root, dirs, files in os.walk(profile_dir, topdown=True):
         if not full_copy:
@@ -196,7 +196,7 @@ def sync_chrome_profile_back(
     profile_dir: Path,
     *,
     paths: Sequence[str] = SESSION_CRITICAL_PATHS,
-) -> List[str]:
+) -> list[str]:
     """
     把 snapshot 內 session-critical 檔複製回原 profile。
     Copy session-critical files from the snapshot back into the persistent
@@ -209,7 +209,7 @@ def sync_chrome_profile_back(
         raise ChromeProfileError(f"snapshot dir does not exist: {snapshot_dir}")
     profile_dir.mkdir(parents=True, exist_ok=True)
 
-    statuses: List[str] = []
+    statuses: list[str] = []
     for rel in paths:
         src = snapshot_dir / rel
         if not src.exists():
@@ -227,7 +227,7 @@ def sync_chrome_profile_back(
 
 def build_chrome_options(
     profile_dir: Path,
-    flags: Optional[StealthFlags] = None,
+    flags: StealthFlags | None = None,
 ):
     """
     產出帶 stealth 設定的 ChromeOptions。
@@ -261,9 +261,9 @@ def build_chrome_options(
 def build_stealth_chrome_driver(
     profile_dir: Path,
     *,
-    snapshot_dir: Optional[Path] = None,
-    flags: Optional[StealthFlags] = None,
-    chromedriver_log: Optional[Path] = None,
+    snapshot_dir: Path | None = None,
+    flags: StealthFlags | None = None,
+    chromedriver_log: Path | None = None,
     retry_once: bool = True,
 ):
     """
@@ -329,9 +329,9 @@ def build_stealth_chrome_driver(
 def chrome_profile_session(
     profile_dir: Path,
     *,
-    snapshot_dir: Optional[Path] = None,
-    flags: Optional[StealthFlags] = None,
-    chromedriver_log: Optional[Path] = None,
+    snapshot_dir: Path | None = None,
+    flags: StealthFlags | None = None,
+    chromedriver_log: Path | None = None,
     sync_back: bool = True,
 ) -> Iterator[Any]:
     """
@@ -368,8 +368,8 @@ def build_playwright_persistent_context(
     playwright_browser_type: Any,
     profile_dir: Path,
     *,
-    flags: Optional[StealthFlags] = None,
-    extra_launch_kwargs: Optional[dict] = None,
+    flags: StealthFlags | None = None,
+    extra_launch_kwargs: dict | None = None,
 ) -> Any:
     """
     用 Playwright 的 persistent context 開瀏覽器並套 stealth flag。
@@ -385,7 +385,7 @@ def build_playwright_persistent_context(
     profile_dir.mkdir(parents=True, exist_ok=True)
     cleanup_chrome_locks(profile_dir)
 
-    args: List[str] = [f"--lang={flags.language}"]
+    args: list[str] = [f"--lang={flags.language}"]
     if flags.disable_blink_features:
         args.append("--disable-blink-features=AutomationControlled")
     args.extend(flags.extra_args)

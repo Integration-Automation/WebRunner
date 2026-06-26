@@ -12,7 +12,6 @@ index switching.
 """
 from __future__ import annotations
 
-from typing import List, Optional, Union
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -23,7 +22,7 @@ class PlaywrightElementError(WebRunnerException):
     """Raised when an element-level Playwright operation cannot proceed."""
 
 
-def _record(name: str, params, error: Optional[Exception]) -> None:
+def _record(name: str, params, error: Exception | None) -> None:
     record_action_to_list(f"Playwright element {name}", params, error)
 
 
@@ -35,7 +34,7 @@ class PlaywrightElementWrapper:
 
     def __init__(self) -> None:
         self.current_element = None
-        self.current_element_list: Optional[List[object]] = None
+        self.current_element_list: list[object] | None = None
 
     def _require_element(self):
         if self.current_element is None:
@@ -123,7 +122,7 @@ class PlaywrightElementWrapper:
             web_runner_logger.error(f"PlaywrightElementWrapper uncheck failed: {error!r}")
             _record("uncheck", None, error)
 
-    def select_option(self, value: Union[str, list, dict]) -> List[str]:
+    def select_option(self, value: str | list | dict) -> list[str]:
         web_runner_logger.info(f"PlaywrightElementWrapper select_option: {value!r}")
         params = {"value": value}
         try:
@@ -135,7 +134,7 @@ class PlaywrightElementWrapper:
             _record("select_option", params, error)
             return []
 
-    def get_attribute(self, name: str) -> Optional[str]:
+    def get_attribute(self, name: str) -> str | None:
         web_runner_logger.info(f"PlaywrightElementWrapper get_attribute: {name!r}")
         params = {"name": name}
         try:
@@ -161,7 +160,7 @@ class PlaywrightElementWrapper:
             _record("get_property", params, error)
             return None
 
-    def inner_text(self) -> Optional[str]:
+    def inner_text(self) -> str | None:
         web_runner_logger.info("PlaywrightElementWrapper inner_text")
         try:
             value = self._require_element().inner_text()
@@ -172,7 +171,7 @@ class PlaywrightElementWrapper:
             _record("inner_text", None, error)
             return None
 
-    def inner_html(self) -> Optional[str]:
+    def inner_html(self) -> str | None:
         web_runner_logger.info("PlaywrightElementWrapper inner_html")
         try:
             value = self._require_element().inner_html()
@@ -225,7 +224,7 @@ class PlaywrightElementWrapper:
             web_runner_logger.error(f"PlaywrightElementWrapper scroll_into_view failed: {error!r}")
             _record("scroll_into_view", None, error)
 
-    def screenshot(self, filename: str) -> Optional[str]:
+    def screenshot(self, filename: str) -> str | None:
         web_runner_logger.info(f"PlaywrightElementWrapper screenshot: {filename}")
         params = {"filename": filename}
         try:

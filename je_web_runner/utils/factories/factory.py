@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import itertools
 import time
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -25,23 +25,23 @@ class Factory:
     invoked for every ``build()`` so faker-style providers stay fresh.
     """
 
-    def __init__(self, defaults: Dict[str, Any]):
+    def __init__(self, defaults: dict[str, Any]):
         if not isinstance(defaults, dict):
             raise FactoryError("Factory defaults must be a dict")
-        self._defaults: Dict[str, Any] = dict(defaults)
+        self._defaults: dict[str, Any] = dict(defaults)
 
-    def build(self, **overrides: Any) -> Dict[str, Any]:
+    def build(self, **overrides: Any) -> dict[str, Any]:
         web_runner_logger.info("Factory.build")
-        out: Dict[str, Any] = {}
+        out: dict[str, Any] = {}
         for key, value in self._defaults.items():
             out[key] = value() if callable(value) else value
         out.update(overrides)
         return out
 
-    def build_batch(self, count: int, **overrides: Any) -> List[Dict[str, Any]]:
+    def build_batch(self, count: int, **overrides: Any) -> list[dict[str, Any]]:
         return [self.build(**overrides) for _ in range(int(count))]
 
-    def extend(self, **extra_defaults: Any) -> "Factory":
+    def extend(self, **extra_defaults: Any) -> Factory:
         """Return a new Factory with additional / overriding defaults."""
         merged = {**self._defaults, **extra_defaults}
         return Factory(merged)

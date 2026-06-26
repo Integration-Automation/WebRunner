@@ -20,7 +20,7 @@ import math
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Sequence, Union
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -43,12 +43,12 @@ class BaselineSample:
     prompt_id: str
     prompt: str
     answer: str
-    embedding: List[float]
-    must_include: List[str] = field(default_factory=list)
-    must_exclude: List[str] = field(default_factory=list)
+    embedding: list[float]
+    must_include: list[str] = field(default_factory=list)
+    must_exclude: list[str] = field(default_factory=list)
     captured_at: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -56,15 +56,15 @@ class BaselineSample:
 class Baseline:
     """Set of frozen reference samples, persisted as JSON."""
 
-    samples: List[BaselineSample] = field(default_factory=list)
+    samples: list[BaselineSample] = field(default_factory=list)
     captured_at: str = ""
 
-    def by_id(self) -> Dict[str, BaselineSample]:
+    def by_id(self) -> dict[str, BaselineSample]:
         return {s.prompt_id: s for s in self.samples}
 
 
 def capture_baseline(
-    prompts: Sequence[Dict[str, Any]],
+    prompts: Sequence[dict[str, Any]],
     embedder: Embedder,
     answerer: Callable[[str], str],
 ) -> Baseline:
@@ -74,7 +74,7 @@ def capture_baseline(
     """
     if not prompts:
         raise PromptDriftError("prompts must be non-empty")
-    samples: List[BaselineSample] = []
+    samples: list[BaselineSample] = []
     now = datetime.now(tz=timezone.utc).isoformat(timespec="seconds")
     for raw in prompts:
         if not isinstance(raw, dict):
@@ -102,7 +102,7 @@ def capture_baseline(
     return Baseline(samples=samples, captured_at=now)
 
 
-def save_baseline(baseline: Baseline, path: Union[str, Path]) -> Path:
+def save_baseline(baseline: Baseline, path: str | Path) -> Path:
     """Persist baseline to JSON."""
     if not isinstance(baseline, Baseline):
         raise PromptDriftError("save_baseline expects Baseline")
@@ -117,7 +117,7 @@ def save_baseline(baseline: Baseline, path: Union[str, Path]) -> Path:
     return p
 
 
-def load_baseline(path: Union[str, Path]) -> Baseline:
+def load_baseline(path: str | Path) -> Baseline:
     """Read baseline JSON back into a :class:`Baseline`."""
     p = Path(path)
     if not p.exists():
@@ -128,7 +128,7 @@ def load_baseline(path: Union[str, Path]) -> Baseline:
         raise PromptDriftError(f"baseline file invalid: {error}") from error
     if not isinstance(data, dict) or not isinstance(data.get("samples"), list):
         raise PromptDriftError("baseline JSON missing 'samples' list")
-    samples: List[BaselineSample] = []
+    samples: list[BaselineSample] = []
     for raw in data["samples"]:
         if not isinstance(raw, dict):
             continue
@@ -159,8 +159,8 @@ class DriftFinding:
     prompt_id: str
     similarity: float
     drifted: bool
-    missing_required: List[str] = field(default_factory=list)
-    forbidden_present: List[str] = field(default_factory=list)
+    missing_required: list[str] = field(default_factory=list)
+    forbidden_present: list[str] = field(default_factory=list)
     current_answer: str = ""
 
 
@@ -169,9 +169,9 @@ class DriftReport:
     """Roll-up returned by :func:`check_drift`."""
 
     threshold: float
-    findings: List[DriftFinding] = field(default_factory=list)
+    findings: list[DriftFinding] = field(default_factory=list)
 
-    def drifted_findings(self) -> List[DriftFinding]:
+    def drifted_findings(self) -> list[DriftFinding]:
         return [f for f in self.findings
                 if f.drifted or f.missing_required or f.forbidden_present]
 

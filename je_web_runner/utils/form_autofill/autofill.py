@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -27,7 +27,7 @@ class FormAutoFillError(WebRunnerException):
 
 @dataclass
 class FieldMatch:
-    field: Dict[str, Any]
+    field: dict[str, Any]
     fixture_key: str
     value: Any
     confidence: float
@@ -37,7 +37,7 @@ class FieldMatch:
 _NORMALISE_RE = re.compile(r"[^a-z0-9]+")
 
 
-_ALIAS_BUCKETS: Dict[str, List[str]] = {
+_ALIAS_BUCKETS: dict[str, list[str]] = {
     "email": ["email", "e-mail", "emailaddress", "useremail"],
     "username": ["username", "user", "userid", "login", "account"],
     "password": ["password", "pass", "passwd", "pwd"],
@@ -55,7 +55,7 @@ _ALIAS_BUCKETS: Dict[str, List[str]] = {
 }
 
 
-_CANONICAL_BY_TOKEN: Dict[str, str] = {}
+_CANONICAL_BY_TOKEN: dict[str, str] = {}
 for canonical, aliases in _ALIAS_BUCKETS.items():
     for alias in aliases:
         _CANONICAL_BY_TOKEN[alias] = canonical
@@ -67,7 +67,7 @@ def _normalise(text: Any) -> str:
     return _NORMALISE_RE.sub("", text.lower())
 
 
-def classify_field(field: Dict[str, Any]) -> Optional[str]:
+def classify_field(field: dict[str, Any]) -> str | None:
     """
     依 ``data-testid`` > ``id`` > ``name`` > ``placeholder`` > ``label`` > ``type``
     Pick the first matching alias group; return the canonical key or None.
@@ -102,13 +102,13 @@ def classify_field(field: Dict[str, Any]) -> Optional[str]:
 
 
 def match_fields(
-    fields: Iterable[Dict[str, Any]],
-    fixture: Dict[str, Any],
-) -> List[FieldMatch]:
+    fields: Iterable[dict[str, Any]],
+    fixture: dict[str, Any],
+) -> list[FieldMatch]:
     """Return a :class:`FieldMatch` for every field that maps to a fixture key."""
     if not isinstance(fixture, dict):
         raise FormAutoFillError("fixture must be a dict")
-    matches: List[FieldMatch] = []
+    matches: list[FieldMatch] = []
     for field in fields:
         canonical = classify_field(field)
         if canonical is None:
@@ -128,8 +128,8 @@ def match_fields(
     return matches
 
 
-def _pick_fixture_value(field: Dict[str, Any], canonical: str,
-                        fixture: Dict[str, Any]):
+def _pick_fixture_value(field: dict[str, Any], canonical: str,
+                        fixture: dict[str, Any]):
     raw_id = str(field.get("id") or field.get("name") or "").lower()
     if raw_id and raw_id in fixture:
         return raw_id, fixture[raw_id], "exact id/name match", 1.0
@@ -143,17 +143,17 @@ def _pick_fixture_value(field: Dict[str, Any], canonical: str,
 
 
 def plan_fill_actions(
-    fields: Iterable[Dict[str, Any]],
-    fixture: Dict[str, Any],
-    submit_locator: Optional[Dict[str, str]] = None,
-) -> List[List[Any]]:
+    fields: Iterable[dict[str, Any]],
+    fixture: dict[str, Any],
+    submit_locator: dict[str, str] | None = None,
+) -> list[list[Any]]:
     """
     把比對結果展開成 ``WR_save_test_object`` + ``WR_element_input`` 序列
     Convert matches into an executable action list. ``submit_locator``
     optional ``{strategy, value}`` adds a final click.
     """
     matches = match_fields(fields, fixture)
-    actions: List[List[Any]] = []
+    actions: list[list[Any]] = []
     for match in matches:
         strategy, value = _locator_for(match.field)
         if strategy is None:
@@ -176,7 +176,7 @@ def plan_fill_actions(
     return actions
 
 
-def _locator_for(field: Dict[str, Any]):
+def _locator_for(field: dict[str, Any]):
     if field.get("id"):
         return "ID", field["id"]
     if field.get("data-testid"):

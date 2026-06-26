@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import List, Sequence, Set
+from typing import Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -37,14 +37,14 @@ class Chunk:
 @dataclass
 class RagAnswer:
     text: str
-    cited_chunk_ids: List[str] = field(default_factory=list)
+    cited_chunk_ids: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not isinstance(self.text, str):
             raise RagGroundingError("text must be string")
 
 
-def _tokens(text: str) -> Set[str]:
+def _tokens(text: str) -> set[str]:
     return {t.lower() for t in re.findall(r"\w{3,}", text or "")}
 
 
@@ -77,7 +77,7 @@ def lexical_overlap_score(
     answer_tokens = _tokens(answer.text)
     if not answer_tokens:
         return 0.0
-    retrieved_tokens: Set[str] = set()
+    retrieved_tokens: set[str] = set()
     for c in retrieved:
         retrieved_tokens |= _tokens(c.text)
     return len(answer_tokens & retrieved_tokens) / len(answer_tokens)
@@ -103,7 +103,7 @@ def find_unsupported_claims(
     retrieved: Sequence[Chunk],
     *,
     min_phrase_len: int = 4,
-) -> List[str]:
+) -> list[str]:
     """Return ``n``-token phrases in the answer that don't appear in any chunk."""
     if min_phrase_len < 2:
         raise RagGroundingError("min_phrase_len must be >= 2")
@@ -111,7 +111,7 @@ def find_unsupported_claims(
     if len(answer_words) < min_phrase_len:
         return []
     haystack = " ".join((c.text or "").lower() for c in retrieved)
-    unsupported: List[str] = []
+    unsupported: list[str] = []
     for i in range(len(answer_words) - min_phrase_len + 1):
         phrase = " ".join(answer_words[i:i + min_phrase_len]).lower()
         if phrase not in haystack:

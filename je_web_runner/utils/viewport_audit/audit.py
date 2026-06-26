@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -25,11 +25,11 @@ class ViewportAuditError(WebRunnerException):
 @dataclass
 class ViewportMeta:
     content: str = ""
-    parsed: Dict[str, str] = field(default_factory=dict)
+    parsed: dict[str, str] = field(default_factory=dict)
 
 
-def _parse_meta_content(content: str) -> Dict[str, str]:
-    out: Dict[str, str] = {}
+def _parse_meta_content(content: str) -> dict[str, str]:
+    out: dict[str, str] = {}
     for part in (content or "").split(","):
         if "=" in part:
             k, _, v = part.partition("=")
@@ -46,19 +46,19 @@ _ATTR_RE = re.compile(
 )
 
 
-def _tag_attrs(tag: str) -> Dict[str, str]:
-    out: Dict[str, str] = {}
+def _tag_attrs(tag: str) -> dict[str, str]:
+    out: dict[str, str] = {}
     for match in _ATTR_RE.finditer(tag):
         key = match.group(1).lower()
         out[key] = match.group(2) or match.group(3) or match.group(4) or ""
     return out
 
 
-def parse_meta(html: str) -> Optional[ViewportMeta]:
+def parse_meta(html: str) -> ViewportMeta | None:
     """Extract the *last* ``<meta name="viewport">`` content from HTML."""
     if not isinstance(html, str):
         raise ViewportAuditError("html must be a string")
-    last_content: Optional[str] = None
+    last_content: str | None = None
     for tag in _META_TAG_RE.finditer(html):
         attrs = _tag_attrs(tag.group(0))
         if attrs.get("name", "").lower() == "viewport" and "content" in attrs:
@@ -69,14 +69,14 @@ def parse_meta(html: str) -> Optional[ViewportMeta]:
                         parsed=_parse_meta_content(last_content))
 
 
-def assert_meta_present(meta: Optional[ViewportMeta]) -> None:
+def assert_meta_present(meta: ViewportMeta | None) -> None:
     if meta is None:
         raise ViewportAuditError(
             "<meta name='viewport'> is missing — mobile layout will be broken"
         )
 
 
-def assert_responsive_width(meta: Optional[ViewportMeta]) -> None:
+def assert_responsive_width(meta: ViewportMeta | None) -> None:
     assert_meta_present(meta)
     width = meta.parsed.get("width")
     if width != "device-width":
@@ -85,7 +85,7 @@ def assert_responsive_width(meta: Optional[ViewportMeta]) -> None:
         )
 
 
-def assert_user_scalable_allowed(meta: Optional[ViewportMeta]) -> None:
+def assert_user_scalable_allowed(meta: ViewportMeta | None) -> None:
     """A11y / WCAG 1.4.4: pinch-zoom must not be disabled."""
     assert_meta_present(meta)
     scalable = meta.parsed.get("user-scalable")
@@ -107,7 +107,7 @@ def assert_user_scalable_allowed(meta: Optional[ViewportMeta]) -> None:
             ) from exc
 
 
-def assert_notch_aware(meta: Optional[ViewportMeta]) -> None:
+def assert_notch_aware(meta: ViewportMeta | None) -> None:
     assert_meta_present(meta)
     fit = meta.parsed.get("viewport-fit")
     if fit != "cover":

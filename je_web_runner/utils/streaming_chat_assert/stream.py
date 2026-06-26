@@ -14,7 +14,7 @@ Tests need to confirm:
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, List, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -29,7 +29,7 @@ class TokenDelta:
 
     text: str = ""
     ts_ms: float = 0
-    seq: Optional[int] = None    # if provider numbers chunks
+    seq: int | None = None    # if provider numbers chunks
 
     def __post_init__(self) -> None:
         if not isinstance(self.text, str):
@@ -38,10 +38,10 @@ class TokenDelta:
             raise StreamingChatAssertError("ts_ms must be >= 0")
 
 
-def parse_deltas(payload: Any) -> List[TokenDelta]:
+def parse_deltas(payload: Any) -> list[TokenDelta]:
     if not isinstance(payload, list):
         raise StreamingChatAssertError("payload must be a list")
-    out: List[TokenDelta] = []
+    out: list[TokenDelta] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue

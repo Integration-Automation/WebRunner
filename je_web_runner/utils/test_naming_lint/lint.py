@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable, List
+from typing import Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -81,14 +81,14 @@ class NamingFinding:
 def lint_test_name(
     name: str, *, convention: Convention,
     max_length: int = 100,
-) -> List[NamingFinding]:
+) -> list[NamingFinding]:
     if not isinstance(name, str):
         raise NamingLintError("name must be string")
     if not isinstance(convention, Convention):
         raise NamingLintError("convention must be Convention enum")
     if max_length < 10:
         raise NamingLintError("max_length must be >= 10")
-    findings: List[NamingFinding] = []
+    findings: list[NamingFinding] = []
     if not name.startswith("test_"):
         findings.append(NamingFinding(
             rule="missing-prefix", test=name,
@@ -117,8 +117,8 @@ def lint_test_name(
 def lint_many(
     names: Iterable[str], *, convention: Convention,
     max_length: int = 100,
-) -> List[NamingFinding]:
-    out: List[NamingFinding] = []
+) -> list[NamingFinding]:
+    out: list[NamingFinding] = []
     for n in names:
         out.extend(lint_test_name(n, convention=convention,
                                   max_length=max_length))

@@ -13,7 +13,7 @@ them per repo without forking.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -89,8 +89,8 @@ class RiskReport:
 
     score: float  # 0..100
     level: str   # "low" | "medium" | "high" | "critical"
-    reasons: List[str] = field(default_factory=list)
-    contributions: Dict[str, float] = field(default_factory=dict)
+    reasons: list[str] = field(default_factory=list)
+    contributions: dict[str, float] = field(default_factory=dict)
 
     def is_blocking(self, block_at: float = 75.0) -> bool:
         return self.score >= block_at
@@ -114,7 +114,7 @@ _SIGNAL_NAMES = (
 )
 
 
-def _signal_components(signals: PrSignals) -> Dict[str, float]:
+def _signal_components(signals: PrSignals) -> dict[str, float]:
     flake_touched_ratio = _ratio(
         signals.flaky_tests_touched, signals.total_tests_touched,
     )
@@ -140,7 +140,7 @@ def _signal_components(signals: PrSignals) -> Dict[str, float]:
     }
 
 
-def _format_reason(name: str, component: float, weight: float) -> Optional[str]:
+def _format_reason(name: str, component: float, weight: float) -> str | None:
     if component <= 0:
         return None
     pct = round(component * 100)
@@ -159,7 +159,7 @@ def _level_for(score: float) -> str:
 
 def score_pr(
     signals: PrSignals,
-    weights: Optional[RiskWeights] = None,
+    weights: RiskWeights | None = None,
 ) -> RiskReport:
     """Combine ``signals`` × ``weights`` into a 0–100 :class:`RiskReport`."""
     if not isinstance(signals, PrSignals):
@@ -169,7 +169,7 @@ def score_pr(
     if weight_total <= 0:
         raise PrRiskScoreError("at least one weight must be > 0")
     components = _signal_components(signals)
-    contributions: Dict[str, float] = {}
+    contributions: dict[str, float] = {}
     weighted_sum = 0.0
     for name in _SIGNAL_NAMES:
         weight = getattr(weights, name)
@@ -212,20 +212,20 @@ def report_markdown(report: RiskReport) -> str:
     return "\n".join(lines) + "\n"
 
 
-def aggregate_signals(per_file: Sequence[Dict[str, Any]]) -> PrSignals:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+def aggregate_signals(per_file: Sequence[dict[str, Any]]) -> PrSignals:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """
     Reduce a per-file signal list (from upstream tools) into one
     :class:`PrSignals`. Unknown keys are ignored so callers can pass
     richer dicts without breaking.
     """
-    totals: Dict[str, int] = dict.fromkeys((
+    totals: dict[str, int] = dict.fromkeys((
         "flaky_tests_touched", "total_tests_touched",
         "impacted_modules", "impacted_critical_paths",
         "fragile_locators_touched", "total_locators_touched",
         "lines_added", "lines_covered",
         "migration_files_changed", "security_files_changed",
     ), 0)
-    flake_scores: List[float] = []
+    flake_scores: list[float] = []
     repo_modules = 0
     for entry in per_file:
         if not isinstance(entry, dict):

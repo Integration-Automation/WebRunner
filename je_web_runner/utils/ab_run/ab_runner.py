@@ -6,7 +6,7 @@ or before/after migrations.
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -27,17 +27,17 @@ class ABRunError(WebRunnerException):
 _NO_EXCEPTION = "None"
 
 
-def _snapshot_records() -> List[Dict[str, Any]]:
+def _snapshot_records() -> list[dict[str, Any]]:
     """Take a deep-ish copy of the current records buffer."""
     return [dict(record) for record in test_record_instance.test_record_list]
 
 
 def _run_one_side(
     label: str,
-    setup: Optional[Callable[[], Any]],
+    setup: Callable[[], Any] | None,
     action_data: Any,
     runner: Callable[[Any], Any],
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     web_runner_logger.info(f"ab_run side={label}")
     test_record_instance.clean_record()
     if setup is not None:
@@ -46,14 +46,14 @@ def _run_one_side(
     return _snapshot_records()
 
 
-def _step_status(record: Dict[str, Any]) -> str:
+def _step_status(record: dict[str, Any]) -> str:
     return "failed" if record.get("program_exception", _NO_EXCEPTION) != _NO_EXCEPTION else "passed"
 
 
 def diff_records(
-    records_a: List[Dict[str, Any]],
-    records_b: List[Dict[str, Any]],
-) -> Dict[str, Any]:
+    records_a: list[dict[str, Any]],
+    records_b: list[dict[str, Any]],
+) -> dict[str, Any]:
     """
     比對兩側的 record 序列；回傳每步的差異
     Compare two record sequences step-by-step and return summary + diffs.
@@ -63,7 +63,7 @@ def diff_records(
         "len_b": len(records_b),
         "length_match": len(records_a) == len(records_b),
     }
-    differences: List[Dict[str, Any]] = []
+    differences: list[dict[str, Any]] = []
     pairs = zip(records_a, records_b, strict=False)
     for index, (left, right) in enumerate(pairs):
         left_status = _step_status(left)
@@ -87,10 +87,10 @@ def diff_records(
 
 def run_ab(
     action_data: Any,
-    setup_a: Optional[Callable[[], Any]] = None,
-    setup_b: Optional[Callable[[], Any]] = None,
-    runner: Optional[Callable[[Any], Any]] = None,
-) -> Dict[str, Any]:
+    setup_a: Callable[[], Any] | None = None,
+    setup_b: Callable[[], Any] | None = None,
+    runner: Callable[[Any], Any] | None = None,
+) -> dict[str, Any]:
     """
     對兩個環境跑同一份 action 並回傳比對結果
     Run ``action_data`` against two environments. ``setup_a`` / ``setup_b``

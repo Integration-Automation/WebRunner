@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -71,22 +71,22 @@ class PipEvent:
     kind: str        # "enter" | "exit"
     mode: Mode
     ts_ms: int = 0
-    width: Optional[int] = None
-    height: Optional[int] = None
+    width: int | None = None
+    height: int | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "mode": self.mode.value}
 
 
 @dataclass
 class PipLog:
-    events: List[PipEvent] = field(default_factory=list)
+    events: list[PipEvent] = field(default_factory=list)
 
 
 def parse_log(payload: Any) -> PipLog:
     if not isinstance(payload, list):
         raise PipAssertError("payload must be a list")
-    out: List[PipEvent] = []
+    out: list[PipEvent] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue

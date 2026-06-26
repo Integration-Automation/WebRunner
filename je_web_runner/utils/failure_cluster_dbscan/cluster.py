@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -49,7 +49,7 @@ _NOISE_PATTERNS = (
 )
 
 
-def _tokenize(message: str) -> Set[str]:
+def _tokenize(message: str) -> set[str]:
     if not isinstance(message, str):
         return set()
     cleaned = message
@@ -58,7 +58,7 @@ def _tokenize(message: str) -> Set[str]:
     return {t.lower() for t in re.findall(r"\w{3,}", cleaned)}
 
 
-def _jaccard_distance(a: Set[str], b: Set[str]) -> float:
+def _jaccard_distance(a: set[str], b: set[str]) -> float:
     if not a and not b:
         return 0.0
     union = a | b
@@ -71,23 +71,23 @@ def _jaccard_distance(a: Set[str], b: Set[str]) -> float:
 @dataclass
 class Cluster:
     representative: str
-    members: List[str] = field(default_factory=list)
+    members: list[str] = field(default_factory=list)
 
     @property
     def size(self) -> int:
         return len(self.members)
 
 
-def _neighbours_fn(tokens: List[Set[str]], eps: float):
+def _neighbours_fn(tokens: list[set[str]], eps: float):
     n = len(tokens)
-    def find(i: int) -> List[int]:
+    def find(i: int) -> list[int]:
         return [j for j in range(n)
                 if j != i and _jaccard_distance(tokens[i], tokens[j]) <= eps]
     return find
 
 
 def _expand_cluster(
-    seed: int, neighbours, labels: List[Optional[int]],
+    seed: int, neighbours, labels: list[int | None],
     cluster_id: int, min_samples: int,
 ) -> None:
     labels[seed] = cluster_id
@@ -104,9 +104,9 @@ def _expand_cluster(
 
 
 def _assign_labels(
-    tokens: List[Set[str]], eps: float, min_samples: int,
-) -> List[Optional[int]]:
-    labels: List[Optional[int]] = [None] * len(tokens)
+    tokens: list[set[str]], eps: float, min_samples: int,
+) -> list[int | None]:
+    labels: list[int | None] = [None] * len(tokens)
     neighbours = _neighbours_fn(tokens, eps)
     cluster_id = 0
     for i in range(len(tokens)):
@@ -122,12 +122,12 @@ def _assign_labels(
 
 
 def _materialize_clusters(
-    records: Sequence[FailureRecord], labels: List[Optional[int]],
-) -> List[Cluster]:
-    buckets: Dict[int, List[int]] = defaultdict(list)
+    records: Sequence[FailureRecord], labels: list[int | None],
+) -> list[Cluster]:
+    buckets: dict[int, list[int]] = defaultdict(list)
     for i, label in enumerate(labels):
         buckets[label if label is not None else -1].append(i)
-    out: List[Cluster] = []
+    out: list[Cluster] = []
     for label, indexes in buckets.items():
         if label == -1:
             for i in indexes:
@@ -147,7 +147,7 @@ def _materialize_clusters(
 def cluster(
     records: Sequence[FailureRecord], *,
     eps: float = 0.3, min_samples: int = 2,
-) -> List[Cluster]:
+) -> list[Cluster]:
     """Tiny DBSCAN. Returns one ``Cluster`` per dense group. Noise points
     become singleton clusters."""
     if not 0 < eps <= 1:
@@ -162,7 +162,7 @@ def cluster(
                   key=lambda c: -c.size)
 
 
-def cluster_summary(clusters: Iterable[Cluster]) -> List[Dict[str, Any]]:
+def cluster_summary(clusters: Iterable[Cluster]) -> list[dict[str, Any]]:
     return [{"representative": c.representative[:120],
              "size": c.size,
              "tests": c.members[:5]} for c in clusters]

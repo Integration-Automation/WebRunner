@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Sequence
+from typing import Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -34,10 +34,10 @@ class _MetricResult:
 
 @dataclass
 class DriftReport:
-    metrics: List[_MetricResult] = field(default_factory=list)
+    metrics: list[_MetricResult] = field(default_factory=list)
 
     @property
-    def regressions(self) -> List[_MetricResult]:
+    def regressions(self) -> list[_MetricResult]:
         return [m for m in self.metrics if m.drifted and m.direction == "regressed"]
 
     @property
@@ -119,12 +119,12 @@ def compute_drift(
 
 
 def detect_drift(
-    metrics: Dict[str, Sequence[float]],
+    metrics: dict[str, Sequence[float]],
     *,
     baseline_window: int = 20,
     recent_window: int = 5,
     tolerance: float = 0.1,
-    higher_is_better: Optional[Iterable[str]] = None,
+    higher_is_better: Iterable[str] | None = None,
     pct: float = 95.0,
 ) -> DriftReport:
     """
@@ -149,7 +149,7 @@ def detect_drift(
 
 
 def assert_no_regression(report: DriftReport,
-                         allow_metrics: Optional[Iterable[str]] = None) -> None:
+                         allow_metrics: Iterable[str] | None = None) -> None:
     """Raise if any drifted+regressed metric remains."""
     allow = set(allow_metrics or [])
     bad = [m for m in report.regressions if m.metric not in allow]

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -35,8 +35,8 @@ class TraceRecorder:
     screenshots: bool = True
     snapshots: bool = True
     sources: bool = True
-    _active_name: Optional[str] = field(default=None, init=False)
-    _written: List[str] = field(default_factory=list, init=False)
+    _active_name: str | None = field(default=None, init=False)
+    _written: list[str] = field(default_factory=list, init=False)
 
     def start(self, context: Any, name: str) -> None:
         if not name:
@@ -75,5 +75,5 @@ class TraceRecorder:
         self._active_name = None
         return str(target)
 
-    def written(self) -> List[str]:
+    def written(self) -> list[str]:
         return list(self._written)

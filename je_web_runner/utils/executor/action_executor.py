@@ -4,7 +4,7 @@ import types
 from datetime import datetime
 from inspect import getmembers, isbuiltin
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable
 
 # 禁止暴露於 JSON 動作執行器的內建函式，避免任意程式碼執行
 # Builtins that must never be callable from user-supplied JSON actions,
@@ -153,7 +153,7 @@ from je_web_runner.utils.test_record.test_record_class import test_record_instan
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 
-def _sleep_seconds(seconds: Union[int, float] = 1) -> float:
+def _sleep_seconds(seconds: int | float = 1) -> float:
     """
     阻塞當前執行緒指定秒數，回傳實際睡眠的秒數。
     Block the calling thread for ``seconds`` (positive number). Negative
@@ -168,7 +168,7 @@ def _sleep_seconds(seconds: Union[int, float] = 1) -> float:
     return float(seconds)
 
 
-def _try_selenium_screenshot() -> Optional[bytes]:
+def _try_selenium_screenshot() -> bytes | None:
     try:
         if webdriver_wrapper_instance.current_webdriver is None:
             return None
@@ -177,7 +177,7 @@ def _try_selenium_screenshot() -> Optional[bytes]:
         return None
 
 
-def _try_playwright_screenshot() -> Optional[bytes]:
+def _try_playwright_screenshot() -> bytes | None:
     try:
         if not _pw.playwright_wrapper_instance._pages:
             return None
@@ -186,12 +186,12 @@ def _try_playwright_screenshot() -> Optional[bytes]:
         return None
 
 
-class Executor(object):
+class Executor:
 
     def __init__(self):
         # 失敗時自動截圖目錄；None 代表停用
         # Output directory for auto-captured failure screenshots; None disables it.
-        self.failure_screenshot_dir: Optional[str] = None
+        self.failure_screenshot_dir: str | None = None
         # 全域重試策略 (預設關閉)
         # Global retry policy. retries == 0 disables retry; backoff is in
         # seconds and is multiplied by the (1-based) attempt number.
@@ -204,7 +204,7 @@ class Executor(object):
         # Optional context-manager factory invoked once per action so an
         # observability stack (OpenTelemetry, custom logging, …) can wrap
         # each call without the executor depending on the SDK directly.
-        self._action_span_factory: Optional[Callable[[str], Any]] = None
+        self._action_span_factory: Callable[[str], Any] | None = None
         # 事件字典：將字串名稱對應到實際可執行的函式
         # Event dictionary: map string keys to actual callable functions
         self.event_dict = {
@@ -818,7 +818,7 @@ class Executor(object):
         """
         self.retry_policy = {"retries": max(int(retries), 0), "backoff": max(float(backoff), 0.0)}
 
-    def set_action_span_factory(self, factory: Optional[Callable[[str], Any]]) -> None:
+    def set_action_span_factory(self, factory: Callable[[str], Any] | None) -> None:
         """
         登錄一個 context-manager factory，每個 action 會被它包起來
         Register an optional ``ContextManager`` factory invoked once per
@@ -850,7 +850,7 @@ class Executor(object):
         # Unreachable: ``range(retries + 1)`` always has at least one iteration.
         raise WebRunnerExecuteException("retry loop exited without resolution")
 
-    def set_failure_screenshot_dir(self, path: Optional[str]) -> None:
+    def set_failure_screenshot_dir(self, path: str | None) -> None:
         """
         設定 (或停用) 動作失敗時的自動截圖目錄
         Configure the directory used for auto-screenshots on action failure.
@@ -860,7 +860,7 @@ class Executor(object):
             Path(path).mkdir(parents=True, exist_ok=True)
         self.failure_screenshot_dir = path
 
-    def _capture_failure_screenshot(self, action) -> Optional[str]:
+    def _capture_failure_screenshot(self, action) -> str | None:
         """Best-effort screenshot save when an action raises. Returns path or None."""
         if not self.failure_screenshot_dir:
             return None
@@ -941,7 +941,7 @@ class Executor(object):
         # Invalid format, raise exception
         raise WebRunnerExecuteException(executor_data_error + " " + str(action))
 
-    def execute_action(self, action_list: Union[list, dict]) -> dict:
+    def execute_action(self, action_list: list | dict) -> dict:
         """
         執行一系列動作
         Execute a list of actions

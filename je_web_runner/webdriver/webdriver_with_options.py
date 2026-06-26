@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Union, List, Set
 
 from selenium import webdriver
 from selenium.webdriver.ie.options import Options
@@ -30,7 +29,7 @@ selenium_options_dict = {
 
 
 def set_webdriver_options_argument(
-        webdriver_name: str, argument_iterable: Union[List[str], Set[str]]
+        webdriver_name: str, argument_iterable: list[str] | set[str]
 ) -> None | Options | Options | Options | Options:
     """
     設定 WebDriver 啟動參數

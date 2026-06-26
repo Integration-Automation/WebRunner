@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import os
 import subprocess  # nosec B404 — argv-only invocation, no shell
-from typing import Callable, Iterable, List, Optional, Sequence, Set
+from typing import Callable, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -36,7 +36,7 @@ def _default_git_runner(args: Sequence[str]) -> str:
     return out
 
 
-def changed_paths(base_ref: str = "main", git_runner: Optional[GitRunner] = None) -> List[str]:
+def changed_paths(base_ref: str = "main", git_runner: GitRunner | None = None) -> list[str]:
     """
     Return the list of paths changed between ``base_ref`` and ``HEAD``.
     """
@@ -48,17 +48,17 @@ def changed_paths(base_ref: str = "main", git_runner: Optional[GitRunner] = None
 def select_action_files(
     candidate_paths: Iterable[str],
     changed: Iterable[str],
-    additional_keep: Optional[Iterable[str]] = None,
-) -> List[str]:
+    additional_keep: Iterable[str] | None = None,
+) -> list[str]:
     """
     從 ``candidate_paths`` 中挑出 ``changed`` 中影響到的子集
     Keep only the candidate paths that are also in ``changed``. ``additional_keep``
     forces inclusion regardless of diff (useful for "core" tests that should
     always run).
     """
-    changed_set: Set[str] = {_normalise(p) for p in changed}
-    keep_set: Set[str] = {_normalise(p) for p in (additional_keep or [])}
-    selected: List[str] = []
+    changed_set: set[str] = {_normalise(p) for p in changed}
+    keep_set: set[str] = {_normalise(p) for p in (additional_keep or [])}
+    selected: list[str] = []
     for candidate in candidate_paths:
         normalised = _normalise(candidate)
         if normalised in changed_set or normalised in keep_set:
@@ -73,9 +73,9 @@ def select_action_files(
 def select_for_changed(
     candidate_paths: Iterable[str],
     base_ref: str = "main",
-    additional_keep: Optional[Iterable[str]] = None,
-    git_runner: Optional[GitRunner] = None,
-) -> List[str]:
+    additional_keep: Iterable[str] | None = None,
+    git_runner: GitRunner | None = None,
+) -> list[str]:
     """High-level shortcut: query git, then filter."""
     changes = changed_paths(base_ref=base_ref, git_runner=git_runner)
     return select_action_files(

@@ -13,7 +13,7 @@ Action format accepted by the executor:
 """
 from __future__ import annotations
 
-from typing import Iterable, Union
+from typing import Iterable
 
 from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
@@ -23,7 +23,7 @@ from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 ACTION_LIST_KEY = "webdriver_wrapper"
 
 
-def _extract_action_list(data: Union[list, dict]) -> list:
+def _extract_action_list(data: list | dict) -> list:
     """Pull the action list out of a top-level dict, or accept a list directly."""
     if isinstance(data, dict):
         action_list = data.get(ACTION_LIST_KEY)
@@ -73,7 +73,7 @@ def _validate_single_action(action: object, index: int) -> None:
             )
 
 
-def validate_action_json(data: Union[list, dict]) -> bool:
+def validate_action_json(data: list | dict) -> bool:
     """
     驗證動作 JSON 是否符合執行器格式
     Validate that ``data`` matches the executor action format.

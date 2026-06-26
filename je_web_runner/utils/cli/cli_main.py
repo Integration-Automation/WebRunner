@@ -9,7 +9,7 @@ import json
 import sys
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from pathlib import Path
-from typing import Optional, Sequence, Tuple
+from typing import Sequence
 
 from je_web_runner.utils.exception.exception_tags import argparse_get_wrong_data
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
@@ -113,7 +113,7 @@ def _build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def _split_csv(value: Optional[str]) -> list:
+def _split_csv(value: str | None) -> list:
     if not value:
         return []
     return [item.strip() for item in value.split(",") if item.strip()]
@@ -142,7 +142,7 @@ def _run_one_file(path: str) -> bool:
     return not failed
 
 
-def _run_one_file_isolated(path: str) -> Tuple[str, bool, list]:
+def _run_one_file_isolated(path: str) -> tuple[str, bool, list]:
     """
     Top-level picklable worker for ``ProcessPoolExecutor``: executes the file
     in its own process (so the WebRunner singletons are fresh) and returns
@@ -173,7 +173,7 @@ def _run_one_file_isolated(path: str) -> Tuple[str, bool, list]:
 
 def _run_with_dependencies(
     files: Sequence[str],
-    ledger_path: Optional[str],
+    ledger_path: str | None,
 ) -> None:
     """Run files in topological order, skipping downstream when upstream fails."""
     graph = build_dependency_graph(files)
@@ -200,8 +200,8 @@ def _select_files(
     directory: str,
     include_tags,
     exclude_tags,
-    rerun_only: Optional[Sequence[str]],
-    shard_spec: Optional[str],
+    rerun_only: Sequence[str] | None,
+    shard_spec: str | None,
 ) -> list:
     """Apply rerun-only / tag / shard filters to the directory listing."""
     files = get_dir_files_as_list(directory)
@@ -216,7 +216,7 @@ def _select_files(
     return files
 
 
-def _run_sequential(files, ledger_path: Optional[str]) -> None:
+def _run_sequential(files, ledger_path: str | None) -> None:
     """Sequential execution with optional ledger recording."""
     if not ledger_path:
         execute_files(files)
@@ -226,7 +226,7 @@ def _run_sequential(files, ledger_path: Optional[str]) -> None:
         record_run(ledger_path, path, passed=passed)
 
 
-def _run_with_process_pool(files, parallel: int, ledger_path: Optional[str]) -> None:
+def _run_with_process_pool(files, parallel: int, ledger_path: str | None) -> None:
     """ProcessPool branch — true singleton isolation, records merged back."""
     with ProcessPoolExecutor(max_workers=parallel) as pool:
         for path, passed, records in pool.map(_run_one_file_isolated, files):
@@ -235,7 +235,7 @@ def _run_with_process_pool(files, parallel: int, ledger_path: Optional[str]) -> 
                 record_run(ledger_path, path, passed=passed)
 
 
-def _run_with_thread_pool(files, parallel: int, ledger_path: Optional[str]) -> None:
+def _run_with_thread_pool(files, parallel: int, ledger_path: str | None) -> None:
     """ThreadPool branch — shares singletons, only safe for non-browser flows."""
     web_runner_logger.warning(
         "--parallel-mode=thread shares webdriver singletons across files; "
@@ -256,10 +256,10 @@ def _run_dir(
     parallel: int,
     include_tags=None,
     exclude_tags=None,
-    ledger_path: Optional[str] = None,
-    rerun_only: Optional[Sequence[str]] = None,
+    ledger_path: str | None = None,
+    rerun_only: Sequence[str] | None = None,
     parallel_mode: str = "thread",
-    shard_spec: Optional[str] = None,
+    shard_spec: str | None = None,
 ) -> None:
     files = _select_files(directory, include_tags, exclude_tags, rerun_only, shard_spec)
     if any(build_dependency_graph(files).get(path) for path in files):
@@ -363,7 +363,7 @@ def _do_migrate(target: str, dry_run: bool) -> None:
                 print(f"  [{change['index']}] {change['from']} -> {change['to']}")
 
 
-def main(argv: Optional[Sequence[str]] = None) -> int:
+def main(argv: Sequence[str] | None = None) -> int:
     """Entry point for ``python -m je_web_runner``."""
     parser = _build_parser()
     args = parser.parse_args(argv)

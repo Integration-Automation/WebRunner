@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Optional, Set, Tuple
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -49,12 +49,12 @@ _TICKET_RE = re.compile(
 @dataclass
 class TriggerPlan:
     skip: bool = False
-    only_buckets: Set[str] = field(default_factory=set)
-    labels: Set[str] = field(default_factory=set)
-    shard: Optional[Tuple[int, int]] = None
-    tickets: Set[str] = field(default_factory=set)
+    only_buckets: set[str] = field(default_factory=set)
+    labels: set[str] = field(default_factory=set)
+    shard: tuple[int, int] | None = None
+    tickets: set[str] = field(default_factory=set)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         d["only_buckets"] = sorted(self.only_buckets)
         d["labels"] = sorted(self.labels)
@@ -101,7 +101,7 @@ def should_run_job(plan: TriggerPlan, job_name: str) -> bool:
     return True
 
 
-def assigned_shard(plan: TriggerPlan, total_shards: int) -> Optional[int]:
+def assigned_shard(plan: TriggerPlan, total_shards: int) -> int | None:
     """If commit overrides shard, return the 0-indexed shard for ``total_shards``.
     Returns None when no override applies."""
     if total_shards <= 0:

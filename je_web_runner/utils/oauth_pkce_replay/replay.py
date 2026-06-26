@@ -15,7 +15,7 @@ import hashlib
 import secrets
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Sequence
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -57,10 +57,10 @@ class TokenExchangeResponse:
     """What the probe callable must return."""
 
     status_code: int
-    body: Dict[str, Any]
+    body: dict[str, Any]
 
 
-ProbeFn = Callable[[Dict[str, Any]], TokenExchangeResponse]
+ProbeFn = Callable[[dict[str, Any]], TokenExchangeResponse]
 """Callable that POSTs to the token endpoint with the given payload."""
 
 
@@ -69,7 +69,7 @@ class ReplayCase:
     """One attempt at re-using a previously-consumed value."""
 
     name: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     expected: ReplayOutcome = ReplayOutcome.REJECTED
 
 
@@ -80,7 +80,7 @@ class ReplayResult:
     status_code: int
     note: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "outcome": self.outcome.value}
 
 
@@ -122,7 +122,7 @@ def replay(case: ReplayCase, probe: ProbeFn) -> ReplayResult:
     )
 
 
-def run_cases(cases: Sequence[ReplayCase], probe: ProbeFn) -> List[ReplayResult]:
+def run_cases(cases: Sequence[ReplayCase], probe: ProbeFn) -> list[ReplayResult]:
     if not cases:
         raise OauthPkceReplayError("cases must be non-empty")
     return [replay(c, probe) for c in cases]

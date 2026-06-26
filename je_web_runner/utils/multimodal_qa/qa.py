@@ -22,7 +22,7 @@ import re
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Protocol, Sequence, Union
+from typing import Any, Protocol, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -49,7 +49,7 @@ class QaRequest:
 
     image_bytes: bytes
     question: str
-    rubric: List[str] = field(default_factory=list)
+    rubric: list[str] = field(default_factory=list)
     image_label: str = ""
 
     def __post_init__(self) -> None:
@@ -73,13 +73,13 @@ class QaResponse:
     verdict: Verdict
     confidence: float
     rationale: str
-    issues: List[str] = field(default_factory=list)
+    issues: list[str] = field(default_factory=list)
     raw: str = ""
 
     def is_pass(self) -> bool:
         return self.verdict == Verdict.PASS
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "verdict": self.verdict.value}
 
 
@@ -95,7 +95,7 @@ class VisionClient(Protocol):
 
 def build_prompt(request: QaRequest) -> str:
     """Render a deterministic prompt the vision model will see."""
-    parts: List[str] = [
+    parts: list[str] = [
         "You are reviewing a UI screenshot. Answer the question strictly.",
         "Respond with ONLY a JSON object on a single line with keys:",
         '  "verdict": one of "pass" | "fail" | "uncertain"',
@@ -167,7 +167,7 @@ def ask(
 
 
 def ask_path(
-    path: Union[str, Path],
+    path: str | Path,
     question: str,
     client: VisionClient,
     *,

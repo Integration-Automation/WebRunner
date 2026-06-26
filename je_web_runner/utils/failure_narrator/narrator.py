@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Protocol, Sequence, Union
+from typing import Any, Protocol, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -36,18 +36,18 @@ class FailureBundle:
     error_class: str = ""
     last_url: str = ""
     last_dom_excerpt: str = ""
-    console_errors: List[str] = field(default_factory=list)
-    network_errors: List[str] = field(default_factory=list)
+    console_errors: list[str] = field(default_factory=list)
+    network_errors: list[str] = field(default_factory=list)
     failed_assertion: str = ""
     git_commit: str = ""
     flake_history: str = ""  # e.g. "flaky in 3/10 recent runs"
-    extra_context: List[str] = field(default_factory=list)
+    extra_context: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not isinstance(self.test_id, str) or not self.test_id:
             raise FailureNarratorError("test_id must be non-empty string")
 
-def load_bundle_dir(path: Union[str, Path]) -> FailureBundle:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+def load_bundle_dir(path: str | Path) -> FailureBundle:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """Read a failure-bundle directory laid out as JSON + text files."""
     bundle_dir = Path(path)
     if not bundle_dir.exists() or not bundle_dir.is_dir():
@@ -87,7 +87,7 @@ def _read_text(path: Path, *, limit: int) -> str:
     return text[:limit]
 
 
-def _read_lines(path: Path) -> List[str]:
+def _read_lines(path: Path) -> list[str]:
     if not path.exists():
         return []
     return [line.rstrip("\n") for line in path.read_text(
@@ -179,7 +179,7 @@ class NarrationReport:
     confidence: str
     raw: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     def markdown(self) -> str:

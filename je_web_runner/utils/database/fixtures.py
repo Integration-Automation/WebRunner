@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -32,7 +32,7 @@ def _safe_identifier(name: str, kind: str) -> str:
     return name
 
 
-def load_fixture_file(path: Union[str, Path]) -> Dict[str, List[Dict[str, Any]]]:
+def load_fixture_file(path: str | Path) -> dict[str, list[dict[str, Any]]]:
     """Read a JSON fixture file and validate its shape."""
     fp = Path(path)
     if not fp.is_file():
@@ -44,7 +44,7 @@ def load_fixture_file(path: Union[str, Path]) -> Dict[str, List[Dict[str, Any]]]
     return validate_shape(data)
 
 
-def validate_shape(data: Any) -> Dict[str, List[Dict[str, Any]]]:
+def validate_shape(data: Any) -> dict[str, list[dict[str, Any]]]:
     """Make sure the loaded object matches ``{table: [rows]}``."""
     if not isinstance(data, dict):
         raise DbFixtureError("fixture root must be an object")
@@ -54,7 +54,7 @@ def validate_shape(data: Any) -> Dict[str, List[Dict[str, Any]]]:
     }
 
 
-def _validated_tables(data: Dict[Any, Any]):
+def _validated_tables(data: dict[Any, Any]):
     for table, rows in data.items():
         if not isinstance(table, str) or not table:
             raise DbFixtureError(f"table name must be non-empty string, got {table!r}")
@@ -63,8 +63,8 @@ def _validated_tables(data: Dict[Any, Any]):
         yield table, rows
 
 
-def _validate_rows(table: str, rows: List[Any]) -> List[Dict[str, Any]]:
-    validated: List[Dict[str, Any]] = []
+def _validate_rows(table: str, rows: list[Any]) -> list[dict[str, Any]]:
+    validated: list[dict[str, Any]] = []
     for index, row in enumerate(rows):
         if not isinstance(row, dict):
             raise DbFixtureError(
@@ -81,10 +81,10 @@ def _validate_rows(table: str, rows: List[Any]) -> List[Dict[str, Any]]:
 
 def load_into_connection(
     connection: Any,
-    fixture: Dict[str, List[Dict[str, Any]]],
+    fixture: dict[str, list[dict[str, Any]]],
     quote: str = '"',
-    only_tables: Optional[Sequence[str]] = None,
-) -> Dict[str, int]:
+    only_tables: Sequence[str] | None = None,
+) -> dict[str, int]:
     """
     對每個表 batch insert 所有 rows，回傳 ``{table: rows_inserted}``
     Insert every fixture row using ``INSERT INTO <t> (...) VALUES (...)``
@@ -92,7 +92,7 @@ def load_into_connection(
     """
     if not hasattr(connection, "execute"):
         raise DbFixtureError("connection must expose execute() (SQLAlchemy or PEP-249)")
-    inserted: Dict[str, int] = {}
+    inserted: dict[str, int] = {}
     allowed = set(only_tables) if only_tables else None
     for table, rows in fixture.items():
         if allowed is not None and table not in allowed:
@@ -110,7 +110,7 @@ def load_into_connection(
     return inserted
 
 
-def _build_insert(table: str, columns: List[str], quote: str) -> str:
+def _build_insert(table: str, columns: list[str], quote: str) -> str:
     """Construct an INSERT with already-validated identifiers."""
     placeholder = ", ".join(f":{col}" for col in columns)
     column_text = ", ".join(f"{quote}{col}{quote}" for col in columns)

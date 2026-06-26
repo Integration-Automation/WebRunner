@@ -10,7 +10,7 @@ extend via :func:`register_preset`.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -30,7 +30,7 @@ class DevicePreset:
     user_agent: str
 
 
-_PRESETS: Dict[str, DevicePreset] = {
+_PRESETS: dict[str, DevicePreset] = {
     "iPhone 15 Pro": DevicePreset(
         name="iPhone 15 Pro",
         width=393, height=852, device_scale_factor=3.0,
@@ -97,7 +97,7 @@ _PRESETS: Dict[str, DevicePreset] = {
 }
 
 
-def available_presets() -> List[str]:
+def available_presets() -> list[str]:
     return sorted(_PRESETS.keys())
 
 
@@ -116,7 +116,7 @@ def register_preset(preset: DevicePreset) -> None:
     _PRESETS[preset.name] = preset
 
 
-def playwright_kwargs(preset_name: str) -> Dict[str, Any]:
+def playwright_kwargs(preset_name: str) -> dict[str, Any]:
     """Return ``new_context`` kwargs for Playwright."""
     preset = get_preset(preset_name)
     return {
@@ -140,7 +140,7 @@ def apply_to_chrome_options(options: Any, preset_name: str) -> Any:
     return options
 
 
-def cdp_emulation_command(preset_name: str) -> Dict[str, Any]:
+def cdp_emulation_command(preset_name: str) -> dict[str, Any]:
     """Return the CDP ``Emulation.setDeviceMetricsOverride`` payload."""
     preset = get_preset(preset_name)
     return {

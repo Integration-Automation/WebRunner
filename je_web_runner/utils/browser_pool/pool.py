@@ -15,7 +15,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from queue import Empty, Queue
-from typing import Any, Callable, Iterator, List, Optional
+from typing import Any, Callable, Iterator
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -46,8 +46,8 @@ class BrowserPool:
     def __init__(
         self,
         factory: SessionFactory,
-        destructor: Optional[SessionDestructor] = None,
-        health_check: Optional[HealthCheck] = None,
+        destructor: SessionDestructor | None = None,
+        health_check: HealthCheck | None = None,
         size: int = 2,
         max_uses: int = 50,
     ) -> None:
@@ -60,11 +60,11 @@ class BrowserPool:
         self._health_check = health_check or (lambda _instance: True)
         self._size = size
         self._max_uses = max_uses
-        self._available: "Queue[PooledSession]" = Queue()
+        self._available: Queue[PooledSession] = Queue()
         self._lock = threading.Lock()
         self._next_id = 1
         self._closed = False
-        self._tracked: List[PooledSession] = []
+        self._tracked: list[PooledSession] = []
 
     def warm(self) -> None:
         """Pre-launch ``size`` instances eagerly."""

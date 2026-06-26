@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -63,7 +63,7 @@ class Flow:
                 f"trans_status must be TransStatus, got {self.trans_status!r}"
             )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "trans_status": self.trans_status.value}
 
 

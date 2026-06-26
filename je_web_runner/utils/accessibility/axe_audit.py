@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import json as _json
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -45,8 +45,8 @@ def _selenium_driver():
 
 def selenium_run_audit(
     axe_source: str,
-    options: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    options: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """
     在當前 Selenium 頁面執行 axe.run，回傳結果 dict
     Run ``axe.run`` on the current Selenium page and return the result dict.
@@ -73,8 +73,8 @@ def selenium_run_audit(
 
 def playwright_run_audit(
     axe_source: str,
-    options: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
+    options: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """
     在當前 Playwright 頁面執行 axe.run，回傳結果 dict
     Run ``axe.run`` on the current Playwright page.
@@ -88,14 +88,14 @@ def playwright_run_audit(
     )
 
 
-def summarise_violations(results: Dict[str, Any]) -> List[Dict[str, Any]]:
+def summarise_violations(results: dict[str, Any]) -> list[dict[str, Any]]:
     """
     將 axe 結果壓縮成只含 ``id`` / ``impact`` / ``help`` / ``nodes`` 數量的清單
     Compress the axe results into a thin list of {id, impact, help, nodes}.
     """
     if not isinstance(results, dict):
         return []
-    summary: List[Dict[str, Any]] = []
+    summary: list[dict[str, Any]] = []
     for violation in results.get("violations", []) or []:
         summary.append({
             "id": violation.get("id"),

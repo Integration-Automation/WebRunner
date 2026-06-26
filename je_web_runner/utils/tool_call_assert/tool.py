@@ -19,7 +19,7 @@ contract bugs without dragging ``jsonschema`` in.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -31,7 +31,7 @@ class ToolCallAssertError(WebRunnerException):
 @dataclass
 class ToolCall:
     name: str
-    arguments: Dict[str, Any] = field(default_factory=dict)
+    arguments: dict[str, Any] = field(default_factory=dict)
     call_id: str = ""
 
     def __post_init__(self) -> None:
@@ -47,10 +47,10 @@ JSON_TYPE_MAP = {
 }
 
 
-def parse_calls(payload: Any) -> List[ToolCall]:
+def parse_calls(payload: Any) -> list[ToolCall]:
     if not isinstance(payload, list):
         raise ToolCallAssertError("payload must be a list of tool-call dicts")
-    out: List[ToolCall] = []
+    out: list[ToolCall] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -63,9 +63,9 @@ def parse_calls(payload: Any) -> List[ToolCall]:
 
 
 def assert_called(
-    calls: Iterable[ToolCall], *, name: str, times: Optional[int] = None,
-    min_times: Optional[int] = None, max_times: Optional[int] = None,
-) -> List[ToolCall]:
+    calls: Iterable[ToolCall], *, name: str, times: int | None = None,
+    min_times: int | None = None, max_times: int | None = None,
+) -> list[ToolCall]:
     if not name:
         raise ToolCallAssertError("name must be non-empty")
     matches = [c for c in calls if c.name == name]

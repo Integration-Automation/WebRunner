@@ -14,7 +14,7 @@ Dependency Submission all emit) and reports:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -28,7 +28,7 @@ class Component:
     name: str
     version: str = ""
     purl: str = ""
-    licenses: Tuple[str, ...] = ()
+    licenses: tuple[str, ...] = ()
 
     @property
     def key(self) -> str:
@@ -41,18 +41,18 @@ class VersionChange:
     base_version: str
     head_version: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 @dataclass
 class SbomReport:
-    added: List[Component] = field(default_factory=list)
-    removed: List[Component] = field(default_factory=list)
-    upgraded: List[VersionChange] = field(default_factory=list)
-    downgraded: List[VersionChange] = field(default_factory=list)
-    new_licenses: List[str] = field(default_factory=list)
-    new_vulnerable: List[str] = field(default_factory=list)
+    added: list[Component] = field(default_factory=list)
+    removed: list[Component] = field(default_factory=list)
+    upgraded: list[VersionChange] = field(default_factory=list)
+    downgraded: list[VersionChange] = field(default_factory=list)
+    new_licenses: list[str] = field(default_factory=list)
+    new_vulnerable: list[str] = field(default_factory=list)
 
     @property
     def has_changes(self) -> bool:
@@ -62,8 +62,8 @@ class SbomReport:
         )
 
 
-def _extract_licenses(component: Dict[str, Any]) -> List[str]:
-    out: List[str] = []
+def _extract_licenses(component: dict[str, Any]) -> list[str]:
+    out: list[str] = []
     for lic in component.get("licenses") or []:
         if not isinstance(lic, dict):
             continue
@@ -74,7 +74,7 @@ def _extract_licenses(component: Dict[str, Any]) -> List[str]:
     return out
 
 
-def _parse_component(c: Any) -> Optional[Component]:
+def _parse_component(c: Any) -> Component | None:
     if not isinstance(c, dict):
         return None
     name = c.get("name")
@@ -88,7 +88,7 @@ def _parse_component(c: Any) -> Optional[Component]:
     )
 
 
-def _parse_components(sbom: Dict[str, Any]) -> List[Component]:
+def _parse_components(sbom: dict[str, Any]) -> list[Component]:
     if not isinstance(sbom, dict):
         raise SbomDiffError("sbom must be a dict")
     raw = sbom.get("components")
@@ -100,7 +100,7 @@ def _parse_components(sbom: Dict[str, Any]) -> List[Component]:
     return [c for c in parsed if c is not None]
 
 
-def _vulnerable_purls(sbom: Dict[str, Any]) -> set:
+def _vulnerable_purls(sbom: dict[str, Any]) -> set:
     vulns = sbom.get("vulnerabilities")
     if not isinstance(vulns, list):
         return set()
@@ -115,11 +115,11 @@ def _vulnerable_purls(sbom: Dict[str, Any]) -> set:
     return refs
 
 
-def _index(components: Iterable[Component]) -> Dict[str, Component]:
+def _index(components: Iterable[Component]) -> dict[str, Component]:
     return {c.key: c for c in components}
 
 
-def _version_order(a: str, b: str) -> Optional[int]:
+def _version_order(a: str, b: str) -> int | None:
     """Return -1/0/1 if version sort is decidable, None otherwise."""
     if a == b:
         return 0
@@ -137,7 +137,7 @@ def _version_order(a: str, b: str) -> Optional[int]:
     return 0
 
 
-def diff_sboms(base: Dict[str, Any], head: Dict[str, Any]) -> SbomReport:
+def diff_sboms(base: dict[str, Any], head: dict[str, Any]) -> SbomReport:
     """Compare two CycloneDX SBOMs and return a high-level report."""
     base_comps = _parse_components(base)
     head_comps = _parse_components(head)

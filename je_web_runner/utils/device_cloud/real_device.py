@@ -27,7 +27,7 @@ import ssl
 import time
 import urllib.request
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -37,22 +37,22 @@ class DeviceCloudError(WebRunnerException):
     """Raised on connection / status update / metadata fetch errors."""
 
 
-SUPPORTED_PROVIDERS: Tuple[str, ...] = ("browserstack", "saucelabs", "lambdatest")
+SUPPORTED_PROVIDERS: tuple[str, ...] = ("browserstack", "saucelabs", "lambdatest")
 
 
-_ENV_VAR_MAP: Dict[str, Tuple[str, str]] = {
+_ENV_VAR_MAP: dict[str, tuple[str, str]] = {
     "browserstack": ("BROWSERSTACK_USERNAME", "BROWSERSTACK_ACCESS_KEY"),
     "saucelabs": ("SAUCE_USERNAME", "SAUCE_ACCESS_KEY"),
     "lambdatest": ("LT_USERNAME", "LT_ACCESS_KEY"),
 }
 
-_REST_BASES: Dict[str, str] = {
+_REST_BASES: dict[str, str] = {
     "browserstack": "https://api.browserstack.com",
     "saucelabs": "https://api.us-west-1.saucelabs.com",
     "lambdatest": "https://api.lambdatest.com",
 }
 
-_DASHBOARD_BASES: Dict[str, str] = {
+_DASHBOARD_BASES: dict[str, str] = {
     "browserstack": "https://automate.browserstack.com/dashboard/v2/sessions",
     "saucelabs": "https://app.saucelabs.com/tests",
     "lambdatest": "https://automation.lambdatest.com/test",
@@ -68,7 +68,7 @@ class CloudCredentials:
     username: str
     access_key: str
 
-    def redacted(self) -> Dict[str, str]:
+    def redacted(self) -> dict[str, str]:
         return {
             "username": self.username,
             "access_key": "***" if self.access_key else "",
@@ -115,14 +115,14 @@ class RealDeviceCaps:
     platform_version: str
     browser_name: str = "Chrome"  # or "Safari" on iOS
     real_mobile: bool = True
-    build: Optional[str] = None
-    name: Optional[str] = None
-    project: Optional[str] = None
-    extra: Dict[str, Any] = field(default_factory=dict)
+    build: str | None = None
+    name: str | None = None
+    project: str | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
 
 
-def _to_browserstack(caps: RealDeviceCaps) -> Dict[str, Any]:
-    bstack: Dict[str, Any] = {
+def _to_browserstack(caps: RealDeviceCaps) -> dict[str, Any]:
+    bstack: dict[str, Any] = {
         "deviceName": caps.device_name,
         "osVersion": caps.platform_version,
         "realMobile": "true" if caps.real_mobile else "false",
@@ -133,7 +133,7 @@ def _to_browserstack(caps: RealDeviceCaps) -> Dict[str, Any]:
         bstack["buildName"] = caps.build
     if caps.name:
         bstack["sessionName"] = caps.name
-    out: Dict[str, Any] = {
+    out: dict[str, Any] = {
         "browserName": caps.browser_name,
         "platformName": caps.platform_name,
         "bstack:options": bstack,
@@ -142,18 +142,18 @@ def _to_browserstack(caps: RealDeviceCaps) -> Dict[str, Any]:
     return out
 
 
-def _to_saucelabs(caps: RealDeviceCaps) -> Dict[str, Any]:
-    sauce: Dict[str, Any] = {}
+def _to_saucelabs(caps: RealDeviceCaps) -> dict[str, Any]:
+    sauce: dict[str, Any] = {}
     if caps.build:
         sauce["build"] = caps.build
     if caps.name:
         sauce["name"] = caps.name
-    appium_caps: Dict[str, Any] = {
+    appium_caps: dict[str, Any] = {
         "appium:deviceName": caps.device_name,
         "appium:platformVersion": caps.platform_version,
         "appium:automationName": "XCUITest" if caps.platform_name.lower() == "ios" else "UiAutomator2",
     }
-    out: Dict[str, Any] = {
+    out: dict[str, Any] = {
         "browserName": caps.browser_name,
         "platformName": caps.platform_name,
         "sauce:options": sauce,
@@ -163,8 +163,8 @@ def _to_saucelabs(caps: RealDeviceCaps) -> Dict[str, Any]:
     return out
 
 
-def _to_lambdatest(caps: RealDeviceCaps) -> Dict[str, Any]:
-    lt: Dict[str, Any] = {
+def _to_lambdatest(caps: RealDeviceCaps) -> dict[str, Any]:
+    lt: dict[str, Any] = {
         "deviceName": caps.device_name,
         "platformVersion": caps.platform_version,
         "isRealMobile": caps.real_mobile,
@@ -175,7 +175,7 @@ def _to_lambdatest(caps: RealDeviceCaps) -> Dict[str, Any]:
         lt["name"] = caps.name
     if caps.project:
         lt["project"] = caps.project
-    out: Dict[str, Any] = {
+    out: dict[str, Any] = {
         "browserName": caps.browser_name,
         "platformName": caps.platform_name,
         "LT:Options": lt,
@@ -184,14 +184,14 @@ def _to_lambdatest(caps: RealDeviceCaps) -> Dict[str, Any]:
     return out
 
 
-_CAPS_DISPATCH: Dict[str, Callable[[RealDeviceCaps], Dict[str, Any]]] = {
+_CAPS_DISPATCH: dict[str, Callable[[RealDeviceCaps], dict[str, Any]]] = {
     "browserstack": _to_browserstack,
     "saucelabs": _to_saucelabs,
     "lambdatest": _to_lambdatest,
 }
 
 
-def build_capabilities(provider: str, caps: RealDeviceCaps) -> Dict[str, Any]:
+def build_capabilities(provider: str, caps: RealDeviceCaps) -> dict[str, Any]:
     """Project a :class:`RealDeviceCaps` into provider-native capabilities."""
     key = _normalise_provider(provider)
     return _CAPS_DISPATCH[key](caps)
@@ -206,10 +206,10 @@ class CloudSession:
     provider: str
     session_id: str
     dashboard_url: str
-    video_url: Optional[str] = None
+    video_url: str | None = None
     status: str = "running"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -226,11 +226,11 @@ def connect_real_device(
     provider: str,
     caps: RealDeviceCaps,
     *,
-    credentials: Optional[CloudCredentials] = None,
+    credentials: CloudCredentials | None = None,
     retries: int = 2,
     backoff_seconds: float = 3.0,
-    connector: Optional[Callable[..., Any]] = None,
-) -> Tuple[Any, CloudSession]:
+    connector: Callable[..., Any] | None = None,
+) -> tuple[Any, CloudSession]:
     """
     開一個 real-device session，回傳 (driver, CloudSession)。
     Connect to a cloud provider's real-device cloud with retries. Returns
@@ -249,7 +249,7 @@ def connect_real_device(
     )
 
     chosen = connector or _default_connector(key)
-    last_error: Optional[Exception] = None
+    last_error: Exception | None = None
     for attempt in range(max(1, retries + 1)):
         try:
             driver = chosen(creds.username, creds.access_key, capabilities)
@@ -291,7 +291,7 @@ def _default_connector(provider: str) -> Callable[..., Any]:
 
 def _basic_auth_header(creds: CloudCredentials) -> str:
     import base64
-    raw = f"{creds.username}:{creds.access_key}".encode("utf-8")
+    raw = f"{creds.username}:{creds.access_key}".encode()
     return "Basic " + base64.b64encode(raw).decode("ascii")
 
 
@@ -299,7 +299,7 @@ def _rest_request(
     method: str,
     url: str,
     credentials: CloudCredentials,
-    payload: Optional[Dict[str, Any]] = None,
+    payload: dict[str, Any] | None = None,
     timeout: float = 15.0,
 ) -> Any:
     if not url.startswith("https://"):
@@ -348,9 +348,9 @@ def _session_status_url(provider: str, session_id: str) -> str:
 def fetch_session_info(
     provider: str,
     session_id: str,
-    credentials: Optional[CloudCredentials] = None,
+    credentials: CloudCredentials | None = None,
     *,
-    request_fn: Optional[Callable[..., Any]] = None,
+    request_fn: Callable[..., Any] | None = None,
 ) -> CloudSession:
     """
     讀取 session 的 metadata，補上 video URL 與目前 status。
@@ -373,7 +373,7 @@ def fetch_session_info(
     )
 
 
-def _extract_video_url(provider: str, payload: Dict[str, Any]) -> Optional[str]:
+def _extract_video_url(provider: str, payload: dict[str, Any]) -> str | None:
     if provider == "browserstack":
         info = payload.get("automation_session") or {}
         url = info.get("video_url")
@@ -391,7 +391,7 @@ def _extract_video_url(provider: str, payload: Dict[str, Any]) -> Optional[str]:
     return None
 
 
-def _extract_status(provider: str, payload: Dict[str, Any]) -> str:
+def _extract_status(provider: str, payload: dict[str, Any]) -> str:
     if provider == "browserstack":
         info = payload.get("automation_session") or {}
         return str(info.get("status") or "unknown")
@@ -408,9 +408,9 @@ def update_session_status(
     session_id: str,
     *,
     passed: bool,
-    reason: Optional[str] = None,
-    credentials: Optional[CloudCredentials] = None,
-    request_fn: Optional[Callable[..., Any]] = None,
+    reason: str | None = None,
+    credentials: CloudCredentials | None = None,
+    request_fn: Callable[..., Any] | None = None,
 ) -> None:
     """
     把測試結果回寫到 provider，讓 dashboard 從 running 變 passed / failed。

@@ -10,7 +10,7 @@ WebRunner's higher-level helpers don't cover.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -24,10 +24,10 @@ class CDPError(WebRunnerException):
 
 # Cached Playwright CDP sessions keyed by ``id(page)`` so we don't open a new
 # session for every command on the same page.
-_pw_cdp_sessions: Dict[int, Any] = {}
+_pw_cdp_sessions: dict[int, Any] = {}
 
 
-def selenium_cdp(method: str, params: Optional[Dict[str, Any]] = None) -> Any:
+def selenium_cdp(method: str, params: dict[str, Any] | None = None) -> Any:
     """
     在當前 Selenium driver 執行 CDP 命令
     Issue a CDP command via the active Selenium driver.
@@ -41,7 +41,7 @@ def selenium_cdp(method: str, params: Optional[Dict[str, Any]] = None) -> Any:
     return driver.execute_cdp_cmd(method, params or {})
 
 
-def playwright_cdp(method: str, params: Optional[Dict[str, Any]] = None) -> Any:
+def playwright_cdp(method: str, params: dict[str, Any] | None = None) -> Any:
     """
     在當前 Playwright page 執行 CDP 命令
     Issue a CDP command via the active Playwright page (cached session per page).

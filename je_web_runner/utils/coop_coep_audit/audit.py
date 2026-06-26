@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -49,7 +49,7 @@ class CorpValue(str, Enum):
 
 # ---------- header parsing ---------------------------------------------
 
-def _enum_or(value: Optional[str], cls, default):
+def _enum_or(value: str | None, cls, default):
     if value is None:
         return default
     try:
@@ -73,11 +73,11 @@ class PagePolicy:
 
 
 def parse_page_headers(
-    headers: Iterable[Tuple[str, str]],
+    headers: Iterable[tuple[str, str]],
 ) -> PagePolicy:
     """Parse a header iterable into a :class:`PagePolicy`."""
-    coop_raw: Optional[str] = None
-    coep_raw: Optional[str] = None
+    coop_raw: str | None = None
+    coep_raw: str | None = None
     for name, value in headers:
         if not isinstance(name, str) or not isinstance(value, str):
             continue
@@ -100,7 +100,7 @@ class ResourceFinding:
 
     url: str
     reason: str
-    corp: Optional[str] = None
+    corp: str | None = None
     cors_present: bool = False
 
 
@@ -113,8 +113,8 @@ def _same_origin(a: str, b: str) -> bool:
     return (pa.scheme, pa.hostname, pa.port) == (pb.scheme, pb.hostname, pb.port)
 
 
-def _header_lookup(entry: Dict[str, Any]) -> Dict[str, str]:
-    out: Dict[str, str] = {}
+def _header_lookup(entry: dict[str, Any]) -> dict[str, str]:
+    out: dict[str, str] = {}
     headers = ((entry.get("response") or {}).get("headers")) or []
     if not isinstance(headers, list):
         return out
@@ -129,9 +129,9 @@ def _header_lookup(entry: Dict[str, Any]) -> Dict[str, str]:
 
 
 def _evaluate_resource(
-    request_url: str, corp: Optional[str], cors_origin: Optional[str],
+    request_url: str, corp: str | None, cors_origin: str | None,
     coep: CoepValue,
-) -> Optional[ResourceFinding]:
+) -> ResourceFinding | None:
     """Decide if one HAR resource violates the page's COEP. None = OK."""
     if coep == CoepValue.REQUIRE_CORP:
         if corp == CorpValue.CROSS_ORIGIN.value:
@@ -158,7 +158,7 @@ def _evaluate_resource(
 
 def _entry_finding(
     entry: Any, page_url: str, coep: CoepValue,
-) -> Optional[ResourceFinding]:
+) -> ResourceFinding | None:
     """One HAR entry → optional :class:`ResourceFinding`."""
     if not isinstance(entry, dict):
         return None
@@ -175,11 +175,11 @@ def _entry_finding(
 
 
 def scan_har_resources(
-    har: Union[str, Dict[str, Any]],
+    har: str | dict[str, Any],
     *,
     page_url: str,
     coep: CoepValue,
-) -> List[ResourceFinding]:
+) -> list[ResourceFinding]:
     """
     Walk HAR entries; any cross-origin entry must satisfy the page's COEP.
     Returns one :class:`ResourceFinding` per violation; empty list means OK.
@@ -200,7 +200,7 @@ def scan_har_resources(
     ]
 
 
-def _coerce_har(har: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
+def _coerce_har(har: str | dict[str, Any]) -> dict[str, Any]:
     if isinstance(har, str):
         try:
             parsed = json.loads(har)
@@ -225,13 +225,13 @@ class IsolationReport:
     page_url: str
     policy: PagePolicy
     isolated: bool
-    resource_findings: List[ResourceFinding] = field(default_factory=list)
-    notes: List[str] = field(default_factory=list)
+    resource_findings: list[ResourceFinding] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
     def passed(self) -> bool:
         return self.isolated and not self.resource_findings
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "page_url": self.page_url,
             "policy": {
@@ -247,21 +247,21 @@ class IsolationReport:
 
 def audit_isolation(
     page_url: str,
-    page_headers: Iterable[Tuple[str, str]],
+    page_headers: Iterable[tuple[str, str]],
     *,
-    har: Optional[Union[str, Dict[str, Any]]] = None,
+    har: str | dict[str, Any] | None = None,
 ) -> IsolationReport:
     """Combined page + resource audit. ``har`` is optional but recommended."""
     if not isinstance(page_url, str) or not page_url:
         raise CoopCoepAuditError("page_url must be non-empty string")
     policy = parse_page_headers(page_headers)
     isolated = policy.isolated()
-    notes: List[str] = []
+    notes: list[str] = []
     if policy.coop != CoopValue.SAME_ORIGIN:
         notes.append(f"COOP is {policy.coop.value}, want same-origin")
     if policy.coep not in (CoepValue.REQUIRE_CORP, CoepValue.CREDENTIALLESS):
         notes.append(f"COEP is {policy.coep.value}, want require-corp/credentialless")
-    resource_findings: List[ResourceFinding] = []
+    resource_findings: list[ResourceFinding] = []
     if har is not None and policy.coep != CoepValue.UNSAFE_NONE:
         resource_findings = scan_har_resources(
             har, page_url=page_url, coep=policy.coep,

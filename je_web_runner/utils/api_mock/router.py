@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -31,10 +31,10 @@ class MockResponse:
 
     status: _HttpStatus = 200
     body: Any = ""
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
     content_type: str = "application/json"
 
-    def to_payload(self) -> Dict[str, Any]:
+    def to_payload(self) -> dict[str, Any]:
         if isinstance(self.body, (dict, list)):
             body_text = json.dumps(self.body, ensure_ascii=False)
         else:
@@ -51,7 +51,7 @@ class MockRoute:
     method: str
     url_pattern: str
     response: MockResponse
-    times: Optional[int] = None
+    times: int | None = None
     times_seen: int = 0
 
     def matches(self, method: str, url: str) -> bool:
@@ -86,8 +86,8 @@ class MockRouter:
     """Ordered list of :class:`MockRoute`."""
 
     def __init__(self) -> None:
-        self._routes: List[MockRoute] = []
-        self._calls: List[Tuple[str, str]] = []
+        self._routes: list[MockRoute] = []
+        self._calls: list[tuple[str, str]] = []
 
     def add(
         self,
@@ -95,9 +95,9 @@ class MockRouter:
         url_pattern: str,
         body: Any = "",
         status: int = 200,
-        headers: Optional[Dict[str, str]] = None,
+        headers: dict[str, str] | None = None,
         content_type: str = "application/json",
-        times: Optional[int] = None,
+        times: int | None = None,
     ) -> MockRoute:
         if not isinstance(method, str) or not method:
             raise ApiMockError("method must be a non-empty string")
@@ -117,14 +117,14 @@ class MockRouter:
         self._routes.append(route)
         return route
 
-    def match(self, method: str, url: str) -> Optional[MockRoute]:
+    def match(self, method: str, url: str) -> MockRoute | None:
         self._calls.append((method.upper(), url))
         for route in self._routes:
             if route.matches(method, url) and route.consume():
                 return route
         return None
 
-    def calls(self) -> List[Tuple[str, str]]:
+    def calls(self) -> list[tuple[str, str]]:
         return list(self._calls)
 
     def attach_to_page(self, page: Any) -> None:
@@ -161,9 +161,9 @@ _GLOBAL = MockRouter()
 def register_route(
     method: str,
     url_pattern: str,
-    body: Union[str, Dict[str, Any], List[Any]] = "",
+    body: str | dict[str, Any] | list[Any] = "",
     status: int = 200,
-    times: Optional[int] = None,
+    times: int | None = None,
 ) -> MockRoute:
     """Register a route on the module-level singleton."""
     return _GLOBAL.add(method, url_pattern, body=body, status=status, times=times)

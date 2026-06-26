@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -36,7 +36,7 @@ class SpeculationRule:
 
     source: str  # "list" / "document"
     urls: Sequence[str] = ()
-    where: Optional[Dict[str, Any]] = None  # for source=document
+    where: dict[str, Any] | None = None  # for source=document
     eagerness: str = "moderate"  # 'immediate' / 'eager' / 'moderate' / 'conservative'
 
     def __post_init__(self) -> None:
@@ -51,10 +51,10 @@ class SpeculationRule:
 def build_script_tag(prefetch: Sequence[SpeculationRule] = (),
                      prerender: Sequence[SpeculationRule] = ()) -> str:
     """Render a ``<script type=speculationrules>`` payload as a string."""
-    def _serialise(rules: Sequence[SpeculationRule]) -> List[Dict[str, Any]]:
-        out: List[Dict[str, Any]] = []
+    def _serialise(rules: Sequence[SpeculationRule]) -> list[dict[str, Any]]:
+        out: list[dict[str, Any]] = []
         for rule in rules:
-            entry: Dict[str, Any] = {"source": rule.source}
+            entry: dict[str, Any] = {"source": rule.source}
             if rule.source == "list":
                 entry["urls"] = list(rule.urls)
             else:
@@ -62,7 +62,7 @@ def build_script_tag(prefetch: Sequence[SpeculationRule] = (),
             entry["eagerness"] = rule.eagerness
             out.append(entry)
         return out
-    payload: Dict[str, List[Dict[str, Any]]] = {}
+    payload: dict[str, list[dict[str, Any]]] = {}
     if prefetch:
         payload["prefetch"] = _serialise(prefetch)
     if prerender:
@@ -105,8 +105,8 @@ HARVEST_LOG_SCRIPT = "return window.__wr_spec__ || {events: [], fires: {}};"
 class PrerenderLog:
     """Harvested log of prerender-phase events + counters."""
 
-    events: List[Dict[str, Any]] = field(default_factory=list)
-    fires: Dict[str, int] = field(default_factory=dict)
+    events: list[dict[str, Any]] = field(default_factory=list)
+    fires: dict[str, int] = field(default_factory=dict)
 
 
 def parse_log(payload: Any) -> PrerenderLog:

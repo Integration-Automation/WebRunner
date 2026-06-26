@@ -16,7 +16,7 @@ from collections import defaultdict
 from dataclasses import dataclass, field
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -32,12 +32,12 @@ class HarEntry:
     method: str
     path: str
     status: int
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
     body: str = ""
     body_is_base64: bool = False
 
 
-def load_har(source: Union[str, Path]) -> List[HarEntry]:
+def load_har(source: str | Path) -> list[HarEntry]:
     """Read a HAR file and return its ``entries`` projected to :class:`HarEntry`."""
     path = Path(source)
     if not path.is_file():
@@ -49,7 +49,7 @@ def load_har(source: Union[str, Path]) -> List[HarEntry]:
     entries = (document.get("log") or {}).get("entries")
     if not isinstance(entries, list):
         raise HarReplayError("HAR missing log.entries")
-    parsed: List[HarEntry] = []
+    parsed: list[HarEntry] = []
     for index, entry in enumerate(entries):
         try:
             parsed.append(_entry_from_har(entry))
@@ -58,7 +58,7 @@ def load_har(source: Union[str, Path]) -> List[HarEntry]:
     return parsed
 
 
-def _entry_from_har(entry: Dict[str, Any]) -> HarEntry:
+def _entry_from_har(entry: dict[str, Any]) -> HarEntry:
     request = entry["request"]
     response = entry["response"]
     parsed = urlparse(request["url"])
@@ -100,7 +100,7 @@ def _build_matcher(pattern: str) -> _PathMatcher:
 class _Bucket:
     matcher: _PathMatcher
     pattern: str
-    entries: List[HarEntry]
+    entries: list[HarEntry]
     cursor: int = 0
 
 
@@ -109,7 +109,7 @@ class HarReplayServer:
 
     def __init__(
         self,
-        entries: List[HarEntry],
+        entries: list[HarEntry],
         host: str = "127.0.0.1",
         port: int = 0,
         not_found_status: int = 404,
@@ -120,14 +120,14 @@ class HarReplayServer:
         self.host = host
         self.port = port
         self.not_found_status = not_found_status
-        self._buckets: Dict[str, List[_Bucket]] = defaultdict(list)
+        self._buckets: dict[str, list[_Bucket]] = defaultdict(list)
         self._build_buckets()
-        self._server: Optional[HTTPServer] = None
-        self._thread: Optional[threading.Thread] = None
-        self.calls: List[Tuple[str, str]] = []
+        self._server: HTTPServer | None = None
+        self._thread: threading.Thread | None = None
+        self.calls: list[tuple[str, str]] = []
 
     def _build_buckets(self) -> None:
-        grouped: Dict[Tuple[str, str], List[HarEntry]] = defaultdict(list)
+        grouped: dict[tuple[str, str], list[HarEntry]] = defaultdict(list)
         for entry in self.entries:
             grouped[(entry.method, entry.path)].append(entry)
         for (method, path), group in grouped.items():
@@ -138,7 +138,7 @@ class HarReplayServer:
             )
             self._buckets[method].append(bucket)
 
-    def find(self, method: str, path: str) -> Optional[HarEntry]:
+    def find(self, method: str, path: str) -> HarEntry | None:
         method_upper = method.upper()
         self.calls.append((method_upper, path))
         candidates = self._buckets.get(method_upper) or []

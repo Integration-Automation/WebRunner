@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -73,23 +73,23 @@ class PopoverState:
 
     kind: PopoverKind
     open: bool
-    id: Optional[str] = None
-    role: Optional[str] = None
+    id: str | None = None
+    role: str | None = None
     modal: bool = False
-    invoker: Optional[str] = None
-    bounding_rect: Optional[Dict[str, float]] = None
+    invoker: str | None = None
+    bounding_rect: dict[str, float] | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "kind": self.kind.value}
 
 
-def parse_snapshot(payload: Any) -> List[PopoverState]:
+def parse_snapshot(payload: Any) -> list[PopoverState]:
     """Parse the harvested ``HARVEST_SCRIPT`` payload."""
     if not isinstance(payload, list):
         raise PopoverAssertError(
             f"snapshot must be a list, got {type(payload).__name__}"
         )
-    out: List[PopoverState] = []
+    out: list[PopoverState] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue

@@ -8,7 +8,6 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -18,7 +17,7 @@ class FlakyDetectorError(WebRunnerException):
     """Raised when the ledger cannot be read."""
 
 
-def _load_runs(ledger_path: str) -> List[dict]:
+def _load_runs(ledger_path: str) -> list[dict]:
     path = Path(ledger_path)
     if not path.exists():
         return []
@@ -32,7 +31,7 @@ def _load_runs(ledger_path: str) -> List[dict]:
     return [run for run in data["runs"] if isinstance(run, dict)]
 
 
-def flakiness_stats(ledger_path: str, min_runs: int = 3) -> Dict[str, Dict[str, int]]:
+def flakiness_stats(ledger_path: str, min_runs: int = 3) -> dict[str, dict[str, int]]:
     """
     從 ledger 算出每個檔案的 ``{runs, passes, fails, flaky}`` 統計
     Compute per-file run / pass / fail counts plus a ``flaky`` flag.
@@ -40,7 +39,7 @@ def flakiness_stats(ledger_path: str, min_runs: int = 3) -> Dict[str, Dict[str, 
     passes and fails in its history.
     """
     runs = _load_runs(ledger_path)
-    counters: Dict[str, Dict[str, int]] = defaultdict(lambda: {"runs": 0, "passes": 0, "fails": 0})
+    counters: dict[str, dict[str, int]] = defaultdict(lambda: {"runs": 0, "passes": 0, "fails": 0})
     for run in runs:
         path = run.get("path")
         if not isinstance(path, str):
@@ -51,7 +50,7 @@ def flakiness_stats(ledger_path: str, min_runs: int = 3) -> Dict[str, Dict[str, 
         else:
             counters[path]["fails"] += 1
 
-    result: Dict[str, Dict[str, int]] = {}
+    result: dict[str, dict[str, int]] = {}
     for path, stats in counters.items():
         flaky = stats["runs"] >= min_runs and stats["passes"] > 0 and stats["fails"] > 0
         stats_with_flag = dict(stats)
@@ -64,7 +63,7 @@ def flaky_paths(
     ledger_path: str,
     min_runs: int = 3,
     min_fail_rate: float = 0.0,
-) -> List[str]:
+) -> list[str]:
     """
     回傳被判為 flaky 的檔案
     Return the file paths that the heuristic considers flaky.
@@ -76,7 +75,7 @@ def flaky_paths(
         f"flaky_paths min_runs={min_runs} min_fail_rate={min_fail_rate}"
     )
     stats = flakiness_stats(ledger_path, min_runs=min_runs)
-    out: List[str] = []
+    out: list[str] = []
     for path, info in stats.items():
         if not info["flaky"]:
             continue

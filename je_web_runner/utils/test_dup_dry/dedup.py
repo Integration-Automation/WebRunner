@@ -18,7 +18,7 @@ from __future__ import annotations
 import hashlib
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -30,7 +30,7 @@ class DupDryError(WebRunnerException):
 @dataclass
 class DupSpec:
     name: str
-    actions: List[Dict[str, Any]] = field(default_factory=list)
+    actions: list[dict[str, Any]] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.name:
@@ -39,14 +39,14 @@ class DupSpec:
             raise DupDryError("DupSpec.actions must be a list")
 
 
-def _signature_token(action: Dict[str, Any]) -> str:
+def _signature_token(action: dict[str, Any]) -> str:
     name = (action.get("action_name") or "").lower()
     target = (action.get("element_name") or action.get("by_value")
               or action.get("url") or "")
     return f"{name}:{target}"
 
 
-def _signature(actions: Sequence[Dict[str, Any]]) -> str:
+def _signature(actions: Sequence[dict[str, Any]]) -> str:
     joined = "|".join(_signature_token(a) for a in actions if isinstance(a, dict))
     return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:16]
 
@@ -54,11 +54,11 @@ def _signature(actions: Sequence[Dict[str, Any]]) -> str:
 @dataclass
 class DuplicateGroup:
     signature: str
-    test_names: List[str]
+    test_names: list[str]
 
 
-def find_duplicates(specs: Iterable[DupSpec]) -> List[DuplicateGroup]:
-    buckets: Dict[str, List[str]] = defaultdict(list)
+def find_duplicates(specs: Iterable[DupSpec]) -> list[DuplicateGroup]:
+    buckets: dict[str, list[str]] = defaultdict(list)
     for spec in specs:
         if not isinstance(spec, DupSpec):
             raise DupDryError("each spec must be DupSpec")
@@ -75,7 +75,7 @@ class PrefixOverlap:
     common_prefix_len: int
 
 
-def _common_prefix(la: List[str], lb: List[str]) -> int:
+def _common_prefix(la: list[str], lb: list[str]) -> int:
     n = 0
     for x, y in zip(la, lb, strict=False):
         if x != y:
@@ -86,13 +86,13 @@ def _common_prefix(la: List[str], lb: List[str]) -> int:
 
 def find_prefix_overlap(
     specs: Sequence[DupSpec], *, min_prefix: int = 5,
-) -> List[PrefixOverlap]:
+) -> list[PrefixOverlap]:
     if min_prefix < 1:
         raise DupDryError("min_prefix must be >= 1")
     tokens = {s.name: [_signature_token(a) for a in s.actions
                        if isinstance(a, dict)]
               for s in specs}
-    out: List[PrefixOverlap] = []
+    out: list[PrefixOverlap] = []
     names = sorted(tokens)
     for i, a in enumerate(names):
         for b in names[i + 1:]:

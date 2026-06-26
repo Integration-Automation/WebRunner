@@ -21,7 +21,7 @@ def reformat_xml_file(xml_string: str) -> str:
     return dom.toprettyxml()
 
 
-class XMLParser(object):
+class XMLParser:
     """
     XML 解析器
     XML Parser that supports parsing from string or file

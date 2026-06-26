@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -86,15 +86,15 @@ class PressureReaction:
 
 @dataclass
 class PressureLog:
-    reactions: List[PressureReaction] = field(default_factory=list)
+    reactions: list[PressureReaction] = field(default_factory=list)
     disconnect_count: int = 0
-    fires: List[PressureLevel] = field(default_factory=list)
+    fires: list[PressureLevel] = field(default_factory=list)
 
 
 def parse_log(payload: Any) -> PressureLog:
     if not isinstance(payload, dict):
         raise ComputePressureError("payload must be a dict")
-    reactions: List[PressureReaction] = []
+    reactions: list[PressureReaction] = []
     for raw in payload.get("reactions") or []:
         if not isinstance(raw, dict):
             continue
@@ -109,7 +109,7 @@ def parse_log(payload: Any) -> PressureLog:
             level=level,
             ts_ms=int(raw.get("ts") or 0),
         ))
-    fires: List[PressureLevel] = []
+    fires: list[PressureLevel] = []
     for raw in payload.get("fires") or []:
         try:
             fires.append(PressureLevel(raw))
@@ -125,7 +125,7 @@ def parse_log(payload: Any) -> PressureLog:
 
 
 def assert_reaction_to(
-    log: PressureLog, *, level: PressureLevel, name: Optional[str] = None,
+    log: PressureLog, *, level: PressureLevel, name: str | None = None,
 ) -> PressureReaction:
     if not isinstance(level, PressureLevel):
         raise ComputePressureError("level must be PressureLevel enum")

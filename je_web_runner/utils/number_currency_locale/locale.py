@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Dict, Tuple
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -27,7 +26,7 @@ class NumberCurrencyLocaleError(WebRunnerException):
 class NumberRules:
     decimal: str
     thousands: str
-    grouping: Tuple[int, ...] = (3,)
+    grouping: tuple[int, ...] = (3,)
 
 
 @dataclass(frozen=True)
@@ -38,7 +37,7 @@ class CurrencyRules:
 
 
 # Curated minimal locale catalog — extend as you adopt new locales
-NUMBER_RULES: Dict[str, NumberRules] = {
+NUMBER_RULES: dict[str, NumberRules] = {
     "en-US": NumberRules(decimal=".", thousands=","),
     "en-GB": NumberRules(decimal=".", thousands=","),
     "de-DE": NumberRules(decimal=",", thousands="."),
@@ -50,7 +49,7 @@ NUMBER_RULES: Dict[str, NumberRules] = {
     "ar-EG": NumberRules(decimal="٫", thousands="٬"),  # Arabic
 }
 
-CURRENCY_RULES: Dict[str, CurrencyRules] = {
+CURRENCY_RULES: dict[str, CurrencyRules] = {
     "en-US": CurrencyRules(symbol="$", code="USD"),
     "en-GB": CurrencyRules(symbol="£", code="GBP"),
     "de-DE": CurrencyRules(symbol="€", code="EUR", symbol_position="suffix"),
@@ -80,7 +79,7 @@ def _detect_decimal(body: str):
     return None if tail_len == 3 else only
 
 
-def _check_indian_grouping(body: str, rules: "NumberRules", rendered: str) -> None:
+def _check_indian_grouping(body: str, rules: NumberRules, rendered: str) -> None:
     if rules.grouping != (3, 2) or rules.thousands not in body:
         return
     integer_part = body.split(rules.decimal, 1)[0]

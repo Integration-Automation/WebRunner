@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -22,7 +22,7 @@ class TagFilterError(WebRunnerException):
     """Raised when metadata cannot be read."""
 
 
-def read_metadata(path: str) -> Dict[str, Any]:
+def read_metadata(path: str) -> dict[str, Any]:
     """
     讀取 action 檔的 ``meta`` 區塊；若檔案不是 dict 或沒有 meta，回傳空 dict
     Read the ``meta`` block from an action file (empty dict if absent).
@@ -41,15 +41,15 @@ def read_metadata(path: str) -> Dict[str, Any]:
     return meta if isinstance(meta, dict) else {}
 
 
-def _tag_set(meta: Dict[str, Any]) -> set:
+def _tag_set(meta: dict[str, Any]) -> set:
     tags = meta.get("tags") or []
     return {str(tag) for tag in tags}
 
 
 def match_tags(
-    meta: Dict[str, Any],
-    include: Optional[Sequence[str]] = None,
-    exclude: Optional[Sequence[str]] = None,
+    meta: dict[str, Any],
+    include: Sequence[str] | None = None,
+    exclude: Sequence[str] | None = None,
 ) -> bool:
     """
     依 include / exclude 規則判斷檔案是否該執行
@@ -70,9 +70,9 @@ def match_tags(
 
 def filter_paths(
     paths: Iterable[str],
-    include: Optional[Sequence[str]] = None,
-    exclude: Optional[Sequence[str]] = None,
-) -> List[str]:
+    include: Sequence[str] | None = None,
+    exclude: Sequence[str] | None = None,
+) -> list[str]:
     """
     篩選 action 檔路徑清單
     Filter a list of action-file paths by their ``meta.tags``.
@@ -81,7 +81,7 @@ def filter_paths(
     web_runner_logger.info(
         f"filter_paths include={list(include or [])} exclude={list(exclude or [])}"
     )
-    selected: List[str] = []
+    selected: list[str] = []
     for path in paths:
         try:
             meta = read_metadata(path)

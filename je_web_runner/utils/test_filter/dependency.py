@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from collections import defaultdict, deque
 from pathlib import Path
-from typing import Dict, Iterable, List, Sequence
+from typing import Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -23,14 +23,14 @@ def _basename_key(path: str) -> str:
     return Path(path).stem
 
 
-def read_depends_on(path: str) -> List[str]:
+def read_depends_on(path: str) -> list[str]:
     """讀取單一檔案的 ``meta.depends_on`` 清單（以 basename 表示）。"""
     meta = read_metadata(path)
     deps = meta.get("depends_on") or []
     return [str(dep) for dep in deps if isinstance(dep, str)]
 
 
-def build_dependency_graph(paths: Sequence[str]) -> Dict[str, List[str]]:
+def build_dependency_graph(paths: Sequence[str]) -> dict[str, list[str]]:
     """
     依基本檔名建立 ``{path: [dep_path, ...]}`` 圖
     Build a ``{path: [dep_path, …]}`` graph by matching ``depends_on`` entries
@@ -39,8 +39,8 @@ def build_dependency_graph(paths: Sequence[str]) -> Dict[str, List[str]]:
     無法對應到 ``paths`` 中任何檔案的依賴會被忽略並寫入 log（避免阻擋執行）。
     Dependencies that do not match any input path are dropped with a warning.
     """
-    by_stem: Dict[str, str] = {_basename_key(path): path for path in paths}
-    graph: Dict[str, List[str]] = {path: [] for path in paths}
+    by_stem: dict[str, str] = {_basename_key(path): path for path in paths}
+    graph: dict[str, list[str]] = {path: [] for path in paths}
     for path in paths:
         for dep_name in read_depends_on(path):
             dep_path = by_stem.get(dep_name)
@@ -55,13 +55,13 @@ def build_dependency_graph(paths: Sequence[str]) -> Dict[str, List[str]]:
     return graph
 
 
-def topological_order(graph: Dict[str, List[str]]) -> List[str]:
+def topological_order(graph: dict[str, list[str]]) -> list[str]:
     """
     Kahn 演算法拓樸排序；偵測環時拋例外
     Kahn's algorithm; raises DependencyError on cycle.
     """
-    in_degree: Dict[str, int] = defaultdict(int)
-    successors: Dict[str, List[str]] = defaultdict(list)
+    in_degree: dict[str, int] = defaultdict(int)
+    successors: dict[str, list[str]] = defaultdict(list)
     nodes = list(graph.keys())
     for node in nodes:
         in_degree[node] = in_degree[node] + 0
@@ -71,7 +71,7 @@ def topological_order(graph: Dict[str, List[str]]) -> List[str]:
             in_degree[node] += 1
 
     ready = deque(node for node in nodes if in_degree[node] == 0)
-    ordered: List[str] = []
+    ordered: list[str] = []
     while ready:
         current = ready.popleft()
         ordered.append(current)
@@ -86,7 +86,7 @@ def topological_order(graph: Dict[str, List[str]]) -> List[str]:
 
 def _node_should_skip(
     node: str,
-    deps: List[str],
+    deps: list[str],
     failed_set: set,
     must_skip: set,
 ) -> bool:
@@ -96,9 +96,9 @@ def _node_should_skip(
 
 
 def skip_dependents_of_failed(
-    graph: Dict[str, List[str]],
+    graph: dict[str, list[str]],
     failed: Iterable[str],
-) -> List[str]:
+) -> list[str]:
     """
     回傳因為上游失敗而應該跳過的檔案
     Return files whose ancestry contains any path in ``failed``.
@@ -116,7 +116,7 @@ def skip_dependents_of_failed(
     return list(must_skip)
 
 
-def order_paths_by_dependency(paths: Sequence[str]) -> List[str]:
+def order_paths_by_dependency(paths: Sequence[str]) -> list[str]:
     """
     便捷函式：建圖並回傳拓樸序
     Convenience: build graph and return paths in topological order.

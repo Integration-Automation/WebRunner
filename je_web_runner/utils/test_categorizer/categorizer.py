@@ -18,7 +18,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Sequence, Set, Union
+from typing import Any, Callable, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -36,12 +36,12 @@ class Rule:
     """One categorisation rule."""
 
     tag: str
-    matcher: Callable[[List[Dict[str, Any]]], bool]
+    matcher: Callable[[list[dict[str, Any]]], bool]
 
 
-def _has_any(action_name_pattern: str) -> Callable[[List[Dict[str, Any]]], bool]:
+def _has_any(action_name_pattern: str) -> Callable[[list[dict[str, Any]]], bool]:
     regex = re.compile(action_name_pattern)
-    def _check(actions: List[Dict[str, Any]]) -> bool:
+    def _check(actions: list[dict[str, Any]]) -> bool:
         for action in actions:
             if not isinstance(action, dict) or len(action) != 1:
                 continue
@@ -52,14 +52,14 @@ def _has_any(action_name_pattern: str) -> Callable[[List[Dict[str, Any]]], bool]
     return _check
 
 
-def _action_count_at_least(n: int) -> Callable[[List[Dict[str, Any]]], bool]:
-    def _check(actions: List[Dict[str, Any]]) -> bool:
+def _action_count_at_least(n: int) -> Callable[[list[dict[str, Any]]], bool]:
+    def _check(actions: list[dict[str, Any]]) -> bool:
         return len(actions) >= n
     return _check
 
 
-def _and(*matchers: Callable[[List[Dict[str, Any]]], bool]) -> Callable[[List[Dict[str, Any]]], bool]:
-    def _check(actions: List[Dict[str, Any]]) -> bool:
+def _and(*matchers: Callable[[list[dict[str, Any]]], bool]) -> Callable[[list[dict[str, Any]]], bool]:
+    def _check(actions: list[dict[str, Any]]) -> bool:
         return all(m(actions) for m in matchers)
     return _check
 
@@ -108,18 +108,18 @@ class CategoryAssignment:
     """Tag assignment for one test."""
 
     test_id: str
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
     action_count: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 def categorize_actions(
-    actions: List[Dict[str, Any]],
+    actions: list[dict[str, Any]],
     *,
     rules: Sequence[Rule] = DEFAULT_RULES,
-) -> List[str]:
+) -> list[str]:
     """Return sorted list of tags that fire for ``actions``."""
     if not isinstance(actions, list):
         raise TestCategorizerError(
@@ -130,7 +130,7 @@ def categorize_actions(
             raise TestCategorizerError(
                 f"rules entry must be Rule, got {type(rule).__name__}"
             )
-    tags: Set[str] = set()
+    tags: set[str] = set()
     for rule in rules:
         try:
             if rule.matcher(actions):
@@ -143,7 +143,7 @@ def categorize_actions(
 
 
 def categorize_file(
-    path: Union[str, Path],
+    path: str | Path,
     *,
     rules: Sequence[Rule] = DEFAULT_RULES,
 ) -> CategoryAssignment:
@@ -164,10 +164,10 @@ def categorize_file(
 
 
 def categorize_dir(
-    directory: Union[str, Path],
+    directory: str | Path,
     *,
     rules: Sequence[Rule] = DEFAULT_RULES,
-) -> List[CategoryAssignment]:
+) -> list[CategoryAssignment]:
     """Categorize every ``*.json`` in a directory (non-recursive)."""
     d = Path(directory)
     if not d.is_dir():
@@ -184,7 +184,7 @@ class TagDistribution:
 
     total_tests: int = 0
     untagged_tests: int = 0
-    by_tag: Dict[str, int] = field(default_factory=dict)
+    by_tag: dict[str, int] = field(default_factory=dict)
 
 
 def aggregate(assignments: Iterable[CategoryAssignment]) -> TagDistribution:

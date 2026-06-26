@@ -4,7 +4,7 @@ Post a run summary to a Slack incoming webhook or any HTTP webhook.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -29,7 +29,7 @@ def _check_url(url: str) -> str:
     return url
 
 
-def summarise_run() -> Dict[str, Any]:
+def summarise_run() -> dict[str, Any]:
     """
     從 ``test_record_instance`` 產生 pass/fail 統計
     Build a {total, passed, failed, failures} summary from the recorded
@@ -52,9 +52,9 @@ def summarise_run() -> Dict[str, Any]:
 
 def notify_webhook(
     url: str,
-    payload: Dict[str, Any],
+    payload: dict[str, Any],
     timeout: int = _DEFAULT_TIMEOUT,
-    headers: Optional[Dict[str, str]] = None,
+    headers: dict[str, str] | None = None,
 ) -> int:
     """
     POST 任意 JSON payload 到 webhook，回傳 HTTP 狀態碼
@@ -70,7 +70,7 @@ def notify_webhook(
     return response.status_code
 
 
-def _slack_text(summary: Dict[str, Any], header: str) -> str:
+def _slack_text(summary: dict[str, Any], header: str) -> str:
     lines = [
         f"*{header}*",
         f"total: {summary['total']}  passed: {summary['passed']}  failed: {summary['failed']}",
@@ -86,7 +86,7 @@ def _slack_text(summary: Dict[str, Any], header: str) -> str:
 
 def notify_slack(
     webhook_url: str,
-    summary: Optional[Dict[str, Any]] = None,
+    summary: dict[str, Any] | None = None,
     header: str = "WebRunner Run Summary",
 ) -> int:
     """

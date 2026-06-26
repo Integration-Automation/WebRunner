@@ -20,7 +20,7 @@ assertions: ``assert_spoke``, ``assert_lang``, ``assert_no_speech``.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -75,14 +75,14 @@ class Utterance:
     pitch: float = 1.0
     volume: float = 1.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def parse_spoken(payload: Any) -> List[Utterance]:
+def parse_spoken(payload: Any) -> list[Utterance]:
     if not isinstance(payload, list):
         raise SpeechApiAssertError("payload must be a list")
-    out: List[Utterance] = []
+    out: list[Utterance] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue

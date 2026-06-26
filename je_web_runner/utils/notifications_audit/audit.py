@@ -10,7 +10,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -36,7 +36,7 @@ class PermissionRequest:
     result: PermissionResult
     page_age_ms: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "result": self.result.value}
 
 
@@ -47,7 +47,7 @@ class NotificationShown:
     timestamp_ms: float
     title: str
     body: str = ""
-    tag: Optional[str] = None
+    tag: str | None = None
     require_interaction: bool = False
     silent: bool = False
 
@@ -56,8 +56,8 @@ class NotificationShown:
 class NotificationsLog:
     """Combined audit log."""
 
-    permission_requests: List[PermissionRequest] = field(default_factory=list)
-    notifications: List[NotificationShown] = field(default_factory=list)
+    permission_requests: list[PermissionRequest] = field(default_factory=list)
+    notifications: list[NotificationShown] = field(default_factory=list)
 
 
 # ---------- script generation ------------------------------------------
@@ -133,7 +133,7 @@ def parse_log(payload: Any) -> NotificationsLog:  # NOSONAR S3776 — cohesive l
         raise NotificationsAuditError(
             f"payload must be dict, got {type(payload).__name__}"
         )
-    requests: List[PermissionRequest] = []
+    requests: list[PermissionRequest] = []
     for raw in payload.get("permission_requests") or []:
         if not isinstance(raw, dict):
             continue
@@ -152,7 +152,7 @@ def parse_log(payload: Any) -> NotificationsLog:  # NOSONAR S3776 — cohesive l
             raise NotificationsAuditError(
                 f"bad permission_request entry {raw!r}: {error}"
             ) from error
-    notifications: List[NotificationShown] = []
+    notifications: list[NotificationShown] = []
     for raw in payload.get("notifications") or []:
         if not isinstance(raw, dict):
             continue
@@ -204,7 +204,7 @@ def assert_no_prompt_before(
 
 def assert_no_spam_after_deny(log: NotificationsLog) -> None:
     """Assert no further prompts or notifications appear after a 'denied'."""
-    deny_time: Optional[float] = None
+    deny_time: float | None = None
     for req in log.permission_requests:
         if req.result == PermissionResult.DENIED:
             deny_time = req.timestamp_ms
@@ -225,9 +225,9 @@ def assert_no_spam_after_deny(log: NotificationsLog) -> None:
 def assert_notification_shown(
     log: NotificationsLog,
     *,
-    title_contains: Optional[str] = None,
-    body_contains: Optional[str] = None,
-    tag: Optional[str] = None,
+    title_contains: str | None = None,
+    body_contains: str | None = None,
+    tag: str | None = None,
 ) -> NotificationShown:
     """Assert at least one notification matches the given filters."""
     if title_contains is None and body_contains is None and tag is None:
@@ -250,7 +250,7 @@ def assert_notification_shown(
 
 def assert_unique_tags(log: NotificationsLog) -> None:
     """Assert no tag was reused (would silently replace earlier notification)."""
-    seen: Dict[str, int] = {}
+    seen: dict[str, int] = {}
     for notif in log.notifications:
         if notif.tag is None:
             continue

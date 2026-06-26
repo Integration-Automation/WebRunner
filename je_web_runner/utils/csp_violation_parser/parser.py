@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List
+from typing import Any, Iterable
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -34,7 +34,7 @@ class Violation:
     line_number: int = 0
     disposition: str = "enforce"   # "enforce" | "report"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -58,14 +58,14 @@ def parse_one(report: Any) -> Violation:
     )
 
 
-def parse_many(reports: Iterable[Any]) -> List[Violation]:
+def parse_many(reports: Iterable[Any]) -> list[Violation]:
     return [parse_one(r) for r in reports]
 
 
 def group_by_directive(
     violations: Iterable[Violation],
-) -> Dict[str, List[Violation]]:
-    buckets: Dict[str, List[Violation]] = defaultdict(list)
+) -> dict[str, list[Violation]]:
+    buckets: dict[str, list[Violation]] = defaultdict(list)
     for v in violations:
         buckets[v.violated_directive or "(unknown)"].append(v)
     return dict(buckets)
@@ -73,7 +73,7 @@ def group_by_directive(
 
 def top_blocked_hosts(
     violations: Iterable[Violation], *, top_n: int = 5,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     if top_n < 1:
         raise CspViolationParserError("top_n must be >= 1")
     counts: Counter = Counter()
@@ -96,14 +96,14 @@ def assert_no_enforced_violations(violations: Iterable[Violation]) -> None:
 
 def looks_like_recon(
     violations: Iterable[Violation], *, distinct_hosts_threshold: int = 5,
-) -> List[str]:
+) -> list[str]:
     """Buckets per directive whose distinct blocked-host count exceeds
     ``distinct_hosts_threshold`` — a probable XSS / SSRF probe."""
     if distinct_hosts_threshold < 2:
         raise CspViolationParserError(
             "distinct_hosts_threshold must be >= 2"
         )
-    hosts_by_directive: Dict[str, set] = defaultdict(set)
+    hosts_by_directive: dict[str, set] = defaultdict(set)
     for v in violations:
         host = urlparse(v.blocked_uri).hostname or v.blocked_uri
         if host:

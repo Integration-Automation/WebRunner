@@ -17,7 +17,7 @@ import json
 import re
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Callable, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -34,8 +34,8 @@ class SseEvent:
 
     event: str = "message"  # default per SSE spec
     data: str = ""
-    id: Optional[str] = None
-    retry: Optional[int] = None
+    id: str | None = None
+    retry: int | None = None
     timestamp: float = field(default_factory=time.time)
 
     def as_json(self) -> Any:
@@ -47,7 +47,7 @@ class SseEvent:
                 f"event data is not JSON ({error}): {self.data[:80]!r}"
             ) from error
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -56,7 +56,7 @@ class SseEvent:
 _FIELD_RE = re.compile(r"^([A-Za-z]+)(?::\s?(.*))?$")
 
 
-def parse_sse_stream(text: str) -> List[SseEvent]:
+def parse_sse_stream(text: str) -> list[SseEvent]:
     """
     Parse an SSE bytestream chunk into a list of :class:`SseEvent`.
     Robust to ``\\r\\n`` / ``\\n`` line endings and trailing partial events
@@ -66,7 +66,7 @@ def parse_sse_stream(text: str) -> List[SseEvent]:
         raise SseAssertError(f"parse_sse_stream expects str, got {type(text).__name__}")
     normalised = text.replace("\r\n", "\n").replace("\r", "\n")
     raw_events = normalised.split("\n\n")
-    events: List[SseEvent] = []
+    events: list[SseEvent] = []
     for raw in raw_events:
         if not raw.strip():
             continue
@@ -76,11 +76,11 @@ def parse_sse_stream(text: str) -> List[SseEvent]:
     return events
 
 
-def _parse_event_block(raw: str) -> Optional[SseEvent]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+def _parse_event_block(raw: str) -> SseEvent | None:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     event_type = "message"
-    data_lines: List[str] = []
-    event_id: Optional[str] = None
-    retry: Optional[int] = None
+    data_lines: list[str] = []
+    event_id: str | None = None
+    retry: int | None = None
     for line in raw.split("\n"):
         if not line or line.startswith(":"):  # comment line
             continue
@@ -116,7 +116,7 @@ class SseRecorder:
     """Stateful chunk-feeder. Holds parsed events for assertion."""
 
     def __init__(self) -> None:
-        self._events: List[SseEvent] = []
+        self._events: list[SseEvent] = []
         self._buffer = ""
 
     def __len__(self) -> int:
@@ -149,7 +149,7 @@ class SseRecorder:
         self._events.clear()
         self._buffer = ""
 
-    def events(self, *, event_type: Optional[str] = None) -> List[SseEvent]:
+    def events(self, *, event_type: str | None = None) -> list[SseEvent]:
         if event_type is None:
             return list(self._events)
         return [e for e in self._events if e.event == event_type]
@@ -160,9 +160,9 @@ class SseRecorder:
 def assert_event_count(
     recorder: SseRecorder,
     *,
-    event_type: Optional[str] = None,
+    event_type: str | None = None,
     minimum: int = 0,
-    maximum: Optional[int] = None,
+    maximum: int | None = None,
 ) -> int:
     """Assert ``minimum <= count <= maximum`` for the filtered events."""
     if minimum < 0:
@@ -199,7 +199,7 @@ def assert_data_contains(
     recorder: SseRecorder,
     needle: str,
     *,
-    event_type: Optional[str] = None,
+    event_type: str | None = None,
 ) -> SseEvent:
     """Assert an event whose ``data`` contains ``needle``."""
     if not isinstance(needle, str) or not needle:
@@ -216,7 +216,7 @@ def assert_json_shape(
     recorder: SseRecorder,
     required_keys: Sequence[str],
     *,
-    event_type: Optional[str] = None,
+    event_type: str | None = None,
 ) -> SseEvent:
     """Assert a JSON-data event whose top-level dict has every ``required_keys``."""
     if not required_keys:
@@ -236,7 +236,7 @@ def assert_json_shape(
 
 def assert_strictly_increasing_ids(recorder: SseRecorder) -> None:
     """Assert ``id`` values, when present, are strictly increasing."""
-    last: Optional[str] = None
+    last: str | None = None
     for event in recorder.events():
         if event.id is None:
             continue

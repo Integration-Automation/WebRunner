@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Optional, Any, Dict, Iterable, List, Mapping, Sequence, Set
+from typing import Any, Iterable, Mapping, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -33,23 +33,23 @@ class ApiObservation:
 
 @dataclass
 class DriftReport:
-    undocumented: List[str] = field(default_factory=list)
-    zombie: List[str] = field(default_factory=list)
-    undocumented_methods: List[str] = field(default_factory=list)
-    undocumented_statuses: List[str] = field(default_factory=list)
+    undocumented: list[str] = field(default_factory=list)
+    zombie: list[str] = field(default_factory=list)
+    undocumented_methods: list[str] = field(default_factory=list)
+    undocumented_statuses: list[str] = field(default_factory=list)
 
 
-def _collect_spec(spec: Mapping[str, Any]) -> Dict[str, Dict[str, Set[str]]]:
+def _collect_spec(spec: Mapping[str, Any]) -> dict[str, dict[str, set[str]]]:
     if not isinstance(spec, Mapping):
         raise OpenapiDriftError("spec must be a mapping")
     paths = spec.get("paths") or {}
     if not isinstance(paths, Mapping):
         raise OpenapiDriftError("spec.paths must be a mapping")
-    out: Dict[str, Dict[str, Set[str]]] = {}
+    out: dict[str, dict[str, set[str]]] = {}
     for path, methods in paths.items():
         if not isinstance(methods, Mapping):
             continue
-        method_map: Dict[str, Set[str]] = {}
+        method_map: dict[str, set[str]] = {}
         for method, op in methods.items():
             method = method.upper()
             if method not in ("GET", "POST", "PUT", "PATCH",
@@ -85,9 +85,9 @@ def _normalize_path(path: str, spec_paths: Iterable[str]) -> str:
 
 
 def _classify_observation(
-    obs: ApiObservation, spec_map: Dict[str, Dict[str, Set[str]]],
-    report: DriftReport, seen_methods: Dict[str, Set[str]],
-) -> Optional[str]:
+    obs: ApiObservation, spec_map: dict[str, dict[str, set[str]]],
+    report: DriftReport, seen_methods: dict[str, set[str]],
+) -> str | None:
     """Record drift for ``obs``; return the matched spec path if any."""
     if not isinstance(obs, ApiObservation):
         raise OpenapiDriftError("observation must be ApiObservation")
@@ -109,10 +109,10 @@ def _classify_observation(
 
 
 def _collect_zombies(
-    spec_map: Dict[str, Dict[str, Set[str]]],
-    seen_paths: Set[str], seen_methods: Dict[str, Set[str]],
-) -> List[str]:
-    out: List[str] = []
+    spec_map: dict[str, dict[str, set[str]]],
+    seen_paths: set[str], seen_methods: dict[str, set[str]],
+) -> list[str]:
+    out: list[str] = []
     for spec_path, methods in spec_map.items():
         for method in methods:
             if (spec_path not in seen_paths
@@ -126,8 +126,8 @@ def diff(
 ) -> DriftReport:
     spec_map = _collect_spec(spec)
     report = DriftReport()
-    seen_paths: Set[str] = set()
-    seen_methods: Dict[str, Set[str]] = defaultdict(set)
+    seen_paths: set[str] = set()
+    seen_methods: dict[str, set[str]] = defaultdict(set)
     for obs in observations:
         matched = _classify_observation(obs, spec_map, report, seen_methods)
         if matched is not None:

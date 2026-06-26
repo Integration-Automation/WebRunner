@@ -16,7 +16,7 @@ when canShare returned false.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -59,9 +59,9 @@ INSTALL_SCRIPT = r"""
 
 @dataclass
 class ShareCall:
-    title: Optional[str] = None
-    text: Optional[str] = None
-    url: Optional[str] = None
+    title: str | None = None
+    text: str | None = None
+    url: str | None = None
     files_count: int = 0
 
 
@@ -73,14 +73,14 @@ class FallbackEvent:
 
 @dataclass
 class ShareLog:
-    shares: List[ShareCall] = field(default_factory=list)
-    fallbacks: List[FallbackEvent] = field(default_factory=list)
+    shares: list[ShareCall] = field(default_factory=list)
+    fallbacks: list[FallbackEvent] = field(default_factory=list)
 
 
 def parse_log(payload: Any) -> ShareLog:
     if not isinstance(payload, dict):
         raise WebShareAssertError("payload must be a dict")
-    shares: List[ShareCall] = []
+    shares: list[ShareCall] = []
     for raw in payload.get("shares") or []:
         if not isinstance(raw, dict):
             continue
@@ -90,7 +90,7 @@ def parse_log(payload: Any) -> ShareLog:
             url=raw.get("url"),
             files_count=int(raw.get("filesCount") or 0),
         ))
-    fallbacks: List[FallbackEvent] = []
+    fallbacks: list[FallbackEvent] = []
     for raw in payload.get("fallbacks") or []:
         if not isinstance(raw, dict):
             continue

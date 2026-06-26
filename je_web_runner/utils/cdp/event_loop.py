@@ -36,7 +36,7 @@ from __future__ import annotations
 import json
 import queue
 import threading
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -125,21 +125,21 @@ class CDPEventListener:
     def __init__(self, ws_url: str):
         self._ws_url = ws_url
         self._ws = None
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._stop_flag = threading.Event()
-        self._handlers: Dict[str, List[Callable[[dict], None]]] = {}
+        self._handlers: dict[str, list[Callable[[dict], None]]] = {}
         self._handlers_lock = threading.Lock()
-        self._pending: Dict[int, queue.Queue] = {}
+        self._pending: dict[int, queue.Queue] = {}
         self._pending_lock = threading.Lock()
         self._next_id_lock = threading.Lock()
         self._next_id = 1
 
     @classmethod
-    def from_driver(cls, driver) -> "CDPEventListener":
+    def from_driver(cls, driver) -> CDPEventListener:
         """從現有 driver 自動解析 WebSocket URL 並建立 listener。"""
         return cls(resolve_cdp_ws_url(driver))
 
-    def __enter__(self) -> "CDPEventListener":
+    def __enter__(self) -> CDPEventListener:
         self.start()
         return self
 
@@ -198,7 +198,7 @@ class CDPEventListener:
     def send(
             self,
             method: str,
-            params: Optional[dict] = None,
+            params: dict | None = None,
             timeout: float = 5.0,
     ) -> Any:
         """

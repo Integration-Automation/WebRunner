@@ -12,7 +12,7 @@ asserts per-boundary budgets.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -74,16 +74,16 @@ class BoundaryTiming:
     """Per-Suspense / per-island timing snapshot."""
 
     id: str
-    placeholder_ms: Optional[float] = None
-    arrived_ms: Optional[float] = None
-    interactive_ms: Optional[float] = None
+    placeholder_ms: float | None = None
+    arrived_ms: float | None = None
+    interactive_ms: float | None = None
 
-    def time_to_arrival(self) -> Optional[float]:
+    def time_to_arrival(self) -> float | None:
         if self.placeholder_ms is None or self.arrived_ms is None:
             return None
         return self.arrived_ms - self.placeholder_ms
 
-    def time_to_interactive(self) -> Optional[float]:
+    def time_to_interactive(self) -> float | None:
         if self.arrived_ms is None or self.interactive_ms is None:
             return None
         return self.interactive_ms - self.arrived_ms
@@ -91,9 +91,9 @@ class BoundaryTiming:
 
 @dataclass
 class StreamingReport:
-    boundaries: List[BoundaryTiming] = field(default_factory=list)
+    boundaries: list[BoundaryTiming] = field(default_factory=list)
 
-    def by_id(self) -> Dict[str, BoundaryTiming]:
+    def by_id(self) -> dict[str, BoundaryTiming]:
         return {b.id: b for b in self.boundaries}
 
 
@@ -105,7 +105,7 @@ def parse_log(payload: Any) -> StreamingReport:
     raw_boundaries = payload.get("boundaries") or {}
     if not isinstance(raw_boundaries, dict):
         raise HydrationStreamingError("boundaries must be a dict")
-    out: List[BoundaryTiming] = []
+    out: list[BoundaryTiming] = []
     for bid, phases in raw_boundaries.items():
         if not isinstance(phases, dict):
             continue
@@ -118,7 +118,7 @@ def parse_log(payload: Any) -> StreamingReport:
     return StreamingReport(boundaries=out)
 
 
-def _to_float(value: Any) -> Optional[float]:
+def _to_float(value: Any) -> float | None:
     if value is None:
         return None
     try:

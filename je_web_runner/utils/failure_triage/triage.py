@@ -20,7 +20,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Sequence
 
 from je_web_runner.utils.ai_assist.llm_assist import LLMAssistError, _invoke
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -51,21 +51,21 @@ class TriageSignals:
     test_name: str
     error_repr: str
     error_signature: str
-    last_steps: List[Any] = field(default_factory=list)
-    console_tail: List[Dict[str, Any]] = field(default_factory=list)
-    network_tail: List[Dict[str, Any]] = field(default_factory=list)
+    last_steps: list[Any] = field(default_factory=list)
+    console_tail: list[dict[str, Any]] = field(default_factory=list)
+    network_tail: list[dict[str, Any]] = field(default_factory=list)
     dom_excerpt: str = ""
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
     has_screenshot: bool = False
 
 
-def _slice_tail(items: Sequence[Any], limit: int) -> List[Any]:
+def _slice_tail(items: Sequence[Any], limit: int) -> list[Any]:
     if not items:
         return []
     return list(items[-limit:])
 
 
-def _read_bundle_json(files: Dict[str, bytes], rel: str) -> Any:
+def _read_bundle_json(files: dict[str, bytes], rel: str) -> Any:
     raw = files.get(rel)
     if raw is None:
         return None
@@ -75,7 +75,7 @@ def _read_bundle_json(files: Dict[str, bytes], rel: str) -> Any:
         return None
 
 
-def _read_bundle_text(files: Dict[str, bytes], rel: str) -> str:
+def _read_bundle_text(files: dict[str, bytes], rel: str) -> str:
     raw = files.get(rel)
     if raw is None:
         return ""
@@ -86,9 +86,9 @@ def _read_bundle_text(files: Dict[str, bytes], rel: str) -> str:
 
 
 def extract_signals_from_bundle(
-    bundle_path: Union[str, Path],
+    bundle_path: str | Path,
     *,
-    steps: Optional[Sequence[Any]] = None,
+    steps: Sequence[Any] | None = None,
     max_steps: int = _DEFAULT_MAX_STEPS,
     max_console: int = _DEFAULT_MAX_CONSOLE,
     max_network: int = _DEFAULT_MAX_NETWORK,
@@ -160,14 +160,14 @@ class TriageReport:
 
     likely_cause: str
     category: str
-    evidence: List[str]
-    next_steps: List[str]
+    evidence: list[str]
+    next_steps: list[str]
     suggested_fix: str
     confidence: float
     test_name: str = ""
     error_signature: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -177,7 +177,7 @@ _ALLOWED_CATEGORIES = frozenset({
 })
 
 
-def _parse_triage_payload(text: str) -> Dict[str, Any]:
+def _parse_triage_payload(text: str) -> dict[str, Any]:
     match = _JSON_OBJECT_RE.search(text)
     if match is None:
         raise FailureTriageError("LLM did not return a JSON object")
@@ -190,7 +190,7 @@ def _parse_triage_payload(text: str) -> Dict[str, Any]:
     return payload
 
 
-def _coerce_str_list(value: Any) -> List[str]:
+def _coerce_str_list(value: Any) -> list[str]:
     if isinstance(value, list):
         return [str(item) for item in value]
     if isinstance(value, str):
@@ -258,9 +258,9 @@ def triage_failure(signals: TriageSignals) -> TriageReport:
 
 
 def triage_bundle(
-    bundle_path: Union[str, Path],
+    bundle_path: str | Path,
     *,
-    steps: Optional[Sequence[Any]] = None,
+    steps: Sequence[Any] | None = None,
 ) -> TriageReport:
     """One-shot helper: extract signals + run triage."""
     signals = extract_signals_from_bundle(bundle_path, steps=steps)
@@ -302,7 +302,7 @@ def render_markdown(report: TriageReport, *, heading_level: int = 2) -> str:
     return "\n".join(pieces).rstrip() + "\n"
 
 
-def save_report(report: TriageReport, output_path: Union[str, Path]) -> Path:
+def save_report(report: TriageReport, output_path: str | Path) -> Path:
     """Persist a report as JSON next to its bundle for later inspection."""
     path = Path(output_path)
     path.parent.mkdir(parents=True, exist_ok=True)

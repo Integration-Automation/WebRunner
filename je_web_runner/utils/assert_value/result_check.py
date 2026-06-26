@@ -69,9 +69,7 @@ def check_value(element_name: str, element_value: typing.Any, result_check_dict:
     """
     if result_check_dict.get(element_name) != element_value:
         raise WebRunnerAssertException(
-            "value should be {right_value} but value was {wrong_value}".format(
-                right_value=element_value, wrong_value=result_check_dict.get(element_name)
-            )
+            f"value should be {element_value} but value was {result_check_dict.get(element_name)}"
         )
 
 
@@ -86,9 +84,7 @@ def check_values(check_dict: dict, result_check_dict: dict) -> None:
     for key, value in result_check_dict.items():
         if check_dict.get(key) != value:
             raise WebRunnerAssertException(
-                "value should be {right_value} but value was {wrong_value}".format(
-                    right_value=value, wrong_value=check_dict.get(key)
-                )
+                f"value should be {value} but value was {check_dict.get(key)}"
             )
 
 

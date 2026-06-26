@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import html
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -21,7 +21,7 @@ class ReplayStudioError(WebRunnerException):
 _NO_EXCEPTION = "None"
 
 
-def _matching_screenshot(name: str, screenshot_dir: Optional[Path]) -> Optional[Path]:
+def _matching_screenshot(name: str, screenshot_dir: Path | None) -> Path | None:
     if screenshot_dir is None or not screenshot_dir.is_dir():
         return None
     for png in sorted(screenshot_dir.glob(f"*_{name}.png")):
@@ -29,12 +29,12 @@ def _matching_screenshot(name: str, screenshot_dir: Optional[Path]) -> Optional[
     return None
 
 
-def _row_html(record: Dict[str, Any], screenshot: Optional[Path]) -> str:
+def _row_html(record: dict[str, Any], screenshot: Path | None) -> str:
     function_name = record.get("function_name", "(unknown)")
     failed = record.get("program_exception", _NO_EXCEPTION) != _NO_EXCEPTION
     status_class = "fail" if failed else "ok"
     status_label = "FAILED" if failed else "PASSED"
-    parts: List[str] = [
+    parts: list[str] = [
         f"<tr class='{status_class}'>",
         f"<td>{html.escape(str(record.get('time', '')))}</td>",
         f"<td>{html.escape(str(function_name))}</td>",
@@ -55,8 +55,8 @@ def _row_html(record: Dict[str, Any], screenshot: Optional[Path]) -> str:
 
 
 def build_replay_html(
-    records: Optional[List[Dict[str, Any]]] = None,
-    screenshot_dir: Optional[str] = None,
+    records: list[dict[str, Any]] | None = None,
+    screenshot_dir: str | None = None,
     title: str = "WebRunner replay",
 ) -> str:
     """
@@ -81,8 +81,8 @@ def build_replay_html(
 
 def export_replay_studio(
     output_path: str,
-    records: Optional[List[Dict[str, Any]]] = None,
-    screenshot_dir: Optional[str] = None,
+    records: list[dict[str, Any]] | None = None,
+    screenshot_dir: str | None = None,
     title: str = "WebRunner replay",
 ) -> str:
     """Write the studio to ``output_path`` and return the resolved path."""

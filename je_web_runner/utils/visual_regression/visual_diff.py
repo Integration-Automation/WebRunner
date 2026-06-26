@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
-from typing import Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -71,8 +70,8 @@ def _count_diff_pixels(diff_image) -> int:
 
 def compare_with_baseline(
     baseline_path: str,
-    diff_path: Optional[str] = None,
-    current_path: Optional[str] = None,
+    diff_path: str | None = None,
+    current_path: str | None = None,
     threshold: int = 0,
 ) -> dict:
     """

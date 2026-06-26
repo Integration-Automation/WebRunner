@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -23,17 +23,17 @@ class SyntheticMonitorError(WebRunnerException):
 
 
 CheckCallable = Callable[[], Any]
-AlertSink = Callable[[Dict[str, Any]], None]
+AlertSink = Callable[[dict[str, Any]], None]
 
 
 @dataclass
 class _CheckState:
     name: str
-    last_status: Optional[str] = None  # "green" / "red"
+    last_status: str | None = None  # "green" / "red"
     consecutive_failures: int = 0
     consecutive_successes: int = 0
-    last_error: Optional[str] = None
-    last_run_at: Optional[float] = None
+    last_error: str | None = None
+    last_run_at: float | None = None
 
 
 @dataclass
@@ -44,10 +44,10 @@ class SyntheticMonitorResult:
     status: str  # "green" / "red"
     duration_seconds: float
     transitioned: bool
-    error: Optional[str] = None
+    error: str | None = None
     timestamp: float = field(default_factory=time.time)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "status": self.status,
@@ -78,8 +78,8 @@ class SyntheticMonitor:
             raise SyntheticMonitorError("alert_sink must be callable")
         self._alert_sink = alert_sink
         self._clock = clock
-        self._checks: Dict[str, _ConfiguredCheck] = {}
-        self._states: Dict[str, _CheckState] = {}
+        self._checks: dict[str, _ConfiguredCheck] = {}
+        self._states: dict[str, _CheckState] = {}
 
     def register(
         self,
@@ -102,9 +102,9 @@ class SyntheticMonitor:
         )
         self._states[name] = _CheckState(name=name)
 
-    def tick_once(self) -> List[SyntheticMonitorResult]:
+    def tick_once(self) -> list[SyntheticMonitorResult]:
         """Run every registered check exactly once and return the outcomes."""
-        results: List[SyntheticMonitorResult] = []
+        results: list[SyntheticMonitorResult] = []
         for configured in self._checks.values():
             results.append(self._run_check(configured))
         return results
@@ -114,13 +114,13 @@ class SyntheticMonitor:
         iterations: int,
         interval_seconds: float = 60.0,
         sleep: Callable[[float], None] = time.sleep,
-    ) -> List[SyntheticMonitorResult]:
+    ) -> list[SyntheticMonitorResult]:
         """Run ``iterations`` ticks separated by ``interval_seconds``."""
         if iterations <= 0:
             raise SyntheticMonitorError("iterations must be > 0")
         if interval_seconds < 0:
             raise SyntheticMonitorError("interval_seconds must be >= 0")
-        all_results: List[SyntheticMonitorResult] = []
+        all_results: list[SyntheticMonitorResult] = []
         for index in range(iterations):
             all_results.extend(self.tick_once())
             if index + 1 < iterations and interval_seconds > 0:
@@ -182,12 +182,12 @@ class SyntheticMonitor:
 
 
 def from_action_files(
-    files: Iterable[Union[str]],
+    files: Iterable[str],
     runner: Callable[[str], None],
     *,
     failure_threshold: int = 2,
     recovery_threshold: int = 1,
-    alert_sink: Optional[AlertSink] = None,
+    alert_sink: AlertSink | None = None,
 ) -> SyntheticMonitor:
     """
     Build a monitor whose checks each run an action JSON file via ``runner``.

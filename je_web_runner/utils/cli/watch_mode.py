@@ -7,15 +7,15 @@ from __future__ import annotations
 
 import time
 from pathlib import Path
-from typing import Callable, Dict
+from typing import Callable
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
 
-def _snapshot(directory: str) -> Dict[str, float]:
+def _snapshot(directory: str) -> dict[str, float]:
     """Map of relative path → mtime for every JSON file under ``directory``."""
     base = Path(directory)
-    snapshot: Dict[str, float] = {}
+    snapshot: dict[str, float] = {}
     for path in base.rglob("*.json"):
         try:
             snapshot[str(path)] = path.stat().st_mtime

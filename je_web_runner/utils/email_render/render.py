@@ -20,7 +20,7 @@ import json
 from dataclasses import dataclass, field
 from email.message import Message
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -39,11 +39,11 @@ class CapturedEmail:
     message_id: str
     subject: str
     from_addr: str
-    to: List[str]
-    html_body: Optional[str] = None
-    text_body: Optional[str] = None
-    headers: Dict[str, str] = field(default_factory=dict)
-    raw: Optional[str] = None
+    to: list[str]
+    html_body: str | None = None
+    text_body: str | None = None
+    headers: dict[str, str] = field(default_factory=dict)
+    raw: str | None = None
 
     def has_html(self) -> bool:
         return bool(self.html_body and self.html_body.strip())
@@ -57,7 +57,7 @@ class ViewportProfile:
     width: int
     height: int
     dark_mode: bool = False
-    user_agent: Optional[str] = None
+    user_agent: str | None = None
 
 
 DEFAULT_VIEWPORTS: Sequence[ViewportProfile] = (
@@ -90,7 +90,7 @@ def _require_requests() -> Any:
         ) from error
 
 
-def _split_addresses(value: Any) -> List[str]:
+def _split_addresses(value: Any) -> list[str]:
     if value is None:
         return []
     if isinstance(value, list):
@@ -98,7 +98,7 @@ def _split_addresses(value: Any) -> List[str]:
     return [part.strip() for part in str(value).split(",") if part.strip()]
 
 
-def _parse_eml(raw: Union[str, bytes]) -> CapturedEmail:
+def _parse_eml(raw: str | bytes) -> CapturedEmail:
     if isinstance(raw, bytes):
         msg = email.message_from_bytes(raw)
     else:
@@ -106,9 +106,9 @@ def _parse_eml(raw: Union[str, bytes]) -> CapturedEmail:
     return _from_message(msg, raw_text=raw if isinstance(raw, str) else raw.decode("utf-8", "replace"))
 
 
-def _from_message(msg: Message, *, raw_text: Optional[str] = None) -> CapturedEmail:
-    html_body: Optional[str] = None
-    text_body: Optional[str] = None
+def _from_message(msg: Message, *, raw_text: str | None = None) -> CapturedEmail:
+    html_body: str | None = None
+    text_body: str | None = None
     if msg.is_multipart():
         for part in msg.walk():
             ctype = part.get_content_type()
@@ -135,7 +135,7 @@ def _from_message(msg: Message, *, raw_text: Optional[str] = None) -> CapturedEm
     )
 
 
-def _decode_payload(part: Message) -> Optional[str]:
+def _decode_payload(part: Message) -> str | None:
     payload = part.get_payload(decode=True)
     if payload is None:
         return None
@@ -148,7 +148,7 @@ def _decode_payload(part: Message) -> Optional[str]:
 
 # ---------- fetchers -----------------------------------------------------
 
-def load_eml_file(path: Union[str, Path]) -> CapturedEmail:
+def load_eml_file(path: str | Path) -> CapturedEmail:
     """Parse a single ``.eml`` file."""
     eml_path = Path(path)
     if not eml_path.exists():
@@ -157,18 +157,18 @@ def load_eml_file(path: Union[str, Path]) -> CapturedEmail:
     return _parse_eml(raw)
 
 
-def load_eml_dir(directory: Union[str, Path]) -> List[CapturedEmail]:
+def load_eml_dir(directory: str | Path) -> list[CapturedEmail]:
     """Parse every ``.eml`` file in ``directory`` (non-recursive)."""
     dir_path = Path(directory)
     if not dir_path.is_dir():
         raise EmailRenderError(f"eml directory not found: {dir_path}")
-    out: List[CapturedEmail] = []
+    out: list[CapturedEmail] = []
     for child in sorted(dir_path.glob("*.eml")):
         out.append(load_eml_file(child))
     return out
 
 
-def fetch_mailhog(base_url: str, *, timeout: float = 10.0) -> List[CapturedEmail]:
+def fetch_mailhog(base_url: str, *, timeout: float = 10.0) -> list[CapturedEmail]:
     """Fetch messages from a MailHog server's ``/api/v2/messages`` endpoint."""
     requests = _require_requests()
     url = base_url.rstrip("/") + "/api/v2/messages"
@@ -184,7 +184,7 @@ def fetch_mailhog(base_url: str, *, timeout: float = 10.0) -> List[CapturedEmail
     return [_parse_mailhog_item(item) for item in items if isinstance(item, dict)]
 
 
-def _parse_mailhog_item(item: Dict[str, Any]) -> CapturedEmail:
+def _parse_mailhog_item(item: dict[str, Any]) -> CapturedEmail:
     content = item.get("Content") or {}
     headers = content.get("Headers") or {}
     raw_body = content.get("Body") or ""
@@ -196,7 +196,7 @@ def _parse_mailhog_item(item: Dict[str, Any]) -> CapturedEmail:
     return _parse_eml(raw)
 
 
-def fetch_mailpit(base_url: str, *, timeout: float = 10.0, limit: int = 50) -> List[CapturedEmail]:
+def fetch_mailpit(base_url: str, *, timeout: float = 10.0, limit: int = 50) -> list[CapturedEmail]:
     """Fetch messages from a Mailpit server's ``/api/v1/messages`` listing."""
     requests = _require_requests()
     list_url = f"{base_url.rstrip('/')}/api/v1/messages?limit={int(limit)}"
@@ -211,7 +211,7 @@ def fetch_mailpit(base_url: str, *, timeout: float = 10.0, limit: int = 50) -> L
         for entry in listing_payload.get("messages", []) or []:
             if isinstance(entry, dict) and entry.get("ID"):
                 ids.append(entry["ID"])
-    out: List[CapturedEmail] = []
+    out: list[CapturedEmail] = []
     for msg_id in ids:
         raw_url = f"{base_url.rstrip('/')}/api/v1/message/{msg_id}/raw"
         try:
@@ -233,10 +233,10 @@ RenderDriver = Callable[[str, ViewportProfile, Path], Path]
 def render_email_in_viewports(
     captured: CapturedEmail,
     driver: RenderDriver,
-    output_dir: Union[str, Path],
+    output_dir: str | Path,
     *,
     viewports: Sequence[ViewportProfile] = DEFAULT_VIEWPORTS,
-) -> List[RenderArtifact]:
+) -> list[RenderArtifact]:
     """
     Render ``captured.html_body`` in each viewport via ``driver`` and write
     screenshots into ``output_dir``. The driver receives the HTML, viewport
@@ -247,7 +247,7 @@ def render_email_in_viewports(
         raise EmailRenderError(f"captured email has no HTML body: {captured.message_id!r}")
     out_dir = Path(output_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-    artifacts: List[RenderArtifact] = []
+    artifacts: list[RenderArtifact] = []
     for viewport in viewports:
         target = out_dir / f"{_safe_slug(captured.message_id) or 'msg'}__{viewport.name}.png"
         written = Path(driver(captured.html_body or "", viewport, target))
@@ -279,7 +279,7 @@ def assert_subject_contains(captured: CapturedEmail, needle: str) -> None:
 
 def export_summary_json(
     captures: Sequence[CapturedEmail],
-    output_path: Union[str, Path],
+    output_path: str | Path,
 ) -> Path:
     """Persist a compact JSON list of captured emails for downstream tooling."""
     payload = [

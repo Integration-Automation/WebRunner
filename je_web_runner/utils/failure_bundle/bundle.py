@@ -11,7 +11,7 @@ import json
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -38,8 +38,8 @@ class FailureBundle:
     test_name: str
     error_repr: str
     captured_at: str = field(default_factory=_utc_now_iso)
-    metadata: Dict[str, Any] = field(default_factory=dict)
-    _entries: Dict[str, bytes] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
+    _entries: dict[str, bytes] = field(default_factory=dict)
 
     def add_screenshot(self, png_bytes: bytes, name: str = "screenshot.png") -> None:
         if not isinstance(png_bytes, (bytes, bytearray)):
@@ -49,23 +49,23 @@ class FailureBundle:
     def add_dom(self, html: str, name: str = "dom.html") -> None:
         self._entries[f"artifacts/{name}"] = html.encode("utf-8")
 
-    def add_console(self, messages: List[Dict[str, Any]]) -> None:
+    def add_console(self, messages: list[dict[str, Any]]) -> None:
         self._entries["artifacts/console.json"] = json.dumps(
             messages, ensure_ascii=False, indent=2
         ).encode("utf-8")
 
-    def add_network(self, responses: List[Dict[str, Any]]) -> None:
+    def add_network(self, responses: list[dict[str, Any]]) -> None:
         self._entries["artifacts/network.json"] = json.dumps(
             responses, ensure_ascii=False, indent=2
         ).encode("utf-8")
 
-    def add_trace(self, trace_path: Union[str, Path]) -> None:
+    def add_trace(self, trace_path: str | Path) -> None:
         path = Path(trace_path)
         if not path.is_file():
             raise FailureBundleError(f"trace file not found: {trace_path!r}")
         self._entries[f"artifacts/{path.name}"] = path.read_bytes()
 
-    def add_file(self, source: Union[str, Path], inside_name: Optional[str] = None) -> None:
+    def add_file(self, source: str | Path, inside_name: str | None = None) -> None:
         path = Path(source)
         if not path.is_file():
             raise FailureBundleError(f"file not found: {source!r}")
@@ -75,7 +75,7 @@ class FailureBundle:
     def add_text(self, name: str, text: str) -> None:
         self._entries[f"artifacts/{name}"] = text.encode("utf-8")
 
-    def _manifest(self) -> Dict[str, Any]:
+    def _manifest(self) -> dict[str, Any]:
         return {
             "test_name": self.test_name,
             "error_repr": self.error_repr,
@@ -87,7 +87,7 @@ class FailureBundle:
             ],
         }
 
-    def write(self, output_path: Union[str, Path]) -> Path:
+    def write(self, output_path: str | Path) -> Path:
         path = Path(output_path)
         path.parent.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as zf:
@@ -100,12 +100,12 @@ class FailureBundle:
         return path
 
 
-def extract_bundle(zip_path: Union[str, Path]) -> Dict[str, Any]:
+def extract_bundle(zip_path: str | Path) -> dict[str, Any]:
     """Read a bundle and return ``{manifest, files: {name: bytes}}``."""
     path = Path(zip_path)
     if not path.is_file():
         raise FailureBundleError(f"bundle not found: {zip_path!r}")
-    files: Dict[str, bytes] = {}
+    files: dict[str, bytes] = {}
     with zipfile.ZipFile(path, "r") as zf:
         names = zf.namelist()
         if _MANIFEST_NAME not in names:

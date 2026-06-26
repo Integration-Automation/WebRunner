@@ -13,7 +13,7 @@ import os
 import ssl
 import urllib.request
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -32,12 +32,12 @@ class PrSummary:
     passed: int
     failed: int
     skipped: int = 0
-    duration_seconds: Optional[float] = None
+    duration_seconds: float | None = None
     flaky: int = 0
-    sections: List[Dict[str, Any]] = field(default_factory=list)
+    sections: list[dict[str, Any]] = field(default_factory=list)
 
 
-def build_summary_markdown(summary: PrSummary, run_url: Optional[str] = None) -> str:
+def build_summary_markdown(summary: PrSummary, run_url: str | None = None) -> str:
     pass_pct = (summary.passed / summary.total * 100) if summary.total else 0.0
     pieces = [
         _MARKER,
@@ -70,7 +70,7 @@ def _request(
     method: str,
     url: str,
     token: str,
-    payload: Optional[Dict[str, Any]] = None,
+    payload: dict[str, Any] | None = None,
     timeout: float = 15.0,
 ) -> Any:
     if not (url.startswith(("https://api.github.com/", "http://api.github.com/"))):  # NOSONAR — allow-list
@@ -98,7 +98,7 @@ def _request(
         raise PrCommentError(f"GitHub returned non-JSON: {error}") from error
 
 
-def _list_comments(repo: str, pr_number: int, token: str) -> List[Dict[str, Any]]:
+def _list_comments(repo: str, pr_number: int, token: str) -> list[dict[str, Any]]:
     url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/comments?per_page=100"
     payload = _request("GET", url, token=token)
     if not isinstance(payload, list):
@@ -106,7 +106,7 @@ def _list_comments(repo: str, pr_number: int, token: str) -> List[Dict[str, Any]
     return payload
 
 
-def _find_marker(comments: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+def _find_marker(comments: list[dict[str, Any]]) -> dict[str, Any] | None:
     for entry in comments:
         if isinstance(entry, dict) and _MARKER in (entry.get("body") or ""):
             return entry
@@ -117,8 +117,8 @@ def post_or_update_comment(
     repo: str,
     pr_number: int,
     body: str,
-    token: Optional[str] = None,
-) -> Dict[str, Any]:
+    token: str | None = None,
+) -> dict[str, Any]:
     """
     依 marker 判斷新增或覆寫 WebRunner summary 留言
     Find the WebRunner-marker comment on this PR and PATCH it; create a new

@@ -23,7 +23,7 @@ from __future__ import annotations
 import math
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -87,7 +87,7 @@ class Target:
     label: str = ""
     is_inline_in_text: bool = False
     is_user_agent_control: bool = False
-    raw: Dict[str, Any] = field(default_factory=dict)
+    raw: dict[str, Any] = field(default_factory=dict)
 
     @property
     def smallest_side(self) -> float:
@@ -102,14 +102,14 @@ class Violation:
     height: float
     note: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def parse_targets(payload: Any) -> List[Target]:
+def parse_targets(payload: Any) -> list[Target]:
     if not isinstance(payload, list):
         raise Wcag22TouchTargetError("payload must be a list")
-    out: List[Target] = []
+    out: list[Target] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -148,11 +148,11 @@ def _has_spacing_circle(
     return True
 
 
-def audit(targets: List[Target]) -> List[Violation]:
+def audit(targets: list[Target]) -> list[Violation]:
     """Return a list of Violation entries for elements failing 2.5.8."""
     if not isinstance(targets, list):
         raise Wcag22TouchTargetError("targets must be a list")
-    violations: List[Violation] = []
+    violations: list[Violation] = []
     for t in targets:
         if t.smallest_side >= MIN_SIZE_CSS_PX:
             continue

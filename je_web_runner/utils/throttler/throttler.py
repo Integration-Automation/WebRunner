@@ -15,7 +15,7 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Iterator
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -50,14 +50,14 @@ class FileSemaphore:
             except OSError:
                 continue
 
-    def _try_acquire_one(self, directory: Path) -> Optional[Path]:
+    def _try_acquire_one(self, directory: Path) -> Path | None:
         for index in range(self.capacity):
             slot = directory / f"slot-{index}.lock"
             try:
                 handle = os.open(str(slot), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             except FileExistsError:
                 continue
-            os.write(handle, f"{os.getpid()}|{uuid.uuid4().hex}\n".encode("utf-8"))
+            os.write(handle, f"{os.getpid()}|{uuid.uuid4().hex}\n".encode())
             os.close(handle)
             return slot
         return None
@@ -126,7 +126,7 @@ def throttle(name: str, timeout: float = 30.0) -> Iterator[Path]:
 
 
 def configure_global(name: str, capacity: int,
-                     base_dir: Optional[str] = None,
+                     base_dir: str | None = None,
                      stale_after: float = 600.0) -> None:
     """Configure the module-level throttler."""
     if base_dir is not None:

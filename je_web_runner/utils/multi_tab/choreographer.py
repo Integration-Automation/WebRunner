@@ -7,7 +7,7 @@ of opaque handle ids.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -27,7 +27,7 @@ class TabHandle:
 class TabChoreographer:
     """Track and switch between named browser tabs."""
 
-    tabs: Dict[str, TabHandle] = field(default_factory=dict)
+    tabs: dict[str, TabHandle] = field(default_factory=dict)
 
     def register_current(self, driver: Any, alias: str) -> TabHandle:
         if not hasattr(driver, "current_window_handle"):
@@ -37,7 +37,7 @@ class TabChoreographer:
         self.tabs[alias] = tab
         return tab
 
-    def open_new(self, driver: Any, alias: str, url: Optional[str] = None) -> TabHandle:
+    def open_new(self, driver: Any, alias: str, url: str | None = None) -> TabHandle:
         """Open a fresh blank tab and register it under ``alias``."""
         if not hasattr(driver, "switch_to") or not hasattr(driver, "window_handles"):
             raise MultiTabError("driver does not expose window_handles / switch_to")
@@ -69,7 +69,7 @@ class TabChoreographer:
         driver.switch_to.window(tab.handle)
         driver.close()
 
-    def aliases(self) -> List[str]:
+    def aliases(self) -> list[str]:
         return sorted(self.tabs.keys())
 
     def with_tab(

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -107,8 +107,8 @@ class LiveDashboard:
     def __init__(self, host: str = "127.0.0.1", port: int = 0) -> None:
         self._host = host
         self._port = int(port)
-        self._server: Optional[ThreadingHTTPServer] = None
-        self._thread: Optional[threading.Thread] = None
+        self._server: ThreadingHTTPServer | None = None
+        self._thread: threading.Thread | None = None
 
     @property
     def address(self) -> str:

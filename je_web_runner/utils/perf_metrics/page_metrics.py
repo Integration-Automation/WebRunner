@@ -9,7 +9,7 @@ window so callers can specify the wait duration.
 """
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -68,7 +68,7 @@ _COLLECT_JS_TEMPLATE = r"""
 """
 
 
-def selenium_collect_metrics(observe_ms: int = 1000) -> Dict[str, Any]:
+def selenium_collect_metrics(observe_ms: int = 1000) -> dict[str, Any]:
     """
     透過 ``execute_async_script`` 抓取效能指標
     Collect performance metrics via Selenium ``execute_async_script``.
@@ -84,7 +84,7 @@ def selenium_collect_metrics(observe_ms: int = 1000) -> Dict[str, Any]:
     return driver.execute_async_script(script) or {}
 
 
-def playwright_collect_metrics(observe_ms: int = 1000) -> Dict[str, Any]:
+def playwright_collect_metrics(observe_ms: int = 1000) -> dict[str, Any]:
     """
     透過 ``page.evaluate`` 抓取效能指標
     Collect performance metrics via Playwright's ``page.evaluate``.
@@ -101,7 +101,7 @@ def playwright_collect_metrics(observe_ms: int = 1000) -> Dict[str, Any]:
     return page.evaluate(expression, observe_ms) or {}
 
 
-def assert_metrics_within(metrics: Dict[str, Any], thresholds: Dict[str, float]) -> None:
+def assert_metrics_within(metrics: dict[str, Any], thresholds: dict[str, float]) -> None:
     """
     斷言所有指標都不超過上限
     Assert each measured metric is at or below its threshold (ms / score).

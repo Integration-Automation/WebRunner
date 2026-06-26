@@ -21,7 +21,7 @@ import hmac
 import time
 from dataclasses import dataclass
 from enum import Enum
-from typing import Mapping, Optional
+from typing import Mapping
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -92,7 +92,7 @@ def _verify_stripe(headers: Mapping[str, str], body: bytes, secret: str,
             f"Stripe timestamp {ts} outside tolerance "
             f"({tolerance_seconds}s) — replay attack defence"
         )
-    signed = f"{t}.".encode("utf-8") + body
+    signed = f"{t}.".encode() + body
     expected = _hex(secret, signed)
     return VerifyResult(ok=_equal(expected, v1), scheme=Scheme.STRIPE)
 
@@ -115,7 +115,7 @@ def _verify_slack(headers: Mapping[str, str], body: bytes, secret: str,
         raise WebhookSignatureVerifyError(
             f"Slack timestamp {ts_int} outside tolerance ({tolerance_seconds}s)"
         )
-    base = f"v0:{ts}:".encode("utf-8") + body
+    base = f"v0:{ts}:".encode() + body
     expected = "v0=" + _hex(secret, base)
     return VerifyResult(ok=_equal(expected, sig), scheme=Scheme.SLACK)
 
@@ -170,13 +170,13 @@ def sign_github(body: bytes, secret: str) -> str:
     return _GITHUB_SIG_PREFIX + _hex(secret, body)
 
 
-def sign_stripe(body: bytes, secret: str, ts: Optional[int] = None) -> str:
+def sign_stripe(body: bytes, secret: str, ts: int | None = None) -> str:
     ts = int(ts or time.time())
-    signed = f"{ts}.".encode("utf-8") + body
+    signed = f"{ts}.".encode() + body
     return f"t={ts},v1={_hex(secret, signed)}"
 
 
-def sign_slack(body: bytes, secret: str, ts: Optional[int] = None) -> str:
+def sign_slack(body: bytes, secret: str, ts: int | None = None) -> str:
     ts = int(ts or time.time())
-    base = f"v0:{ts}:".encode("utf-8") + body
+    base = f"v0:{ts}:".encode() + body
     return "v0=" + _hex(secret, base)

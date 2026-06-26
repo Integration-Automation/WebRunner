@@ -15,7 +15,7 @@ from __future__ import annotations
 import socket
 import ssl
 from dataclasses import asdict, dataclass
-from typing import Optional, Sequence
+from typing import Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -36,8 +36,8 @@ _ACCEPTABLE_VERSIONS = ("TLSv1.2", "TLSv1.3")
 class TlsHandshakeReport:
     host: str
     port: int = 443
-    version: Optional[str] = None
-    cipher_suite: Optional[str] = None
+    version: str | None = None
+    cipher_suite: str | None = None
     ocsp_stapled: bool = False
     cert_subject: str = ""
 
@@ -47,7 +47,7 @@ class TlsHandshakeReport:
 
 def handshake(
     host: str, port: int = 443, *, timeout: float = 10.0,
-    context: Optional[ssl.SSLContext] = None,
+    context: ssl.SSLContext | None = None,
 ) -> TlsHandshakeReport:
     """Do a real TLS handshake and report what was negotiated."""
     if not isinstance(host, str) or not host:

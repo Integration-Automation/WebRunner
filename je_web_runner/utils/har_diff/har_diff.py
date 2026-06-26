@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -17,10 +17,10 @@ class HarDiffError(WebRunnerException):
     """Raised when a HAR document cannot be parsed."""
 
 
-_Entry = Dict[str, Any]
+_Entry = dict[str, Any]
 
 
-def _load_har(har: Any) -> Dict[str, Any]:
+def _load_har(har: Any) -> dict[str, Any]:
     if isinstance(har, dict):
         return har
     if isinstance(har, str):
@@ -31,7 +31,7 @@ def _load_har(har: Any) -> Dict[str, Any]:
     raise HarDiffError(f"unsupported HAR type: {type(har).__name__}")
 
 
-def _entries(har: Dict[str, Any]) -> List[_Entry]:
+def _entries(har: dict[str, Any]) -> list[_Entry]:
     log = har.get("log")
     if not isinstance(log, dict):
         raise HarDiffError("HAR missing 'log' block")
@@ -41,9 +41,9 @@ def _entries(har: Dict[str, Any]) -> List[_Entry]:
     return entries
 
 
-def _index(entries: List[_Entry]) -> Dict[Tuple[str, str], _Entry]:
+def _index(entries: list[_Entry]) -> dict[tuple[str, str], _Entry]:
     """Index entries by (METHOD, url); later entries with the same key win."""
-    index: Dict[Tuple[str, str], _Entry] = {}
+    index: dict[tuple[str, str], _Entry] = {}
     for entry in entries:
         request = entry.get("request") or {}
         method = (request.get("method") or "").upper()
@@ -59,7 +59,7 @@ def _status(entry: _Entry) -> int:
     return int(status) if isinstance(status, int) else 0
 
 
-def diff_har(left: Any, right: Any) -> Dict[str, List[Dict[str, Any]]]:
+def diff_har(left: Any, right: Any) -> dict[str, list[dict[str, Any]]]:
     """
     比對兩份 HAR；回傳 ``{added, removed, changed}``
     Diff two HAR documents; returns ``{added, removed, changed}`` lists.
@@ -68,9 +68,9 @@ def diff_har(left: Any, right: Any) -> Dict[str, List[Dict[str, Any]]]:
     left_index = _index(_entries(_load_har(left)))
     right_index = _index(_entries(_load_har(right)))
 
-    added: List[Dict[str, Any]] = []
-    removed: List[Dict[str, Any]] = []
-    changed: List[Dict[str, Any]] = []
+    added: list[dict[str, Any]] = []
+    removed: list[dict[str, Any]] = []
+    changed: list[dict[str, Any]] = []
 
     for key, entry in right_index.items():
         if key not in left_index:
@@ -97,7 +97,7 @@ def diff_har(left: Any, right: Any) -> Dict[str, List[Dict[str, Any]]]:
     return {"added": added, "removed": removed, "changed": changed}
 
 
-def diff_har_files(left_path: str, right_path: str) -> Dict[str, List[Dict[str, Any]]]:
+def diff_har_files(left_path: str, right_path: str) -> dict[str, list[dict[str, Any]]]:
     """讀取兩個 HAR 檔並比對 / Read two HAR files from disk and diff them."""
     left_path_obj = Path(left_path)
     right_path_obj = Path(right_path)

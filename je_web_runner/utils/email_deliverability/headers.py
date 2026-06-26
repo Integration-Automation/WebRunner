@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -32,12 +31,12 @@ class EmailDeliverabilityError(WebRunnerException):
 class HeaderMap:
     """All headers as a case-insensitive multimap (header → list of values)."""
 
-    headers: Dict[str, List[str]] = field(default_factory=dict)
+    headers: dict[str, list[str]] = field(default_factory=dict)
 
-    def get_all(self, name: str) -> List[str]:
+    def get_all(self, name: str) -> list[str]:
         return list(self.headers.get(name.lower(), []))
 
-    def get_first(self, name: str) -> Optional[str]:
+    def get_first(self, name: str) -> str | None:
         all_ = self.get_all(name)
         return all_[0] if all_ else None
 
@@ -46,9 +45,9 @@ def parse_headers(raw: str) -> HeaderMap:
     """Parse RFC 5322 headers (lines, continuations) from a raw message."""
     if not isinstance(raw, str):
         raise EmailDeliverabilityError("raw must be a string")
-    out: Dict[str, List[str]] = {}
-    cur_name: Optional[str] = None
-    cur_value: List[str] = []
+    out: dict[str, list[str]] = {}
+    cur_name: str | None = None
+    cur_value: list[str] = []
     for line in raw.splitlines():
         if not line.strip():
             break   # end of headers

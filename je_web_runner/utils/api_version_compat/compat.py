@@ -17,7 +17,7 @@ server.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Mapping
+from typing import Any, Iterable, Mapping
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -38,8 +38,8 @@ class ApiContract:
     """The shape the old client relies on for one endpoint."""
 
     endpoint: str
-    response_fields: List[FieldSpec] = field(default_factory=list)
-    request_fields: List[FieldSpec] = field(default_factory=list)
+    response_fields: list[FieldSpec] = field(default_factory=list)
+    request_fields: list[FieldSpec] = field(default_factory=list)
 
 
 _TYPE_MAP = {
@@ -50,8 +50,8 @@ _TYPE_MAP = {
 
 def _check_response(
     contract: ApiContract, response: Mapping[str, Any],
-) -> List[str]:
-    problems: List[str] = []
+) -> list[str]:
+    problems: list[str] = []
     for spec in contract.response_fields:
         if spec.name not in response:
             if spec.required:
@@ -71,8 +71,8 @@ def _check_response(
 
 def _check_request(
     contract: ApiContract, request: Mapping[str, Any],
-) -> List[str]:
-    problems: List[str] = []
+) -> list[str]:
+    problems: list[str] = []
     required_old = {f.name for f in contract.request_fields if f.required}
     for missing in required_old - set(request.keys()):
         problems.append(
@@ -120,7 +120,7 @@ class CompatMatrixRow:
     notes: str = ""
 
 
-def matrix_summary(rows: Iterable[CompatMatrixRow]) -> List[Dict[str, Any]]:
+def matrix_summary(rows: Iterable[CompatMatrixRow]) -> list[dict[str, Any]]:
     return [{"client": r.client_version, "server": r.server_version,
              "passed": r.passed, "notes": r.notes} for r in rows]
 

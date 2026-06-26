@@ -8,7 +8,7 @@ different element counts as a separate finding.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -21,15 +21,15 @@ class A11yDiffError(WebRunnerException):
 class _Finding:
     rule_id: str
     target: str
-    impact: Optional[str] = None
-    summary: Optional[str] = None
+    impact: str | None = None
+    summary: str | None = None
 
 
 @dataclass
 class A11yDiff:
-    added: List[Dict[str, Any]] = field(default_factory=list)
-    resolved: List[Dict[str, Any]] = field(default_factory=list)
-    persisting: List[Dict[str, Any]] = field(default_factory=list)
+    added: list[dict[str, Any]] = field(default_factory=list)
+    resolved: list[dict[str, Any]] = field(default_factory=list)
+    persisting: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def regressed(self) -> bool:
@@ -44,8 +44,8 @@ class A11yDiff:
         return len(self.added) + len(self.persisting)
 
 
-def _flatten(violations: Iterable[Any]) -> List[_Finding]:
-    findings: List[_Finding] = []
+def _flatten(violations: Iterable[Any]) -> list[_Finding]:
+    findings: list[_Finding] = []
     for entry in violations:
         if not isinstance(entry, dict):
             raise A11yDiffError("violations entries must be objects")
@@ -76,7 +76,7 @@ def _node_target(node: Any) -> str:
     return ""
 
 
-def _to_dict(finding: _Finding) -> Dict[str, Any]:
+def _to_dict(finding: _Finding) -> dict[str, Any]:
     return {
         "rule_id": finding.rule_id,
         "target": finding.target,
@@ -93,7 +93,7 @@ def diff_violations(
     baseline_findings = _flatten(baseline)
     current_findings = _flatten(current)
 
-    def keyed(items: Iterable[_Finding]) -> Dict[Tuple[str, str], _Finding]:
+    def keyed(items: Iterable[_Finding]) -> dict[tuple[str, str], _Finding]:
         return {(f.rule_id, f.target): f for f in items}
 
     baseline_keyed = keyed(baseline_findings)
@@ -112,7 +112,7 @@ def diff_violations(
 
 
 def assert_no_regressions(diff: A11yDiff,
-                          allow_rules: Optional[Sequence[str]] = None) -> None:
+                          allow_rules: Sequence[str] | None = None) -> None:
     """Raise if ``diff.added`` is non-empty (after applying ``allow_rules``)."""
     allow = set(allow_rules or [])
     bad = [a for a in diff.added if a.get("rule_id") not in allow]

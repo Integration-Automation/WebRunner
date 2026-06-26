@@ -21,7 +21,7 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -68,7 +68,7 @@ class Utterance:
     role: str
     node_index: int
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -81,7 +81,7 @@ class Violation:
     node_index: int
     detail: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "kind": self.kind.value}
 
 
@@ -89,8 +89,8 @@ class Violation:
 class ScreenReaderTranscript:
     """Result of :func:`walk_tree`."""
 
-    utterances: List[Utterance] = field(default_factory=list)
-    violations: List[Violation] = field(default_factory=list)
+    utterances: list[Utterance] = field(default_factory=list)
+    violations: list[Violation] = field(default_factory=list)
 
     def speech(self) -> str:
         """Joined transcript as a single string."""
@@ -103,7 +103,7 @@ class ScreenReaderTranscript:
 # ---------- walker ------------------------------------------------------
 
 def walk_tree(
-    root: Dict[str, Any],
+    root: dict[str, Any],
     *,
     include_decorative: bool = False,
 ) -> ScreenReaderTranscript:
@@ -123,9 +123,9 @@ def walk_tree(
 
 
 def _walk_node(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
-    node: Dict[str, Any],
+    node: dict[str, Any],
     transcript: ScreenReaderTranscript,
-    state: Dict[str, int],
+    state: dict[str, int],
     *,
     include_decorative: bool,
 ) -> None:
@@ -177,7 +177,7 @@ def _walk_node(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-
 
 
 def _emit_interactive(
-    _node: Dict[str, Any],
+    _node: dict[str, Any],
     role: str,
     name: str,
     index: int,
@@ -211,7 +211,7 @@ def _is_generic_link(name: str) -> bool:
     return cleaned in _BANNED_LINK_TEXT
 
 
-def _is_decorative(node: Dict[str, Any]) -> bool:
+def _is_decorative(node: dict[str, Any]) -> bool:
     if node.get("decorative") is True:
         return True
     properties = node.get("properties") or {}
@@ -226,7 +226,7 @@ def _is_decorative(node: Dict[str, Any]) -> bool:
 def _check_heading_level(
     level: int,
     index: int,
-    state: Dict[str, int],
+    state: dict[str, int],
     transcript: ScreenReaderTranscript,
 ) -> None:
     last = state["last_heading_level"]

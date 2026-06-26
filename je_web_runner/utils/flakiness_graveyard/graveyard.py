@@ -22,7 +22,7 @@ import os
 from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta
 from enum import Enum
-from typing import Dict, Iterable, List, Optional
+from typing import Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -52,7 +52,7 @@ class GraveEntry:
         _parse_date(self.quarantined_at, "quarantined_at")
         _parse_date(self.last_flake_date, "last_flake_date")
 
-    def to_dict(self) -> Dict[str, str]:
+    def to_dict(self) -> dict[str, str]:
         return {**asdict(self), "status": self.status.value}
 
 
@@ -74,8 +74,8 @@ def _today() -> date:
 
 
 def register_flake(
-    registry: List[GraveEntry], test_name: str, *, owner: str = "",
-    ticket_url: str = "", today: Optional[date] = None,
+    registry: list[GraveEntry], test_name: str, *, owner: str = "",
+    ticket_url: str = "", today: date | None = None,
 ) -> GraveEntry:
     """Insert / update an entry. Returns the affected entry."""
     if not isinstance(registry, list):
@@ -100,7 +100,7 @@ def register_flake(
     return new_entry
 
 
-def revive(registry: List[GraveEntry], test_name: str) -> GraveEntry:
+def revive(registry: list[GraveEntry], test_name: str) -> GraveEntry:
     for entry in registry:
         if entry.test_name == test_name:
             if entry.status == Status.BURIED:
@@ -114,13 +114,13 @@ def revive(registry: List[GraveEntry], test_name: str) -> GraveEntry:
 
 def due_for_burial(
     registry: Iterable[GraveEntry],
-    *, days: int = 30, today: Optional[date] = None,
-) -> List[GraveEntry]:
+    *, days: int = 30, today: date | None = None,
+) -> list[GraveEntry]:
     """Quarantined tests untouched for >= ``days`` days."""
     if days < 1:
         raise FlakinessGraveyardError("days must be >= 1")
     today = today or _today()
-    out: List[GraveEntry] = []
+    out: list[GraveEntry] = []
     for entry in registry:
         if entry.status != Status.QUARANTINED:
             continue
@@ -130,7 +130,7 @@ def due_for_burial(
     return out
 
 
-def bury(registry: List[GraveEntry], test_name: str) -> GraveEntry:
+def bury(registry: list[GraveEntry], test_name: str) -> GraveEntry:
     for entry in registry:
         if entry.test_name == test_name:
             if entry.status != Status.QUARANTINED:
@@ -142,18 +142,18 @@ def bury(registry: List[GraveEntry], test_name: str) -> GraveEntry:
     raise FlakinessGraveyardError(f"unknown test {test_name!r}")
 
 
-def load(path: str) -> List[GraveEntry]:
+def load(path: str) -> list[GraveEntry]:
     if not isinstance(path, str) or not path:
         raise FlakinessGraveyardError("path must be non-empty string")
     if not os.path.exists(path):
         return []
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         raw = json.load(fh)
     if not isinstance(raw, list):
         raise FlakinessGraveyardError(
             f"registry file {path!r} must contain a JSON array"
         )
-    out: List[GraveEntry] = []
+    out: list[GraveEntry] = []
     for item in raw:
         if not isinstance(item, dict):
             continue

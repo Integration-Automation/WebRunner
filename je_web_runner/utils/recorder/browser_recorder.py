@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Iterable, List, Optional
+from typing import Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.json.json_file.json_file import write_action_json
@@ -102,13 +102,13 @@ def _looks_sensitive(selector: str, value: str) -> bool:
     return bool(_LONG_DIGIT_RE.match(digits))
 
 
-def mask_sensitive_events(events: Iterable[dict]) -> List[dict]:
+def mask_sensitive_events(events: Iterable[dict]) -> list[dict]:
     """
     在 Python 端再做一次遮罩，保險起見
     Defensive Python-side masking pass; mainly useful when consuming raw
     events that bypassed the JS-side masking (e.g. loaded from disk).
     """
-    masked: List[dict] = []
+    masked: list[dict] = []
     for event in events:
         copy = dict(event)
         if copy.get("type") == "input" and not copy.get("masked"):
@@ -139,7 +139,7 @@ def start_recording(driver_or_wrapper) -> None:
     driver.execute_script(_RECORDER_JS)
 
 
-def pull_events(driver_or_wrapper) -> List[dict]:
+def pull_events(driver_or_wrapper) -> list[dict]:
     """
     從瀏覽器拉回累積事件並清空緩衝
     Drain accumulated events from the browser side and clear the buffer.
@@ -162,7 +162,7 @@ def stop_recording(driver_or_wrapper) -> None:
     driver.execute_script(_RESET_JS)
 
 
-def _click_to_actions(event: dict, name_index: int) -> List[list]:
+def _click_to_actions(event: dict, name_index: int) -> list[list]:
     test_object_name = event["selector"]
     return [
         [
@@ -174,7 +174,7 @@ def _click_to_actions(event: dict, name_index: int) -> List[list]:
     ]
 
 
-def _input_to_actions(event: dict, name_index: int) -> List[list]:
+def _input_to_actions(event: dict, name_index: int) -> list[list]:
     test_object_name = event["selector"]
     value = event.get("value", "")
     return [
@@ -187,7 +187,7 @@ def _input_to_actions(event: dict, name_index: int) -> List[list]:
     ]
 
 
-def events_to_actions(events: Iterable[dict]) -> List[list]:
+def events_to_actions(events: Iterable[dict]) -> list[list]:
     """
     將事件清單翻譯成 WR_* action 序列
     Translate captured events into a WR_* action list.
@@ -195,7 +195,7 @@ def events_to_actions(events: Iterable[dict]) -> List[list]:
     未支援的事件類型會被忽略並寫入日誌。
     Unsupported event types are skipped and logged.
     """
-    actions: List[list] = []
+    actions: list[list] = []
     handlers = {"click": _click_to_actions, "input": _input_to_actions}
     for index, event in enumerate(events):
         event_type = event.get("type")
@@ -210,7 +210,7 @@ def events_to_actions(events: Iterable[dict]) -> List[list]:
 def save_recording(
     driver_or_wrapper,
     output_path: str,
-    raw_events_path: Optional[str] = None,
+    raw_events_path: str | None = None,
 ) -> str:
     """
     便捷函式：拉回事件、轉成 actions、寫出 JSON

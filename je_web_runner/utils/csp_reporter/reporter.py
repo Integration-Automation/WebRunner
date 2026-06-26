@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Any, Iterable, List, Optional
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -48,16 +48,16 @@ _READ_VIOLATIONS = "JSON.stringify(window.__wrCspViolations || [])"
 class CspViolation:
     violated_directive: str
     blocked_uri: str
-    source_file: Optional[str]
-    line_number: Optional[int]
-    sample: Optional[str]
+    source_file: str | None
+    line_number: int | None
+    sample: str | None
 
 
 class CspViolationCollector:
     """Inject + read CSP-violation listener for a Selenium driver / Playwright page."""
 
     def __init__(self) -> None:
-        self._violations: List[CspViolation] = []
+        self._violations: list[CspViolation] = []
 
     def install(self, driver: Any) -> None:
         from je_web_runner.utils.driver_dispatch import (
@@ -68,7 +68,7 @@ class CspViolationCollector:
         except DriverDispatchError as error:
             raise CspReporterError(str(error)) from error
 
-    def collect(self, driver: Any) -> List[CspViolation]:
+    def collect(self, driver: Any) -> list[CspViolation]:
         from je_web_runner.utils.driver_dispatch import (
             DriverDispatchError, evaluate_expression,
         )
@@ -95,7 +95,7 @@ class CspViolationCollector:
         ]
         return list(self._violations)
 
-    def violations(self) -> List[CspViolation]:
+    def violations(self) -> list[CspViolation]:
         return list(self._violations)
 
     def assert_none(self) -> None:
@@ -116,11 +116,11 @@ def install_listener(driver: Any) -> None:
     CspViolationCollector().install(driver)
 
 
-def collect_violations(driver: Any) -> List[CspViolation]:
+def collect_violations(driver: Any) -> list[CspViolation]:
     return CspViolationCollector().collect(driver)
 
 
-def assert_no_violations(driver: Any, allow_directives: Optional[Iterable[str]] = None) -> None:
+def assert_no_violations(driver: Any, allow_directives: Iterable[str] | None = None) -> None:
     collector = CspViolationCollector()
     violations = collector.collect(driver)
     allowed = set(allow_directives or [])

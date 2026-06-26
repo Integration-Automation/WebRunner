@@ -23,7 +23,7 @@ import re
 import subprocess  # nosec B404 — used for `git diff` invocation, args are statically composed
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.ai_assist.llm_assist import LLMAssistError, _invoke
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -48,19 +48,19 @@ _DEFAULT_DIFF_MAX_CHARS = 6000
 
 
 def collect_git_diff(
-    repo_dir: Union[str, Path] = ".",
+    repo_dir: str | Path = ".",
     *,
     since_ref: str = "HEAD~1",
-    paths: Optional[Sequence[str]] = None,
+    paths: Sequence[str] | None = None,
     max_chars: int = _DEFAULT_DIFF_MAX_CHARS,
-    runner: Optional[Callable[..., subprocess.CompletedProcess]] = None,
+    runner: Callable[..., subprocess.CompletedProcess] | None = None,
 ) -> str:
     """
     讀 ``git diff <since_ref>..HEAD``(可選擇限定 paths),截到 ``max_chars``。
     Returns the diff text or empty string if git is unavailable. ``runner``
     lets tests substitute a fake ``subprocess.run``.
     """
-    cmd: List[str] = ["git", "-C", str(repo_dir), "diff", f"{since_ref}..HEAD", "--unified=2"]
+    cmd: list[str] = ["git", "-C", str(repo_dir), "diff", f"{since_ref}..HEAD", "--unified=2"]
     if paths:
         cmd.append("--")
         cmd.extend(str(p) for p in paths)
@@ -91,11 +91,11 @@ class RepairPlan:
 
     summary: str
     confidence: float
-    repaired_actions: List[Any]
-    changes: List[Dict[str, Any]] = field(default_factory=list)
-    risks: List[str] = field(default_factory=list)
+    repaired_actions: list[Any]
+    changes: list[dict[str, Any]] = field(default_factory=list)
+    risks: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -124,7 +124,7 @@ _REPAIR_PROMPT = (
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 
 
-def _parse_payload(text: str) -> Dict[str, Any]:
+def _parse_payload(text: str) -> dict[str, Any]:
     match = _JSON_OBJECT_RE.search(text)
     if match is None:
         raise TestAutoRepairError("LLM did not return a JSON object")
@@ -151,17 +151,17 @@ def _coerce_confidence(value: Any) -> float:
     return score
 
 
-def _coerce_change_list(value: Any) -> List[Dict[str, Any]]:
+def _coerce_change_list(value: Any) -> list[dict[str, Any]]:
     if not isinstance(value, list):
         return []
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for entry in value:
         if isinstance(entry, dict):
             out.append(entry)
     return out
 
 
-def _coerce_str_list(value: Any) -> List[str]:
+def _coerce_str_list(value: Any) -> list[str]:
     if isinstance(value, list):
         return [str(item) for item in value]
     if isinstance(value, str):
@@ -170,7 +170,7 @@ def _coerce_str_list(value: Any) -> List[str]:
 
 
 def propose_repair(
-    actions: List[Any],
+    actions: list[Any],
     signals: TriageSignals,
     *,
     diff_text: str = "",
@@ -220,12 +220,12 @@ def propose_repair(
 
 
 def repair_from_bundle(
-    action_path: Union[str, Path],
-    bundle_path: Union[str, Path],
+    action_path: str | Path,
+    bundle_path: str | Path,
     *,
-    repo_dir: Union[str, Path] = ".",
+    repo_dir: str | Path = ".",
     since_ref: str = "HEAD~1",
-    git_runner: Optional[Callable[..., subprocess.CompletedProcess]] = None,
+    git_runner: Callable[..., subprocess.CompletedProcess] | None = None,
 ) -> RepairPlan:
     """
     One-shot:讀 action 檔 + failure bundle + git diff,回傳 RepairPlan。
@@ -236,7 +236,7 @@ def repair_from_bundle(
     return propose_repair(actions, signals, diff_text=diff_text)
 
 
-def _load_actions(action_path: Union[str, Path]) -> List[Any]:
+def _load_actions(action_path: str | Path) -> list[Any]:
     path = Path(action_path)
     if not path.is_file():
         raise TestAutoRepairError(f"action file not found: {path}")
@@ -253,10 +253,10 @@ def _load_actions(action_path: Union[str, Path]) -> List[Any]:
 # ---------- apply / write back ------------------------------------------
 
 def apply_repair(
-    action_path: Union[str, Path],
+    action_path: str | Path,
     plan: RepairPlan,
     *,
-    output_path: Optional[Union[str, Path]] = None,
+    output_path: str | Path | None = None,
     min_confidence: float = 0.5,
 ) -> Path:
     """

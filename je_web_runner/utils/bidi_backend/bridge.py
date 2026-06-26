@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import itertools
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -32,7 +32,7 @@ class BidiEvent:
     """Backend-agnostic event payload."""
 
     name: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
 
 
 @dataclass
@@ -104,7 +104,7 @@ def _playwright_event_translator(event_name: str) -> Translator:
     return translator
 
 
-def _extract_playwright_payload(event_name: str, payload: Any) -> Dict[str, Any]:
+def _extract_playwright_payload(event_name: str, payload: Any) -> dict[str, Any]:
     if event_name == "console":
         return {
             "type": getattr(payload, "type", None),
@@ -129,9 +129,9 @@ class BidiBridge:
     """Backend-detecting bridge for BiDi-style event subscription."""
 
     def __init__(self) -> None:
-        self._subscriptions: Dict[int, BidiSubscription] = {}
+        self._subscriptions: dict[int, BidiSubscription] = {}
         self._counter = itertools.count(1)
-        self._translators: Dict[str, Dict[str, Translator]] = {
+        self._translators: dict[str, dict[str, Translator]] = {
             "selenium": {"console": _selenium_console_translator},
             "playwright": {
                 "console": _playwright_event_translator("console"),
@@ -158,7 +158,7 @@ class BidiBridge:
         target: Any,
         event: str,
         callback: Callable[[BidiEvent], None],
-        backend: Optional[str] = None,
+        backend: str | None = None,
     ) -> BidiSubscription:
         used_backend = backend or self.detect_backend(target)
         translator = self._translators.get(used_backend, {}).get(event)
@@ -191,5 +191,5 @@ class BidiBridge:
         for sub in snapshot:
             self.unsubscribe(sub)
 
-    def active_subscriptions(self) -> List[BidiSubscription]:
+    def active_subscriptions(self) -> list[BidiSubscription]:
         return list(self._subscriptions.values())

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -40,7 +40,7 @@ class RetryPolicy:
     real_max: int = 0
     base_backoff: float = 0.25
     max_backoff: float = 4.0
-    history: List[RetryDecision] = field(default_factory=list)
+    history: list[RetryDecision] = field(default_factory=list)
 
     def budget_for(self, category: str) -> int:
         return {
@@ -58,9 +58,9 @@ class RetryPolicy:
 def run_with_retry(
     func: Callable[..., Any],
     *args: Any,
-    policy: Optional[RetryPolicy] = None,
-    ledger_path: Optional[str] = None,
-    file_path: Optional[str] = None,
+    policy: RetryPolicy | None = None,
+    ledger_path: str | None = None,
+    file_path: str | None = None,
     sleep: Callable[[float], None] = time.sleep,
     **kwargs: Any,
 ) -> Any:
@@ -92,8 +92,8 @@ def _record_attempt(
     policy: RetryPolicy,
     attempt: int,
     error: BaseException,
-    ledger_path: Optional[str],
-    file_path: Optional[str],
+    ledger_path: str | None,
+    file_path: str | None,
 ) -> RetryDecision:
     error_repr = repr(error)
     category = classify(error_repr, ledger_path=ledger_path, file_path=file_path)
@@ -113,9 +113,9 @@ def _record_attempt(
     return decision
 
 
-def summarise_history(policy: RetryPolicy) -> Dict[str, Any]:
+def summarise_history(policy: RetryPolicy) -> dict[str, Any]:
     """Aggregate decision counts for reporting."""
-    by_category: Dict[str, int] = {}
+    by_category: dict[str, int] = {}
     for decision in policy.history:
         by_category[decision.category] = by_category.get(decision.category, 0) + 1
     return {

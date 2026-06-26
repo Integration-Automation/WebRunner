@@ -9,7 +9,7 @@ runs without it.
 from __future__ import annotations
 
 import time
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -30,7 +30,7 @@ def _require_locust():
         ) from error
 
 
-def _build_task(action: Dict[str, Any]) -> Callable:
+def _build_task(action: dict[str, Any]) -> Callable:
     """Turn an action dict into a Locust task method."""
     method = (action.get("method") or "GET").upper()
     path = action.get("path") or "/"
@@ -54,7 +54,7 @@ def _build_task(action: Dict[str, Any]) -> Callable:
 
 
 def build_http_user_class(
-    actions: List[Dict[str, Any]],
+    actions: list[dict[str, Any]],
     wait_min: float = 1.0,
     wait_max: float = 3.0,
 ) -> type:
@@ -66,7 +66,7 @@ def build_http_user_class(
     ``json_body``, ``headers``, ``params``.
     """
     http_user_cls, between, task, _environment_cls = _require_locust()
-    attrs: Dict[str, Any] = {"wait_time": between(wait_min, wait_max)}
+    attrs: dict[str, Any] = {"wait_time": between(wait_min, wait_max)}
     for index, action in enumerate(actions):
         weight = int(action.get("weight", 1))
         attrs[f"task_{index}"] = task(weight)(_build_task(action))
@@ -77,13 +77,13 @@ def build_http_user_class(
 
 def run_locust(
     host: str,
-    actions: List[Dict[str, Any]],
+    actions: list[dict[str, Any]],
     num_users: int = 10,
     spawn_rate: float = 2.0,
     run_seconds: float = 60.0,
     wait_min: float = 1.0,
     wait_max: float = 3.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     無頭模式跑 Locust 並回傳統計
     Run Locust headlessly against ``host`` with the given actions and return
@@ -110,9 +110,9 @@ def run_locust(
     return _summarise_stats(env.stats)
 
 
-def _summarise_stats(stats: Any) -> Dict[str, Any]:
+def _summarise_stats(stats: Any) -> dict[str, Any]:
     """Pull a small dict summary out of Locust's stats object."""
-    per_endpoint: List[Dict[str, Any]] = []
+    per_endpoint: list[dict[str, Any]] = []
     for entry in getattr(stats, "entries", {}).values():
         per_endpoint.append({
             "name": entry.name,

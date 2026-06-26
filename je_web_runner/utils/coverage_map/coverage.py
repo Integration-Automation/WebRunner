@@ -13,7 +13,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Union
+from typing import Any, Iterable, Sequence
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -52,7 +52,7 @@ def normalise_path(path: str, normalise_params: bool = True) -> str:
     return "/".join(canonical)
 
 
-def _extract_url(action: List[Any]) -> Optional[str]:
+def _extract_url(action: list[Any]) -> str | None:
     if not isinstance(action, list) or len(action) < 2:
         return None
     command = action[0]
@@ -79,24 +79,24 @@ def _path_for(url: str) -> str:
 
 @dataclass
 class CoverageMap:
-    routes_by_file: Dict[str, Set[str]] = field(default_factory=dict)
-    files_by_route: Dict[str, Set[str]] = field(default_factory=dict)
+    routes_by_file: dict[str, set[str]] = field(default_factory=dict)
+    files_by_route: dict[str, set[str]] = field(default_factory=dict)
 
-    def files_for(self, route: str) -> List[str]:
+    def files_for(self, route: str) -> list[str]:
         return sorted(self.files_by_route.get(route, set()))
 
-    def routes_for(self, file_path: str) -> List[str]:
+    def routes_for(self, file_path: str) -> list[str]:
         return sorted(self.routes_by_file.get(file_path, set()))
 
-    def all_routes(self) -> List[str]:
+    def all_routes(self) -> list[str]:
         return sorted(self.files_by_route.keys())
 
-    def uncovered(self, declared_routes: Iterable[str]) -> List[str]:
+    def uncovered(self, declared_routes: Iterable[str]) -> list[str]:
         return sorted(set(declared_routes) - set(self.files_by_route.keys()))
 
 
 def build_coverage_map(
-    directory: Union[str, Path],
+    directory: str | Path,
     glob: str = "**/*.json",
     normalise_params: bool = True,
 ) -> CoverageMap:
@@ -104,8 +104,8 @@ def build_coverage_map(
     base = Path(directory)
     if not base.is_dir():
         raise CoverageMapError(f"directory missing: {directory!r}")
-    routes_by_file: Dict[str, Set[str]] = defaultdict(set)
-    files_by_route: Dict[str, Set[str]] = defaultdict(set)
+    routes_by_file: dict[str, set[str]] = defaultdict(set)
+    files_by_route: dict[str, set[str]] = defaultdict(set)
     for path in sorted(base.glob(glob)):
         if not path.is_file():
             continue
@@ -121,7 +121,7 @@ def build_coverage_map(
     )
 
 
-def _load_action_list(path: Path) -> Optional[List[Any]]:
+def _load_action_list(path: Path) -> list[Any] | None:
     try:
         actions = json.loads(path.read_text(encoding="utf-8"))
     except ValueError:
@@ -129,7 +129,7 @@ def _load_action_list(path: Path) -> Optional[List[Any]]:
     return actions if isinstance(actions, list) else None
 
 
-def _routes_in(actions: List[Any], normalise_params: bool):
+def _routes_in(actions: list[Any], normalise_params: bool):
     for action in actions:
         if not isinstance(action, list):
             continue
@@ -142,13 +142,13 @@ def _routes_in(actions: List[Any], normalise_params: bool):
 def coverage_for_routes(
     coverage: CoverageMap,
     declared_routes: Sequence[str],
-) -> Dict[str, List[str]]:
+) -> dict[str, list[str]]:
     """Return ``{route: [files]}`` for each declared route (empty list if missing)."""
     return {route: coverage.files_for(route) for route in declared_routes}
 
 
 def render_markdown(coverage: CoverageMap,
-                    declared_routes: Optional[Sequence[str]] = None) -> str:
+                    declared_routes: Sequence[str] | None = None) -> str:
     """Render a Markdown coverage report (table of route → file count)."""
     routes = list(declared_routes) if declared_routes else coverage.all_routes()
     lines = [

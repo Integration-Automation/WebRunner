@@ -12,7 +12,7 @@ from __future__ import annotations
 import statistics
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, List, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -59,14 +59,14 @@ class EncodedChunk:
     width: int = 0
     height: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "type": self.type.value}
 
 
-def parse_chunks(payload: Any) -> List[EncodedChunk]:
+def parse_chunks(payload: Any) -> list[EncodedChunk]:
     if not isinstance(payload, list):
         raise WebcodecsAssertError("payload must be a list")
-    out: List[EncodedChunk] = []
+    out: list[EncodedChunk] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue

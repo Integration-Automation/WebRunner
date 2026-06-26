@@ -23,7 +23,7 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Sequence
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -182,7 +182,7 @@ def broadcast_message(page: Any, channel_name: str, data: Any) -> None:
 def collect_broadcast_messages(
     page: Any,
     channel_name: str,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """Return everything the recorder on ``page`` has captured for ``channel_name``."""
     if page is None:
         raise CrossTabSyncError(_PAGE_IS_NONE_MSG)
@@ -212,7 +212,7 @@ def wait_for_broadcast(
     poll_interval: float = 0.1,
     sleep_fn: Callable[[float], None] = time.sleep,
     time_fn: Callable[[], float] = time.time,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     輪詢 recorder 直到出現一條符合 ``matcher`` 的訊息。
     Returns the matching message entry (with ``data`` and ``receivedAt``).
@@ -242,7 +242,7 @@ def wait_for_broadcast(
 class PropagationResult:
     """Outcome of one :func:`assert_state_propagates` call."""
 
-    propagated_to: List[int] = field(default_factory=list)
+    propagated_to: list[int] = field(default_factory=list)
     elapsed_seconds: float = 0.0
 
 

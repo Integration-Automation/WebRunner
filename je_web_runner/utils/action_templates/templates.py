@@ -15,7 +15,7 @@ from __future__ import annotations
 import copy
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -27,7 +27,7 @@ class ActionTemplateError(WebRunnerException):
 @dataclass
 class ActionTemplate:
     name: str
-    actions: List[Any]
+    actions: list[Any]
     parameters: Sequence[str] = field(default_factory=tuple)
     description: str = ""
 
@@ -35,7 +35,7 @@ class ActionTemplate:
 _PLACEHOLDER_RE = re.compile(r"\{\{\s*([A-Za-z_]\w*)\s*\}\}")
 
 
-_BUILTIN_TEMPLATES: Dict[str, ActionTemplate] = {
+_BUILTIN_TEMPLATES: dict[str, ActionTemplate] = {
     "login_basic": ActionTemplate(
         name="login_basic",
         parameters=("username_locator", "password_locator", "submit_locator",
@@ -84,7 +84,7 @@ _BUILTIN_TEMPLATES: Dict[str, ActionTemplate] = {
 }
 
 
-def available_templates() -> List[str]:
+def available_templates() -> list[str]:
     return sorted(_BUILTIN_TEMPLATES.keys())
 
 
@@ -102,7 +102,7 @@ def register_template(template: ActionTemplate) -> None:
     _BUILTIN_TEMPLATES[template.name] = template
 
 
-def render_template(name: str, parameters: Optional[Dict[str, Any]] = None) -> List[Any]:
+def render_template(name: str, parameters: dict[str, Any] | None = None) -> list[Any]:
     """
     把 ``{{name}}`` 替換成實際值，回傳深拷貝的 action list
     Substitute every ``{{name}}`` placeholder in the template with the
@@ -122,7 +122,7 @@ def render_template(name: str, parameters: Optional[Dict[str, Any]] = None) -> L
     ]
 
 
-def _substitute(node: Any, params: Dict[str, Any], template_name: str) -> Any:
+def _substitute(node: Any, params: dict[str, Any], template_name: str) -> Any:
     if isinstance(node, str):
         return _substitute_text(node, params, template_name)
     if isinstance(node, list):
@@ -132,7 +132,7 @@ def _substitute(node: Any, params: Dict[str, Any], template_name: str) -> Any:
     return node
 
 
-def _substitute_text(text: str, params: Dict[str, Any], template_name: str) -> Any:
+def _substitute_text(text: str, params: dict[str, Any], template_name: str) -> Any:
     matches = list(_PLACEHOLDER_RE.finditer(text))
     if not matches:
         return text

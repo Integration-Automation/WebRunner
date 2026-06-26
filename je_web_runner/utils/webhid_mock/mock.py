@@ -14,7 +14,7 @@ The harness ships:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -76,7 +76,7 @@ class MockDevice:
     product_id: int
     product_name: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "vendor_id": self.vendor_id,
             "product_id": self.product_id,
@@ -93,7 +93,7 @@ def build_mock_device(
                       product_name=product_name)
 
 
-def build_input_report(report_id: int, data: Sequence[int]) -> Dict[str, Any]:
+def build_input_report(report_id: int, data: Sequence[int]) -> dict[str, Any]:
     if not 0 <= report_id <= 255:
         raise WebhidMockError("report_id must be 0..255")
     if not isinstance(data, (list, tuple)):
@@ -106,13 +106,13 @@ def build_input_report(report_id: int, data: Sequence[int]) -> Dict[str, Any]:
 @dataclass
 class OutgoingReport:
     report_id: int
-    data: List[int] = field(default_factory=list)
+    data: list[int] = field(default_factory=list)
 
 
-def parse_outgoing(payload: Any) -> List[OutgoingReport]:
+def parse_outgoing(payload: Any) -> list[OutgoingReport]:
     if not isinstance(payload, list):
         raise WebhidMockError("payload must be a list")
-    out: List[OutgoingReport] = []
+    out: list[OutgoingReport] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -125,8 +125,8 @@ def parse_outgoing(payload: Any) -> List[OutgoingReport]:
 
 def assert_output_reports(
     reports: Iterable[OutgoingReport],
-    *, expected_count: Optional[int] = None,
-    contains: Optional[Sequence[int]] = None,
+    *, expected_count: int | None = None,
+    contains: Sequence[int] | None = None,
 ) -> None:
     rs = list(reports)
     if expected_count is not None and len(rs) != expected_count:

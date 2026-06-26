@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import typing
 from pathlib import Path
-from typing import List, Union
 
 from selenium import webdriver
 from selenium.webdriver import ActionChains
@@ -107,9 +106,9 @@ def _apply_extension_paths(driver_options, webdriver_name, extension_paths) -> N
 
 def _build_driver_options(
         webdriver_name: str,
-        options: List[str] | None,
+        options: list[str] | None,
         experimental_options: dict | None,
-        extension_paths: List[str] | None,
+        extension_paths: list[str] | None,
         enable_bidi: bool,
 ):
     """
@@ -163,26 +162,20 @@ class WebDriverWrapper(
     """
 
     def __init__(self):
-        self.current_webdriver: Union[WebDriver, None] = None
-        self._webdriver_name: Union[str, None] = None
-        self._action_chain: Union[ActionChains, None] = None
+        self.current_webdriver: WebDriver | None = None
+        self._webdriver_name: str | None = None
+        self._action_chain: ActionChains | None = None
 
     def set_driver(
             self,
             webdriver_name: str,
             webdriver_manager_option_dict: dict | None = None,
-            options: List[str] | None = None,
+            options: list[str] | None = None,
             experimental_options: dict | None = None,
-            extension_paths: List[str] | None = None,
+            extension_paths: list[str] | None = None,
             enable_bidi: bool = False,
             **kwargs
-    ) -> Union[
-        webdriver.Chrome,
-        webdriver.Firefox,
-        webdriver.Edge,
-        webdriver.Ie,
-        webdriver.Safari,
-    ]:
+    ) -> webdriver.Chrome | webdriver.Firefox | webdriver.Edge | webdriver.Ie | webdriver.Safari:
         """
         啟動一個新的 WebDriver
         Start a new WebDriver instance
@@ -290,7 +283,7 @@ class WebDriverWrapper(
             self,
             debugger_address: str,
             webdriver_name: str = "chrome",
-            options: List[str] | None = None,
+            options: list[str] | None = None,
             experimental_options: dict | None = None,
             **kwargs,
     ):

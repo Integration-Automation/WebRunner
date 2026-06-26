@@ -9,7 +9,6 @@ from __future__ import annotations
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -19,7 +18,7 @@ class LedgerError(WebRunnerException):
     """Raised on ledger I/O / format problems."""
 
 
-def _load(ledger_path: str) -> Dict[str, list]:
+def _load(ledger_path: str) -> dict[str, list]:
     path = Path(ledger_path)
     if not path.exists():
         return {"runs": []}
@@ -33,7 +32,7 @@ def _load(ledger_path: str) -> Dict[str, list]:
     return data
 
 
-def _save(ledger_path: str, data: Dict[str, list]) -> None:
+def _save(ledger_path: str, data: dict[str, list]) -> None:
     path = Path(ledger_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", encoding="utf-8") as ledger_file:
@@ -52,13 +51,13 @@ def record_run(ledger_path: str, file_path: str, passed: bool) -> None:
     _save(ledger_path, data)
 
 
-def latest_status(ledger_path: str) -> Dict[str, bool]:
+def latest_status(ledger_path: str) -> dict[str, bool]:
     """
     取每個檔案最新的 pass/fail 狀態
     Build a dict keyed by file path of the most recent passed flag.
     """
     data = _load(ledger_path)
-    latest: Dict[str, bool] = {}
+    latest: dict[str, bool] = {}
     for run in data["runs"]:
         path = run.get("path")
         if isinstance(path, str):
@@ -66,12 +65,12 @@ def latest_status(ledger_path: str) -> Dict[str, bool]:
     return latest
 
 
-def failed_files(ledger_path: str) -> List[str]:
+def failed_files(ledger_path: str) -> list[str]:
     """Return paths whose most recent run was a failure."""
     return [path for path, passed in latest_status(ledger_path).items() if not passed]
 
 
-def passed_files(ledger_path: str) -> List[str]:
+def passed_files(ledger_path: str) -> list[str]:
     """Return paths whose most recent run was a pass."""
     return [path for path, passed in latest_status(ledger_path).items() if passed]
 

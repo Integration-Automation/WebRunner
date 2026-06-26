@@ -9,7 +9,7 @@ import csv
 import json
 import re
 from pathlib import Path
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -22,7 +22,7 @@ class DataDrivenError(WebRunnerException):
 _ROW_PLACEHOLDER_RE = re.compile(r"\$\{ROW\.([A-Za-z_]\w*)\}")
 
 
-def load_dataset_csv(path: str, encoding: str = "utf-8") -> List[Dict[str, str]]:
+def load_dataset_csv(path: str, encoding: str = "utf-8") -> list[dict[str, str]]:
     """
     讀取 CSV 為 list of dict（首列為欄位名）
     Read a CSV file into a list of dicts using the first row as headers.
@@ -36,7 +36,7 @@ def load_dataset_csv(path: str, encoding: str = "utf-8") -> List[Dict[str, str]]
         return [dict(row) for row in reader]
 
 
-def load_dataset_json(path: str, encoding: str = "utf-8") -> List[Dict[str, Any]]:
+def load_dataset_json(path: str, encoding: str = "utf-8") -> list[dict[str, Any]]:
     """
     讀取 JSON 為 list of dict
     Read a JSON file into a list of dicts.
@@ -52,7 +52,7 @@ def load_dataset_json(path: str, encoding: str = "utf-8") -> List[Dict[str, Any]
     return data
 
 
-def _expand_string(text: str, row: Dict[str, Any]) -> str:
+def _expand_string(text: str, row: dict[str, Any]) -> str:
     def _resolve(match: re.Match) -> str:
         column = match.group(1)
         if column not in row:
@@ -62,7 +62,7 @@ def _expand_string(text: str, row: Dict[str, Any]) -> str:
     return _ROW_PLACEHOLDER_RE.sub(_resolve, text)
 
 
-def expand_with_row(data: Any, row: Dict[str, Any]) -> Any:
+def expand_with_row(data: Any, row: dict[str, Any]) -> Any:
     """
     遞迴展開 ``${ROW.col}`` 占位符
     Recursively expand ``${ROW.col}`` placeholders against a row mapping.
@@ -80,9 +80,9 @@ def expand_with_row(data: Any, row: Dict[str, Any]) -> Any:
 
 def run_with_dataset(
     action_data: Any,
-    rows: List[Dict[str, Any]],
+    rows: list[dict[str, Any]],
     runner: Callable[[Any], Any],
-) -> List[Any]:
+) -> list[Any]:
     """
     對每筆 row 展開 placeholders 後呼叫 ``runner``
     For each row, expand placeholders against ``action_data`` and call

@@ -14,7 +14,7 @@ and:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Optional, Any, Dict, List, Mapping
+from typing import Any, Mapping
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -32,14 +32,14 @@ _METRIC_KEYS = ("largest-contentful-paint", "cumulative-layout-shift",
 
 @dataclass
 class LighthouseSnapshot:
-    scores: Dict[str, float] = field(default_factory=dict)        # 0..100
-    metrics: Dict[str, float] = field(default_factory=dict)       # numeric
+    scores: dict[str, float] = field(default_factory=dict)        # 0..100
+    metrics: dict[str, float] = field(default_factory=dict)       # numeric
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def _coerce_score(key: str, raw: Any) -> Optional[float]:
+def _coerce_score(key: str, raw: Any) -> float | None:
     if raw is None:
         return None
     try:
@@ -50,7 +50,7 @@ def _coerce_score(key: str, raw: Any) -> Optional[float]:
         ) from exc
 
 
-def _coerce_metric(key: str, raw: Any) -> Optional[float]:
+def _coerce_metric(key: str, raw: Any) -> float | None:
     if raw is None:
         return None
     try:
@@ -61,8 +61,8 @@ def _coerce_metric(key: str, raw: Any) -> Optional[float]:
         ) from exc
 
 
-def _collect_scores(categories: Mapping[str, Any]) -> Dict[str, float]:
-    scores: Dict[str, float] = {}
+def _collect_scores(categories: Mapping[str, Any]) -> dict[str, float]:
+    scores: dict[str, float] = {}
     for key in _CATEGORY_KEYS:
         entry = categories.get(key)
         if isinstance(entry, Mapping) and "score" in entry:
@@ -72,8 +72,8 @@ def _collect_scores(categories: Mapping[str, Any]) -> Dict[str, float]:
     return scores
 
 
-def _collect_metrics(audits: Mapping[str, Any]) -> Dict[str, float]:
-    metrics: Dict[str, float] = {}
+def _collect_metrics(audits: Mapping[str, Any]) -> dict[str, float]:
+    metrics: dict[str, float] = {}
     for key in _METRIC_KEYS:
         entry = audits.get(key)
         if isinstance(entry, Mapping):
@@ -109,8 +109,8 @@ class ScoreDelta:
 
 @dataclass
 class RegressionReport:
-    score_changes: List[ScoreDelta] = field(default_factory=list)
-    metric_changes: List[ScoreDelta] = field(default_factory=list)
+    score_changes: list[ScoreDelta] = field(default_factory=list)
+    metric_changes: list[ScoreDelta] = field(default_factory=list)
 
 
 def diff(baseline: LighthouseSnapshot, head: LighthouseSnapshot) -> RegressionReport:

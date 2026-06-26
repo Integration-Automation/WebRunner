@@ -14,7 +14,7 @@ import json
 import re
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Pattern, Sequence, Union
+from typing import Any, Callable, Iterable, Pattern, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -47,7 +47,7 @@ class WsFrame:
                 f"direction must be 'sent' or 'received', got {self.direction!r}"
             )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
     def as_json(self) -> Any:
@@ -66,7 +66,7 @@ class WsFrameRecorder:
     """Thread-unsafe in-memory recorder. Wrap with a Lock if shared."""
 
     def __init__(self) -> None:
-        self._frames: List[WsFrame] = []
+        self._frames: list[WsFrame] = []
 
     def __len__(self) -> int:
         return len(self._frames)
@@ -90,9 +90,9 @@ class WsFrameRecorder:
     def frames(
         self,
         *,
-        direction: Optional[str] = None,
-        url_match: Optional[Union[str, Pattern[str]]] = None,
-    ) -> List[WsFrame]:
+        direction: str | None = None,
+        url_match: str | Pattern[str] | None = None,
+    ) -> list[WsFrame]:
         """Return a filtered snapshot list (the recorder is unmodified)."""
         if direction is not None and direction not in _DIRECTIONS:
             raise WebSocketAssertError(f"unknown direction {direction!r}")
@@ -107,7 +107,7 @@ class WsFrameRecorder:
         return out
 
 
-def _coerce_pattern(value: Optional[Union[str, Pattern[str]]]) -> Optional[Pattern[str]]:
+def _coerce_pattern(value: str | Pattern[str] | None) -> Pattern[str] | None:
     if value is None:
         return None
     if hasattr(value, "search"):
@@ -120,10 +120,10 @@ def _coerce_pattern(value: Optional[Union[str, Pattern[str]]]) -> Optional[Patte
 def assert_frame_count(
     recorder: WsFrameRecorder,
     *,
-    direction: Optional[str] = None,
-    url_match: Optional[Union[str, Pattern[str]]] = None,
+    direction: str | None = None,
+    url_match: str | Pattern[str] | None = None,
     minimum: int = 0,
-    maximum: Optional[int] = None,
+    maximum: int | None = None,
 ) -> int:
     """Assert ``minimum <= count <= maximum`` for the filtered frames."""
     if minimum < 0:
@@ -161,7 +161,7 @@ def assert_payload_contains(
     recorder: WsFrameRecorder,
     needle: str,
     *,
-    direction: Optional[str] = None,
+    direction: str | None = None,
 ) -> WsFrame:
     """Assert a frame whose text payload contains ``needle``."""
     if not isinstance(needle, str) or not needle:
@@ -178,7 +178,7 @@ def assert_json_shape(
     recorder: WsFrameRecorder,
     required_keys: Sequence[str],
     *,
-    direction: Optional[str] = RECEIVED,
+    direction: str | None = RECEIVED,
 ) -> WsFrame:
     """Assert a JSON frame whose top-level object has every ``required_keys`` key."""
     if not required_keys:

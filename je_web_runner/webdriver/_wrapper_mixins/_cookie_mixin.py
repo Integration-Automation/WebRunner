@@ -131,7 +131,7 @@ class _CookieMixin:
         web_runner_logger.info(f"WebDriverWrapper load_cookies, file_path: {file_path}")
         param = locals()
         try:
-            with open(file_path, "r", encoding="utf-8") as fh:
+            with open(file_path, encoding="utf-8") as fh:
                 cookies = json.load(fh)
             added = 0
             for cookie in cookies:

@@ -4,7 +4,7 @@ TestRail integration: push case-level pass/fail results into a run.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, List
+from typing import Any, Iterable
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -37,9 +37,9 @@ def testrail_send_results(
     username: str,
     api_key: str,
     run_id: int,
-    results: List[Dict[str, Any]],
+    results: list[dict[str, Any]],
     timeout: int = _DEFAULT_TIMEOUT,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     將結果送到 ``add_results_for_cases/{run_id}``
     Submit results to ``index.php?/api/v2/add_results_for_cases/{run_id}``.
@@ -62,20 +62,20 @@ def testrail_send_results(
 
 
 def testrail_results_from_pairs(
-    pairs: Iterable[Dict[str, Any]],
+    pairs: Iterable[dict[str, Any]],
     comment_field: str = "comment",
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     把 ``[{case_id, passed, comment?}]`` 轉成 TestRail status_id 格式
     Helper: turn a list of {case_id, passed, comment?} dicts into the
     payload TestRail expects.
     """
-    out: List[Dict[str, Any]] = []
+    out: list[dict[str, Any]] = []
     for pair in pairs:
         case_id = pair.get("case_id")
         if case_id is None:
             continue
-        entry: Dict[str, Any] = {
+        entry: dict[str, Any] = {
             "case_id": int(case_id),
             "status_id": _PASSED if pair.get("passed") else _FAILED,
         }
@@ -91,7 +91,7 @@ def testrail_close_run(
     api_key: str,
     run_id: int,
     timeout: int = _DEFAULT_TIMEOUT,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     關閉指定的 TestRail run
     Close a TestRail run via ``index.php?/api/v2/close_run/{run_id}``.

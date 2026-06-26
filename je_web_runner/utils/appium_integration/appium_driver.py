@@ -9,7 +9,7 @@ so the existing WR_* commands keep working against a mobile session.
 """
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -33,7 +33,7 @@ def _require_appium():
 
 def start_appium_session(
     server_url: str,
-    capabilities: Dict[str, Any],
+    capabilities: dict[str, Any],
     register: bool = True,
 ) -> Any:
     """
@@ -73,10 +73,10 @@ def build_android_caps(
     device_name: str = "Android Emulator",
     platform_version: str = "13",
     automation_name: str = "UiAutomator2",
-    extra: Dict[str, Any] | None = None,
-) -> Dict[str, Any]:
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Convenience: build a capabilities dict for Android."""
-    caps: Dict[str, Any] = {
+    caps: dict[str, Any] = {
         "platformName": "Android",
         "appium:platformVersion": platform_version,
         "appium:deviceName": device_name,
@@ -93,9 +93,9 @@ def build_ios_caps(
     device_name: str = "iPhone 15",
     platform_version: str = "17",
     automation_name: str = "XCUITest",
-    extra: Dict[str, Any] | None = None,
-) -> Dict[str, Any]:
-    caps: Dict[str, Any] = {
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    caps: dict[str, Any] = {
         "platformName": "iOS",
         "appium:platformVersion": platform_version,
         "appium:deviceName": device_name,

@@ -22,7 +22,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Protocol
+from typing import Any, Protocol
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -84,14 +84,14 @@ class FragilityScore:
     """Heuristic locator-fragility score (0..1)."""
 
     score: float
-    reasons: List[str] = field(default_factory=list)
+    reasons: list[str] = field(default_factory=list)
 
 
 def score_fragility(locator: FragileLocator) -> FragilityScore:
     """Quick non-LLM check. Anything ``score >= 0.5`` is worth hardening."""
     if not isinstance(locator, FragileLocator):
         raise LocatorHardenerError("expects FragileLocator")
-    reasons: List[str] = []
+    reasons: list[str] = []
     score = 0.0
     if locator.strategy == LocatorStrategy.XPATH:
         score += 0.2
@@ -178,11 +178,11 @@ class LocatorSuggestion:
     value: str
     rationale: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {"strategy": self.strategy.value, "value": self.value,
                 "rationale": self.rationale}
 
-def parse_suggestions(raw: str) -> List[LocatorSuggestion]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+def parse_suggestions(raw: str) -> list[LocatorSuggestion]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """Decode the LLM's JSON array; reject malformed entries."""
     if not isinstance(raw, str) or not raw.strip():
         raise LocatorHardenerError("LLM returned empty response")
@@ -198,7 +198,7 @@ def parse_suggestions(raw: str) -> List[LocatorSuggestion]:  # NOSONAR S3776 —
         ) from error
     if not isinstance(obj, list):
         raise LocatorHardenerError("suggestions must be a list")
-    out: List[LocatorSuggestion] = []
+    out: list[LocatorSuggestion] = []
     for index, raw_item in enumerate(obj):
         if not isinstance(raw_item, dict):
             continue
@@ -236,7 +236,7 @@ def harden(
     client: HardenerClient,
     *,
     min_fragility: float = 0.5,
-) -> List[LocatorSuggestion]:
+) -> list[LocatorSuggestion]:
     """Score → maybe-skip → ask LLM → parse → return."""
     if not 0.0 <= min_fragility <= 1.0:
         raise LocatorHardenerError("min_fragility must be in [0, 1]")

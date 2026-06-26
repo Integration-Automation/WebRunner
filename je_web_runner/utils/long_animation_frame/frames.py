@@ -14,7 +14,7 @@ This module:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -92,19 +92,19 @@ class LongFrame:
     render_start_ms: float
     style_layout_start_ms: float
     blocking_duration_ms: float
-    scripts: List[ScriptAttribution] = field(default_factory=list)
+    scripts: list[ScriptAttribution] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def parse_log(payload: Any) -> List[LongFrame]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+def parse_log(payload: Any) -> list[LongFrame]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """Convert the harvested ``__wr_loaf_log__`` array into typed frames."""
     if not isinstance(payload, list):
         raise LongAnimationFrameError(
             f"payload must be list, got {type(payload).__name__}"
         )
-    out: List[LongFrame] = []
+    out: list[LongFrame] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -145,7 +145,7 @@ def parse_log(payload: Any) -> List[LongFrame]:  # NOSONAR S3776 — cohesive lo
 class LoafReport:
     """Rolled-up view across all frames."""
 
-    frames: List[LongFrame] = field(default_factory=list)
+    frames: list[LongFrame] = field(default_factory=list)
 
     def worst_frame_ms(self) -> float:
         return max((f.duration_ms for f in self.frames), default=0.0)
@@ -153,9 +153,9 @@ class LoafReport:
     def total_blocking_ms(self) -> float:
         return sum(f.blocking_duration_ms for f in self.frames)
 
-    def top_scripts(self, *, n: int = 5) -> List[ScriptAttribution]:
+    def top_scripts(self, *, n: int = 5) -> list[ScriptAttribution]:
         """Top N scripts by aggregated duration across all frames."""
-        bucket: Dict[str, ScriptAttribution] = {}
+        bucket: dict[str, ScriptAttribution] = {}
         for frame in self.frames:
             for s in frame.scripts:
                 key = s.source_url or s.name or s.invoker

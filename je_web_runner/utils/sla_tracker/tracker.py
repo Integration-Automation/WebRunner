@@ -12,7 +12,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -56,7 +56,7 @@ def _parse_iso(value: str) -> datetime:
     return dt
 
 
-def load_runs(path: Union[str, Path]) -> List[SuiteRun]:
+def load_runs(path: str | Path) -> list[SuiteRun]:
     """Read a ledger JSON file. Skips rows missing the fields we need."""
     p = Path(path)
     if not p.exists():
@@ -67,7 +67,7 @@ def load_runs(path: Union[str, Path]) -> List[SuiteRun]:
         raise SlaTrackerError(f"ledger not JSON: {error}") from error
     if not isinstance(data, dict) or "runs" not in data:
         raise SlaTrackerError("ledger missing 'runs' key")
-    out: List[SuiteRun] = []
+    out: list[SuiteRun] = []
     for raw in data["runs"]:
         if not isinstance(raw, dict):
             continue
@@ -121,14 +121,14 @@ class SlaReport:
     """Outcome of :func:`compute_sla`."""
 
     target: SlaTarget
-    buckets: List[BucketResult] = field(default_factory=list)
+    buckets: list[BucketResult] = field(default_factory=list)
     overall_pct: float = 0.0
     overall_runs: int = 0
 
     def passed(self) -> bool:
         return self.overall_pct >= self.target.target_pass_pct
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "target": asdict(self.target),
             "buckets": [asdict(b) for b in self.buckets],
@@ -154,13 +154,13 @@ def compute_sla(
     target: SlaTarget,
     *,
     bucket: str = "week",
-    suite: Optional[str] = None,
+    suite: str | None = None,
 ) -> SlaReport:
     """Group runs into buckets, compute met-percentage, aggregate."""
     if bucket not in ("week", "day"):
         raise SlaTrackerError("bucket must be 'week' or 'day'")
     label_fn = _week_label if bucket == "week" else _day_label
-    buckets_by_label: Dict[str, List[SuiteRun]] = {}
+    buckets_by_label: dict[str, list[SuiteRun]] = {}
     for run in runs:
         if not isinstance(run, SuiteRun):
             raise SlaTrackerError(
@@ -169,7 +169,7 @@ def compute_sla(
         if suite is not None and run.suite != suite:
             continue
         buckets_by_label.setdefault(label_fn(run.started_at), []).append(run)
-    bucket_results: List[BucketResult] = []
+    bucket_results: list[BucketResult] = []
     total_runs = 0
     total_met = 0
     for label in sorted(buckets_by_label):

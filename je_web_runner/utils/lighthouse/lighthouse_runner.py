@@ -13,7 +13,7 @@ import json
 import subprocess  # nosec B404 — controlled args, no shell
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -36,10 +36,10 @@ def _build_command(
     url: str,
     output_path: str,
     lighthouse_path: str,
-    chrome_flags: Optional[List[str]],
-    extra_args: Optional[List[str]],
-) -> List[str]:
-    cmd: List[str] = [
+    chrome_flags: list[str] | None,
+    extra_args: list[str] | None,
+) -> list[str]:
+    cmd: list[str] = [
         lighthouse_path,
         url,
         "--output=json",
@@ -54,10 +54,10 @@ def _build_command(
     return cmd
 
 
-def _summarise(report: Dict[str, Any]) -> Dict[str, Any]:
+def _summarise(report: dict[str, Any]) -> dict[str, Any]:
     categories = report.get("categories") or {}
 
-    def _score(key: str) -> Optional[float]:
+    def _score(key: str) -> float | None:
         bucket = categories.get(key)
         if isinstance(bucket, dict):
             score = bucket.get("score")
@@ -75,12 +75,12 @@ def _summarise(report: Dict[str, Any]) -> Dict[str, Any]:
 
 def run_lighthouse(
     url: str,
-    output_path: Optional[str] = None,
+    output_path: str | None = None,
     lighthouse_path: str = "lighthouse",
-    chrome_flags: Optional[List[str]] = None,
-    extra_args: Optional[List[str]] = None,
+    chrome_flags: list[str] | None = None,
+    extra_args: list[str] | None = None,
     timeout: int = _DEFAULT_TIMEOUT,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     執行 Lighthouse 並回傳 ``{scores, report_path, raw}``
     Run Lighthouse against ``url`` and return scores plus the raw report.
@@ -139,7 +139,7 @@ def run_lighthouse(
     return summary
 
 
-def assert_scores(result: Dict[str, Any], thresholds: Dict[str, float]) -> None:
+def assert_scores(result: dict[str, Any], thresholds: dict[str, float]) -> None:
     """
     斷言所有指定分數皆達門檻
     Assert each requested category score is at or above its threshold (0–1).
@@ -147,7 +147,7 @@ def assert_scores(result: Dict[str, Any], thresholds: Dict[str, float]) -> None:
     scores = result.get("scores") if isinstance(result, dict) else None
     if not isinstance(scores, dict):
         raise LighthouseError("lighthouse result missing 'scores' dict")
-    breaches: List[Dict[str, Any]] = []
+    breaches: list[dict[str, Any]] = []
     for category, minimum in thresholds.items():
         value = scores.get(category)
         if value is None:

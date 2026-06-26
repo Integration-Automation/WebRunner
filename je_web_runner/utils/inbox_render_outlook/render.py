@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -36,7 +36,7 @@ class RenderFinding:
     message: str
     snippet: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "severity": self.severity.value}
 
 
@@ -60,10 +60,10 @@ _GMAIL_RULES = (
 _HTML_TYPE_ERROR = "html must be a string"
 
 
-def audit_outlook(html: str) -> List[RenderFinding]:
+def audit_outlook(html: str) -> list[RenderFinding]:
     if not isinstance(html, str):
         raise InboxRenderOutlookError(_HTML_TYPE_ERROR)
-    findings: List[RenderFinding] = []
+    findings: list[RenderFinding] = []
     for pattern in _OUTLOOK_BAD_CSS:
         for match in pattern.finditer(html):
             findings.append(RenderFinding(
@@ -85,10 +85,10 @@ def audit_outlook(html: str) -> List[RenderFinding]:
     return findings
 
 
-def audit_gmail(html: str) -> List[RenderFinding]:
+def audit_gmail(html: str) -> list[RenderFinding]:
     if not isinstance(html, str):
         raise InboxRenderOutlookError(_HTML_TYPE_ERROR)
-    findings: List[RenderFinding] = []
+    findings: list[RenderFinding] = []
     for pattern in _GMAIL_RULES:
         if pattern.search(html):
             findings.append(RenderFinding(
@@ -107,10 +107,10 @@ def audit_gmail(html: str) -> List[RenderFinding]:
     return findings
 
 
-def audit_apple_mail(html: str) -> List[RenderFinding]:
+def audit_apple_mail(html: str) -> list[RenderFinding]:
     if not isinstance(html, str):
         raise InboxRenderOutlookError(_HTML_TYPE_ERROR)
-    findings: List[RenderFinding] = []
+    findings: list[RenderFinding] = []
     if "@media (prefers-color-scheme: dark)" not in html.lower():
         findings.append(RenderFinding(
             rule="apple-mail-dark-mode", severity=Severity.INFO,
@@ -120,7 +120,7 @@ def audit_apple_mail(html: str) -> List[RenderFinding]:
     return findings
 
 
-def audit_all(html: str) -> List[RenderFinding]:
+def audit_all(html: str) -> list[RenderFinding]:
     return (audit_outlook(html) + audit_gmail(html) + audit_apple_mail(html))
 
 
