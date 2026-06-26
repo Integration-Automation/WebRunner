@@ -58,7 +58,7 @@ def _collect_spec(spec: Mapping[str, Any]) -> dict[str, dict[str, set[str]]]:
             if not isinstance(op, Mapping):
                 continue
             responses = op.get("responses") or {}
-            method_map[method] = {str(code) for code in responses.keys()}
+            method_map[method] = {str(code) for code in responses}
         out[path] = method_map
     return out
 

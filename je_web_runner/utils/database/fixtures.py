@@ -100,7 +100,7 @@ def load_into_connection(
         if not rows:
             continue
         safe_table = _safe_identifier(table, "table")
-        columns = [_safe_identifier(c, "column") for c in rows[0].keys()]
+        columns = [_safe_identifier(c, "column") for c in rows[0]]
         sql = _build_insert(safe_table, columns, quote)
         for row in rows:
             # nosemgrep: python_sql_rule-hardcoded-sql-expression

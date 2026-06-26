@@ -161,7 +161,7 @@ class CallbackFunctionExecutor:
         :return: 觸發函式的回傳值 / return value of the trigger function
         """
         try:
-            if trigger_function_name not in self.event_dict.keys():
+            if trigger_function_name not in self.event_dict:
                 raise CallbackExecutorException(get_bad_trigger_function)
 
             # 執行觸發函式

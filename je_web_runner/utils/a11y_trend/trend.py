@@ -76,7 +76,7 @@ def _count_violation(point: A11yTrendPoint, violation: Any) -> None:
 def render_html(points: list[A11yTrendPoint], title: str = "A11y trend") -> str:
     """Render a self-contained HTML page with table + SVG line chart."""
     rows = []
-    impact_keys = sorted({impact for point in points for impact in point.impacts.keys()})
+    impact_keys = sorted({impact for point in points for impact in point.impacts})
     for point in points:
         cells = "".join(
             f"<td>{point.impacts.get(key, 0)}</td>" for key in impact_keys

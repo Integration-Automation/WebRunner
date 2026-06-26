@@ -22,7 +22,7 @@ def _command_names() -> list[str]:
     """Pull every registered command name from the executor singleton."""
     # Imported lazily to avoid an import cycle with the executor module.
     from je_web_runner.utils.executor.action_executor import executor
-    return sorted(name for name in executor.event_dict.keys() if name.startswith("WR_"))
+    return sorted(name for name in executor.event_dict if name.startswith("WR_"))
 
 
 def build_action_schema() -> dict[str, Any]:
