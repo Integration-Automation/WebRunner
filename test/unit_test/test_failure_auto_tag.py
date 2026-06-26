@@ -100,6 +100,20 @@ class TestLlmTags(unittest.TestCase):
                                    {"name": "ok", "confidence": 0.5}])
         self.assertEqual([t.name for t in tags], ["ok"])
 
+    def test_explicit_zero_confidence_preserved(self):
+        tags = llm_tags(FailureBundle(),
+                        lambda b: [{"name": "weak", "confidence": 0}])
+        self.assertEqual(tags[0].confidence, 0.0)
+
+    def test_missing_confidence_defaults_half(self):
+        tags = llm_tags(FailureBundle(), lambda b: [{"name": "x"}])
+        self.assertEqual(tags[0].confidence, 0.5)
+
+    def test_non_numeric_confidence_defaults_half(self):
+        tags = llm_tags(FailureBundle(),
+                        lambda b: [{"name": "x", "confidence": "high"}])
+        self.assertEqual(tags[0].confidence, 0.5)
+
 
 class TestMerge(unittest.TestCase):
 

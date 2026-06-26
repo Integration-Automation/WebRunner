@@ -115,6 +115,18 @@ LlmTagger = Callable[[FailureBundle], Sequence[dict[str, Any]]]
 """Pluggable LLM hook returning ``[{'name', 'confidence', 'reason'}, ...]``."""
 
 
+def _coerce_confidence(value: Any) -> float:
+    """Default to 0.5 only when confidence is absent; an explicit ``0`` is a
+    valid low score (a falsy-coalesce would wrongly promote it to 0.5 and
+    mis-rank the tag in :func:`merge_tags`). Non-numeric input falls back too."""
+    if value is None:
+        return 0.5
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.5
+
+
 def llm_tags(bundle: FailureBundle, tagger: LlmTagger) -> list[Tag]:
     if not callable(tagger):
         raise FailureAutoTagError("tagger must be callable")
@@ -133,7 +145,7 @@ def llm_tags(bundle: FailureBundle, tagger: LlmTagger) -> list[Tag]:
             continue
         out.append(Tag(
             name=name,
-            confidence=float(item.get("confidence") or 0.5),
+            confidence=_coerce_confidence(item.get("confidence")),
             reason=str(item.get("reason") or ""),
         ))
     return out
