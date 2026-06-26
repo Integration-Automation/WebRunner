@@ -14,6 +14,7 @@ from je_web_runner.utils.cdp.cdp_commands import CDPError
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.webdriver.webdriver_wrapper import (
     WebDriverWrapper,
+    _options_dict,
     _webdriver_manager_dict,
 )
 
@@ -32,6 +33,12 @@ class TestWebdriverManagerDict(unittest.TestCase):
         # Calling the entry (as the launch path does) must construct a manager,
         # not raise TypeError. ``.install()`` is intentionally not called here.
         self.assertIsInstance(_webdriver_manager_dict["chromium"](), ChromeDriverManager)
+
+    def test_chromium_options_declare_browser_name(self):
+        # chromium launches via webdriver.Chrome; its Options must declare
+        # browserName, else webdriver.Chrome raises KeyError('browserName').
+        self.assertIn("browserName", _options_dict["chromium"]().default_capabilities)
+        self.assertIn("browserName", _options_dict["chrome"]().default_capabilities)
 
 
 class TestQuit(unittest.TestCase):

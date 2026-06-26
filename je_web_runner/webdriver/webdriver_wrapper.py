@@ -20,7 +20,6 @@ from pathlib import Path
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.chromium.options import ArgOptions as ChromiumOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.ie.options import Options as IEOptions, Options
@@ -80,8 +79,11 @@ _webdriver_manager_dict = {
 # 瀏覽器名稱對應到 Options 類別
 # Mapping browser names to Options classes
 _options_dict = {
+    # chromium runs through webdriver.Chrome, so it needs ChromeOptions (which
+    # sets browserName); the bare ArgOptions base has empty default_capabilities
+    # and makes webdriver.Chrome raise KeyError('browserName') at launch.
     "chrome": ChromeOptions,
-    "chromium": ChromiumOptions,
+    "chromium": ChromeOptions,
     "firefox": FirefoxOptions,
     "edge": EdgeOptions,
     "ie": IEOptions,
