@@ -129,7 +129,11 @@ def run_cases(cases: Sequence[ReplayCase], probe: ProbeFn) -> list[ReplayResult]
 
 
 def assert_all_rejected(results: Sequence[ReplayResult]) -> None:
-    """Raise if any result is ACCEPTED (the server reused something it shouldn't)."""
+    """Raise if any result is ACCEPTED (the server reused something it
+    shouldn't). Also raise on empty ``results``: a green here would be false
+    confidence for a security check that actually exercised nothing."""
+    if not results:
+        raise OauthPkceReplayError("no replay results to check — nothing was tested")
     accepted = [r for r in results if r.outcome == ReplayOutcome.ACCEPTED]
     if accepted:
         names = [r.case for r in accepted]
