@@ -42,7 +42,7 @@ def _require(module: str, attribute: str) -> Any:
 
 def start_postgres(
     image: str = "postgres:16-alpine",
-    user: str = "test",
+    username: str = "test",
     password: str = "test",  # NOSONAR  # nosec B107 — testcontainers default
     dbname: str = "test",
 ) -> Any:
@@ -52,7 +52,8 @@ def start_postgres(
     """
     web_runner_logger.info(f"start_postgres image={image}")
     postgres_cls = _require("postgres", "PostgresContainer")
-    container = postgres_cls(image, user=user, password=password, dbname=dbname)
+    # testcontainers' PostgresContainer expects ``username`` (not ``user``).
+    container = postgres_cls(image, username=username, password=password, dbname=dbname)
     container.start()
     _started.append(container)
     return container
