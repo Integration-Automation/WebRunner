@@ -78,8 +78,12 @@ def check_values(check_dict: dict, result_check_dict: dict) -> None:
     驗證多個屬性值是否正確
     Check if multiple attribute values are correct
 
-    :param check_dict: 預期值字典 / dictionary of expected values
-    :param result_check_dict: 實際檢查結果字典 / dictionary of actual values
+    每個 ``result_check_dict`` 的鍵值對都會與 ``check_dict`` 內同名鍵比對；
+    不相符時拋出例外。錯誤訊息為「should be <預期> but value was <實際>」，
+    因此 ``result_check_dict`` 為預期值、``check_dict`` 為實際值。
+
+    :param check_dict: 實際值字典（被查詢的一方）/ dictionary of actual values to look up
+    :param result_check_dict: 預期值字典（逐一斷言）/ dictionary of expected values to assert
     """
     for key, value in result_check_dict.items():
         if check_dict.get(key) != value:
