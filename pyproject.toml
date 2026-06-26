@@ -42,3 +42,11 @@ content-type = "text/markdown"
 
 [tool.setuptools.packages]
 find = { namespaces = false }
+
+[tool.pytest.ini_options]
+# Real test modules are named test_*.py across unit/integration/e2e. The
+# legacy *_test.py scripts under test/unit_test/*/ are standalone browser
+# programs that call sys.exit() at import time, so restricting collection to
+# the test_*.py pattern keeps `python -m pytest test/` from crashing on them.
+testpaths = ["test"]
+python_files = ["test_*.py"]
