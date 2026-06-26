@@ -534,11 +534,19 @@ class WebDriverWrapper(
             test_object_record.clean_record()  # 清空測試物件紀錄
             self._action_chain = None
             record_action_to_list("webdriver wrapper quit", None, None)
-            self.current_webdriver.quit()
+            # No-op when there is no live driver (mirrors quit_appium_session);
+            # ``None.quit()`` would otherwise raise.
+            if self.current_webdriver is not None:
+                self.current_webdriver.quit()
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper quit failed: {error!r}")
             record_action_to_list("webdriver wrapper quit", None, error)
             raise WebRunnerException from error
+        finally:
+            # Forget the (now dead) driver so the ``is None`` guards in
+            # find_element / etc. correctly report "no active driver".
+            self.current_webdriver = None
+            self._webdriver_name = None
 
 
 # 全域單例，方便直接使用

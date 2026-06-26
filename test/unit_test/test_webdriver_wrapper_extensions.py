@@ -34,6 +34,26 @@ class TestWebdriverManagerDict(unittest.TestCase):
         self.assertIsInstance(_webdriver_manager_dict["chromium"](), ChromeDriverManager)
 
 
+class TestQuit(unittest.TestCase):
+    """``quit`` must quit the live driver, reset state, and no-op when idle."""
+
+    def test_quit_calls_driver_and_resets_state(self):
+        wrapper = WebDriverWrapper()
+        driver = MagicMock(name="driver")
+        wrapper.current_webdriver = driver
+        wrapper._webdriver_name = "chrome"
+        wrapper.quit()
+        driver.quit.assert_called_once()
+        self.assertIsNone(wrapper.current_webdriver)
+        self.assertIsNone(wrapper._webdriver_name)
+
+    def test_quit_no_driver_is_noop(self):
+        wrapper = WebDriverWrapper()
+        wrapper.current_webdriver = None
+        wrapper.quit()  # must not raise
+        self.assertIsNone(wrapper.current_webdriver)
+
+
 class TestSetDriverExperimentalOptions(unittest.TestCase):
     """``set_driver`` 應將 experimental_options 透過 add_experimental_option 傳入 ChromeOptions。"""
 
