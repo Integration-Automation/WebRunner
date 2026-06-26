@@ -109,6 +109,15 @@ class OutgoingReport:
     data: list[int] = field(default_factory=list)
 
 
+def _outgoing_report_id(raw: dict[str, Any]) -> int:
+    """Read the report id from either key; report id ``0`` is valid (single-
+    report devices), so a falsy-coalesce would wrongly discard it."""
+    value = raw.get("reportId")
+    if value is None:
+        value = raw.get("report_id")
+    return int(value) if value is not None else 0
+
+
 def parse_outgoing(payload: Any) -> list[OutgoingReport]:
     if not isinstance(payload, list):
         raise WebhidMockError("payload must be a list")
@@ -117,7 +126,7 @@ def parse_outgoing(payload: Any) -> list[OutgoingReport]:
         if not isinstance(raw, dict):
             continue
         out.append(OutgoingReport(
-            report_id=int(raw.get("reportId") or raw.get("report_id") or 0),
+            report_id=_outgoing_report_id(raw),
             data=[int(b) for b in (raw.get("data") or [])],
         ))
     return out

@@ -65,12 +65,22 @@ class _SessionCookie:
     same_site: str
 
 
+def _cookie_http_only(cookie: dict[str, Any]) -> bool:
+    """Honour an explicit ``httpOnly: False``; a falsy-coalesce across the two
+    key spellings would let a stray ``http_only: True`` mask it (and this audit
+    flags *missing* HttpOnly, so the direction matters)."""
+    value = cookie.get("httpOnly")
+    if value is None:
+        value = cookie.get("http_only")
+    return bool(value)
+
+
 def _extract_session(cookie: dict[str, Any]) -> _SessionCookie:
     return _SessionCookie(
         name=str(cookie.get("name") or ""),
         domain=str(cookie.get("domain") or "").lstrip("."),
         path=str(cookie.get("path") or "/"),
-        http_only=bool(cookie.get("httpOnly") or cookie.get("http_only")),
+        http_only=_cookie_http_only(cookie),
         secure=bool(cookie.get("secure")),
         same_site=(cookie.get("sameSite") or cookie.get("same_site") or "").lower(),
     )
