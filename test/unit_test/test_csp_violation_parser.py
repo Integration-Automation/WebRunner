@@ -49,6 +49,26 @@ class TestParseOne(unittest.TestCase):
         with self.assertRaises(CspViolationParserError):
             parse_one({"csp-report": "nope"})
 
+    def test_line_number_parsed(self):
+        v = parse_one({"line-number": 42})
+        self.assertEqual(v.line_number, 42)
+
+    def test_line_number_zero_is_kept(self):
+        # 0 is a valid line number and must not fall through to lineNumber.
+        v = parse_one({"line-number": 0, "lineNumber": 99})
+        self.assertEqual(v.line_number, 0)
+
+    def test_line_number_camelcase_fallback(self):
+        v = parse_one({"lineNumber": 7})
+        self.assertEqual(v.line_number, 7)
+
+    def test_line_number_missing_defaults_zero(self):
+        self.assertEqual(parse_one({}).line_number, 0)
+
+    def test_line_number_non_numeric_defaults_zero(self):
+        # Malformed input must not crash the parser.
+        self.assertEqual(parse_one({"line-number": "abc"}).line_number, 0)
+
 
 class TestParseMany(unittest.TestCase):
 

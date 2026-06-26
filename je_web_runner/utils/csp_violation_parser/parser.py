@@ -38,6 +38,18 @@ class Violation:
         return asdict(self)
 
 
+def _pick_int(*candidates: Any) -> int:
+    """First non-``None`` candidate as int (``0`` is a valid value, not a miss);
+    falls back to ``0`` on absent or non-numeric input."""
+    for candidate in candidates:
+        if candidate is not None:
+            try:
+                return int(candidate)
+            except (TypeError, ValueError):
+                return 0
+    return 0
+
+
 def parse_one(report: Any) -> Violation:
     if not isinstance(report, dict):
         raise CspViolationParserError("report must be a dict")
@@ -53,7 +65,7 @@ def parse_one(report: Any) -> Violation:
         ),
         blocked_uri=str(body.get("blocked-uri") or body.get("blockedURL") or ""),
         source_file=str(body.get("source-file") or body.get("sourceFile") or ""),
-        line_number=int(body.get("line-number") or body.get("lineNumber") or 0),
+        line_number=_pick_int(body.get("line-number"), body.get("lineNumber")),
         disposition=str(body.get("disposition") or "enforce"),
     )
 

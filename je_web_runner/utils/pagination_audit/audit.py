@@ -209,9 +209,16 @@ def assert_sorted_by(
     """
     if not callable(items_by_page_key):
         raise PaginationAuditError("items_by_page_key must be callable")
-    flattened: list[Hashable] = [
-        key for page_keys in findings.item_keys_by_page for key in page_keys
-    ]
+    try:
+        flattened: list[Hashable] = [
+            items_by_page_key(key)
+            for page_keys in findings.item_keys_by_page
+            for key in page_keys
+        ]
+    except Exception as error:
+        raise PaginationAuditError(
+            f"items_by_page_key failed: {error!r}"
+        ) from error
     if not flattened:
         return
     last = flattened[0]
