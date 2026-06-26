@@ -103,7 +103,7 @@ def minimize(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
                   for i in range(0, len(current), chunk_size)]
         # Try removing complement of each chunk first (granularity = n).
         reduced = False
-        for index, chunk in enumerate(chunks):
+        for index in range(len(chunks)):
             complement = [
                 a for j, c in enumerate(chunks) if j != index for a in c
             ]

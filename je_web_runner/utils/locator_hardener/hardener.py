@@ -199,7 +199,7 @@ def parse_suggestions(raw: str) -> list[LocatorSuggestion]:  # NOSONAR S3776 —
     if not isinstance(obj, list):
         raise LocatorHardenerError("suggestions must be a list")
     out: list[LocatorSuggestion] = []
-    for index, raw_item in enumerate(obj):
+    for raw_item in obj:
         if not isinstance(raw_item, dict):
             continue
         strategy_str = raw_item.get("strategy") or ""

@@ -146,7 +146,7 @@ def structural_clusters(files: Sequence[ActionFile]) -> list[DuplicateCluster]:
     for f in files:
         buckets.setdefault(f.fingerprint, []).append(f.path)
     clusters: list[DuplicateCluster] = []
-    for fingerprint, paths in buckets.items():
+    for paths in buckets.values():
         if len(paths) <= 1:
             continue
         sorted_paths = sorted(paths)
