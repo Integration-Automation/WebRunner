@@ -294,7 +294,10 @@ def build_stealth_chrome_driver(
     opts = build_chrome_options(run_dir, flags=flags)
     service_kwargs = {}
     if chromedriver_log is not None:
-        service_kwargs["log_path"] = str(chromedriver_log)
+        # Selenium 4.x maps a string ``log_output`` to chromedriver's
+        # ``--log-path``; the old ``log_path`` kwarg is swallowed by the
+        # Service ``**kwargs`` and silently ignored (no log written).
+        service_kwargs["log_output"] = str(chromedriver_log)
     try:
         service = ChromeService(**service_kwargs)
         driver = webdriver.Chrome(service=service, options=opts)
