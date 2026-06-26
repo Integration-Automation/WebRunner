@@ -195,7 +195,15 @@ def _safe_extract_tar(archive: tarfile.TarFile, target_dir: Path) -> None:
             candidate.relative_to(base)
         except ValueError as error:
             raise DriverPinError(f"unsafe tar member {member.name!r}") from error
-    archive.extractall(target_dir)  # nosec B202 — members validated above
+    # Name validation above does not cover symlink/hardlink *targets* that
+    # escape ``target_dir`` (the link resolves at extract time, not by name).
+    # Prefer the hardened "data" filter (Python 3.12+, security-backported to
+    # 3.9.17 / 3.10.12 / 3.11.4) which rejects escaping links; fall back to a
+    # plain extract on older interpreters that lack the parameter.
+    try:
+        archive.extractall(target_dir, filter="data")  # nosec B202 — members validated + data filter
+    except TypeError:
+        archive.extractall(target_dir)  # nosec B202 — members validated above
 
 
 def install_for_browser(

@@ -1,5 +1,6 @@
 import io
 import json
+import tarfile
 import tempfile
 import unittest
 import zipfile
@@ -21,6 +22,17 @@ def _zip_with(filename, content=b"fake-binary"):
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w") as zf:
         zf.writestr(filename, content)
+    return buffer.getvalue()
+
+
+def _targz_with(members):
+    """Build a gzip tarball from a ``{name: bytes}`` mapping."""
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w:gz") as tf:
+        for name, content in members.items():
+            info = tarfile.TarInfo(name=name)
+            info.size = len(content)
+            tf.addfile(info, io.BytesIO(content))
     return buffer.getvalue()
 
 
@@ -113,6 +125,36 @@ class TestDownloadPinned(unittest.TestCase):
                 url="https://example.com/g.zip",
                 archive_format="zip",
                 binary_inside="geckodriver.exe",
+            )
+            with self.assertRaises(DriverPinError):
+                download_pinned(pinned, cache_dir=cache_dir,
+                                fetch=lambda _url: payload)
+
+    def test_extracts_targz_archive(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cache_dir = Path(tmpdir) / "cache"
+            payload = _targz_with({"geckodriver": b"tar-binary"})
+            pinned = PinnedDriver(
+                name="geckodriver", version="0.34.0",
+                url="https://example.com/g.tar.gz",
+                archive_format="tar.gz",
+                binary_inside="geckodriver",
+            )
+            result = download_pinned(pinned, cache_dir=cache_dir,
+                                     fetch=lambda _url: payload)
+            self.assertTrue(result.is_file())
+            self.assertEqual(result.read_bytes(), b"tar-binary")
+
+    def test_targz_path_traversal_rejected(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            cache_dir = Path(tmpdir) / "cache"
+            evil_name = "../" * 20 + "evil_escape.txt"
+            payload = _targz_with({evil_name: b"pwned"})
+            pinned = PinnedDriver(
+                name="geckodriver", version="0.34.0",
+                url="https://example.com/g.tar.gz",
+                archive_format="tar.gz",
+                binary_inside="geckodriver",
             )
             with self.assertRaises(DriverPinError):
                 download_pinned(pinned, cache_dir=cache_dir,
