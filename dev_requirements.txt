@@ -8,3 +8,8 @@ defusedxml
 Pillow
 faker
 sqlalchemy
+pytest
+pylint
+flake8
+bandit
+mypy
