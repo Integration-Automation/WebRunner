@@ -128,6 +128,8 @@ def assert_supports(log: PaymentLog, *, method: str) -> None:
 def assert_total_currency(log: PaymentLog, *, currency: str) -> None:
     if not currency:
         raise PaymentRequestAssertError("currency must be non-empty")
+    if not log.constructed:
+        raise PaymentRequestAssertError("page never constructed a PaymentRequest")
     for c in log.constructed:
         total = c.details.get("total") or {}
         amount = total.get("amount") or {} if isinstance(total, dict) else {}

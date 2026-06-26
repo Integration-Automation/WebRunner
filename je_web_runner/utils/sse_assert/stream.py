@@ -234,13 +234,30 @@ def assert_json_shape(
     )
 
 
+def _id_not_increasing(previous: str, current: str) -> bool:
+    """True when ``current`` is not strictly greater than ``previous``.
+
+    Compares numerically when both ids are integer-like so ``"9" -> "10"`` is
+    correctly increasing; otherwise falls back to lexicographic order (SSE ids
+    are opaque strings, e.g. ``"a" -> "b"``).
+    """
+    try:
+        return int(current) <= int(previous)
+    except ValueError:
+        return current <= previous
+
+
 def assert_strictly_increasing_ids(recorder: SseRecorder) -> None:
-    """Assert ``id`` values, when present, are strictly increasing."""
+    """Assert ``id`` values, when present, are strictly increasing.
+
+    Integer-like ids are compared numerically (``"10"`` follows ``"9"``);
+    non-numeric ids fall back to lexicographic comparison.
+    """
     last: str | None = None
     for event in recorder.events():
         if event.id is None:
             continue
-        if last is not None and event.id <= last:
+        if last is not None and _id_not_increasing(last, event.id):
             raise SseAssertError(
                 f"SSE id not strictly increasing: {last!r} -> {event.id!r}"
             )

@@ -92,6 +92,12 @@ class TestCurrency(unittest.TestCase):
         with self.assertRaises(PaymentRequestAssertError):
             assert_total_currency(PaymentLog(), currency="")
 
+    def test_no_pr_constructed(self):
+        # No PaymentRequest built → must fail, not vacuously pass (matches
+        # assert_supports / assert_completed which both guard empty logs).
+        with self.assertRaises(PaymentRequestAssertError):
+            assert_total_currency(PaymentLog(), currency="USD")
+
 
 class TestCompleted(unittest.TestCase):
 
