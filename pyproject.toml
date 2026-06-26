@@ -12,7 +12,12 @@ authors = [
 ]
 description = "WEB Automation Framework"
 requires-python = ">=3.10"
+license = "MIT"
 license-files = ["LICENSE"]
+keywords = [
+    "selenium", "automation", "testing", "web-automation",
+    "webdriver", "browser", "e2e", "qa",
+]
 dependencies = [
     "selenium>=4.0.0",
     'requests',
@@ -22,12 +27,21 @@ dependencies = [
     "Pillow",
 ]
 classifiers = [
-    "Programming Language :: Python :: 3.10",
     "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
     "Environment :: Win32 (MS Windows)",
     "Environment :: MacOS X",
     "Environment :: X11 Applications",
-    "Operating System :: OS Independent"
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
 ]
 
 [project.urls]
