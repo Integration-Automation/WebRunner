@@ -34,6 +34,7 @@ def _spawn():
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        encoding="utf-8",  # MCP emits UTF-8; don't let a cp1252/cp950 locale corrupt it
         bufsize=1,
     )
 

@@ -15,6 +15,7 @@ def _run(args):
         [sys.executable, "-m", "je_web_runner", *args],
         capture_output=True,
         text=True,
+        encoding="utf-8",  # decode child output as UTF-8 regardless of OS locale
         timeout=60,
         check=False,
     )
