@@ -43,6 +43,11 @@ content-type = "text/markdown"
 [tool.setuptools.packages]
 find = { namespaces = false }
 
+[tool.setuptools.package-data]
+# Ship the PEP 561 marker so downstream type checkers honour the inline
+# type hints exported by je_web_runner.
+je_web_runner = ["py.typed"]
+
 [tool.pytest.ini_options]
 # Real test modules are named test_*.py across unit/integration/e2e. The
 # legacy *_test.py scripts under test/unit_test/*/ are standalone browser
