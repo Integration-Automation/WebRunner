@@ -258,7 +258,7 @@ class _ActionsMixin:
             web_runner_logger.error(f"WebDriverWrapper reset_actions failed: {error!r}")
             record_action_to_list("webdriver wrapper reset_actions", None, error)
 
-    def left_click(self, on_element: WebElement = None) -> None:
+    def left_click(self, on_element: WebElement | None = None) -> None:
         """
         滑鼠左鍵點擊 (可指定元素或當前位置)
         Left click mouse at current position or on a given element
@@ -297,7 +297,7 @@ class _ActionsMixin:
             web_runner_logger.error(f"WebDriverWrapper left_click_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper left_click_with_test_object", param, error)
 
-    def left_click_and_hold(self, on_element: WebElement = None) -> None:
+    def left_click_and_hold(self, on_element: WebElement | None = None) -> None:
         """
         滑鼠左鍵按住 (可指定元素或當前位置)
         Left click and hold mouse at current position or on a given element
@@ -332,7 +332,7 @@ class _ActionsMixin:
             web_runner_logger.error(f"WebDriverWrapper left_click_and_hold_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper left_click_and_hold_with_test_object", param, error)
 
-    def right_click(self, on_element: WebElement = None) -> None:
+    def right_click(self, on_element: WebElement | None = None) -> None:
         """
         滑鼠右鍵點擊 (可指定元素或當前位置)
         Right click mouse at current position or on a given element
@@ -367,7 +367,7 @@ class _ActionsMixin:
             web_runner_logger.error(f"WebDriverWrapper right_click_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper right_click_with_test_object", param, error)
 
-    def left_double_click(self, on_element: WebElement = None) -> None:
+    def left_double_click(self, on_element: WebElement | None = None) -> None:
         """
         滑鼠左鍵雙擊 (可指定元素或當前位置)
         Double left click mouse at current position or on a given element
@@ -408,7 +408,7 @@ class _ActionsMixin:
             web_runner_logger.error(f"WebDriverWrapper left_double_click_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper left_double_click_with_test_object", param, error)
 
-    def release(self, on_element: WebElement = None) -> None:
+    def release(self, on_element: WebElement | None = None) -> None:
         """
         釋放滑鼠 (可指定元素或當前位置)
         Release mouse button at current position or on a given element
@@ -445,7 +445,7 @@ class _ActionsMixin:
             web_runner_logger.error(f"WebDriverWrapper release_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper release_with_test_object", param, error)
 
-    def press_key(self, keycode_on_key_class, on_element: WebElement = None) -> None:
+    def press_key(self, keycode_on_key_class, on_element: WebElement | None = None) -> None:
         """
         按下鍵盤按鍵 (可指定元素或當前位置)
         Press a key on keyboard, optionally on a given element
@@ -493,7 +493,7 @@ class _ActionsMixin:
             web_runner_logger.error(f"WebDriverWrapper press_key_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper press_key_with_test_object", param, error)
 
-    def release_key(self, keycode_on_key_class, on_element: WebElement = None) -> None:
+    def release_key(self, keycode_on_key_class, on_element: WebElement | None = None) -> None:
         """
         釋放鍵盤按鍵 (可指定元素或當前位置)
         Release a key on keyboard, optionally on a given element
