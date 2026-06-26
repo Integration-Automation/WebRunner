@@ -21,9 +21,15 @@ class AppiumIntegrationError(WebRunnerException):
 
 
 def _require_appium():
+    """Return ``(appium.webdriver, AppiumOptions)`` or raise an install hint.
+
+    Appium-Python-Client v3 removed the ``desired_capabilities`` kwarg, so the
+    caller builds an ``AppiumOptions`` from the capability dict instead.
+    """
     try:
         from appium import webdriver  # type: ignore[import-not-found]
-        return webdriver
+        from appium.options.common import AppiumOptions  # type: ignore[import-not-found]
+        return webdriver, AppiumOptions
     except ImportError as error:
         raise AppiumIntegrationError(
             "Appium-Python-Client is not installed. "
@@ -49,9 +55,10 @@ def start_appium_session(
         raise AppiumIntegrationError(f"server_url must be http(s): {server_url!r}")
     if not isinstance(capabilities, dict) or not capabilities:
         raise AppiumIntegrationError("capabilities must be a non-empty dict")
-    appium_webdriver = _require_appium()
-    driver = appium_webdriver.Remote(command_executor=server_url, options=None,
-                                     desired_capabilities=capabilities)
+    appium_webdriver, appium_options_cls = _require_appium()
+    options = appium_options_cls()
+    options.load_capabilities(capabilities)
+    driver = appium_webdriver.Remote(command_executor=server_url, options=options)
     if register:
         webdriver_wrapper_instance.current_webdriver = driver
     return driver
