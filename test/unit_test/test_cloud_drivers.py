@@ -93,7 +93,7 @@ class TestConnect(unittest.TestCase):
                    return_value=fake_driver), \
                 patch("je_web_runner.utils.cloud_grid.cloud_drivers.webdriver_wrapper_instance") as wrapper:
             start_remote_driver("https://hub/wd/hub", {"browserName": "chrome"})
-            self.assertIs(wrapper.current_webdriver, fake_driver)
+            wrapper.set_active_driver.assert_called_once_with(fake_driver)
 
 
 if __name__ == "__main__":

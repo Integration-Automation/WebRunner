@@ -60,7 +60,9 @@ def start_appium_session(
     options.load_capabilities(capabilities)
     driver = appium_webdriver.Remote(command_executor=server_url, options=options)
     if register:
-        webdriver_wrapper_instance.current_webdriver = driver
+        # set_active_driver (not a bare current_webdriver assignment) so the
+        # wrapper's ActionChains bind to this driver.
+        webdriver_wrapper_instance.set_active_driver(driver)
     return driver
 
 
