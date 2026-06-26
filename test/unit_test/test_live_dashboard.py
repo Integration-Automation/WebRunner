@@ -41,6 +41,14 @@ class TestLiveDashboard(unittest.TestCase):
         names = [r["function_name"] for r in payload["records"]]
         self.assertEqual(names, ["step_ok", "step_fail"])
 
+    def test_index_renders_records_without_innerhtml_sink(self):
+        # Record fields (function names, exception text quoting page content)
+        # must render via textContent, never tr.innerHTML, to avoid DOM XSS.
+        with urllib.request.urlopen(self._url + "/", timeout=2) as response:  # nosec B310
+            body = response.read().decode("utf-8")
+        self.assertNotIn("tr.innerHTML", body)
+        self.assertIn("textContent", body)
+
     def test_unknown_path_404(self):
         with self.assertRaises(urllib.error.HTTPError) as ctx:
             urllib.request.urlopen(self._url + "/nope", timeout=2)  # nosec B310

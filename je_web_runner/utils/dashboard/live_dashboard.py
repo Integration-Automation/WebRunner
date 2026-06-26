@@ -40,13 +40,19 @@ async function refresh(){
     document.getElementById('summary').textContent =
       `total=${data.total}  passed=${data.passed}  failed=${data.failed}`;
     const rows = document.getElementById('rows');
-    rows.innerHTML = '';
+    rows.replaceChildren();
     data.records.forEach((r, i) => {
       const tr = document.createElement('tr');
       tr.className = r.status === 'failed' ? 'fail' : 'ok';
-      tr.innerHTML = `<td>${i+1}</td><td>${r.time||''}</td>
-        <td>${r.function_name||''}</td><td>${r.status}</td>
-        <td>${r.exception||''}</td>`;
+      // Use textContent (never innerHTML) so recorded values — function
+      // names and exception text that may quote page content from a site
+      // under test — cannot inject HTML/script into this origin.
+      [i + 1, r.time || '', r.function_name || '', r.status, r.exception || '']
+        .forEach((value) => {
+          const td = document.createElement('td');
+          td.textContent = value;
+          tr.appendChild(td);
+        });
       rows.appendChild(tr);
     });
   } catch (e) { /* ignore — keep polling */ }
