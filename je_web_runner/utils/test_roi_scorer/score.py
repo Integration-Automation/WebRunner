@@ -103,7 +103,9 @@ def _recency_score(m: RoiMetrics) -> float:
     return 0.5 ** (m.days_since_last_real_failure / 30)
 
 
-def score_one(m: RoiMetrics, weights: Weights = Weights()) -> RoiScore:
+def score_one(m: RoiMetrics, weights: Weights | None = None) -> RoiScore:
+    if weights is None:
+        weights = Weights()
     if not isinstance(m, RoiMetrics):
         raise RoiScorerError("metrics must be RoiMetrics")
     if abs(weights.total() - 1.0) > 1e-6:
@@ -131,10 +133,12 @@ def score_one(m: RoiMetrics, weights: Weights = Weights()) -> RoiScore:
 
 
 def score_many(
-    metrics: Sequence[RoiMetrics], weights: Weights = Weights(),
+    metrics: Sequence[RoiMetrics], weights: Weights | None = None,
 ) -> List[RoiScore]:
     if not isinstance(metrics, (list, tuple)):
         raise RoiScorerError("metrics must be a sequence")
+    if weights is None:
+        weights = Weights()
     return sorted([score_one(m, weights) for m in metrics],
                   key=lambda s: -s.score)
 

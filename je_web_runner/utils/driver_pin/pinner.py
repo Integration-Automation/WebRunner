@@ -154,7 +154,7 @@ def download_pinned(
 
 
 def _default_fetch(url: str) -> bytes:
-    if not (url.startswith("https://") or url.startswith("http://")):  # NOSONAR — guarded above
+    if not (url.startswith(("https://", "http://"))):  # NOSONAR — guarded above
         raise DriverPinError(f"refusing non-http(s) url: {url!r}")
     ssl_context = ssl.create_default_context()  # NOSONAR — Py3.10+ default enforces TLS 1.2+
     with urllib.request.urlopen(url, context=ssl_context, timeout=120) as response:  # nosec B310 — scheme validated

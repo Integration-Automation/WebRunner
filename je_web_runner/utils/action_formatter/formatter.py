@@ -46,7 +46,7 @@ def _sorted_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
     if not isinstance(kwargs, dict):
         raise ActionFormatterError("action kwargs must be a dict")
     preferred_present = [k for k in _PREFERRED_KWARGS_ORDER if k in kwargs]
-    rest = sorted(k for k in kwargs.keys() if k not in _PREFERRED_KWARGS_ORDER)
+    rest = sorted(k for k in kwargs if k not in _PREFERRED_KWARGS_ORDER)
     ordered: Dict[str, Any] = {}
     for key in preferred_present + rest:
         value = kwargs[key]
