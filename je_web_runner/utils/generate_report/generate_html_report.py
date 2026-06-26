@@ -1,5 +1,4 @@
 import html
-import sys
 from threading import Lock
 
 from je_web_runner.utils.exception.exception_tags import html_generate_no_data_tag
@@ -173,10 +172,8 @@ def generate_html_report(html_name: str = "default_name"):
     web_runner_logger.info(f"generate_html_report, html_name: {html_name}")
     new_html_string = generate_html()
     try:
-        _lock.acquire()  # 確保多執行緒安全 / ensure thread safety
-        with open(html_name + ".html", "w+", encoding="utf-8") as file_to_write:
+        # ``_lock`` serialises concurrent writers; ``with`` guarantees release.
+        with _lock, open(html_name + ".html", "w", encoding="utf-8") as file_to_write:
             file_to_write.write(new_html_string)
-    except Exception as error:
-        print(repr(error), file=sys.stderr)
-    finally:
-        _lock.release()
+    except OSError as error:
+        web_runner_logger.error(f"generate_html_report write failed: {error!r}")
