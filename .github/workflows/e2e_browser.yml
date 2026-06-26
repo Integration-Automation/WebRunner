@@ -41,6 +41,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: 'pip'
+          cache-dependency-path: dev_requirements.txt
 
       - name: Install dependencies
         run: |
