@@ -174,6 +174,17 @@ class WebDriverWrapper(
         self._webdriver_name: str | None = None
         self._action_chain: ActionChains | None = None
 
+    def set_active_driver(self, driver: WebDriver | None) -> None:
+        """
+        將 ``driver`` 設為當前作用中的 driver 並重建 ActionChains。
+        Make ``driver`` the active driver and rebuild its ActionChains so chains
+        keep targeting the right driver after :meth:`WebdriverManager.change_webdriver`
+        switches between parallel drivers (a bare ``current_webdriver`` reassignment
+        would leave ``_action_chain`` bound to the previous driver).
+        """
+        self.current_webdriver = driver
+        self._action_chain = ActionChains(driver) if driver is not None else None
+
     def set_driver(
             self,
             webdriver_name: str,

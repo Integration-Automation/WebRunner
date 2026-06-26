@@ -67,7 +67,9 @@ class WebdriverManager:
         param = locals()
         try:
             self.current_webdriver = self._current_webdriver_list[index_of_webdriver]
-            self.webdriver_wrapper.current_webdriver = self.current_webdriver
+            # Rebind via set_active_driver so the wrapper's ActionChains follow
+            # the switched driver instead of staying on the previous one.
+            self.webdriver_wrapper.set_active_driver(self.current_webdriver)
             record_action_to_list("web runner manager change_webdriver", param, None)
         except Exception as error:
             web_runner_logger.error(
