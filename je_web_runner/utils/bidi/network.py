@@ -41,50 +41,55 @@ def _resolve_network(driver) -> Any:
     return network
 
 
+def _add_request_handler(driver, event: str, callback: Callable[[Any], None]) -> int:
+    """
+    透過 Selenium 4.x BiDi ``network.add_request_handler(event, callback)``
+    註冊一個事件 handler。Selenium 的單一入口以 ``event`` 區分階段
+    (``before_request`` / ``response_started`` / ``auth_required``)，
+    並沒有獨立的 ``add_response_handler`` / callback 版 ``add_auth_handler``。
+    Register a handler via Selenium 4.x BiDi ``add_request_handler(event, cb)``.
+    """
+    network = _resolve_network(driver)
+    add = getattr(network, "add_request_handler", None)
+    if add is None:
+        raise BidiNetworkError(
+            "driver.network.add_request_handler missing; needs Selenium 4.23+"
+        )
+    return add(event, callback)
+
+
 def add_request_handler(driver, callback: Callable[[Any], None]) -> int:
     """
     註冊「請求送出前」事件 handler，回傳訂閱 id。
-    Register a handler for the BiDi ``network.beforeRequestSent`` event;
-    returns a subscription id.
+    Register a handler for the BiDi ``network.beforeRequestSent`` event.
 
     :param callback: 接收事件物件的可呼叫物 / callable taking an event object
     """
     web_runner_logger.info("bidi network add_request_handler")
-    try:
-        return _resolve_network(driver).add_request_handler(callback)
-    except AttributeError as error:
-        raise BidiNetworkError(
-            "driver.network.add_request_handler missing; needs Selenium 4.23+"
-        ) from error
+    return _add_request_handler(driver, "before_request", callback)
 
 
 def add_response_handler(driver, callback: Callable[[Any], None]) -> int:
     """
-    註冊「收到回應」事件 handler，回傳訂閱 id。
-    Register a handler for the BiDi ``network.responseCompleted`` event;
-    returns a subscription id.
+    註冊「回應開始」事件 handler，回傳訂閱 id。
+    Register a handler for the BiDi ``network.responseStarted`` event
+    (Selenium's ``add_request_handler`` only exposes the *started* response
+    phase, not ``responseCompleted``).
     """
     web_runner_logger.info("bidi network add_response_handler")
-    try:
-        return _resolve_network(driver).add_response_handler(callback)
-    except AttributeError as error:
-        raise BidiNetworkError(
-            "driver.network.add_response_handler missing; needs Selenium 4.23+"
-        ) from error
+    return _add_request_handler(driver, "response_started", callback)
 
 
 def add_auth_handler(driver, callback: Callable[[Any], None]) -> int:
     """
     註冊 HTTP 401 / 407 認證挑戰 handler。
-    Register a handler for the BiDi ``network.authRequired`` event.
+    Register a handler for the BiDi ``network.authRequired`` event. (Selenium's
+    own ``add_auth_handler(username, password)`` auto-supplies credentials and
+    is a different feature; this callback-based hook routes through
+    ``add_request_handler('auth_required', ...)``.)
     """
     web_runner_logger.info("bidi network add_auth_handler")
-    try:
-        return _resolve_network(driver).add_auth_handler(callback)
-    except AttributeError as error:
-        raise BidiNetworkError(
-            "driver.network.add_auth_handler missing; needs Selenium 4.23+"
-        ) from error
+    return _add_request_handler(driver, "auth_required", callback)
 
 
 def clear_network_handlers(driver) -> bool:
@@ -94,10 +99,10 @@ def clear_network_handlers(driver) -> bool:
     """
     web_runner_logger.info("bidi network clear_network_handlers")
     network = _resolve_network(driver)
-    clear = getattr(network, "clear_handlers", None) or getattr(network, "clear", None)
+    clear = getattr(network, "clear_request_handlers", None)
     if clear is None:
         raise BidiNetworkError(
-            "driver.network has neither clear_handlers nor clear; "
+            "driver.network.clear_request_handlers missing; "
             "your Selenium version may not expose handler clearing"
         )
     try:
