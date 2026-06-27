@@ -970,18 +970,15 @@ class Executor:
 
         execute_record_dict = {}
 
-        # 檢查 action_list 是否為合法的 list
-        # Validate action_list
-        try:
-            if len(action_list) == 0 or isinstance(action_list, list) is False:
-                web_runner_logger.error(
-                    f"execute_action, action_list: {action_list}, "
-                    f"failed: {WebRunnerExecuteException(executor_list_error)}")
-                raise WebRunnerExecuteException(executor_list_error)
-        except Exception as error:
+        # action_list 必須是 list（空 list 會自然回傳空結果，迴圈不執行）。
+        # 先前這裡的 raise 被同層 except 立即吞掉，等同沒驗證，導致非 list
+        # (例如字串) 會被逐字元迭代。改為直接拒絕非 list。
+        # action_list must be a list; an empty list yields an empty result.
+        if not isinstance(action_list, list):
             web_runner_logger.error(
                 f"execute_action, action_list: {action_list}, "
-                f"failed: {error!r}")
+                f"failed: {WebRunnerExecuteException(executor_list_error)}")
+            raise WebRunnerExecuteException(executor_list_error)
 
         # 逐一執行動作
         # Execute each action in the list
