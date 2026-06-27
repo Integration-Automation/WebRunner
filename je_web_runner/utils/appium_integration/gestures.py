@@ -5,9 +5,10 @@ Actions sequence so it stays compatible with both UiAutomator2 (Android)
 and XCUITest (iOS) without per-platform branching.
 
 The driver is required to expose either ``execute_script`` (for the
-``mobile:`` named-gesture extensions) or ``perform_actions`` (for raw
-W3C input). The helpers prefer the named extension when present and
-fall back to W3C otherwise.
+``mobile:`` named-gesture extensions) or ``execute`` (for raw W3C input
+via the ``actions`` command — Selenium/appium drivers have no
+``perform_actions`` method). The helpers prefer the named extension when
+present and fall back to W3C otherwise.
 """
 from __future__ import annotations
 
@@ -56,11 +57,15 @@ def _w3c_pointer_path(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def _perform_w3c(driver: Any, actions: list[dict[str, Any]]) -> None:
-    if not hasattr(driver, "perform_actions"):
+    # Raw W3C actions go through the same low-level ``actions`` command that
+    # Selenium's ActionChains uses internally; Selenium/appium drivers expose
+    # ``execute`` but no ``perform_actions`` method.
+    if not hasattr(driver, "execute"):
         raise AppiumGestureError(
-            "driver lacks perform_actions and the mobile: gesture extension"
+            "driver lacks execute() and the mobile: gesture extension"
         )
-    driver.perform_actions(actions)
+    from selenium.webdriver.remote.command import Command
+    driver.execute(Command.W3C_ACTIONS, {"actions": actions})
 
 
 def swipe(

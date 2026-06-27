@@ -20,11 +20,20 @@ def _named_only_driver():
 
 
 def _w3c_only_driver():
-    """Driver without the mobile: extension; only W3C perform_actions."""
-    driver = MagicMock(spec=["execute_script", "perform_actions"])
+    """Driver without the mobile: extension; raw W3C via execute(actions)."""
+    driver = MagicMock(spec=["execute_script", "execute"])
     driver.execute_script = MagicMock(side_effect=RuntimeError("no extension"))
-    driver.perform_actions = MagicMock()
+    driver.execute = MagicMock()
     return driver
+
+
+def _fallback_actions(driver):
+    """Pull the W3C action devices from the driver.execute(actions) call."""
+    from selenium.webdriver.remote.command import Command
+    driver.execute.assert_called_once()
+    command, payload = driver.execute.call_args.args
+    assert command == Command.W3C_ACTIONS, command
+    return payload["actions"]
 
 
 class TestSwipe(unittest.TestCase):
@@ -39,8 +48,7 @@ class TestSwipe(unittest.TestCase):
     def test_w3c_fallback_path(self):
         driver = _w3c_only_driver()
         swipe(driver, Point(0, 0), Point(0, 200))
-        driver.perform_actions.assert_called_once()
-        actions = driver.perform_actions.call_args.args[0]
+        actions = _fallback_actions(driver)
         self.assertEqual(actions[0]["type"], "pointer")
 
     def test_invalid_duration(self):
@@ -67,7 +75,7 @@ class TestScroll(unittest.TestCase):
     def test_fallback_synthesizes_swipe(self):
         driver = _w3c_only_driver()
         scroll(driver, "down")
-        driver.perform_actions.assert_called_once()
+        _fallback_actions(driver)
 
 
 class TestLongPress(unittest.TestCase):
@@ -81,7 +89,7 @@ class TestLongPress(unittest.TestCase):
     def test_fallback_pause(self):
         driver = _w3c_only_driver()
         long_press(driver, Point(50, 50), duration_ms=500)
-        actions = driver.perform_actions.call_args.args[0]
+        actions = _fallback_actions(driver)
         sub = actions[0]["actions"]
         self.assertTrue(any(a["type"] == "pause" and a["duration"] == 500 for a in sub))
 
@@ -111,7 +119,7 @@ class TestPinch(unittest.TestCase):
     def test_w3c_two_finger_fallback(self):
         driver = _w3c_only_driver()
         pinch(driver, rect=(0, 0, 200, 200), scale=2.0)
-        actions = driver.perform_actions.call_args.args[0]
+        actions = _fallback_actions(driver)
         self.assertEqual(len(actions), 2)
 
 
@@ -126,7 +134,7 @@ class TestDoubleTap(unittest.TestCase):
     def test_fallback_emits_two_downs(self):
         driver = _w3c_only_driver()
         double_tap(driver, Point(20, 20))
-        sub = driver.perform_actions.call_args.args[0][0]["actions"]
+        sub = _fallback_actions(driver)[0]["actions"]
         downs = [a for a in sub if a.get("type") == "pointerDown"]
         self.assertEqual(len(downs), 2)
 
