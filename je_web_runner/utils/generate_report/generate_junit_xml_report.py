@@ -93,13 +93,10 @@ def generate_junit_xml_report(junit_file_name: str = "default_name") -> None:
     junit_xml = generate_junit_xml()
     target = junit_file_name + "_junit.xml"
     try:
-        _lock.acquire()
-        with open(target, "w+", encoding="utf-8") as file_to_write:
+        with _lock, open(target, "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             file_to_write.write('<?xml version="1.0" encoding="UTF-8"?>\n')
             file_to_write.write(junit_xml)
     except OSError as error:
         web_runner_logger.error(
-            f"generate_junit_xml_report, junit_file_name: {junit_file_name}, failed: {repr(error)}"
+            f"generate_junit_xml_report, junit_file_name: {junit_file_name}, failed: {error!r}"
         )
-    finally:
-        _lock.release()

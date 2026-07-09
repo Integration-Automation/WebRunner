@@ -20,7 +20,7 @@ import random
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Sequence, Union
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -58,7 +58,7 @@ class Mutation:
     original: Any = None
     mutated: Any = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
         out["type"] = self.type.value
         return out
@@ -70,9 +70,9 @@ class MutationResult:
 
     mutation: Mutation
     killed: bool
-    error: Optional[str] = None
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "mutation": self.mutation.to_dict(),
             "killed": self.killed,
@@ -88,9 +88,9 @@ class MutationScore:
     killed: int
     survived: int
     score: float
-    results: List[MutationResult] = field(default_factory=list)
+    results: list[MutationResult] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "total": self.total,
             "killed": self.killed,
@@ -102,7 +102,7 @@ class MutationScore:
 
 # ---------- helpers ------------------------------------------------------
 
-def _kwargs_of(action: List[Any]) -> Optional[Dict[str, Any]]:
+def _kwargs_of(action: list[Any]) -> dict[str, Any] | None:
     if not isinstance(action, list) or not action:
         return None
     if len(action) >= 3 and isinstance(action[2], dict):
@@ -112,7 +112,7 @@ def _kwargs_of(action: List[Any]) -> Optional[Dict[str, Any]]:
     return None
 
 
-def _action_command(action: List[Any]) -> str:
+def _action_command(action: list[Any]) -> str:
     if isinstance(action, list) and action and isinstance(action[0], str):
         return action[0]
     return ""
@@ -120,8 +120,8 @@ def _action_command(action: List[Any]) -> str:
 
 # ---------- mutation generators -----------------------------------------
 
-def _gen_locator_swap(actions: List[Any]) -> List[Mutation]:
-    mutations: List[Mutation] = []
+def _gen_locator_swap(actions: list[Any]) -> list[Mutation]:
+    mutations: list[Mutation] = []
     for idx, action in enumerate(actions):
         kwargs = _kwargs_of(action)
         if not kwargs:
@@ -139,8 +139,8 @@ def _gen_locator_swap(actions: List[Any]) -> List[Mutation]:
     return mutations
 
 
-def _gen_timeout_shrink(actions: List[Any]) -> List[Mutation]:
-    mutations: List[Mutation] = []
+def _gen_timeout_shrink(actions: list[Any]) -> list[Mutation]:
+    mutations: list[Mutation] = []
     for idx, action in enumerate(actions):
         kwargs = _kwargs_of(action)
         if not kwargs:
@@ -158,8 +158,8 @@ def _gen_timeout_shrink(actions: List[Any]) -> List[Mutation]:
     return mutations
 
 
-def _gen_url_change(actions: List[Any]) -> List[Mutation]:
-    mutations: List[Mutation] = []
+def _gen_url_change(actions: list[Any]) -> list[Mutation]:
+    mutations: list[Mutation] = []
     for idx, action in enumerate(actions):
         kwargs = _kwargs_of(action)
         if not kwargs:
@@ -189,8 +189,8 @@ def _flip_assertion_value(value: Any) -> Any:
     return f"__MUTATED__{value!r}"
 
 
-def _gen_assertion_flip(actions: List[Any]) -> List[Mutation]:
-    mutations: List[Mutation] = []
+def _gen_assertion_flip(actions: list[Any]) -> list[Mutation]:
+    mutations: list[Mutation] = []
     for idx, action in enumerate(actions):
         kwargs = _kwargs_of(action)
         if not kwargs:
@@ -209,8 +209,8 @@ def _gen_assertion_flip(actions: List[Any]) -> List[Mutation]:
     return mutations
 
 
-def _gen_action_removal(actions: List[Any]) -> List[Mutation]:
-    mutations: List[Mutation] = []
+def _gen_action_removal(actions: list[Any]) -> list[Mutation]:
+    mutations: list[Mutation] = []
     for idx, action in enumerate(actions):
         command = _action_command(action)
         if not command:
@@ -227,8 +227,8 @@ def _gen_action_removal(actions: List[Any]) -> List[Mutation]:
     return mutations
 
 
-def _gen_adjacent_reorder(actions: List[Any]) -> List[Mutation]:
-    mutations: List[Mutation] = []
+def _gen_adjacent_reorder(actions: list[Any]) -> list[Mutation]:
+    mutations: list[Mutation] = []
     for idx in range(len(actions) - 1):
         if not isinstance(actions[idx], list) or not isinstance(actions[idx + 1], list):
             continue
@@ -250,7 +250,7 @@ def _gen_adjacent_reorder(actions: List[Any]) -> List[Mutation]:
     return mutations
 
 
-_GENERATORS: Dict[MutationType, Callable[[List[Any]], List[Mutation]]] = {
+_GENERATORS: dict[MutationType, Callable[[list[Any]], list[Mutation]]] = {
     MutationType.LOCATOR_SWAP: _gen_locator_swap,
     MutationType.TIMEOUT_SHRINK: _gen_timeout_shrink,
     MutationType.URL_CHANGE: _gen_url_change,
@@ -261,12 +261,12 @@ _GENERATORS: Dict[MutationType, Callable[[List[Any]], List[Mutation]]] = {
 
 
 def generate_mutations(
-    actions: List[Any],
+    actions: list[Any],
     types: Sequence[MutationType] = _DEFAULT_MUTATION_TYPES,
     *,
-    seed: Optional[int] = None,
-    max_per_type: Optional[int] = None,
-) -> List[Mutation]:
+    seed: int | None = None,
+    max_per_type: int | None = None,
+) -> list[Mutation]:
     """
     依 mutation type 對 action list 生出可能的變異。
     Run every configured generator and concatenate. ``max_per_type`` caps
@@ -276,7 +276,7 @@ def generate_mutations(
     if not isinstance(actions, list):
         raise MutationTestingError(f"actions must be a list, got {type(actions).__name__}")
     rng = random.Random(seed) if seed is not None else random  # nosec B311 — mutation sampling, not crypto
-    all_mutations: List[Mutation] = []
+    all_mutations: list[Mutation] = []
     for mt in types:
         generator = _GENERATORS.get(mt)
         if generator is None:
@@ -290,7 +290,7 @@ def generate_mutations(
 
 # ---------- apply ---------------------------------------------------------
 
-def apply_mutation(actions: List[Any], mutation: Mutation) -> List[Any]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+def apply_mutation(actions: list[Any], mutation: Mutation) -> list[Any]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """
     產生一份套了 mutation 的 actions（不修改原 list）。
     Return a deep-copied action list with ``mutation`` applied. Mutations
@@ -343,16 +343,16 @@ def apply_mutation(actions: List[Any], mutation: Mutation) -> List[Any]:  # NOSO
 
 # ---------- runner -------------------------------------------------------
 
-ExecutorFn = Callable[[List[Any]], bool]
+ExecutorFn = Callable[[list[Any]], bool]
 
 
 def run_mutation_testing(
-    actions: List[Any],
+    actions: list[Any],
     executor: ExecutorFn,
     *,
     types: Sequence[MutationType] = _DEFAULT_MUTATION_TYPES,
-    seed: Optional[int] = None,
-    max_per_type: Optional[int] = None,
+    seed: int | None = None,
+    max_per_type: int | None = None,
     stop_on_first_survivor: bool = False,
 ) -> MutationScore:
     """
@@ -363,12 +363,12 @@ def run_mutation_testing(
     executor are caught and treated as kills (failures).
     """
     mutations = generate_mutations(actions, types, seed=seed, max_per_type=max_per_type)
-    results: List[MutationResult] = []
+    results: list[MutationResult] = []
     for mutation in mutations:
         mutated = apply_mutation(actions, mutation)
         try:
             passed = bool(executor(mutated))
-        except Exception as error:  # noqa: BLE001 — executor may raise
+        except Exception as error:
             results.append(MutationResult(
                 mutation=mutation, killed=True, error=repr(error),
             ))
@@ -392,7 +392,7 @@ def run_mutation_testing(
 
 
 def run_mutation_testing_on_file(
-    action_path: Union[str, Path],
+    action_path: str | Path,
     executor: ExecutorFn,
     **kwargs: Any,
 ) -> MutationScore:

@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import re
 from enum import Enum
-from typing import Any, Dict
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -43,7 +43,7 @@ _PII_PATTERNS = (
 )
 
 
-def assert_fcm_payload(payload: Dict[str, Any]) -> None:
+def assert_fcm_payload(payload: dict[str, Any]) -> None:
     if not isinstance(payload, dict):
         raise PushDeliveryError("payload must be a dict")
     if "message" not in payload:
@@ -61,7 +61,7 @@ def assert_fcm_payload(payload: Dict[str, Any]) -> None:
         _assert_ttl_string(message["android"].get("ttl"), FCM_MAX_TTL_SEC)
 
 
-def assert_apns_payload(payload: Dict[str, Any]) -> None:
+def assert_apns_payload(payload: dict[str, Any]) -> None:
     if not isinstance(payload, dict):
         raise PushDeliveryError("payload must be a dict")
     aps = payload.get("aps")
@@ -79,7 +79,7 @@ def assert_apns_payload(payload: Dict[str, Any]) -> None:
         _assert_no_pii(alert)
 
 
-def _assert_size(payload: Dict[str, Any], max_bytes: int) -> None:
+def _assert_size(payload: dict[str, Any], max_bytes: int) -> None:
     serialized = json.dumps(payload, separators=(",", ":"))
     size = len(serialized.encode("utf-8"))
     if size > max_bytes:
@@ -88,7 +88,7 @@ def _assert_size(payload: Dict[str, Any], max_bytes: int) -> None:
         )
 
 
-def _assert_no_pii(notification: Dict[str, Any]) -> None:
+def _assert_no_pii(notification: dict[str, Any]) -> None:
     for field_name in ("title", "body"):
         value = notification.get(field_name)
         if not isinstance(value, str):
@@ -120,7 +120,7 @@ def _assert_ttl_string(ttl: Any, max_seconds: int) -> None:
         )
 
 
-def assert_collapse_intent(payload: Dict[str, Any]) -> None:
+def assert_collapse_intent(payload: dict[str, Any]) -> None:
     """If the message is *meant* to replace older notifications, a
     collapse key / thread identifier must be set."""
     if isinstance(payload.get("aps"), dict):

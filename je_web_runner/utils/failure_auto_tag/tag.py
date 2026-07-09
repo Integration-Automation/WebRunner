@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -26,8 +26,8 @@ class FailureBundle:
 
     exception_text: str = ""
     last_action: str = ""
-    console_errors: List[str] = field(default_factory=list)
-    network_errors: List[Dict[str, Any]] = field(default_factory=list)
+    console_errors: list[str] = field(default_factory=list)
+    network_errors: list[dict[str, Any]] = field(default_factory=list)
 
     def is_empty(self) -> bool:
         return not (self.exception_text or self.last_action
@@ -40,13 +40,13 @@ class Tag:
     confidence: float = 1.0
     reason: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 # pattern -> tag.  Order matters: first hit wins per rule, but every rule
 # is evaluated so multiple tags can fire.
-_PATTERN_TAGS: List[tuple] = [
+_PATTERN_TAGS: list[tuple] = [
     (re.compile(r"NoSuchElement|element not found|locator did not match",
                 re.IGNORECASE), "flaky-locator",
      "Selector did not resolve to an element."),
@@ -66,7 +66,7 @@ _PATTERN_TAGS: List[tuple] = [
 ]
 
 
-def _network_tag(bundle: FailureBundle) -> Optional[Tag]:
+def _network_tag(bundle: FailureBundle) -> Tag | None:
     server_errors = [e for e in bundle.network_errors
                      if isinstance(e, dict) and 500 <= int(e.get("status", 0)) < 600]
     if server_errors:
@@ -81,7 +81,7 @@ def _network_tag(bundle: FailureBundle) -> Optional[Tag]:
     return None
 
 
-def _console_tag(bundle: FailureBundle) -> Optional[Tag]:
+def _console_tag(bundle: FailureBundle) -> Tag | None:
     if any("Uncaught" in c or "TypeError" in c or "ReferenceError" in c
            for c in bundle.console_errors):
         return Tag(name="js-error", confidence=0.9,
@@ -89,13 +89,13 @@ def _console_tag(bundle: FailureBundle) -> Optional[Tag]:
     return None
 
 
-def heuristic_tags(bundle: FailureBundle) -> List[Tag]:
+def heuristic_tags(bundle: FailureBundle) -> list[Tag]:
     """Cheap, deterministic tag pass — no LLM required."""
     if not isinstance(bundle, FailureBundle):
         raise FailureAutoTagError("bundle must be FailureBundle")
     if bundle.is_empty():
         raise FailureAutoTagError("bundle has no signal to tag on")
-    tags: List[Tag] = []
+    tags: list[Tag] = []
     text = bundle.exception_text or ""
     for pattern, name, reason in _PATTERN_TAGS:
         if pattern.search(text):
@@ -111,11 +111,23 @@ def heuristic_tags(bundle: FailureBundle) -> List[Tag]:
 
 # ---------------- optional LLM augmentation ----------------
 
-LlmTagger = Callable[[FailureBundle], Sequence[Dict[str, Any]]]
+LlmTagger = Callable[[FailureBundle], Sequence[dict[str, Any]]]
 """Pluggable LLM hook returning ``[{'name', 'confidence', 'reason'}, ...]``."""
 
 
-def llm_tags(bundle: FailureBundle, tagger: LlmTagger) -> List[Tag]:
+def _coerce_confidence(value: Any) -> float:
+    """Default to 0.5 only when confidence is absent; an explicit ``0`` is a
+    valid low score (a falsy-coalesce would wrongly promote it to 0.5 and
+    mis-rank the tag in :func:`merge_tags`). Non-numeric input falls back too."""
+    if value is None:
+        return 0.5
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.5
+
+
+def llm_tags(bundle: FailureBundle, tagger: LlmTagger) -> list[Tag]:
     if not callable(tagger):
         raise FailureAutoTagError("tagger must be callable")
     try:
@@ -124,7 +136,7 @@ def llm_tags(bundle: FailureBundle, tagger: LlmTagger) -> List[Tag]:
         raise FailureAutoTagError(f"llm tagger failed: {error!r}") from error
     if not isinstance(raw, (list, tuple)):
         raise FailureAutoTagError("tagger must return a sequence of tag dicts")
-    out: List[Tag] = []
+    out: list[Tag] = []
     for item in raw:
         if not isinstance(item, dict):
             continue
@@ -133,15 +145,15 @@ def llm_tags(bundle: FailureBundle, tagger: LlmTagger) -> List[Tag]:
             continue
         out.append(Tag(
             name=name,
-            confidence=float(item.get("confidence") or 0.5),
+            confidence=_coerce_confidence(item.get("confidence")),
             reason=str(item.get("reason") or ""),
         ))
     return out
 
 
-def merge_tags(*streams: Sequence[Tag]) -> List[Tag]:
+def merge_tags(*streams: Sequence[Tag]) -> list[Tag]:
     """De-duplicate by name, keeping the highest-confidence reason."""
-    best: Dict[str, Tag] = {}
+    best: dict[str, Tag] = {}
     for stream in streams:
         for tag in stream:
             existing = best.get(tag.name)

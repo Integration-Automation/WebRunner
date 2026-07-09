@@ -9,7 +9,7 @@ from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 _VALID_MODULE_NAME = re.compile(r"^[A-Za-z_]\w*(\.[A-Za-z_]\w*)*$", re.ASCII)
 
 
-class PackageManager(object):
+class PackageManager:
 
     def __init__(self):
         # 已安裝套件快取，避免重複載入

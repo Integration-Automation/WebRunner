@@ -6,7 +6,6 @@ and CDP Fetch interception primitives.
 from __future__ import annotations
 
 import base64
-from typing import List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -21,7 +20,7 @@ class _ScriptingMixin:
     """
 
     # exec selenium command
-    def execute(self, driver_command: str, params: dict = None) -> dict | None:
+    def execute(self, driver_command: str, params: dict | None = None) -> dict | None:
         """
         執行 Selenium WebDriver 的底層命令
         Execute a raw WebDriver command
@@ -37,7 +36,7 @@ class _ScriptingMixin:
             return self.current_webdriver.execute(driver_command, params)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper execute, driver_command: {driver_command}, params: {params}, failed: {repr(error)}"
+                f"WebDriverWrapper execute, driver_command: {driver_command}, params: {params}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper execute", param, error)
 
@@ -58,11 +57,11 @@ class _ScriptingMixin:
             record_action_to_list("webdriver wrapper execute_script", param, None)
             return value
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper execute_script, script: {script}, failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper execute_script, script: {script}, failed: {error!r}")
             record_action_to_list("webdriver wrapper execute_script", param, error)
             return None
 
-    def execute_cdp_cmd(self, cmd: str, cmd_args: dict = None):
+    def execute_cdp_cmd(self, cmd: str, cmd_args: dict | None = None):
         """
         在當前 driver 上執行 Chrome DevTools Protocol 命令 (僅 Chromium 系)。
         Issue a Chrome DevTools Protocol command on the current driver (Chromium-only).
@@ -93,7 +92,7 @@ class _ScriptingMixin:
             return result
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper execute_cdp_cmd, cmd: {cmd}, failed: {repr(error)}"
+                f"WebDriverWrapper execute_cdp_cmd, cmd: {cmd}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper execute_cdp_cmd", param, error)
             raise
@@ -239,7 +238,7 @@ class _ScriptingMixin:
             },
         )
 
-    def block_urls(self, patterns: List[str]) -> None:
+    def block_urls(self, patterns: list[str]) -> None:
         """
         透過 CDP ``Network.setBlockedURLs`` 阻擋符合任一 pattern 的請求。
         Block requests matching any pattern via CDP ``Network.setBlockedURLs``.
@@ -290,7 +289,7 @@ class _ScriptingMixin:
             record_action_to_list("webdriver wrapper add_console_listener", param, None)
             return subscription_id
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper add_console_listener failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper add_console_listener failed: {error!r}")
             record_action_to_list("webdriver wrapper add_console_listener", param, error)
             raise
 
@@ -306,7 +305,7 @@ class _ScriptingMixin:
             record_action_to_list("webdriver wrapper add_js_error_listener", param, None)
             return subscription_id
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper add_js_error_listener failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper add_js_error_listener failed: {error!r}")
             record_action_to_list("webdriver wrapper add_js_error_listener", param, error)
             raise
 
@@ -324,7 +323,7 @@ class _ScriptingMixin:
             record_action_to_list("webdriver wrapper remove_console_listener", param, None)
             return True
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper remove_console_listener failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper remove_console_listener failed: {error!r}")
             record_action_to_list("webdriver wrapper remove_console_listener", param, error)
             return False
 
@@ -340,7 +339,7 @@ class _ScriptingMixin:
             record_action_to_list("webdriver wrapper remove_js_error_listener", param, None)
             return True
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper remove_js_error_listener failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper remove_js_error_listener failed: {error!r}")
             record_action_to_list("webdriver wrapper remove_js_error_listener", param, error)
             return False
 
@@ -391,7 +390,7 @@ class _ScriptingMixin:
 
     def enable_fetch_interception(
             self,
-            patterns: list = None,
+            patterns: list | None = None,
             handle_auth: bool = False,
     ) -> None:
         """
@@ -420,8 +419,8 @@ class _ScriptingMixin:
     def continue_request(
             self,
             request_id: str,
-            url: str = None,
-            method: str = None,
+            url: str | None = None,
+            method: str | None = None,
             post_data=None,
             headers=None,
     ) -> None:
@@ -454,7 +453,7 @@ class _ScriptingMixin:
             response_code: int,
             body=None,
             response_headers=None,
-            response_phrase: str = None,
+            response_phrase: str | None = None,
     ) -> None:
         """
         以指定 response 回應一個被攔截的請求 (不再送出到原伺服器)。
@@ -509,6 +508,6 @@ class _ScriptingMixin:
             return result
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper execute_async_script, script: {script}, failed: {repr(error)}"
+                f"WebDriverWrapper execute_async_script, script: {script}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper execute_async_script", param, error)

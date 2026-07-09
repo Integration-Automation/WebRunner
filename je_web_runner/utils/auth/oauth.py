@@ -12,7 +12,7 @@ token cache so repeated runs in the same process don't re-fetch.
 from __future__ import annotations
 
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 import requests
 
@@ -25,18 +25,18 @@ class OAuthError(WebRunnerException):
 
 
 _DEFAULT_TIMEOUT = 30
-_token_cache: Dict[str, Dict[str, Any]] = {}
+_token_cache: dict[str, dict[str, Any]] = {}
 
 
 def _check_token_url(url: str) -> str:
     if not isinstance(url, str) or not url:
         raise OAuthError("token_url must be a non-empty string")
-    if not (url.startswith("http://") or url.startswith("https://")):  # NOSONAR — scheme allow-list, not an outbound HTTP call
+    if not (url.startswith(("http://", "https://"))):  # NOSONAR — scheme allow-list, not an outbound HTTP call
         raise OAuthError(f"token_url must be http(s): {url!r}")
     return url
 
 
-def _post_token(token_url: str, data: Dict[str, Any], timeout: int) -> Dict[str, Any]:
+def _post_token(token_url: str, data: dict[str, Any], timeout: int) -> dict[str, Any]:
     safe_url = _check_token_url(token_url)
     web_runner_logger.info(f"oauth POST {safe_url}")
     response = requests.post(safe_url, data=data, timeout=timeout)
@@ -55,10 +55,10 @@ def client_credentials_token(
     token_url: str,
     client_id: str,
     client_secret: str,
-    scope: Optional[str] = None,
-    cache_key: Optional[str] = None,
+    scope: str | None = None,
+    cache_key: str | None = None,
     timeout: int = _DEFAULT_TIMEOUT,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     OAuth2 client-credentials 流程
     Run an OAuth2 client-credentials grant and return the token response.
@@ -66,7 +66,7 @@ def client_credentials_token(
     cached = get_cached_token(cache_key) if cache_key else None
     if cached and not _is_expired(cached):
         return cached
-    data: Dict[str, Any] = {
+    data: dict[str, Any] = {
         "grant_type": "client_credentials",
         "client_id": client_id,
         "client_secret": client_secret,
@@ -85,10 +85,10 @@ def password_grant_token(
     client_secret: str,
     username: str,
     password: str,
-    scope: Optional[str] = None,
-    cache_key: Optional[str] = None,
+    scope: str | None = None,
+    cache_key: str | None = None,
     timeout: int = _DEFAULT_TIMEOUT,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     OAuth2 password grant（多數 IdP 已棄用，僅 legacy 系統用）
     Run an OAuth2 password (Resource Owner Password Credentials) grant.
@@ -98,7 +98,7 @@ def password_grant_token(
     cached = get_cached_token(cache_key) if cache_key else None
     if cached and not _is_expired(cached):
         return cached
-    data: Dict[str, Any] = {
+    data: dict[str, Any] = {
         "grant_type": "password",
         "client_id": client_id,
         "client_secret": client_secret,
@@ -118,10 +118,10 @@ def refresh_token_grant(
     client_id: str,
     client_secret: str,
     refresh_token: str,
-    cache_key: Optional[str] = None,
+    cache_key: str | None = None,
     timeout: int = _DEFAULT_TIMEOUT,
-) -> Dict[str, Any]:
-    data: Dict[str, Any] = {
+) -> dict[str, Any]:
+    data: dict[str, Any] = {
         "grant_type": "refresh_token",
         "refresh_token": refresh_token,
         "client_id": client_id,
@@ -133,7 +133,7 @@ def refresh_token_grant(
     return payload
 
 
-def get_cached_token(cache_key: str) -> Optional[Dict[str, Any]]:
+def get_cached_token(cache_key: str) -> dict[str, Any] | None:
     if not cache_key:
         return None
     cached = _token_cache.get(cache_key)
@@ -147,12 +147,12 @@ def clear_token_cache() -> None:
     _token_cache.clear()
 
 
-def bearer_header(access_token: str) -> Dict[str, str]:
+def bearer_header(access_token: str) -> dict[str, str]:
     """Convenience: build the Authorization header for HTTP commands."""
     return {"Authorization": f"Bearer {access_token}"}
 
 
-def _is_expired(token: Dict[str, Any]) -> bool:
+def _is_expired(token: dict[str, Any]) -> bool:
     expires_in = token.get("expires_in")
     obtained_at = token.get("_obtained_at", 0)
     if not isinstance(expires_in, (int, float)) or expires_in <= 0:

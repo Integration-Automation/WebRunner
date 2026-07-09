@@ -15,7 +15,7 @@ import re
 import unicodedata
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Sequence, Union
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -77,7 +77,7 @@ def _require_pil() -> Any:
         ) from error
 
 
-def _open_image(source: Union[bytes, str, Path, Any]) -> Any:
+def _open_image(source: bytes | str | Path | Any) -> Any:
     image_cls = _require_pil()
     if isinstance(source, (bytes, bytearray)):
         from io import BytesIO
@@ -113,9 +113,9 @@ def tesseract_backend(
 
 
 def extract_text(
-    source: Union[bytes, str, Path, Any],
+    source: bytes | str | Path | Any,
     *,
-    backend: Optional[OcrBackend] = None,
+    backend: OcrBackend | None = None,
 ) -> str:
     """Run OCR on a screenshot / image and return the raw recognised text."""
     runner = backend or tesseract_backend()
@@ -138,7 +138,7 @@ class OcrMatchResult:
     needle: str
     haystack: str
     score: float = 0.0
-    notes: List[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
 
     def raise_if_failed(self) -> None:
         if not self.matched:
@@ -150,10 +150,10 @@ class OcrMatchResult:
 
 
 def assert_text_contains(
-    source: Union[bytes, str, Path, Any],
+    source: bytes | str | Path | Any,
     needle: str,
     *,
-    backend: Optional[OcrBackend] = None,
+    backend: OcrBackend | None = None,
     case_sensitive: bool = False,
 ) -> OcrMatchResult:
     """Assert that ``needle`` appears in the OCR output (whitespace-collapsed)."""
@@ -182,11 +182,11 @@ def assert_text_contains(
 
 
 def assert_text_fuzzy(
-    source: Union[bytes, str, Path, Any],
+    source: bytes | str | Path | Any,
     expected: str,
     *,
     min_ratio: float = 0.8,
-    backend: Optional[OcrBackend] = None,
+    backend: OcrBackend | None = None,
 ) -> OcrMatchResult:
     """Assert that the OCR output is ``min_ratio``-similar to ``expected``."""
     if not 0.0 < min_ratio <= 1.0:
@@ -207,10 +207,10 @@ def assert_text_fuzzy(
 
 
 def assert_text_any(
-    source: Union[bytes, str, Path, Any],
+    source: bytes | str | Path | Any,
     candidates: Sequence[str],
     *,
-    backend: Optional[OcrBackend] = None,
+    backend: OcrBackend | None = None,
 ) -> OcrMatchResult:
     """Assert that at least one ``candidate`` appears in the OCR output."""
     if not candidates:

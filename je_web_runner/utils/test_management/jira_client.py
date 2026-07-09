@@ -7,7 +7,7 @@ Auth: user email + API token via HTTP basic auth.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
 from requests.auth import HTTPBasicAuth
@@ -28,7 +28,7 @@ _NO_EXCEPTION = "None"
 def _check_url(base_url: str) -> str:
     if not isinstance(base_url, str) or not base_url:
         raise JiraError("base_url must be a non-empty string")
-    if not (base_url.startswith("http://") or base_url.startswith("https://")):  # NOSONAR — scheme allow-list, not an outbound HTTP call
+    if not (base_url.startswith(("http://", "https://"))):  # NOSONAR — scheme allow-list, not an outbound HTTP call
         raise JiraError(f"base_url must be http(s): {base_url!r}")
     return base_url.rstrip("/")
 
@@ -41,16 +41,16 @@ def jira_create_issue(
     summary: str,
     description: str = "",
     issue_type: str = "Bug",
-    extra_fields: Optional[Dict[str, Any]] = None,
+    extra_fields: dict[str, Any] | None = None,
     timeout: int = _DEFAULT_TIMEOUT,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     建立 JIRA issue
     Create a JIRA issue and return the response JSON.
     """
     web_runner_logger.info(f"jira_create_issue: project={project_key}")
     url = f"{_check_url(base_url)}/rest/api/3/issue"
-    fields: Dict[str, Any] = {
+    fields: dict[str, Any] = {
         "project": {"key": project_key},
         "summary": summary,
         "issuetype": {"name": issue_type},
@@ -84,8 +84,8 @@ def jira_create_failure_issues(
     api_token: str,
     project_key: str,
     issue_type: str = "Bug",
-    build_url: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+    build_url: str | None = None,
+) -> list[dict[str, Any]]:
     """
     對 ``test_record_instance`` 內每個失敗紀錄建立一個 issue
     Create one issue per failure entry in ``test_record_instance``.
@@ -94,7 +94,7 @@ def jira_create_failure_issues(
         record for record in test_record_instance.test_record_list
         if record.get("program_exception", _NO_EXCEPTION) != _NO_EXCEPTION
     ]
-    issues: List[Dict[str, Any]] = []
+    issues: list[dict[str, Any]] = []
     for failure in failures:
         summary = f"WebRunner failure: {failure.get('function_name')}"
         description = (

@@ -6,7 +6,7 @@ so they work without backend-specific shims.
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -38,7 +38,7 @@ def selenium_local_storage_set(key: str, value: str) -> None:
     _selenium_evaluate("window.localStorage.setItem(arguments[0], arguments[1]);", key, value)
 
 
-def selenium_local_storage_get(key: str) -> Optional[str]:
+def selenium_local_storage_get(key: str) -> str | None:
     return _selenium_evaluate("return window.localStorage.getItem(arguments[0]);", key)
 
 
@@ -65,7 +65,7 @@ def selenium_session_storage_set(key: str, value: str) -> None:
     _selenium_evaluate("window.sessionStorage.setItem(arguments[0], arguments[1]);", key, value)
 
 
-def selenium_session_storage_get(key: str) -> Optional[str]:
+def selenium_session_storage_get(key: str) -> str | None:
     return _selenium_evaluate("return window.sessionStorage.getItem(arguments[0]);", key)
 
 
@@ -91,7 +91,7 @@ def playwright_local_storage_set(key: str, value: str) -> None:
     )
 
 
-def playwright_local_storage_get(key: str) -> Optional[str]:
+def playwright_local_storage_get(key: str) -> str | None:
     return _playwright_evaluate("k => window.localStorage.getItem(k)", key)
 
 
@@ -121,7 +121,7 @@ def playwright_session_storage_set(key: str, value: str) -> None:
     )
 
 
-def playwright_session_storage_get(key: str) -> Optional[str]:
+def playwright_session_storage_get(key: str) -> str | None:
     return _playwright_evaluate("k => window.sessionStorage.getItem(k)", key)
 
 

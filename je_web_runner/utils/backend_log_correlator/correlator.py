@@ -20,7 +20,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Callable, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -46,15 +46,15 @@ class CorrelatedLog:
     timestamp: str
     level: str
     message: str
-    service: Optional[str] = None
-    span_id: Optional[str] = None
-    extra: Dict[str, Any] = field(default_factory=dict)
+    service: str | None = None
+    span_id: str | None = None
+    extra: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-LogFetcher = Callable[[str], List[CorrelatedLog]]
+LogFetcher = Callable[[str], list[CorrelatedLog]]
 """Signature: ``fetcher(trace_id) -> [CorrelatedLog, ...]``."""
 
 
@@ -82,7 +82,7 @@ def validate_trace_id(trace_id: str) -> str:
 # ---------- file adapter (offline / tests) -------------------------------
 
 def fetch_file_log(
-    log_path: Union[str, Path],
+    log_path: str | Path,
     *,
     trace_field: str = "trace_id",
     fallback_to_substring: bool = True,
@@ -97,9 +97,9 @@ def fetch_file_log(
     if not path.exists():
         raise BackendLogCorrelatorError(f"log file not found: {path}")
 
-    def _fetch(trace_id: str) -> List[CorrelatedLog]:
+    def _fetch(trace_id: str) -> list[CorrelatedLog]:
         wanted = validate_trace_id(trace_id)
-        out: List[CorrelatedLog] = []
+        out: list[CorrelatedLog] = []
         with open(path, encoding="utf-8") as fp:
             for line in fp:
                 stripped = line.rstrip("\r\n")
@@ -118,7 +118,7 @@ def fetch_file_log(
     return _fetch
 
 
-def _try_parse_json_line(line: str) -> Optional[Dict[str, Any]]:
+def _try_parse_json_line(line: str) -> dict[str, Any] | None:
     line = line.strip()
     if not line.startswith("{"):
         return None
@@ -129,7 +129,7 @@ def _try_parse_json_line(line: str) -> Optional[Dict[str, Any]]:
     return loaded if isinstance(loaded, dict) else None
 
 
-def _log_from_dict(record: Dict[str, Any]) -> CorrelatedLog:
+def _log_from_dict(record: dict[str, Any]) -> CorrelatedLog:
     return CorrelatedLog(
         timestamp=str(record.get("timestamp") or record.get("ts") or ""),
         level=str(record.get("level") or record.get("severity") or "info"),
@@ -170,7 +170,7 @@ def fetch_loki(
     requests = _require_requests()
     url = base_url.rstrip("/") + "/loki/api/v1/query_range"
 
-    def _fetch(trace_id: str) -> List[CorrelatedLog]:
+    def _fetch(trace_id: str) -> list[CorrelatedLog]:
         wanted = validate_trace_id(trace_id)
         params = {"query": f'{{{label}="{wanted}"}}', "limit": int(limit)}
         try:
@@ -184,8 +184,8 @@ def fetch_loki(
     return _fetch
 
 
-def _parse_loki_payload(payload: Any) -> List[CorrelatedLog]:
-    out: List[CorrelatedLog] = []
+def _parse_loki_payload(payload: Any) -> list[CorrelatedLog]:
+    out: list[CorrelatedLog] = []
     if not isinstance(payload, dict):
         return out
     streams = ((payload.get("data") or {}).get("result")) or []
@@ -221,7 +221,7 @@ def fetch_elasticsearch(
     requests = _require_requests()
     url = f"{base_url.rstrip('/')}/{index}/_search"
 
-    def _fetch(trace_id: str) -> List[CorrelatedLog]:
+    def _fetch(trace_id: str) -> list[CorrelatedLog]:
         wanted = validate_trace_id(trace_id)
         body = {"size": int(size), "query": {"term": {trace_field: wanted}}}
         try:
@@ -235,11 +235,11 @@ def fetch_elasticsearch(
     return _fetch
 
 
-def _parse_elasticsearch_payload(payload: Any) -> List[CorrelatedLog]:
+def _parse_elasticsearch_payload(payload: Any) -> list[CorrelatedLog]:
     if not isinstance(payload, dict):
         return []
     hits = ((payload.get("hits") or {}).get("hits")) or []
-    out: List[CorrelatedLog] = []
+    out: list[CorrelatedLog] = []
     for hit in hits:
         source = hit.get("_source") if isinstance(hit, dict) else None
         if isinstance(source, dict):
@@ -252,7 +252,7 @@ def _parse_elasticsearch_payload(payload: Any) -> List[CorrelatedLog]:
 def correlate(
     trace_id_or_header: str,
     fetchers: Sequence[LogFetcher],
-) -> List[CorrelatedLog]:
+) -> list[CorrelatedLog]:
     """
     Resolve ``trace_id_or_header`` (raw id or full traceparent) and call
     every fetcher in turn, concatenating their results.
@@ -261,7 +261,7 @@ def correlate(
         raise BackendLogCorrelatorError("at least one fetcher is required")
     raw = trace_id_or_header.strip() if isinstance(trace_id_or_header, str) else ""
     trace_id = parse_traceparent(raw) if "-" in raw else validate_trace_id(raw)
-    merged: List[CorrelatedLog] = []
+    merged: list[CorrelatedLog] = []
     for fetcher in fetchers:
         try:
             merged.extend(fetcher(trace_id))
@@ -273,7 +273,7 @@ def correlate(
 
 
 def attach_to_failure_bundle(
-    bundle_dir: Union[str, Path],
+    bundle_dir: str | Path,
     logs: Iterable[CorrelatedLog],
     *,
     filename: str = "backend_logs.json",

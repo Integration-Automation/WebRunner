@@ -13,7 +13,7 @@ from __future__ import annotations
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -28,13 +28,13 @@ class _TaskOutcome:
     name: str
     duration_seconds: float
     result: Any = None
-    error: Optional[BaseException] = None
+    error: BaseException | None = None
 
     @property
     def succeeded(self) -> bool:
         return self.error is None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "duration_seconds": round(self.duration_seconds, 4),
@@ -54,17 +54,17 @@ def _safe_repr(value: Any) -> Any:
 
 @dataclass
 class FanOutResult:
-    outcomes: List[_TaskOutcome] = field(default_factory=list)
+    outcomes: list[_TaskOutcome] = field(default_factory=list)
 
     @property
     def succeeded(self) -> bool:
         return all(o.succeeded for o in self.outcomes)
 
     @property
-    def failures(self) -> List[_TaskOutcome]:
+    def failures(self) -> list[_TaskOutcome]:
         return [o for o in self.outcomes if not o.succeeded]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "succeeded": self.succeeded,
             "outcomes": [o.to_dict() for o in self.outcomes],
@@ -84,8 +84,8 @@ _Task = Callable[[], Any]
 
 def run_fan_out(
     tasks: Sequence[Any],
-    max_workers: Optional[int] = None,
-    timeout: Optional[float] = None,
+    max_workers: int | None = None,
+    timeout: float | None = None,
     fail_fast: bool = False,
 ) -> FanOutResult:
     """
@@ -111,8 +111,8 @@ def run_fan_out(
     return result
 
 
-def _parse_tasks(tasks: Sequence[Any]) -> List[tuple]:
-    parsed: List[tuple] = []
+def _parse_tasks(tasks: Sequence[Any]) -> list[tuple]:
+    parsed: list[tuple] = []
     for index, entry in enumerate(tasks):
         if callable(entry):
             parsed.append((f"task-{index}", entry))
@@ -123,8 +123,8 @@ def _parse_tasks(tasks: Sequence[Any]) -> List[tuple]:
     return parsed
 
 
-def _collect_results(future_to_name: Dict[Any, str], result: FanOutResult,
-                     timeout: Optional[float], fail_fast: bool) -> None:
+def _collect_results(future_to_name: dict[Any, str], result: FanOutResult,
+                     timeout: float | None, fail_fast: bool) -> None:
     try:
         for future in as_completed(future_to_name, timeout=timeout):
             outcome = future.result()

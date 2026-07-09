@@ -12,7 +12,12 @@ authors = [
 ]
 description = "WEB Automation Framework"
 requires-python = ">=3.10"
+license = "MIT"
 license-files = ["LICENSE"]
+keywords = [
+    "selenium", "automation", "testing", "web-automation",
+    "webdriver", "browser", "e2e", "qa",
+]
 dependencies = [
     "selenium>=4.0.0",
     'requests',
@@ -22,12 +27,21 @@ dependencies = [
     "Pillow",
 ]
 classifiers = [
-    "Programming Language :: Python :: 3.10",
     "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3 :: Only",
     "Environment :: Win32 (MS Windows)",
     "Environment :: MacOS X",
     "Environment :: X11 Applications",
-    "Operating System :: OS Independent"
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Quality Assurance",
 ]
 
 [project.urls]
@@ -42,3 +56,16 @@ content-type = "text/markdown"
 
 [tool.setuptools.packages]
 find = { namespaces = false }
+
+[tool.setuptools.package-data]
+# Ship the PEP 561 marker so downstream type checkers honour the inline
+# type hints exported by je_web_runner.
+je_web_runner = ["py.typed"]
+
+[tool.pytest.ini_options]
+# Real test modules are named test_*.py across unit/integration/e2e. The
+# legacy *_test.py scripts under test/unit_test/*/ are standalone browser
+# programs that call sys.exit() at import time, so restricting collection to
+# the test_*.py pattern keeps `python -m pytest test/` from crashing on them.
+testpaths = ["test"]
+python_files = ["test_*.py"]

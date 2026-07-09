@@ -17,7 +17,7 @@ import json
 import threading
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.linter.locator_strength import (
@@ -43,8 +43,8 @@ class FallbackHitTracker:
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
-        self._hits: Dict[str, int] = {}
-        self._fallback_used: Dict[str, int] = {}
+        self._hits: dict[str, int] = {}
+        self._fallback_used: dict[str, int] = {}
 
     def track_primary(self, name: str) -> None:
         with self._lock:
@@ -55,7 +55,7 @@ class FallbackHitTracker:
             self._hits[name] = self._hits.get(name, 0) + 1
             self._fallback_used[name] = self._fallback_used.get(name, 0) + 1
 
-    def stats(self) -> Dict[str, Dict[str, int]]:
+    def stats(self) -> dict[str, dict[str, int]]:
         with self._lock:
             return {
                 name: {
@@ -85,8 +85,8 @@ class LocatorFinding:
     strategy: str
     value: str
     score: int
-    reasons: List[str] = field(default_factory=list)
-    name: Optional[str] = None
+    reasons: list[str] = field(default_factory=list)
+    name: str | None = None
     hits: int = 0
     fallback_used: int = 0
 
@@ -94,13 +94,13 @@ class LocatorFinding:
     def fallback_rate(self) -> float:
         return (self.fallback_used / self.hits) if self.hits else 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
         out["fallback_rate"] = round(self.fallback_rate, 4)
         return out
 
 
-def _walk_actions(payload: Any) -> Iterable[List[Any]]:
+def _walk_actions(payload: Any) -> Iterable[list[Any]]:
     """Yield every action list inside ``payload`` (top-level list or nested)."""
     if isinstance(payload, list):
         for item in payload:
@@ -108,7 +108,7 @@ def _walk_actions(payload: Any) -> Iterable[List[Any]]:
                 yield item
 
 
-def _extract_locator(action: List[Any]) -> Optional[Dict[str, Any]]:
+def _extract_locator(action: list[Any]) -> dict[str, Any] | None:
     if len(action) < 2:
         return None
     kwargs = None
@@ -126,7 +126,7 @@ def _extract_locator(action: List[Any]) -> Optional[Dict[str, Any]]:
     return {"strategy": str(strategy), "value": str(value), "name": str(name) if name else None}
 
 
-def scan_action_file(file_path: Union[str, Path]) -> List[LocatorFinding]:
+def scan_action_file(file_path: str | Path) -> list[LocatorFinding]:
     """Score every locator inside one action JSON file."""
     path = Path(file_path)
     if not path.is_file():
@@ -137,7 +137,7 @@ def scan_action_file(file_path: Union[str, Path]) -> List[LocatorFinding]:
     except (OSError, ValueError) as error:
         raise LocatorHealthError(f"cannot parse {path}: {error!r}") from error
 
-    findings: List[LocatorFinding] = []
+    findings: list[LocatorFinding] = []
     hit_stats = fallback_hit_tracker.stats()
     for index, action in enumerate(_walk_actions(payload)):
         locator = _extract_locator(action)
@@ -167,9 +167,9 @@ def scan_action_file(file_path: Union[str, Path]) -> List[LocatorFinding]:
 
 
 def scan_project(
-    root: Union[str, Path],
+    root: str | Path,
     pattern: str = "**/*.json",
-) -> List[LocatorFinding]:
+) -> list[LocatorFinding]:
     """
     掃整個專案的 action JSON、收集所有 locator finding。
     Walk ``root`` for files matching ``pattern`` and score every locator.
@@ -179,7 +179,7 @@ def scan_project(
     root = Path(root)
     if not root.is_dir():
         raise LocatorHealthError(f"project root is not a directory: {root}")
-    findings: List[LocatorFinding] = []
+    findings: list[LocatorFinding] = []
     for file_path in sorted(root.glob(pattern)):
         if not file_path.is_file():
             continue
@@ -200,12 +200,12 @@ class LocatorHealthReport:
     weak: int
     strong: int
     average_score: float
-    findings: List[LocatorFinding] = field(default_factory=list)
-    weakest: List[LocatorFinding] = field(default_factory=list)
-    fallback_offenders: List[LocatorFinding] = field(default_factory=list)
+    findings: list[LocatorFinding] = field(default_factory=list)
+    weakest: list[LocatorFinding] = field(default_factory=list)
+    fallback_offenders: list[LocatorFinding] = field(default_factory=list)
     threshold: int = 60
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "total": self.total,
             "weak": self.weak,
@@ -274,11 +274,11 @@ class UpgradeSuggestion:
     to_value: str
     rationale: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-_STRATEGY_PRIORITY: Dict[str, int] = {
+_STRATEGY_PRIORITY: dict[str, int] = {
     "ID": 100, "id": 100,
     "NAME": 70, "name": 70,
     "CSS_SELECTOR": 75, "css selector": 75, "css": 75,
@@ -290,7 +290,7 @@ _STRATEGY_PRIORITY: Dict[str, int] = {
 }
 
 
-def _suggest_for_xpath(finding: LocatorFinding) -> Optional[UpgradeSuggestion]:
+def _suggest_for_xpath(finding: LocatorFinding) -> UpgradeSuggestion | None:
     """Heuristic: if an XPath anchors on ``@id='X'``, suggest using ID directly."""
     value = finding.value
     # //*[@id='foo'] or //tag[@id="foo"]
@@ -321,7 +321,7 @@ def _suggest_for_xpath(finding: LocatorFinding) -> Optional[UpgradeSuggestion]:
     return None
 
 
-def _suggest_for_css(finding: LocatorFinding) -> Optional[UpgradeSuggestion]:
+def _suggest_for_css(finding: LocatorFinding) -> UpgradeSuggestion | None:
     """Heuristic: if a CSS selector anchors on ``#id`` alone, suggest ID."""
     value = finding.value.strip()
     if value.startswith("#") and " " not in value and ">" not in value:
@@ -337,7 +337,7 @@ def _suggest_for_css(finding: LocatorFinding) -> Optional[UpgradeSuggestion]:
     return None
 
 
-def suggest_upgrade(finding: LocatorFinding) -> Optional[UpgradeSuggestion]:
+def suggest_upgrade(finding: LocatorFinding) -> UpgradeSuggestion | None:
     """
     回傳 finding 的一個升級建議；找不到合理建議回 None。
     Look for a structural pattern that points at a better strategy. Returns
@@ -354,15 +354,15 @@ def suggest_upgrade(finding: LocatorFinding) -> Optional[UpgradeSuggestion]:
 def suggest_upgrades(
     findings: Iterable[LocatorFinding],
     *,
-    only_below: Optional[int] = None,
-) -> List[UpgradeSuggestion]:
+    only_below: int | None = None,
+) -> list[UpgradeSuggestion]:
     """
     對一批 finding 收集所有可行的升級建議。
     Walk a finding list and return every upgrade suggestion. Pass
     ``only_below`` to skip findings whose static score is already above
     a chosen threshold.
     """
-    suggestions: List[UpgradeSuggestion] = []
+    suggestions: list[UpgradeSuggestion] = []
     for finding in findings:
         if only_below is not None and finding.score >= only_below:
             continue
@@ -373,9 +373,9 @@ def suggest_upgrades(
 
 
 def apply_upgrades(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
-    actions: List[Any],
+    actions: list[Any],
     suggestions: Iterable[UpgradeSuggestion],
-) -> List[Any]:
+) -> list[Any]:
     """
     根據 suggestion 把 action list 內的 locator 改寫，回傳新的 list。
     Non-mutating: returns a deep-copied action list with the chosen
@@ -384,7 +384,7 @@ def apply_upgrades(  # NOSONAR S3776 — cohesive logic; planned refactor in fol
     """
     import copy as _copy
     new_actions = _copy.deepcopy(actions)
-    by_index: Dict[int, UpgradeSuggestion] = {}
+    by_index: dict[int, UpgradeSuggestion] = {}
     for s in suggestions:
         by_index[s.action_index] = s
     for index, action in enumerate(new_actions):
@@ -451,7 +451,7 @@ def render_health_markdown(report: LocatorHealthReport) -> str:
 
 def save_health_report(
     report: LocatorHealthReport,
-    output_path: Union[str, Path],
+    output_path: str | Path,
 ) -> Path:
     """Persist the JSON form of the report next to a CI artifact."""
     path = Path(output_path)

@@ -8,7 +8,7 @@ Reuses :mod:`bundle_budget` to classify assets.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Sequence, Union
+from typing import Any, Sequence
 
 from je_web_runner.utils.bundle_budget.budget import (
     Asset, AssetKind, assets_from_har,
@@ -46,14 +46,14 @@ class AssetDelta:
 class BundleDiff:
     """Aggregate base→head diff."""
 
-    added: List[AssetDelta] = field(default_factory=list)
-    removed: List[AssetDelta] = field(default_factory=list)
-    grew: List[AssetDelta] = field(default_factory=list)
-    shrunk: List[AssetDelta] = field(default_factory=list)
+    added: list[AssetDelta] = field(default_factory=list)
+    removed: list[AssetDelta] = field(default_factory=list)
+    grew: list[AssetDelta] = field(default_factory=list)
+    shrunk: list[AssetDelta] = field(default_factory=list)
     unchanged: int = 0
     total_delta_bytes: int = 0
 
-    def regressions(self, *, min_bytes: int = 1024) -> List[AssetDelta]:
+    def regressions(self, *, min_bytes: int = 1024) -> list[AssetDelta]:
         """Added + grew entries with delta >= ``min_bytes``."""
         if min_bytes < 0:
             raise BundleDiffPrError("min_bytes must be >= 0")
@@ -65,13 +65,13 @@ class BundleDiff:
 
 # ---------- diff --------------------------------------------------------
 
-def _index(assets: Sequence[Asset]) -> Dict[str, Asset]:
+def _index(assets: Sequence[Asset]) -> dict[str, Asset]:
     return {a.url: a for a in assets}
 
 
 def diff_hars(
-    base_har: Union[str, Dict[str, Any]],
-    head_har: Union[str, Dict[str, Any]],
+    base_har: str | dict[str, Any],
+    head_har: str | dict[str, Any],
 ) -> BundleDiff:
     """Compare two HAR snapshots; classify URLs as added/removed/grew/shrunk."""
     base = _index(assets_from_har(base_har))

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Protocol, Sequence
+from typing import Any, Iterable, Protocol, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -36,9 +36,9 @@ class Persona:
     """One identity under test."""
 
     name: str
-    auth_state: Dict[str, Any] = field(default_factory=dict)
-    flags: Dict[str, Any] = field(default_factory=dict)
-    tags: List[str] = field(default_factory=list)
+    auth_state: dict[str, Any] = field(default_factory=dict)
+    flags: dict[str, Any] = field(default_factory=dict)
+    tags: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.name or not isinstance(self.name, str):
@@ -55,8 +55,8 @@ class PersonaCaseResult:
     action_file: str
     passed: bool
     duration_seconds: float = 0.0
-    error: Optional[str] = None
-    notes: List[str] = field(default_factory=list)
+    error: str | None = None
+    notes: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -66,9 +66,9 @@ class MatrixSummary:
     total: int
     passed: int
     failed: int
-    by_persona: Dict[str, Dict[str, int]] = field(default_factory=dict)
-    persona_only_failures: List[str] = field(default_factory=list)
-    file_only_failures: List[str] = field(default_factory=list)
+    by_persona: dict[str, dict[str, int]] = field(default_factory=dict)
+    persona_only_failures: list[str] = field(default_factory=list)
+    file_only_failures: list[str] = field(default_factory=list)
 
 
 # ---------- runner protocol --------------------------------------------
@@ -101,12 +101,12 @@ class PersonaRunner:
         if len(set(self.action_files)) != len(self.action_files):
             raise PersonaRunnerError("duplicate action_files in matrix")
 
-    def run(self) -> List[PersonaCaseResult]:
-        results: List[PersonaCaseResult] = []
+    def run(self) -> list[PersonaCaseResult]:
+        results: list[PersonaCaseResult] = []
         for persona in self.personas:
             for action_file in self.action_files:
                 started = time.monotonic()
-                error: Optional[str] = None
+                error: str | None = None
                 try:
                     self.case_runner(persona, action_file)
                     passed = True
@@ -137,9 +137,9 @@ def summarise(results: Iterable[PersonaCaseResult]) -> MatrixSummary:
     """Build a :class:`MatrixSummary` from a result iterable."""
     total = 0
     passed_count = 0
-    by_persona: Dict[str, Dict[str, int]] = {}
-    failures_by_persona: Dict[str, List[str]] = {}
-    failures_by_file: Dict[str, List[str]] = {}
+    by_persona: dict[str, dict[str, int]] = {}
+    failures_by_persona: dict[str, list[str]] = {}
+    failures_by_file: dict[str, list[str]] = {}
     seen_personas: set = set()
     seen_files: set = set()
     for result in results:
@@ -158,7 +158,7 @@ def summarise(results: Iterable[PersonaCaseResult]) -> MatrixSummary:
             bucket["failed"] += 1
             failures_by_persona.setdefault(result.persona, []).append(result.action_file)
             failures_by_file.setdefault(result.action_file, []).append(result.persona)
-    persona_only: List[str] = []
+    persona_only: list[str] = []
     for persona, failed_files in failures_by_persona.items():
         # A persona "only" fails if every other persona passes the same files
         if all(
@@ -167,7 +167,7 @@ def summarise(results: Iterable[PersonaCaseResult]) -> MatrixSummary:
             for file in failed_files
         ):
             persona_only.append(persona)
-    file_only: List[str] = []
+    file_only: list[str] = []
     for file, failing_personas in failures_by_file.items():
         if len(set(failing_personas)) >= len(seen_personas):
             file_only.append(file)

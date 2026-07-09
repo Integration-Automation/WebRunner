@@ -16,7 +16,7 @@ The Python side validates:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List
+from typing import Any
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -87,14 +87,14 @@ class Notification:
 
 @dataclass
 class PushLog:
-    subscriptions: List[Subscription] = field(default_factory=list)
-    notifications: List[Notification] = field(default_factory=list)
+    subscriptions: list[Subscription] = field(default_factory=list)
+    notifications: list[Notification] = field(default_factory=list)
 
 
 def parse_log(payload: Any) -> PushLog:
     if not isinstance(payload, dict):
         raise WebPushAssertError("payload must be a dict")
-    subs: List[Subscription] = []
+    subs: list[Subscription] = []
     for raw in payload.get("subscriptions") or []:
         if not isinstance(raw, dict):
             continue
@@ -103,7 +103,7 @@ def parse_log(payload: Any) -> PushLog:
             user_visible_only=bool(raw.get("userVisibleOnly")),
             endpoint=str(raw.get("endpoint") or ""),
         ))
-    notes: List[Notification] = []
+    notes: list[Notification] = []
     for raw in payload.get("notifications") or []:
         if not isinstance(raw, dict):
             continue

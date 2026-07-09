@@ -17,7 +17,7 @@ from __future__ import annotations
 import json
 import sys
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, TextIO
+from typing import Any, TextIO
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -36,11 +36,11 @@ class _Document:
 
 @dataclass
 class ActionLspServer:
-    documents: Dict[str, _Document] = field(default_factory=dict)
+    documents: dict[str, _Document] = field(default_factory=dict)
     initialized: bool = False
-    _command_names: Optional[List[str]] = field(default=None, init=False, repr=False)
+    _command_names: list[str] | None = field(default=None, init=False, repr=False)
 
-    def command_names(self) -> List[str]:
+    def command_names(self) -> list[str]:
         if self._command_names is None:
             try:
                 from je_web_runner.utils.executor.action_executor import executor
@@ -53,7 +53,7 @@ class ActionLspServer:
 
     # --- Top-level dispatch ----------------------------------------------
 
-    def handle(self, message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def handle(self, message: dict[str, Any]) -> dict[str, Any] | None:
         method = message.get("method")
         request_id = message.get("id")
         params = message.get("params") or {}
@@ -78,7 +78,7 @@ class ActionLspServer:
 
     # --- Handlers --------------------------------------------------------
 
-    def _initialize(self) -> Dict[str, Any]:
+    def _initialize(self) -> dict[str, Any]:
         return {
             "capabilities": {
                 "textDocumentSync": 1,  # full sync
@@ -87,14 +87,14 @@ class ActionLspServer:
             "serverInfo": {"name": "webrunner-action-lsp", "version": "0.1.0"},
         }
 
-    def _on_did_open(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _on_did_open(self, params: dict[str, Any]) -> dict[str, Any]:
         document = params.get("textDocument") or {}
         uri = str(document.get("uri", ""))
         text = str(document.get("text", ""))
         self.documents[uri] = _Document(uri=uri, text=text, version=int(document.get("version", 0)))
         return self._diagnostics_notification(uri, text)
 
-    def _on_did_change(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _on_did_change(self, params: dict[str, Any]) -> dict[str, Any]:
         document = params.get("textDocument") or {}
         uri = str(document.get("uri", ""))
         changes = params.get("contentChanges") or []
@@ -108,12 +108,12 @@ class ActionLspServer:
         self.documents[uri].version = int(document.get("version", 0))
         return self._diagnostics_notification(uri, full_text)
 
-    def _on_did_close(self, params: Dict[str, Any]) -> None:
+    def _on_did_close(self, params: dict[str, Any]) -> None:
         uri = str((params.get("textDocument") or {}).get("uri", ""))
         self.documents.pop(uri, None)
-        return None
+        return
 
-    def _completion(self, _params: Dict[str, Any]) -> Dict[str, Any]:
+    def _completion(self, _params: dict[str, Any]) -> dict[str, Any]:
         # ``_params`` is part of the LSP request shape but the suggestion
         # list is identical for every cursor position, so the textDocument
         # / position payload is intentionally ignored.
@@ -130,7 +130,7 @@ class ActionLspServer:
 
     # --- Diagnostics -----------------------------------------------------
 
-    def _diagnostics_notification(self, uri: str, text: str) -> Dict[str, Any]:
+    def _diagnostics_notification(self, uri: str, text: str) -> dict[str, Any]:
         return {
             "jsonrpc": "2.0",
             "method": "textDocument/publishDiagnostics",
@@ -140,7 +140,7 @@ class ActionLspServer:
             },
         }
 
-    def _lint_diagnostics(self, text: str) -> List[Dict[str, Any]]:
+    def _lint_diagnostics(self, text: str) -> list[dict[str, Any]]:
         if not text.strip():
             return []
         try:
@@ -151,7 +151,7 @@ class ActionLspServer:
         if not isinstance(actions, list):
             return [_diagnostic("Action document root must be a JSON array.",
                                 line=0, severity=1)]
-        diagnostics: List[Dict[str, Any]] = []
+        diagnostics: list[dict[str, Any]] = []
         try:
             from je_web_runner.utils.linter.action_linter import lint_action
         except Exception:  # pylint: disable=broad-except
@@ -168,18 +168,18 @@ class ActionLspServer:
     # --- Helpers ---------------------------------------------------------
 
     @staticmethod
-    def _respond(request_id: Any, result: Any) -> Dict[str, Any]:
+    def _respond(request_id: Any, result: Any) -> dict[str, Any]:
         return {"jsonrpc": "2.0", "id": request_id, "result": result}
 
     @staticmethod
-    def _error(request_id: Any, code: int, message: str) -> Dict[str, Any]:
+    def _error(request_id: Any, code: int, message: str) -> dict[str, Any]:
         return {
             "jsonrpc": "2.0", "id": request_id,
             "error": {"code": code, "message": message},
         }
 
 
-def _diagnostic(error_message: str, line: int, severity: int) -> Dict[str, Any]:
+def _diagnostic(error_message: str, line: int, severity: int) -> dict[str, Any]:
     return {
         "range": {
             "start": {"line": max(0, line), "character": 0},
@@ -196,8 +196,8 @@ def _diagnostic(error_message: str, line: int, severity: int) -> Dict[str, Any]:
 _HEADER_TERMINATOR = "\r\n\r\n"
 
 
-def _read_message(stdin: TextIO) -> Optional[Dict[str, Any]]:
-    headers: Dict[str, str] = {}
+def _read_message(stdin: TextIO) -> dict[str, Any] | None:
+    headers: dict[str, str] = {}
     while True:
         line = stdin.readline()
         if line == "":
@@ -224,16 +224,16 @@ def _read_message(stdin: TextIO) -> Optional[Dict[str, Any]]:
         raise ActionLspError(f"body is not JSON: {error}") from error
 
 
-def _write_message(stdout: TextIO, message: Dict[str, Any]) -> None:
+def _write_message(stdout: TextIO, message: dict[str, Any]) -> None:
     body = json.dumps(message, ensure_ascii=False)
     stdout.write(f"Content-Length: {len(body.encode('utf-8'))}\r\n\r\n{body}")
     stdout.flush()
 
 
 def serve_stdio(
-    stdin: Optional[TextIO] = None,
-    stdout: Optional[TextIO] = None,
-    server: Optional[ActionLspServer] = None,
+    stdin: TextIO | None = None,
+    stdout: TextIO | None = None,
+    server: ActionLspServer | None = None,
 ) -> None:
     """Run the LSP loop until stdin EOF or an ``exit`` notification."""
     in_stream = stdin or sys.stdin

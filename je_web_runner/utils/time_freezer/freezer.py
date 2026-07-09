@@ -16,7 +16,7 @@ import json
 import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Callable, Union
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -35,7 +35,7 @@ _ISO_RE = re.compile(rf"^{_ISO_DATE_TIME}{_ISO_FRACTION}{_ISO_TZ}$")
 
 # ---------- time parsing ------------------------------------------------
 
-def to_epoch_ms(value: Union[str, int, float, datetime]) -> int:
+def to_epoch_ms(value: str | int | float | datetime) -> int:
     """
     Normalise the input to integer milliseconds since the epoch.
     Accepted shapes: ``int``/``float`` (treated as seconds if < 1e12,
@@ -163,7 +163,7 @@ def attach_to_cdp(cdp_attach: CdpAttach, config: FreezeConfig) -> Any:
 # ---------- convenience -------------------------------------------------
 
 def freeze_at(
-    moment: Union[str, int, float, datetime],
+    moment: str | int | float | datetime,
     *,
     advance_ms_per_real_second: float = 0.0,
 ) -> FreezeConfig:
@@ -175,7 +175,7 @@ def freeze_at(
 
 
 def slow_motion(
-    moment: Union[str, int, float, datetime],
+    moment: str | int | float | datetime,
     *,
     real_seconds_per_virtual_second: float,
 ) -> FreezeConfig:

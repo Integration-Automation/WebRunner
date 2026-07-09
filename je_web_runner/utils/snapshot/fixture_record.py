@@ -13,7 +13,7 @@ from __future__ import annotations
 import json
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, Optional, Union
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -31,13 +31,13 @@ class RecorderMode(Enum):
 class FixtureRecorder:
     """Persist and replay key/value fixtures from a single JSON file."""
 
-    def __init__(self, path: Union[str, Path], mode: RecorderMode = RecorderMode.AUTO) -> None:
+    def __init__(self, path: str | Path, mode: RecorderMode = RecorderMode.AUTO) -> None:
         self.path = Path(path)
         self.mode = mode
-        self._cache: Optional[Dict[str, Any]] = None
+        self._cache: dict[str, Any] | None = None
         self._dirty = False
 
-    def _load(self) -> Dict[str, Any]:
+    def _load(self) -> dict[str, Any]:
         if self._cache is not None:
             return self._cache
         if not self.path.is_file():
@@ -105,8 +105,8 @@ class FixtureRecorder:
 
 
 def open_recorder(
-    path: Union[str, Path],
-    mode: Union[RecorderMode, str] = RecorderMode.AUTO,
+    path: str | Path,
+    mode: RecorderMode | str = RecorderMode.AUTO,
 ) -> FixtureRecorder:
     """Convenience factory accepting string mode names."""
     if isinstance(mode, str):

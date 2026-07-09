@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import inspect
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Tuple
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -34,7 +34,7 @@ def _first_doc_line(callable_obj: Any) -> str:
     return ""
 
 
-def _command_entries() -> List[Tuple[str, Callable[..., Any]]]:
+def _command_entries() -> list[tuple[str, Callable[..., Any]]]:
     """Return every ``WR_*`` entry from the executor in sorted order."""
     from je_web_runner.utils.executor.action_executor import executor
     return sorted(
@@ -50,7 +50,7 @@ def build_command_reference(title: str = "WebRunner command reference") -> str:
     """
     web_runner_logger.info("build_command_reference")
     entries = _command_entries()
-    lines: List[str] = [
+    lines: list[str] = [
         f"# {title}",
         "",
         f"Auto-generated from the executor's event_dict ({len(entries)} commands).",
@@ -65,7 +65,7 @@ def build_command_reference(title: str = "WebRunner command reference") -> str:
     return "\n".join(lines) + "\n"
 
 
-def export_command_reference(path: str, title: Optional[str] = None) -> str:
+def export_command_reference(path: str, title: str | None = None) -> str:
     """Write the Markdown reference to ``path`` and return the resolved path."""
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -77,6 +77,6 @@ def export_command_reference(path: str, title: Optional[str] = None) -> str:
     return str(target.resolve())
 
 
-def list_commands() -> List[str]:
+def list_commands() -> list[str]:
     """Just the command names (handy for shell completion)."""
     return [name for name, _ in _command_entries()]

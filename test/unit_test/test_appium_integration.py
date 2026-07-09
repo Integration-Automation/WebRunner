@@ -24,9 +24,10 @@ class TestStartSession(unittest.TestCase):
     def test_starts_and_registers_on_wrapper(self):
         fake_remote = MagicMock()
         fake_remote.return_value = MagicMock()
+        fake_options_cls = MagicMock()
         with patch(
             "je_web_runner.utils.appium_integration.appium_driver._require_appium",
-            return_value=MagicMock(Remote=fake_remote),
+            return_value=(MagicMock(Remote=fake_remote), fake_options_cls),
         ), patch(
             "je_web_runner.utils.appium_integration.appium_driver.webdriver_wrapper_instance"
         ) as wrapper:
@@ -35,7 +36,15 @@ class TestStartSession(unittest.TestCase):
                 {"platformName": "Android"},
             )
             self.assertIs(driver, fake_remote.return_value)
-            self.assertIs(wrapper.current_webdriver, fake_remote.return_value)
+            wrapper.set_active_driver.assert_called_once_with(fake_remote.return_value)
+            # Modern Appium-Python-Client (v3+) API: caps go through an
+            # options object, never the removed desired_capabilities kwarg.
+            _, remote_kwargs = fake_remote.call_args
+            self.assertIn("options", remote_kwargs)
+            self.assertNotIn("desired_capabilities", remote_kwargs)
+            fake_options_cls.return_value.load_capabilities.assert_called_once_with(
+                {"platformName": "Android"}
+            )
 
 
 class TestQuitSession(unittest.TestCase):

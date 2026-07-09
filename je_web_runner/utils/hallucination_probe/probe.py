@@ -16,7 +16,7 @@ hallucination rate suitable for trend charts.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, List, Sequence
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -29,8 +29,8 @@ class HallucinationProbeError(WebRunnerException):
 class Probe:
     name: str
     prompt: str
-    expected_substrings: List[str] = field(default_factory=list)
-    forbidden_substrings: List[str] = field(default_factory=list)
+    expected_substrings: list[str] = field(default_factory=list)
+    forbidden_substrings: list[str] = field(default_factory=list)
     expect_refusal: bool = False    # model should say "I don't know"
 
     def __post_init__(self) -> None:
@@ -64,13 +64,13 @@ class ProbeResult:
     passed: bool
     reason: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 @dataclass
 class ProbeReport:
-    results: List[ProbeResult] = field(default_factory=list)
+    results: list[ProbeResult] = field(default_factory=list)
 
     @property
     def hallucination_rate(self) -> float:

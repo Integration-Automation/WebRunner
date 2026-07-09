@@ -5,14 +5,15 @@ Actions sequence so it stays compatible with both UiAutomator2 (Android)
 and XCUITest (iOS) without per-platform branching.
 
 The driver is required to expose either ``execute_script`` (for the
-``mobile:`` named-gesture extensions) or ``perform_actions`` (for raw
-W3C input). The helpers prefer the named extension when present and
-fall back to W3C otherwise.
+``mobile:`` named-gesture extensions) or ``execute`` (for raw W3C input
+via the ``actions`` command — Selenium/appium drivers have no
+``perform_actions`` method). The helpers prefer the named extension when
+present and fall back to W3C otherwise.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -33,7 +34,7 @@ class Point:
 def _execute_named_gesture(
     driver: Any,
     name: str,
-    args: Dict[str, Any],
+    args: dict[str, Any],
 ) -> bool:
     """Try the ``mobile:<name>`` extension via ``execute_script``."""
     if not hasattr(driver, "execute_script"):
@@ -45,7 +46,7 @@ def _execute_named_gesture(
         return False
 
 
-def _w3c_pointer_path(actions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def _w3c_pointer_path(actions: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Wrap a list of pointer actions into the W3C Actions envelope."""
     return [{
         "type": "pointer",
@@ -55,12 +56,16 @@ def _w3c_pointer_path(actions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     }]
 
 
-def _perform_w3c(driver: Any, actions: List[Dict[str, Any]]) -> None:
-    if not hasattr(driver, "perform_actions"):
+def _perform_w3c(driver: Any, actions: list[dict[str, Any]]) -> None:
+    # Raw W3C actions go through the same low-level ``actions`` command that
+    # Selenium's ActionChains uses internally; Selenium/appium drivers expose
+    # ``execute`` but no ``perform_actions`` method.
+    if not hasattr(driver, "execute"):
         raise AppiumGestureError(
-            "driver lacks perform_actions and the mobile: gesture extension"
+            "driver lacks execute() and the mobile: gesture extension"
         )
-    driver.perform_actions(actions)
+    from selenium.webdriver.remote.command import Command
+    driver.execute(Command.W3C_ACTIONS, {"actions": actions})
 
 
 def swipe(
@@ -99,7 +104,7 @@ def _direction_for(start: Point, end: Point) -> str:
 def scroll(
     driver: Any,
     direction: str,
-    rect: Optional[Tuple[int, int, int, int]] = None,
+    rect: tuple[int, int, int, int] | None = None,
     percent: float = 0.7,
 ) -> None:
     """Scroll ``direction`` (``up`` / ``down`` / ``left`` / ``right``)."""
@@ -109,7 +114,7 @@ def scroll(
         )
     if not 0 < percent <= 1:
         raise AppiumGestureError("percent must be in (0, 1]")
-    args: Dict[str, Any] = {"direction": direction, "percent": percent}
+    args: dict[str, Any] = {"direction": direction, "percent": percent}
     if rect is not None:
         left, top, width, height = rect
         args.update({"left": left, "top": top, "width": width, "height": height})
@@ -129,7 +134,7 @@ def scroll(
     swipe(driver, centre, end)
 
 
-def _centre(rect: Tuple[int, int, int, int]) -> Point:
+def _centre(rect: tuple[int, int, int, int]) -> Point:
     left, top, width, height = rect
     return Point(left + width // 2, top + height // 2)
 
@@ -156,7 +161,7 @@ def long_press(
 
 def pinch(
     driver: Any,
-    rect: Tuple[int, int, int, int],
+    rect: tuple[int, int, int, int],
     scale: float = 0.5,
     speed: int = 1500,
 ) -> None:

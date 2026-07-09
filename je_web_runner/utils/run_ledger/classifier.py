@@ -5,7 +5,7 @@ Heuristic failure classifier so triage can prioritise the real bugs.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -42,7 +42,7 @@ _ENVIRONMENT_PATTERNS = [
 ]
 
 
-def classify_error(error_repr: str) -> Optional[str]:
+def classify_error(error_repr: str) -> str | None:
     """
     依錯誤字串嘗試判定 transient / environment；無法判定回傳 None
     Try to bucket an error repr into ``transient`` / ``environment``;
@@ -59,8 +59,8 @@ def classify_error(error_repr: str) -> Optional[str]:
     return None
 
 
-def classify(error_repr: str, ledger_path: Optional[str] = None,
-             file_path: Optional[str] = None) -> str:
+def classify(error_repr: str, ledger_path: str | None = None,
+             file_path: str | None = None) -> str:
     """
     綜合錯誤字串與 ledger 歷史回傳分類
     Combine error text + ledger history to bucket a single failure into
@@ -76,14 +76,14 @@ def classify(error_repr: str, ledger_path: Optional[str] = None,
 
 
 def classify_failures(
-    failures: Iterable[Dict[str, Any]],
-    ledger_path: Optional[str] = None,
-) -> Dict[str, str]:
+    failures: Iterable[dict[str, Any]],
+    ledger_path: str | None = None,
+) -> dict[str, str]:
     """
     對 ``[{function_name, exception, file_path?}, ...]`` 各分類
     Map each failure entry to a category.
     """
-    result: Dict[str, str] = {}
+    result: dict[str, str] = {}
     for failure in failures:
         key = str(failure.get("file_path") or failure.get("function_name") or len(result))
         result[key] = classify(

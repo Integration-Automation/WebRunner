@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -39,7 +39,7 @@ class CookieScopeFinding:
     cookie: str
     message: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "severity": self.severity.value}
 
 
@@ -65,19 +65,29 @@ class _SessionCookie:
     same_site: str
 
 
-def _extract_session(cookie: Dict[str, Any]) -> _SessionCookie:
+def _cookie_http_only(cookie: dict[str, Any]) -> bool:
+    """Honour an explicit ``httpOnly: False``; a falsy-coalesce across the two
+    key spellings would let a stray ``http_only: True`` mask it (and this audit
+    flags *missing* HttpOnly, so the direction matters)."""
+    value = cookie.get("httpOnly")
+    if value is None:
+        value = cookie.get("http_only")
+    return bool(value)
+
+
+def _extract_session(cookie: dict[str, Any]) -> _SessionCookie:
     return _SessionCookie(
         name=str(cookie.get("name") or ""),
         domain=str(cookie.get("domain") or "").lstrip("."),
         path=str(cookie.get("path") or "/"),
-        http_only=bool(cookie.get("httpOnly") or cookie.get("http_only")),
+        http_only=_cookie_http_only(cookie),
         secure=bool(cookie.get("secure")),
         same_site=(cookie.get("sameSite") or cookie.get("same_site") or "").lower(),
     )
 
 
-def _scope_findings(c: _SessionCookie, page_host: str) -> List[CookieScopeFinding]:
-    out: List[CookieScopeFinding] = []
+def _scope_findings(c: _SessionCookie, page_host: str) -> list[CookieScopeFinding]:
+    out: list[CookieScopeFinding] = []
     page_apex = ".".join(page_host.split(".")[-2:])
     cookie_apex = ".".join(c.domain.split(".")[-2:]) if c.domain else page_apex
     if c.domain and c.domain != page_host and cookie_apex == page_apex:
@@ -95,8 +105,8 @@ def _scope_findings(c: _SessionCookie, page_host: str) -> List[CookieScopeFindin
     return out
 
 
-def _security_findings(c: _SessionCookie) -> List[CookieScopeFinding]:
-    out: List[CookieScopeFinding] = []
+def _security_findings(c: _SessionCookie) -> list[CookieScopeFinding]:
+    out: list[CookieScopeFinding] = []
     if not c.http_only:
         out.append(CookieScopeFinding(
             severity=Severity.ERROR, rule="session-no-httponly", cookie=c.name,
@@ -119,8 +129,8 @@ def _security_findings(c: _SessionCookie) -> List[CookieScopeFinding]:
 
 
 def audit_cookie(
-    cookie: Dict[str, Any], *, page_host: str,
-) -> List[CookieScopeFinding]:
+    cookie: dict[str, Any], *, page_host: str,
+) -> list[CookieScopeFinding]:
     if not isinstance(cookie, dict):
         raise CookieScopeAbuseError("cookie must be a dict")
     if not isinstance(page_host, str) or not page_host:
@@ -133,9 +143,9 @@ def audit_cookie(
 
 
 def audit_many(
-    cookies: Iterable[Dict[str, Any]], *, page_host: str,
-) -> List[CookieScopeFinding]:
-    out: List[CookieScopeFinding] = []
+    cookies: Iterable[dict[str, Any]], *, page_host: str,
+) -> list[CookieScopeFinding]:
+    out: list[CookieScopeFinding] = []
     for c in cookies:
         out.extend(audit_cookie(c, page_host=page_host))
     return out

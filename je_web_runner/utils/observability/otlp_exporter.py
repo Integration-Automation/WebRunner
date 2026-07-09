@@ -11,7 +11,7 @@ clear install hint.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -26,7 +26,7 @@ class OtlpExportConfig:
 
     endpoint: str
     protocol: str = "grpc"  # "grpc" | "http"
-    headers: Optional[Dict[str, str]] = None
+    headers: dict[str, str] | None = None
     timeout: float = 10.0
     insecure: bool = False
     service_name: str = "webrunner"
@@ -100,8 +100,8 @@ def build_exporter(config: OtlpExportConfig) -> Any:
 def configure_otlp_export(
     tracer_provider: Any,
     config: OtlpExportConfig,
-    processor_factory: Optional[Any] = None,
-    exporter_factory: Optional[Any] = None,
+    processor_factory: Any | None = None,
+    exporter_factory: Any | None = None,
 ) -> Any:
     """
     Build the exporter + ``BatchSpanProcessor`` and register it with the

@@ -19,7 +19,7 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Callable, Dict, List, Optional, Sequence
+from typing import Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -54,11 +54,11 @@ class ChaosEvent:
 class ChaosPlan:
     """A reproducible (seeded) injection schedule."""
 
-    events: List[ChaosEvent] = field(default_factory=list)
-    seed: Optional[int] = None
-    skipped: List[int] = field(default_factory=list)
+    events: list[ChaosEvent] = field(default_factory=list)
+    seed: int | None = None
+    skipped: list[int] = field(default_factory=list)
 
-    def faults_for_step(self, index: int) -> List[ChaosFaultType]:
+    def faults_for_step(self, index: int) -> list[ChaosFaultType]:
         return [e.fault for e in self.events if e.step_index == index]
 
     def describe(self) -> str:
@@ -76,10 +76,10 @@ def plan_chaos(
     *,
     faults: Sequence[ChaosFaultType] = tuple(ChaosFaultType),
     fault_rate: float = 0.2,
-    max_events: Optional[int] = None,
+    max_events: int | None = None,
     skip_first: int = 1,
     skip_last: int = 0,
-    seed: Optional[int] = None,
+    seed: int | None = None,
 ) -> ChaosPlan:
     """
     決定每個 step 是否注入 chaos,以及注入哪種類型。
@@ -95,16 +95,16 @@ def plan_chaos(
         raise ChaosHooksError("skip_first / skip_last must be >= 0")
     total = len(step_names)
     rng = random.Random(seed)  # nosec B311 — deterministic test scheduling, not crypto
-    events: List[ChaosEvent] = []
-    skipped: List[int] = []
+    events: list[ChaosEvent] = []
+    skipped: list[int] = []
     for index, name in enumerate(step_names):
         if index < skip_first or index >= total - skip_last:
             skipped.append(index)
             continue
         # S2245 ok: deterministic seeded scheduling for tests; not cryptographic.
-        if rng.random() >= fault_rate:  # noqa: S2245
+        if rng.random() >= fault_rate:  # NOSONAR S2245 — non-crypto use (chaos/sampling), not security-sensitive
             continue
-        fault = rng.choice(list(faults))  # noqa: S2245
+        fault = rng.choice(list(faults))  # NOSONAR S2245 — non-crypto use (chaos/sampling), not security-sensitive
         events.append(ChaosEvent(step_index=index, step_name=name, fault=fault))
         if max_events is not None and len(events) >= max_events:
             break
@@ -122,7 +122,7 @@ class ChaosRunner:
     """Runs a :class:`ChaosPlan` by invoking the matching injector pre-step."""
 
     plan: ChaosPlan
-    injectors: Dict[ChaosFaultType, Injector] = field(default_factory=dict)
+    injectors: dict[ChaosFaultType, Injector] = field(default_factory=dict)
     raise_on_missing: bool = True
 
     def __post_init__(self) -> None:
@@ -138,9 +138,9 @@ class ChaosRunner:
                 f"no injector registered for fault types: {unique}"
             )
 
-    def before_step(self, index: int, name: str) -> List[ChaosEvent]:
+    def before_step(self, index: int, name: str) -> list[ChaosEvent]:
         """Fire every injector scheduled for ``index``; return events fired."""
-        fired: List[ChaosEvent] = []
+        fired: list[ChaosEvent] = []
         for event in self.plan.events:
             if event.step_index != index:
                 continue
@@ -170,14 +170,14 @@ def run_with_chaos(
     step_fn: Callable[[int, str], None],
     *,
     plan: ChaosPlan,
-    injectors: Dict[ChaosFaultType, Injector],
-) -> List[ChaosEvent]:
+    injectors: dict[ChaosFaultType, Injector],
+) -> list[ChaosEvent]:
     """
     Drive ``step_fn(index, name)`` for every step, firing scheduled
     injectors immediately before each step. Returns the events that fired.
     """
     runner = ChaosRunner(plan=plan, injectors=injectors)
-    fired: List[ChaosEvent] = []
+    fired: list[ChaosEvent] = []
     for index, name in enumerate(step_names):
         fired.extend(runner.before_step(index, name))
         step_fn(index, name)

@@ -20,7 +20,7 @@ assertions: ``assert_spoke``, ``assert_lang``, ``assert_no_speech``.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -75,23 +75,35 @@ class Utterance:
     pitch: float = 1.0
     volume: float = 1.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def parse_spoken(payload: Any) -> List[Utterance]:
+def _coerce_float(value: Any, default: float) -> float:
+    """Keep an explicit ``0`` (a muted ``volume`` or lowest ``pitch`` are valid
+    values a falsy-coalesce would wrongly reset to the default); fall back to
+    ``default`` only when the field is absent or non-numeric."""
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def parse_spoken(payload: Any) -> list[Utterance]:
     if not isinstance(payload, list):
         raise SpeechApiAssertError("payload must be a list")
-    out: List[Utterance] = []
+    out: list[Utterance] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
         out.append(Utterance(
             text=str(raw.get("text") or ""),
             lang=str(raw.get("lang") or ""),
-            rate=float(raw.get("rate") or 1.0),
-            pitch=float(raw.get("pitch") or 1.0),
-            volume=float(raw.get("volume") or 1.0),
+            rate=_coerce_float(raw.get("rate"), 1.0),
+            pitch=_coerce_float(raw.get("pitch"), 1.0),
+            volume=_coerce_float(raw.get("volume"), 1.0),
         ))
     return out
 

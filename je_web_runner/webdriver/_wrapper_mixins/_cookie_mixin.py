@@ -23,7 +23,7 @@ class _CookieMixin:
             record_action_to_list("webdriver wrapper get_cookies", None, None)
             return self.current_webdriver.get_cookies()
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_cookies, failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper get_cookies, failed: {error!r}")
             record_action_to_list("webdriver wrapper get_cookies", None, error)
 
     def get_cookie(self, name: str) -> dict | None:
@@ -40,7 +40,7 @@ class _CookieMixin:
             record_action_to_list("webdriver wrapper get_cookie", param, None)
             return self.current_webdriver.get_cookie(name)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper get_cookie, name: {name}, failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper get_cookie, name: {name}, failed: {error!r}")
             record_action_to_list("webdriver wrapper get_cookie", param, error)
 
     def add_cookie(self, cookie_dict: dict) -> None:
@@ -57,7 +57,7 @@ class _CookieMixin:
             record_action_to_list("webdriver wrapper add_cookie", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper add_cookie, cookie_dict: {cookie_dict}, failed: {repr(error)}"
+                f"WebDriverWrapper add_cookie, cookie_dict: {cookie_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper add_cookie", param, error)
 
@@ -74,7 +74,7 @@ class _CookieMixin:
             self.current_webdriver.delete_cookie(name)
             record_action_to_list("webdriver wrapper delete_cookie", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper delete_cookie, name: {name}, failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper delete_cookie, name: {name}, failed: {error!r}")
             record_action_to_list("webdriver wrapper delete_cookie", param, error)
 
     def delete_all_cookies(self) -> None:
@@ -87,7 +87,7 @@ class _CookieMixin:
             self.current_webdriver.delete_all_cookies()
             record_action_to_list("webdriver wrapper delete_all_cookies", None, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper delete_all_cookies, failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper delete_all_cookies, failed: {error!r}")
             record_action_to_list("webdriver wrapper delete_all_cookies", None, error)
 
     def save_cookies(self, file_path: str) -> bool:
@@ -112,7 +112,7 @@ class _CookieMixin:
             record_action_to_list("webdriver wrapper save_cookies", param, None)
             return True
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper save_cookies failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper save_cookies failed: {error!r}")
             record_action_to_list("webdriver wrapper save_cookies", param, error)
             return False
 
@@ -131,22 +131,22 @@ class _CookieMixin:
         web_runner_logger.info(f"WebDriverWrapper load_cookies, file_path: {file_path}")
         param = locals()
         try:
-            with open(file_path, "r", encoding="utf-8") as fh:
+            with open(file_path, encoding="utf-8") as fh:
                 cookies = json.load(fh)
             added = 0
             for cookie in cookies:
                 try:
                     self.current_webdriver.add_cookie(cookie)
                     added += 1
-                except Exception as add_error:  # noqa: BLE001 — per-cookie failures are tolerated
+                except Exception as add_error:
                     web_runner_logger.warning(
                         f"WebDriverWrapper load_cookies skipped cookie "
-                        f"{cookie.get('name')!r}: {repr(add_error)}"
+                        f"{cookie.get('name')!r}: {add_error!r}"
                     )
             record_action_to_list("webdriver wrapper load_cookies", param, None)
             return added
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper load_cookies failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper load_cookies failed: {error!r}")
             record_action_to_list("webdriver wrapper load_cookies", param, error)
             return 0
 

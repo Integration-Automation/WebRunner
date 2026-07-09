@@ -8,7 +8,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -37,7 +37,7 @@ class EmulationProfile:
     hardware_concurrency: int = 2
     pressure_level: PressureLevel = PressureLevel.FAIR
     cpu_throttle_rate: float = 1.0  # 1.0 = normal, 4.0 = 4x slower
-    js_heap_limit_bytes: Optional[int] = None
+    js_heap_limit_bytes: int | None = None
 
     def __post_init__(self) -> None:
         if self.hardware_concurrency <= 0:
@@ -64,14 +64,14 @@ DEFAULT_PROFILES = (
 
 # ---------- CDP commands ------------------------------------------------
 
-def cdp_payloads(profile: EmulationProfile) -> List[Dict[str, Any]]:
+def cdp_payloads(profile: EmulationProfile) -> list[dict[str, Any]]:
     """
     Render the CDP commands a user's CDP-send callable should execute.
     Each entry is ``{"method": ..., "params": ...}``.
     """
     if not isinstance(profile, EmulationProfile):
         raise MemoryPressureError("profile must be EmulationProfile")
-    commands: List[Dict[str, Any]] = [
+    commands: list[dict[str, Any]] = [
         {"method": "Emulation.setHardwareConcurrencyOverride",
          "params": {"hardwareConcurrency": profile.hardware_concurrency}},
         {"method": "Emulation.setCPUThrottlingRate",
@@ -96,12 +96,12 @@ class PressureRunOutcome:
     profile: str
     passed: bool
     duration_seconds: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 def run_under_profile(
     profile: EmulationProfile,
-    cdp_send: Callable[[str, Dict[str, Any]], Any],
+    cdp_send: Callable[[str, dict[str, Any]], Any],
     test_callable: Callable[[], None],
 ) -> PressureRunOutcome:
     """
@@ -120,7 +120,7 @@ def run_under_profile(
         raise MemoryPressureError(f"CDP apply failed: {error!r}") from error
     started = time.monotonic()
     passed = True
-    error_msg: Optional[str] = None
+    error_msg: str | None = None
     try:
         test_callable()
     except Exception as exc:
@@ -132,7 +132,7 @@ def run_under_profile(
         cdp_send("Emulation.setHardwareConcurrencyOverride", {"hardwareConcurrency": 0})
         cdp_send("Emulation.setCPUThrottlingRate", {"rate": 1.0})
         cdp_send("Memory.simulatePressureNotification", {"level": "nominal"})
-    except Exception as restore_err:  # noqa: BLE001 - best-effort cleanup
+    except Exception as restore_err:
         # Don't mask the test result by re-raising here; CDP restore failure
         # is logged-only so a successful run isn't downgraded to error.
         _LOGGER.warning("CDP pressure restore failed: %r", restore_err)

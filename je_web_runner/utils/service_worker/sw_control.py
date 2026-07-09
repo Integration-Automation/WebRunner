@@ -5,7 +5,6 @@ poison test runs.
 """
 from __future__ import annotations
 
-from typing import List
 
 from je_web_runner.utils.cdp.cdp_commands import playwright_cdp, selenium_cdp
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -39,7 +38,7 @@ _CACHES_CLEAR_JS = (
 )
 
 
-def selenium_unregister_service_workers() -> List[bool]:
+def selenium_unregister_service_workers() -> list[bool]:
     """
     解除註冊當前頁面所有 Service Worker
     Unregister all service workers on the current page.
@@ -51,7 +50,7 @@ def selenium_unregister_service_workers() -> List[bool]:
     return driver.execute_async_script(_UNREGISTER_JS) or []
 
 
-def selenium_clear_caches() -> List[str]:
+def selenium_clear_caches() -> list[str]:
     """
     清空 Cache Storage
     Clear all entries from the browser's Cache Storage.
@@ -71,7 +70,7 @@ def selenium_bypass_service_worker(bypass: bool = True) -> None:
     selenium_cdp("Network.setBypassServiceWorker", {"bypass": bool(bypass)})
 
 
-def playwright_unregister_service_workers() -> List[bool]:
+def playwright_unregister_service_workers() -> list[bool]:
     web_runner_logger.info("playwright_unregister_service_workers")
     page = playwright_wrapper_instance.page
     return page.evaluate(
@@ -83,7 +82,7 @@ def playwright_unregister_service_workers() -> List[bool]:
     ) or []
 
 
-def playwright_clear_caches() -> List[str]:
+def playwright_clear_caches() -> list[str]:
     web_runner_logger.info("playwright_clear_caches")
     page = playwright_wrapper_instance.page
     return page.evaluate(

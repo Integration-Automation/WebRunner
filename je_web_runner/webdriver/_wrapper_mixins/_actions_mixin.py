@@ -32,7 +32,7 @@ class _ActionsMixin:
             record_action_to_list("webdriver wrapper move_to_element", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper move_to_element, target_element: {target_element}, failed: {repr(error)}"
+                f"WebDriverWrapper move_to_element, target_element: {target_element}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper move_to_element", param, error)
 
@@ -54,7 +54,7 @@ class _ActionsMixin:
             record_action_to_list("webdriver wrapper move_to_element_with_test_object", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper move_to_element_with_test_object, element_name: {element_name}, failed: {repr(error)}"
+                f"WebDriverWrapper move_to_element_with_test_object, element_name: {element_name}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper move_to_element_with_test_object", param, error)
 
@@ -77,7 +77,7 @@ class _ActionsMixin:
             record_action_to_list("webdriver wrapper move_to_element_with_offset", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper move_to_element_with_offset failed: {repr(error)}"
+                f"WebDriverWrapper move_to_element_with_offset failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper move_to_element_with_offset", param, error)
 
@@ -104,7 +104,7 @@ class _ActionsMixin:
             record_action_to_list("webdriver wrapper move_to_element_with_offset_and_test_object", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper move_to_element_with_offset_and_test_object failed: {repr(error)}"
+                f"WebDriverWrapper move_to_element_with_offset_and_test_object failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper move_to_element_with_offset_and_test_object", param, error)
 
@@ -125,7 +125,7 @@ class _ActionsMixin:
             record_action_to_list("webdriver wrapper drag_and_drop", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper drag_and_drop failed: {repr(error)}"
+                f"WebDriverWrapper drag_and_drop failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper drag_and_drop", param, error)
 
@@ -157,7 +157,7 @@ class _ActionsMixin:
             record_action_to_list("webdriver wrapper drag_and_drop_with_test_object", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper drag_and_drop_with_test_object failed: {repr(error)}"
+                f"WebDriverWrapper drag_and_drop_with_test_object failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper drag_and_drop_with_test_object", param, error)
 
@@ -180,7 +180,7 @@ class _ActionsMixin:
             record_action_to_list("webdriver wrapper drag_and_drop_offset", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper drag_and_drop_offset failed: {repr(error)}"
+                f"WebDriverWrapper drag_and_drop_offset failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper drag_and_drop_offset", param, error)
 
@@ -208,7 +208,7 @@ class _ActionsMixin:
             record_action_to_list("webdriver wrapper drag_and_drop_offset_with_test_object", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper drag_and_drop_offset_with_test_object failed: {repr(error)}"
+                f"WebDriverWrapper drag_and_drop_offset_with_test_object failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper drag_and_drop_offset_with_test_object", param, error)
 
@@ -238,7 +238,7 @@ class _ActionsMixin:
             self._action_chain.perform()
             record_action_to_list("webdriver wrapper perform", None, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper perform failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper perform failed: {error!r}")
             record_action_to_list("webdriver wrapper perform", None, error)
 
     def reset_actions(self) -> None:
@@ -255,10 +255,10 @@ class _ActionsMixin:
             self._action_chain.reset_actions()
             record_action_to_list("webdriver wrapper reset_actions", None, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper reset_actions failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper reset_actions failed: {error!r}")
             record_action_to_list("webdriver wrapper reset_actions", None, error)
 
-    def left_click(self, on_element: WebElement = None) -> None:
+    def left_click(self, on_element: WebElement | None = None) -> None:
         """
         滑鼠左鍵點擊 (可指定元素或當前位置)
         Left click mouse at current position or on a given element
@@ -271,10 +271,10 @@ class _ActionsMixin:
             self._action_chain.click(on_element)
             record_action_to_list("webdriver wrapper left_click", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_click failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper left_click failed: {error!r}")
             record_action_to_list("webdriver wrapper left_click", param, error)
 
-    def left_click_with_test_object(self, element_name: str = None) -> None:
+    def left_click_with_test_object(self, element_name: str | None = None) -> None:
         """
         使用 TestObject 名稱找到元素並左鍵點擊
         Left click using a TestObject name
@@ -294,10 +294,10 @@ class _ActionsMixin:
                 self._action_chain.click(element)
             record_action_to_list("webdriver wrapper left_click_with_test_object", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_click_with_test_object failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper left_click_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper left_click_with_test_object", param, error)
 
-    def left_click_and_hold(self, on_element: WebElement = None) -> None:
+    def left_click_and_hold(self, on_element: WebElement | None = None) -> None:
         """
         滑鼠左鍵按住 (可指定元素或當前位置)
         Left click and hold mouse at current position or on a given element
@@ -308,10 +308,10 @@ class _ActionsMixin:
             self._action_chain.click_and_hold(on_element)
             record_action_to_list("webdriver wrapper left_click_and_hold", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_click_and_hold failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper left_click_and_hold failed: {error!r}")
             record_action_to_list("webdriver wrapper left_click_and_hold", param, error)
 
-    def left_click_and_hold_with_test_object(self, element_name: str = None) -> None:
+    def left_click_and_hold_with_test_object(self, element_name: str | None = None) -> None:
         """
         使用 TestObject 名稱找到元素並左鍵按住
         Left click and hold using a TestObject name
@@ -329,10 +329,10 @@ class _ActionsMixin:
                 self._action_chain.click_and_hold(element)
             record_action_to_list("webdriver wrapper left_click_and_hold_with_test_object", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_click_and_hold_with_test_object failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper left_click_and_hold_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper left_click_and_hold_with_test_object", param, error)
 
-    def right_click(self, on_element: WebElement = None) -> None:
+    def right_click(self, on_element: WebElement | None = None) -> None:
         """
         滑鼠右鍵點擊 (可指定元素或當前位置)
         Right click mouse at current position or on a given element
@@ -343,10 +343,10 @@ class _ActionsMixin:
             self._action_chain.context_click(on_element)
             record_action_to_list("webdriver wrapper right_click", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper right_click failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper right_click failed: {error!r}")
             record_action_to_list("webdriver wrapper right_click", param, error)
 
-    def right_click_with_test_object(self, element_name: str = None) -> None:
+    def right_click_with_test_object(self, element_name: str | None = None) -> None:
         """
         使用 TestObject 名稱找到元素並右鍵點擊
         Right click using a TestObject name
@@ -364,10 +364,10 @@ class _ActionsMixin:
                 self._action_chain.context_click(element)
             record_action_to_list("webdriver wrapper right_click_with_test_object", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper right_click_with_test_object failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper right_click_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper right_click_with_test_object", param, error)
 
-    def left_double_click(self, on_element: WebElement = None) -> None:
+    def left_double_click(self, on_element: WebElement | None = None) -> None:
         """
         滑鼠左鍵雙擊 (可指定元素或當前位置)
         Double left click mouse at current position or on a given element
@@ -380,10 +380,10 @@ class _ActionsMixin:
             self._action_chain.double_click(on_element)
             record_action_to_list("webdriver wrapper left_double_click", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_double_click failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper left_double_click failed: {error!r}")
             record_action_to_list("webdriver wrapper left_double_click", param, error)
 
-    def left_double_click_with_test_object(self, element_name: str = None) -> None:
+    def left_double_click_with_test_object(self, element_name: str | None = None) -> None:
         """
         使用 TestObject 名稱找到元素並左鍵雙擊
         Double left click using a TestObject name
@@ -405,10 +405,10 @@ class _ActionsMixin:
                 self._action_chain.double_click(web_element_wrapper.current_web_element)
             record_action_to_list("webdriver wrapper left_double_click_with_test_object", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper left_double_click_with_test_object failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper left_double_click_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper left_double_click_with_test_object", param, error)
 
-    def release(self, on_element: WebElement = None) -> None:
+    def release(self, on_element: WebElement | None = None) -> None:
         """
         釋放滑鼠 (可指定元素或當前位置)
         Release mouse button at current position or on a given element
@@ -419,10 +419,10 @@ class _ActionsMixin:
             self._action_chain.release(on_element)
             record_action_to_list("webdriver wrapper release", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper release failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper release failed: {error!r}")
             record_action_to_list("webdriver wrapper release", param, error)
 
-    def release_with_test_object(self, element_name: str = None) -> None:
+    def release_with_test_object(self, element_name: str | None = None) -> None:
         """
         使用 TestObject 名稱找到元素並釋放滑鼠
         Release mouse button using a TestObject name
@@ -442,10 +442,10 @@ class _ActionsMixin:
                 self._action_chain.release(web_element_wrapper.current_web_element)
             record_action_to_list("webdriver wrapper release_with_test_object", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper release_with_test_object failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper release_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper release_with_test_object", param, error)
 
-    def press_key(self, keycode_on_key_class, on_element: WebElement = None) -> None:
+    def press_key(self, keycode_on_key_class, on_element: WebElement | None = None) -> None:
         """
         按下鍵盤按鍵 (可指定元素或當前位置)
         Press a key on keyboard, optionally on a given element
@@ -462,10 +462,10 @@ class _ActionsMixin:
             self._action_chain.key_down(keycode_on_key_class, on_element)
             record_action_to_list("webdriver wrapper press_key", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper press_key failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper press_key failed: {error!r}")
             record_action_to_list("webdriver wrapper press_key", param, error)
 
-    def press_key_with_test_object(self, keycode_on_key_class, element_name: str = None) -> None:
+    def press_key_with_test_object(self, keycode_on_key_class, element_name: str | None = None) -> None:
         """
         使用 TestObject 名稱找到元素並按下鍵盤按鍵
         Press a key on keyboard using a TestObject name
@@ -490,10 +490,10 @@ class _ActionsMixin:
                 self._action_chain.key_down(keycode_on_key_class, web_element_wrapper.current_web_element)
             record_action_to_list("webdriver wrapper press_key_with_test_object", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper press_key_with_test_object failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper press_key_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper press_key_with_test_object", param, error)
 
-    def release_key(self, keycode_on_key_class, on_element: WebElement = None) -> None:
+    def release_key(self, keycode_on_key_class, on_element: WebElement | None = None) -> None:
         """
         釋放鍵盤按鍵 (可指定元素或當前位置)
         Release a key on keyboard, optionally on a given element
@@ -509,10 +509,10 @@ class _ActionsMixin:
             self._action_chain.key_up(keycode_on_key_class, on_element)
             record_action_to_list("webdriver wrapper release_key", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper release_key failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper release_key failed: {error!r}")
             record_action_to_list("webdriver wrapper release_key", param, error)
 
-    def release_key_with_test_object(self, keycode_on_key_class, element_name: str = None) -> None:
+    def release_key_with_test_object(self, keycode_on_key_class, element_name: str | None = None) -> None:
         """
         使用 TestObject 名稱找到元素並釋放鍵盤按鍵
         Release a key on keyboard using a TestObject name
@@ -537,7 +537,7 @@ class _ActionsMixin:
                 self._action_chain.key_up(keycode_on_key_class, web_element_wrapper.current_web_element)
             record_action_to_list("webdriver wrapper release_key_with_test_object", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper release_key_with_test_object failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper release_key_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper release_key_with_test_object", param, error)
 
     def move_by_offset(self, offset_x: int, offset_y: int) -> None:
@@ -554,7 +554,7 @@ class _ActionsMixin:
             self._action_chain.move_by_offset(offset_x, offset_y)
             record_action_to_list("webdriver wrapper move_by_offset", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper move_by_offset failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper move_by_offset failed: {error!r}")
             record_action_to_list("webdriver wrapper move_by_offset", param, error)
 
     def pause(self, seconds: int) -> None:
@@ -570,7 +570,7 @@ class _ActionsMixin:
             self._action_chain.pause(seconds)
             record_action_to_list("webdriver wrapper pause", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper pause failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper pause failed: {error!r}")
             record_action_to_list("webdriver wrapper pause", param, error)
 
     def send_keys(self, keys_to_send) -> None:
@@ -586,7 +586,7 @@ class _ActionsMixin:
             self._action_chain.send_keys(*keys_to_send)
             record_action_to_list("webdriver wrapper send_keys", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper send_keys failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper send_keys failed: {error!r}")
             record_action_to_list("webdriver wrapper send_keys", param, error)
 
     def send_keys_to_element(self, element: WebElement, keys_to_send) -> None:
@@ -604,7 +604,7 @@ class _ActionsMixin:
             self._action_chain.send_keys_to_element(element, keys_to_send)
             record_action_to_list("webdriver wrapper send_keys_to_element", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper send_keys_to_element failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper send_keys_to_element failed: {error!r}")
             record_action_to_list("webdriver wrapper send_keys_to_element", param, error)
 
     def send_keys_to_element_with_test_object(self, element_name: str, keys_to_send) -> None:
@@ -629,7 +629,7 @@ class _ActionsMixin:
             self._action_chain.send_keys_to_element(web_element_wrapper.current_web_element, *keys_to_send)
             record_action_to_list("webdriver wrapper send_keys_to_element_with_test_object", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper send_keys_to_element_with_test_object failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper send_keys_to_element_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper send_keys_to_element_with_test_object", param, error)
 
     def scroll(self, scroll_x: int, scroll_y: int) -> None:
@@ -648,5 +648,5 @@ class _ActionsMixin:
             self._action_chain.scroll_by_amount(scroll_x, scroll_y)
             record_action_to_list("webdriver wrapper scroll", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper scroll failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper scroll failed: {error!r}")
             record_action_to_list("webdriver wrapper scroll", param, error)

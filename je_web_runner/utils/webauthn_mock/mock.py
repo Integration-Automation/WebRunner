@@ -17,7 +17,7 @@ import base64
 import hashlib
 import secrets
 from dataclasses import dataclass, field
-from typing import Optional, Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -99,7 +99,7 @@ class MockCredential:
     signature_b64: str = ""
     user_handle_b64: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         # JS shim uses camelCase keys
         return {
             "id": self.id,
@@ -120,7 +120,7 @@ def build_credential(
     if not user_handle or not rp_id:
         raise WebauthnMockError("user_handle and rp_id are required")
     seed = hashlib.sha256(
-        f"{user_handle}|{rp_id}".encode("utf-8"),
+        f"{user_handle}|{rp_id}".encode(),
     ).digest()
     cred_id = _b64url(seed[:16])
     public_key = _b64url(seed[16:])
@@ -143,8 +143,8 @@ def build_credential(
 
 @dataclass
 class CeremonyLog:
-    created: List[Dict[str, Any]] = field(default_factory=list)
-    requested: List[Dict[str, Any]] = field(default_factory=list)
+    created: list[dict[str, Any]] = field(default_factory=list)
+    requested: list[dict[str, Any]] = field(default_factory=list)
 
 
 def parse_log(payload: Any) -> CeremonyLog:
@@ -170,7 +170,7 @@ def assert_signed_in(log: CeremonyLog) -> None:
         )
 
 
-def _extract_uv(opts: Any) -> Optional[str]:
+def _extract_uv(opts: Any) -> str | None:
     if not isinstance(opts, dict):
         return None
     pk = opts.get("publicKey")

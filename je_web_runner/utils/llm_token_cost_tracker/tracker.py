@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List, Mapping, Optional
+from typing import Any, Iterable, Mapping
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -27,7 +27,7 @@ class LlmTokenCostError(WebRunnerException):
 
 
 # USD per 1K tokens (input, output). Conservative late-2025 numbers.
-DEFAULT_RATE_CARD: Dict[str, Dict[str, float]] = {
+DEFAULT_RATE_CARD: dict[str, dict[str, float]] = {
     "claude-opus-4-7":    {"input": 0.015, "output": 0.075},
     "claude-sonnet-4-6":  {"input": 0.003, "output": 0.015},
     "claude-haiku-4-5":   {"input": 0.001, "output": 0.005},
@@ -59,7 +59,7 @@ class Tally:
     cost_usd: float = 0.0
     calls: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -80,7 +80,7 @@ def _resolve_price(
 
 def compute_cost(
     record: CallRecord, *,
-    rate_card_override: Optional[Mapping[str, Mapping[str, float]]] = None,
+    rate_card_override: Mapping[str, Mapping[str, float]] | None = None,
 ) -> float:
     rates = dict(DEFAULT_RATE_CARD)
     if rate_card_override:
@@ -92,7 +92,7 @@ def compute_cost(
 
 def tally(
     records: Iterable[CallRecord], *,
-    rate_card_override: Optional[Mapping[str, Mapping[str, float]]] = None,
+    rate_card_override: Mapping[str, Mapping[str, float]] | None = None,
 ) -> Tally:
     out = Tally()
     for r in records:
@@ -108,9 +108,9 @@ def tally(
 
 def tally_by_test(
     records: Iterable[CallRecord],
-    *, rate_card_override: Optional[Mapping[str, Mapping[str, float]]] = None,
-) -> Dict[str, Tally]:
-    buckets: Dict[str, List[CallRecord]] = defaultdict(list)
+    *, rate_card_override: Mapping[str, Mapping[str, float]] | None = None,
+) -> dict[str, Tally]:
+    buckets: dict[str, list[CallRecord]] = defaultdict(list)
     for r in records:
         buckets[r.test_name or "(unknown)"].append(r)
     return {k: tally(v, rate_card_override=rate_card_override)
@@ -130,7 +130,7 @@ def assert_under_budget(
 
 def top_spenders(
     by_test: Mapping[str, Tally], *, top_n: int = 5,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     if top_n < 1:
         raise LlmTokenCostError("top_n must be >= 1")
     items = sorted(by_test.items(), key=lambda kv: -kv[1].cost_usd)

@@ -12,7 +12,6 @@ index switching.
 """
 from __future__ import annotations
 
-from typing import List, Optional, Union
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -23,7 +22,7 @@ class PlaywrightElementError(WebRunnerException):
     """Raised when an element-level Playwright operation cannot proceed."""
 
 
-def _record(name: str, params, error: Optional[Exception]) -> None:
+def _record(name: str, params, error: Exception | None) -> None:
     record_action_to_list(f"Playwright element {name}", params, error)
 
 
@@ -35,7 +34,7 @@ class PlaywrightElementWrapper:
 
     def __init__(self) -> None:
         self.current_element = None
-        self.current_element_list: Optional[List[object]] = None
+        self.current_element_list: list[object] | None = None
 
     def _require_element(self):
         if self.current_element is None:
@@ -47,7 +46,7 @@ class PlaywrightElementWrapper:
         try:
             self._require_element().click()
             _record("click", None, None)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper click failed: {error!r}")
             _record("click", None, error)
 
@@ -56,7 +55,7 @@ class PlaywrightElementWrapper:
         try:
             self._require_element().dblclick()
             _record("dblclick", None, None)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper dblclick failed: {error!r}")
             _record("dblclick", None, error)
 
@@ -65,7 +64,7 @@ class PlaywrightElementWrapper:
         try:
             self._require_element().hover()
             _record("hover", None, None)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper hover failed: {error!r}")
             _record("hover", None, error)
 
@@ -76,7 +75,7 @@ class PlaywrightElementWrapper:
         try:
             self._require_element().fill(input_value)
             _record("fill", params, None)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper fill failed: {error!r}")
             _record("fill", params, error)
 
@@ -87,7 +86,7 @@ class PlaywrightElementWrapper:
         try:
             self._require_element().type(input_value, delay=delay)
             _record("type_text", params, None)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper type_text failed: {error!r}")
             _record("type_text", params, error)
 
@@ -97,7 +96,7 @@ class PlaywrightElementWrapper:
         try:
             self._require_element().press(key)
             _record("press", params, None)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper press failed: {error!r}")
             _record("press", params, error)
 
@@ -110,7 +109,7 @@ class PlaywrightElementWrapper:
         try:
             self._require_element().check()
             _record("check", None, None)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper check failed: {error!r}")
             _record("check", None, error)
 
@@ -119,30 +118,30 @@ class PlaywrightElementWrapper:
         try:
             self._require_element().uncheck()
             _record("uncheck", None, None)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper uncheck failed: {error!r}")
             _record("uncheck", None, error)
 
-    def select_option(self, value: Union[str, list, dict]) -> List[str]:
+    def select_option(self, value: str | list | dict) -> list[str]:
         web_runner_logger.info(f"PlaywrightElementWrapper select_option: {value!r}")
         params = {"value": value}
         try:
             result = self._require_element().select_option(value)
             _record("select_option", params, None)
             return result
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper select_option failed: {error!r}")
             _record("select_option", params, error)
             return []
 
-    def get_attribute(self, name: str) -> Optional[str]:
+    def get_attribute(self, name: str) -> str | None:
         web_runner_logger.info(f"PlaywrightElementWrapper get_attribute: {name!r}")
         params = {"name": name}
         try:
             value = self._require_element().get_attribute(name)
             _record("get_attribute", params, None)
             return value
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper get_attribute failed: {error!r}")
             _record("get_attribute", params, error)
             return None
@@ -156,29 +155,29 @@ class PlaywrightElementWrapper:
             value = handle.json_value() if handle is not None else None
             _record("get_property", params, None)
             return value
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper get_property failed: {error!r}")
             _record("get_property", params, error)
             return None
 
-    def inner_text(self) -> Optional[str]:
+    def inner_text(self) -> str | None:
         web_runner_logger.info("PlaywrightElementWrapper inner_text")
         try:
             value = self._require_element().inner_text()
             _record("inner_text", None, None)
             return value
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper inner_text failed: {error!r}")
             _record("inner_text", None, error)
             return None
 
-    def inner_html(self) -> Optional[str]:
+    def inner_html(self) -> str | None:
         web_runner_logger.info("PlaywrightElementWrapper inner_html")
         try:
             value = self._require_element().inner_html()
             _record("inner_html", None, None)
             return value
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper inner_html failed: {error!r}")
             _record("inner_html", None, error)
             return None
@@ -189,7 +188,7 @@ class PlaywrightElementWrapper:
             value = self._require_element().is_visible()
             _record("is_visible", None, None)
             return value
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper is_visible failed: {error!r}")
             _record("is_visible", None, error)
             return False
@@ -200,7 +199,7 @@ class PlaywrightElementWrapper:
             value = self._require_element().is_enabled()
             _record("is_enabled", None, None)
             return value
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper is_enabled failed: {error!r}")
             _record("is_enabled", None, error)
             return False
@@ -211,7 +210,7 @@ class PlaywrightElementWrapper:
             value = self._require_element().is_checked()
             _record("is_checked", None, None)
             return value
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper is_checked failed: {error!r}")
             _record("is_checked", None, error)
             return False
@@ -221,11 +220,11 @@ class PlaywrightElementWrapper:
         try:
             self._require_element().scroll_into_view_if_needed()
             _record("scroll_into_view", None, None)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper scroll_into_view failed: {error!r}")
             _record("scroll_into_view", None, error)
 
-    def screenshot(self, filename: str) -> Optional[str]:
+    def screenshot(self, filename: str) -> str | None:
         web_runner_logger.info(f"PlaywrightElementWrapper screenshot: {filename}")
         params = {"filename": filename}
         try:
@@ -233,7 +232,7 @@ class PlaywrightElementWrapper:
             self._require_element().screenshot(path=target)
             _record("screenshot", params, None)
             return target
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper screenshot failed: {error!r}")
             _record("screenshot", params, error)
             return None
@@ -247,7 +246,7 @@ class PlaywrightElementWrapper:
                 raise PlaywrightElementError("no element list captured")
             self.current_element = self.current_element_list[element_index]
             _record("change_element", params, None)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             web_runner_logger.error(f"PlaywrightElementWrapper change_element failed: {error!r}")
             _record("change_element", params, error)
 

@@ -4,7 +4,7 @@ import types
 from datetime import datetime
 from inspect import getmembers, isbuiltin
 from pathlib import Path
-from typing import Any, Callable, Optional, Union
+from typing import Any, Callable
 
 # 禁止暴露於 JSON 動作執行器的內建函式，避免任意程式碼執行
 # Builtins that must never be callable from user-supplied JSON actions,
@@ -153,7 +153,7 @@ from je_web_runner.utils.test_record.test_record_class import test_record_instan
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 
-def _sleep_seconds(seconds: Union[int, float] = 1) -> float:
+def _sleep_seconds(seconds: int | float = 1) -> float:
     """
     阻塞當前執行緒指定秒數，回傳實際睡眠的秒數。
     Block the calling thread for ``seconds`` (positive number). Negative
@@ -168,30 +168,30 @@ def _sleep_seconds(seconds: Union[int, float] = 1) -> float:
     return float(seconds)
 
 
-def _try_selenium_screenshot() -> Optional[bytes]:
+def _try_selenium_screenshot() -> bytes | None:
     try:
         if webdriver_wrapper_instance.current_webdriver is None:
             return None
         return webdriver_wrapper_instance.get_screenshot_as_png()
-    except Exception:  # noqa: BLE001 — best-effort fallback path
+    except Exception:
         return None
 
 
-def _try_playwright_screenshot() -> Optional[bytes]:
+def _try_playwright_screenshot() -> bytes | None:
     try:
         if not _pw.playwright_wrapper_instance._pages:
             return None
         return _pw.playwright_wrapper_instance.screenshot_bytes()
-    except Exception:  # noqa: BLE001 — best-effort fallback path
+    except Exception:
         return None
 
 
-class Executor(object):
+class Executor:
 
     def __init__(self):
         # 失敗時自動截圖目錄；None 代表停用
         # Output directory for auto-captured failure screenshots; None disables it.
-        self.failure_screenshot_dir: Optional[str] = None
+        self.failure_screenshot_dir: str | None = None
         # 全域重試策略 (預設關閉)
         # Global retry policy. retries == 0 disables retry; backoff is in
         # seconds and is multiplied by the (1-based) attempt number.
@@ -204,7 +204,7 @@ class Executor(object):
         # Optional context-manager factory invoked once per action so an
         # observability stack (OpenTelemetry, custom logging, …) can wrap
         # each call without the executor depending on the SDK directly.
-        self._action_span_factory: Optional[Callable[[str], Any]] = None
+        self._action_span_factory: Callable[[str], Any] | None = None
         # 事件字典：將字串名稱對應到實際可執行的函式
         # Event dictionary: map string keys to actual callable functions
         self.event_dict = {
@@ -818,7 +818,7 @@ class Executor(object):
         """
         self.retry_policy = {"retries": max(int(retries), 0), "backoff": max(float(backoff), 0.0)}
 
-    def set_action_span_factory(self, factory: Optional[Callable[[str], Any]]) -> None:
+    def set_action_span_factory(self, factory: Callable[[str], Any] | None) -> None:
         """
         登錄一個 context-manager factory，每個 action 會被它包起來
         Register an optional ``ContextManager`` factory invoked once per
@@ -839,7 +839,7 @@ class Executor(object):
         for attempt in range(retries + 1):
             try:
                 return self._execute_event(action)
-            except Exception as error:  # noqa: BLE001 — retry layer must catch all
+            except Exception as error:
                 if attempt >= retries:
                     raise
                 if backoff > 0:
@@ -850,7 +850,7 @@ class Executor(object):
         # Unreachable: ``range(retries + 1)`` always has at least one iteration.
         raise WebRunnerExecuteException("retry loop exited without resolution")
 
-    def set_failure_screenshot_dir(self, path: Optional[str]) -> None:
+    def set_failure_screenshot_dir(self, path: str | None) -> None:
         """
         設定 (或停用) 動作失敗時的自動截圖目錄
         Configure the directory used for auto-screenshots on action failure.
@@ -860,7 +860,7 @@ class Executor(object):
             Path(path).mkdir(parents=True, exist_ok=True)
         self.failure_screenshot_dir = path
 
-    def _capture_failure_screenshot(self, action) -> Optional[str]:
+    def _capture_failure_screenshot(self, action) -> str | None:
         """Best-effort screenshot save when an action raises. Returns path or None."""
         if not self.failure_screenshot_dir:
             return None
@@ -941,7 +941,7 @@ class Executor(object):
         # Invalid format, raise exception
         raise WebRunnerExecuteException(executor_data_error + " " + str(action))
 
-    def execute_action(self, action_list: Union[list, dict]) -> dict:
+    def execute_action(self, action_list: list | dict) -> dict:
         """
         執行一系列動作
         Execute a list of actions
@@ -970,18 +970,15 @@ class Executor(object):
 
         execute_record_dict = {}
 
-        # 檢查 action_list 是否為合法的 list
-        # Validate action_list
-        try:
-            if len(action_list) == 0 or isinstance(action_list, list) is False:
-                web_runner_logger.error(
-                    f"execute_action, action_list: {action_list}, "
-                    f"failed: {WebRunnerExecuteException(executor_list_error)}")
-                raise WebRunnerExecuteException(executor_list_error)
-        except Exception as error:
+        # action_list 必須是 list（空 list 會自然回傳空結果，迴圈不執行）。
+        # 先前這裡的 raise 被同層 except 立即吞掉，等同沒驗證，導致非 list
+        # (例如字串) 會被逐字元迭代。改為直接拒絕非 list。
+        # action_list must be a list; an empty list yields an empty result.
+        if not isinstance(action_list, list):
             web_runner_logger.error(
                 f"execute_action, action_list: {action_list}, "
-                f"failed: {repr(error)}")
+                f"failed: {WebRunnerExecuteException(executor_list_error)}")
+            raise WebRunnerExecuteException(executor_list_error)
 
         # 逐一執行動作
         # Execute each action in the list
@@ -993,12 +990,12 @@ class Executor(object):
             except Exception as error:
                 web_runner_logger.error(
                     f"execute_action, action_list: {action_list}, "
-                    f"action: {action}, failed: {repr(error)}")
+                    f"action: {action}, failed: {error!r}")
                 execute_record = "execute: " + str(action)
                 screenshot_path = self._capture_failure_screenshot(action)
                 if screenshot_path:
                     execute_record_dict.update({
-                        execute_record: f"{repr(error)} (failure screenshot: {screenshot_path})"
+                        execute_record: f"{error!r} (failure screenshot: {screenshot_path})"
                     })
                 else:
                     execute_record_dict.update({execute_record: repr(error)})

@@ -171,6 +171,23 @@ class TestBuildStealthChromeDriver(unittest.TestCase):
                 self.assertTrue(snapshot_path.exists())
                 mock_chrome.assert_called_once()
 
+    def test_chromedriver_log_passed_as_log_output(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            profile = Path(tmpdir) / "profile"
+            profile.mkdir()
+            log_path = Path(tmpdir) / "cd.log"
+            with patch(
+                "selenium.webdriver.chrome.service.Service"
+            ) as mock_service, patch("selenium.webdriver.Chrome"):
+                build_stealth_chrome_driver(
+                    profile, snapshot_dir=None, chromedriver_log=log_path,
+                )
+            _, kwargs = mock_service.call_args
+            # Selenium 4.x maps str log_output -> chromedriver --log-path;
+            # the legacy log_path kwarg is silently ignored.
+            self.assertEqual(kwargs.get("log_output"), str(log_path))
+            self.assertNotIn("log_path", kwargs)
+
     def test_retry_once_after_first_failure(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             profile = Path(tmpdir) / "profile"

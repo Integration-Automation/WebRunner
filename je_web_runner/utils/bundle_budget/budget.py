@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Sequence, Tuple, Union
+from typing import Any, Sequence
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -74,7 +74,7 @@ class Asset:
             return ""
 
 
-def _kind_of(entry: Dict[str, Any]) -> AssetKind:
+def _kind_of(entry: dict[str, Any]) -> AssetKind:
     resource_type = str(
         entry.get("_resourceType") or entry.get("resourceType") or ""
     ).lower()
@@ -90,7 +90,7 @@ def _kind_of(entry: Dict[str, Any]) -> AssetKind:
     return _MIME_KIND_MAP.get(mime, AssetKind.OTHER)
 
 
-def _sizes(entry: Dict[str, Any]) -> Tuple[int, int]:
+def _sizes(entry: dict[str, Any]) -> tuple[int, int]:
     response = entry.get("response") or {}
     content = response.get("content") or {}
     transfer = response.get("_transferSize") or response.get("bodySize")
@@ -101,13 +101,13 @@ def _sizes(entry: Dict[str, Any]) -> Tuple[int, int]:
     )
 
 
-def assets_from_har(har: Union[str, Dict[str, Any]]) -> List[Asset]:
+def assets_from_har(har: str | dict[str, Any]) -> list[Asset]:
     """Reduce a HAR object to a flat list of :class:`Asset`."""
     har_obj = _coerce_har(har)
     entries = ((har_obj.get("log") or {}).get("entries")) or []
     if not isinstance(entries, list):
         raise BundleBudgetError("har log.entries must be a list")
-    out: List[Asset] = []
+    out: list[Asset] = []
     for entry in entries:
         if not isinstance(entry, dict):
             continue
@@ -124,7 +124,7 @@ def assets_from_har(har: Union[str, Dict[str, Any]]) -> List[Asset]:
     return out
 
 
-def _coerce_har(har: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
+def _coerce_har(har: str | dict[str, Any]) -> dict[str, Any]:
     if isinstance(har, str):
         try:
             parsed = json.loads(har)
@@ -177,9 +177,9 @@ class BudgetBreach:
 class BudgetReport:
     """Roll-up returned by :func:`evaluate_budget`."""
 
-    totals: Dict[AssetKind, int] = field(default_factory=dict)
-    breaches: List[BudgetBreach] = field(default_factory=list)
-    biggest_assets: List[Asset] = field(default_factory=list)
+    totals: dict[AssetKind, int] = field(default_factory=dict)
+    breaches: list[BudgetBreach] = field(default_factory=list)
+    biggest_assets: list[Asset] = field(default_factory=list)
 
     def passed(self) -> bool:
         return not self.breaches
@@ -196,12 +196,12 @@ def evaluate_budget(
         raise BundleBudgetError("assets must be non-empty")
     if biggest_n < 0:
         raise BundleBudgetError("biggest_n must be >= 0")
-    totals: Dict[AssetKind, int] = {}
+    totals: dict[AssetKind, int] = {}
     for asset in assets:
         totals[asset.kind] = totals.get(asset.kind, 0) + max(
             asset.transfer_bytes, asset.content_bytes,
         )
-    breaches: List[BudgetBreach] = []
+    breaches: list[BudgetBreach] = []
     for budget in budgets:
         if not isinstance(budget, Budget):
             raise BundleBudgetError("budgets entries must be Budget instances")

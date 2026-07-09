@@ -13,7 +13,7 @@ Provides:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -88,7 +88,7 @@ class MockUsbDevice:
     product_name: str = ""
     serial_number: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -106,15 +106,15 @@ def build_mock_device(
 @dataclass
 class OutgoingCall:
     kind: str            # "controlOut" | "transferOut"
-    endpoint: Optional[int] = None
-    setup: Optional[Dict[str, Any]] = None
-    data: List[int] = field(default_factory=list)
+    endpoint: int | None = None
+    setup: dict[str, Any] | None = None
+    data: list[int] = field(default_factory=list)
 
 
-def parse_outgoing(payload: Any) -> List[OutgoingCall]:
+def parse_outgoing(payload: Any) -> list[OutgoingCall]:
     if not isinstance(payload, list):
         raise WebusbMockError("payload must be a list")
-    out: List[OutgoingCall] = []
+    out: list[OutgoingCall] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -129,7 +129,7 @@ def parse_outgoing(payload: Any) -> List[OutgoingCall]:
 
 def assert_transfer_out(
     calls: Iterable[OutgoingCall],
-    *, endpoint: int, contains: Optional[Sequence[int]] = None,
+    *, endpoint: int, contains: Sequence[int] | None = None,
 ) -> OutgoingCall:
     matches = [c for c in calls
                if c.kind == "transferOut" and c.endpoint == endpoint]
@@ -151,7 +151,7 @@ def assert_transfer_out(
 
 def assert_control_out(
     calls: Iterable[OutgoingCall],
-    *, request: Optional[int] = None,
+    *, request: int | None = None,
 ) -> OutgoingCall:
     matches = [c for c in calls if c.kind == "controlOut"]
     if not matches:

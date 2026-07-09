@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any, List, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -62,7 +62,7 @@ _PRELOAD_RE_REVERSE = re.compile(
 _HTML_TYPE_ERROR = "html must be a string"
 
 
-def _extract_preloaded_image_urls(html: str) -> List[str]:
+def _extract_preloaded_image_urls(html: str) -> list[str]:
     if not isinstance(html, str):
         raise LcpImageAuditError(_HTML_TYPE_ERROR)
     matches = _PRELOAD_RE.findall(html) + _PRELOAD_RE_REVERSE.findall(html)

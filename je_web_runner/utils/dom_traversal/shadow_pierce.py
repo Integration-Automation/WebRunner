@@ -10,7 +10,7 @@ Chromium / Firefox / WebKit page exposing ``shadowRoot.mode === "open"``.
 """
 from __future__ import annotations
 
-from typing import Any, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -91,7 +91,7 @@ def find_first(driver: Any, css_selector: str) -> Any:
     return _execute_js(driver, _PIERCE_FIRST_JS, css_selector)
 
 
-def find_all(driver: Any, css_selector: str, limit: int = 1000) -> List[Any]:
+def find_all(driver: Any, css_selector: str, limit: int = 1000) -> list[Any]:
     """Return up to ``limit`` matching nodes across the shadow tree."""
     if not isinstance(css_selector, str) or not css_selector:
         raise ShadowPierceError("css_selector must be a non-empty string")

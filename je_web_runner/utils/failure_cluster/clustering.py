@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -29,8 +29,8 @@ class FailureCluster:
     signature: str
     representative: str
     count: int = 0
-    members: List[Dict[str, Any]] = field(default_factory=list)
-    files: List[str] = field(default_factory=list)
+    members: list[dict[str, Any]] = field(default_factory=list)
+    files: list[str] = field(default_factory=list)
 
 
 _HEX_ADDRESS_RE = re.compile(r"0x[0-9a-fA-F]+")
@@ -77,9 +77,9 @@ def normalise_error(message: str) -> str:
 
 
 def cluster_failures(
-    failures: Iterable[Dict[str, Any]],
-    top_n: Optional[int] = None,
-) -> List[FailureCluster]:
+    failures: Iterable[dict[str, Any]],
+    top_n: int | None = None,
+) -> list[FailureCluster]:
     """
     把 ``[{function_name, exception, file_path?}, …]`` 分群並依 count 排序。
     Group failures by normalised signature; clusters are sorted by count
@@ -87,7 +87,7 @@ def cluster_failures(
     """
     if failures is None:
         raise FailureClusterError("failures must be iterable")
-    buckets: Dict[str, FailureCluster] = {}
+    buckets: dict[str, FailureCluster] = {}
     for failure in failures:
         if not isinstance(failure, dict):
             raise FailureClusterError(
@@ -115,7 +115,7 @@ def cluster_failures(
     return ordered
 
 
-def cluster_summary(clusters: Iterable[FailureCluster]) -> List[Dict[str, Any]]:
+def cluster_summary(clusters: Iterable[FailureCluster]) -> list[dict[str, Any]]:
     """Project clusters to ``{signature, count, files, representative}`` dicts."""
     return [
         {

@@ -9,7 +9,7 @@ from __future__ import annotations
 import os
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from dotenv import load_dotenv
 
@@ -24,7 +24,7 @@ class EnvConfigError(WebRunnerException):
 _PLACEHOLDER_RE = re.compile(r"\$\{ENV\.([A-Za-z_]\w*)\}")
 
 
-def load_env(env_name: Optional[str] = None, env_dir: str = ".", override: bool = False) -> str:
+def load_env(env_name: str | None = None, env_dir: str = ".", override: bool = False) -> str:
     """
     載入指定環境的 ``.env`` 檔
     Load the ``.env`` file for the given environment.
@@ -45,7 +45,7 @@ def load_env(env_name: Optional[str] = None, env_dir: str = ".", override: bool 
     return str(target)
 
 
-def get_env(key: str, default: Optional[str] = None) -> Optional[str]:
+def get_env(key: str, default: str | None = None) -> str | None:
     """Return ``os.environ[key]`` with an optional default."""
     return os.environ.get(key, default)
 

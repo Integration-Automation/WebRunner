@@ -4,7 +4,6 @@ import ssl
 import sys
 import threading
 from secrets import compare_digest
-from typing import Optional
 
 from je_web_runner.utils.executor.action_executor import execute_action
 
@@ -14,7 +13,7 @@ _QUIT_COMMAND = "quit_server"
 _RECV_BYTES = 8192
 
 
-def _split_token(payload: bytes) -> tuple[Optional[str], bytes]:
+def _split_token(payload: bytes) -> tuple[str | None, bytes]:
     """Split off the first line as a token; returns (token, remainder)."""
     parts = payload.split(b"\n", 1)
     if len(parts) != 2:
@@ -35,7 +34,7 @@ class TCPServerHandler(socketserver.BaseRequestHandler):
     Request handler for TCP server
     """
 
-    def _authorize(self, payload: bytes) -> Optional[bytes]:
+    def _authorize(self, payload: bytes) -> bytes | None:
         """Return the authenticated payload, or None to reject the request."""
         expected = getattr(self.server, "auth_token", None)
         if not expected:
@@ -90,12 +89,12 @@ class TCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     Multi-threaded TCP server with optional token auth and TLS.
     """
 
-    def __init__(self, server_address, request_handler_class, auth_token: Optional[str] = None):
+    def __init__(self, server_address, request_handler_class, auth_token: str | None = None):
         super().__init__(server_address, request_handler_class)
         self.close_flag: bool = False
         # ``close_event`` lets callers wait for shutdown without polling.
         self.close_event: threading.Event = threading.Event()
-        self.auth_token: Optional[str] = auth_token
+        self.auth_token: str | None = auth_token
 
 
 def _build_tls_context(certfile: str, keyfile: str) -> ssl.SSLContext:
@@ -120,9 +119,9 @@ def _resolve_argv_overrides(host: str, port: int) -> tuple[str, int]:
 def start_web_runner_socket_server(
     host: str = "localhost",
     port: int = 9941,
-    auth_token: Optional[str] = None,
-    certfile: Optional[str] = None,
-    keyfile: Optional[str] = None,
+    auth_token: str | None = None,
+    certfile: str | None = None,
+    keyfile: str | None = None,
 ):
     """
     啟動 WebRunner TCP Socket Server，可選 token 驗證與 TLS

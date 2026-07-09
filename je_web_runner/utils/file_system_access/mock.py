@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -42,7 +42,7 @@ class WriteEvent:
     sequence: int
     data: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -117,7 +117,7 @@ _TEMPLATE = """
 def build_install_script(
     open_files: Sequence[MockFile] = (),
     *,
-    save_suggested_name: Optional[str] = None,
+    save_suggested_name: str | None = None,
 ) -> str:
     """Render the JS shim. Inject once per page via init-script."""
     files_payload = [
@@ -135,13 +135,13 @@ HARVEST_SCRIPT = "return window.__wr_fsa_writes__ || [];"
 
 # ---------- harvest -----------------------------------------------------
 
-def parse_writes(payload: Any) -> List[WriteEvent]:
+def parse_writes(payload: Any) -> list[WriteEvent]:
     """Convert the harvested array into typed :class:`WriteEvent` records."""
     if not isinstance(payload, list):
         raise FileSystemAccessError(
             f"writes payload must be list, got {type(payload).__name__}"
         )
-    out: List[WriteEvent] = []
+    out: list[WriteEvent] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -172,8 +172,8 @@ def assert_no_writes(writes: Sequence[WriteEvent]) -> None:
 def assert_wrote(
     writes: Sequence[WriteEvent],
     *,
-    file_name: Optional[str] = None,
-    contains: Optional[str] = None,
+    file_name: str | None = None,
+    contains: str | None = None,
 ) -> WriteEvent:
     """Assert at least one write matches name and/or substring."""
     if file_name is None and contains is None:

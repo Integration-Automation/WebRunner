@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -29,8 +28,8 @@ class CriticalCssAuditError(WebRunnerException):
 class CssReport:
     inline_blocks: int = 0
     inline_bytes: int = 0
-    external_blocking: List[str] = field(default_factory=list)
-    preloaded: List[str] = field(default_factory=list)
+    external_blocking: list[str] = field(default_factory=list)
+    preloaded: list[str] = field(default_factory=list)
 
 
 _STYLE_BLOCK_RE = re.compile(

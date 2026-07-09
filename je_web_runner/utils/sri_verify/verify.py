@@ -21,7 +21,7 @@ import hashlib
 import re
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -56,13 +56,13 @@ class ResourceTag:
 
     tag: str
     url: str
-    integrity: Optional[str] = None
-    crossorigin: Optional[str] = None
-    rel: Optional[str] = None
+    integrity: str | None = None
+    crossorigin: str | None = None
+    rel: str | None = None
 
 
-def _parse_attrs(blob: str) -> Dict[str, str]:
-    out: Dict[str, str] = {}
+def _parse_attrs(blob: str) -> dict[str, str]:
+    out: dict[str, str] = {}
     for match in _ATTR_RE.finditer(blob):
         name = match.group(1).lower()
         value = match.group(2) or match.group(3) or match.group(4) or ""
@@ -70,11 +70,11 @@ def _parse_attrs(blob: str) -> Dict[str, str]:
     return out
 
 
-def parse_html(html: str) -> List[ResourceTag]:
+def parse_html(html: str) -> list[ResourceTag]:
     """Extract every ``<script src>`` / ``<link rel=stylesheet href>`` tag."""
     if not isinstance(html, str):
         raise SriVerifyError(f"html must be str, got {type(html).__name__}")
-    tags: List[ResourceTag] = []
+    tags: list[ResourceTag] = []
     for match in _SCRIPT_RE.finditer(html):
         attrs = _parse_attrs(match.group(1))
         if "src" not in attrs:
@@ -121,9 +121,9 @@ def compute_integrity(payload: bytes, algorithm: str = "sha384") -> str:
     return f"{alg}-{base64.b64encode(digest).decode('ascii')}"
 
 
-def _split_integrity(value: str) -> List[tuple]:
+def _split_integrity(value: str) -> list[tuple]:
     """Return list of (algorithm, expected_b64) tuples."""
-    out: List[tuple] = []
+    out: list[tuple] = []
     for token in value.split():
         if "-" not in token:
             continue
@@ -143,14 +143,14 @@ class SriFinding:
     verdict: Verdict
     detail: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "verdict": self.verdict.value}
 
 
 def verify_tag(
     tag: ResourceTag,
     *,
-    payload: Optional[bytes] = None,
+    payload: bytes | None = None,
     require_crossorigin: bool = True,
 ) -> SriFinding:
     """Verify SRI for one parsed tag, optionally re-checking the hash."""
@@ -201,19 +201,19 @@ def verify_tag(
 def _needs_crossorigin(tag: ResourceTag) -> bool:
     """Cross-origin (URL absolute + scheme present) needs ``crossorigin``."""
     # S5332 ok: we are *detecting* an http:// URL here, not making a request.
-    return tag.url.startswith(("http://", "https://", "//"))  # noqa: S5332
+    return tag.url.startswith(("http://", "https://", "//"))  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
 
 
 def verify_html(
     html: str,
     *,
-    payload_provider: Optional[Any] = None,
+    payload_provider: Any | None = None,
     require_crossorigin: bool = True,
-) -> List[SriFinding]:
+) -> list[SriFinding]:
     """Parse + verify every applicable tag in ``html``."""
-    findings: List[SriFinding] = []
+    findings: list[SriFinding] = []
     for tag in parse_html(html):
-        payload: Optional[bytes] = None
+        payload: bytes | None = None
         if payload_provider is not None:
             try:
                 payload = payload_provider(tag.url)

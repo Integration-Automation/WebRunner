@@ -180,6 +180,33 @@ class TestAssertSortedBy(unittest.TestCase):
         with self.assertRaises(PaginationAuditError):
             assert_sorted_by(PaginationFindings(), "nope")  # type: ignore[arg-type]
 
+    def test_callback_is_applied_to_keys(self):
+        # Keys are lexicographically ascending ('alice' < 'bob' < 'charlie')
+        # so the identity check would pass; sorting by length must FAIL
+        # because lengths are 5, 3, 7 — proves the callback is applied.
+        findings = PaginationFindings(
+            item_keys_by_page=[["alice", "bob"], ["charlie"]]
+        )
+        assert_sorted_by(findings, lambda x: x)  # identity: ascending, ok
+        with self.assertRaises(PaginationAuditError):
+            assert_sorted_by(findings, len)  # by length: 5 > 3 violates
+
+    def test_callback_enables_reverse_order(self):
+        # By length descending: 7, 5, 3 — passes only when callback applied.
+        findings = PaginationFindings(
+            item_keys_by_page=[["charlie"], ["alice", "bob"]]
+        )
+        assert_sorted_by(findings, len, reverse=True)
+
+    def test_callback_failure_raises(self):
+        findings = PaginationFindings(item_keys_by_page=[[1, 2]])
+
+        def _boom(_key):
+            raise ValueError("nope")
+
+        with self.assertRaises(PaginationAuditError):
+            assert_sorted_by(findings, _boom)
+
 
 if __name__ == "__main__":
     unittest.main()

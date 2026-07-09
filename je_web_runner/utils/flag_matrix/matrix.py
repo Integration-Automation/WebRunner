@@ -18,7 +18,7 @@ import itertools
 import json
 import random
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Callable, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -27,7 +27,7 @@ class FlagMatrixError(WebRunnerException):
     """Raised on bad flag definitions, impossible constraints, or sample size."""
 
 
-Combo = Dict[str, Any]
+Combo = dict[str, Any]
 Constraint = Callable[[Combo], bool]
 
 
@@ -53,12 +53,12 @@ class FlagSpec:
 class FlagMatrix:
     """The materialised set of combos and metadata."""
 
-    combos: List[Combo] = field(default_factory=list)
+    combos: list[Combo] = field(default_factory=list)
     total_possible: int = 0
     pinned_count: int = 0
     constrained_out: int = 0
     sampled: bool = False
-    seed: Optional[int] = None
+    seed: int | None = None
 
     def __len__(self) -> int:
         return len(self.combos)
@@ -74,8 +74,8 @@ def build_matrix(  # NOSONAR S3776 — cohesive logic; planned refactor in follo
     *,
     constraints: Sequence[Constraint] = (),
     pinned: Sequence[Combo] = (),
-    sample_size: Optional[int] = None,
-    seed: Optional[int] = None,
+    sample_size: int | None = None,
+    seed: int | None = None,
 ) -> FlagMatrix:
     """
     Materialise the combo list. ``constraints`` returning False drop a
@@ -96,12 +96,12 @@ def build_matrix(  # NOSONAR S3776 — cohesive logic; planned refactor in follo
     for variants in variant_lists:
         total_possible *= len(variants)
 
-    all_combos: List[Combo] = []
+    all_combos: list[Combo] = []
     for tup in itertools.product(*variant_lists):
-        combo = dict(zip(names, tup))
+        combo = dict(zip(names, tup, strict=False))
         all_combos.append(combo)
 
-    pinned_combos: List[Combo] = []
+    pinned_combos: list[Combo] = []
     pinned_keys = set()
     for combo in pinned:
         _validate_pinned(combo, names, variant_lists)
@@ -111,7 +111,7 @@ def build_matrix(  # NOSONAR S3776 — cohesive logic; planned refactor in follo
         pinned_keys.add(key)
         pinned_combos.append(combo)
 
-    filtered: List[Combo] = []
+    filtered: list[Combo] = []
     constrained_out = 0
     for combo in all_combos:
         if _combo_key(combo) in pinned_keys:
@@ -129,7 +129,7 @@ def build_matrix(  # NOSONAR S3776 — cohesive logic; planned refactor in follo
         keep_count = max(0, sample_size - len(pinned_combos))
         # S2245 ok: deterministic seeded sampling for reproducible test combos;
         # not used for any cryptographic / security decision.
-        filtered = rng.sample(filtered, keep_count)  # noqa: S2245
+        filtered = rng.sample(filtered, keep_count)  # NOSONAR S2245 — non-crypto use (chaos/sampling), not security-sensitive
         sampled = True
     else:
         sampled = False
@@ -156,7 +156,7 @@ def _validate_pinned(
         raise FlagMatrixError(
             f"pinned combo keys {sorted(combo.keys())} != flag names {sorted(names)}"
         )
-    for name, variants in zip(names, variant_lists):
+    for name, variants in zip(names, variant_lists, strict=False):
         if combo[name] not in variants:
             raise FlagMatrixError(
                 f"pinned combo value {combo[name]!r} for flag {name!r} "
@@ -182,7 +182,7 @@ def _passes_all(combo: Combo, constraints: Sequence[Constraint]) -> bool:
 
 # ---------- constraint helpers ------------------------------------------
 
-def forbid(pair: Tuple[Tuple[str, Any], Tuple[str, Any]]) -> Constraint:
+def forbid(pair: tuple[tuple[str, Any], tuple[str, Any]]) -> Constraint:
     """Block combos containing both ``(flag_a, val_a)`` AND ``(flag_b, val_b)``."""
     (a_flag, a_val), (b_flag, b_val) = pair
 
@@ -191,7 +191,7 @@ def forbid(pair: Tuple[Tuple[str, Any], Tuple[str, Any]]) -> Constraint:
     return _constraint
 
 
-def require(pair: Tuple[Tuple[str, Any], Tuple[str, Any]]) -> Constraint:
+def require(pair: tuple[tuple[str, Any], tuple[str, Any]]) -> Constraint:
     """If ``(flag_a, val_a)`` is set, ``(flag_b, val_b)`` must also be set."""
     (a_flag, a_val), (b_flag, b_val) = pair
 
@@ -211,7 +211,7 @@ class ComboResult:
     combo: Combo
     passed: bool
     duration_seconds: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
@@ -221,7 +221,7 @@ class MatrixReport:
     total: int
     passed: int
     failed: int
-    failures: List[ComboResult] = field(default_factory=list)
+    failures: list[ComboResult] = field(default_factory=list)
     average_seconds: float = 0.0
 
 
@@ -229,7 +229,7 @@ def summarise_results(results: Iterable[ComboResult]) -> MatrixReport:
     """Compute counts and pull out the failures."""
     total = 0
     passed = 0
-    failures: List[ComboResult] = []
+    failures: list[ComboResult] = []
     total_seconds = 0.0
     for result in results:
         if not isinstance(result, ComboResult):
@@ -252,7 +252,7 @@ def summarise_results(results: Iterable[ComboResult]) -> MatrixReport:
     )
 
 
-def smallest_failing_subset(failures: Sequence[ComboResult]) -> List[str]:
+def smallest_failing_subset(failures: Sequence[ComboResult]) -> list[str]:
     """
     Pick out the smallest set of flags that, alone, explain every failure.
     Greedy minimum-set-cover on ``{flag=value}`` strings. Useful for the
@@ -262,11 +262,11 @@ def smallest_failing_subset(failures: Sequence[ComboResult]) -> List[str]:
     if not failures:
         return []
     universe = set(range(len(failures)))
-    sets: Dict[str, set] = {}
+    sets: dict[str, set] = {}
     for index, failure in enumerate(failures):
         for flag, value in failure.combo.items():
             sets.setdefault(f"{flag}={value!r}", set()).add(index)
-    chosen: List[str] = []
+    chosen: list[str] = []
     covered: set = set()
     while covered != universe:
         best_key = None

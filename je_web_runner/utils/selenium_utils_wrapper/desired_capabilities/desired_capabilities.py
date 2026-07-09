@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any
 
 from selenium.webdriver import DesiredCapabilities
 
@@ -15,7 +15,7 @@ desired_capabilities_dict = {
 }
 
 
-def get_desired_capabilities_keys() -> Union[str, Any]:
+def get_desired_capabilities_keys() -> str | Any:
     """
     取得所有可用的 WebDriver 名稱
     Get all available WebDriver names

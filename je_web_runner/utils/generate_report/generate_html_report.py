@@ -1,5 +1,4 @@
 import html
-import sys
 from threading import Lock
 
 from je_web_runner.utils.exception.exception_tags import html_generate_no_data_tag
@@ -151,16 +150,15 @@ def generate_html() -> str:
         # 若沒有測試紀錄，拋出例外
         # Raise exception if no test records
         raise WebRunnerHTMLException(html_generate_no_data_tag)
-    else:
-        event_str = ""
-        for record_data in test_record_instance.test_record_list:
-            # 根據是否有 exception 決定表格樣式
-            # Choose table style based on exception presence
-            if record_data.get("program_exception") == "None":
-                event_str = make_html_table(event_str, record_data, "event_table_head")
-            else:
-                event_str = make_html_table(event_str, record_data, "failure_table_head")
-        new_html_string = _html_string.format(event_table=event_str)
+    event_str = ""
+    for record_data in test_record_instance.test_record_list:
+        # 根據是否有 exception 決定表格樣式
+        # Choose table style based on exception presence
+        if record_data.get("program_exception") == "None":
+            event_str = make_html_table(event_str, record_data, "event_table_head")
+        else:
+            event_str = make_html_table(event_str, record_data, "failure_table_head")
+    new_html_string = _html_string.format(event_table=event_str)
     return new_html_string
 
 
@@ -174,10 +172,8 @@ def generate_html_report(html_name: str = "default_name"):
     web_runner_logger.info(f"generate_html_report, html_name: {html_name}")
     new_html_string = generate_html()
     try:
-        _lock.acquire()  # 確保多執行緒安全 / ensure thread safety
-        with open(html_name + ".html", "w+") as file_to_write:
+        # ``_lock`` serialises concurrent writers; ``with`` guarantees release.
+        with _lock, open(html_name + ".html", "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             file_to_write.write(new_html_string)
-    except Exception as error:
-        print(repr(error), file=sys.stderr)
-    finally:
-        _lock.release()
+    except OSError as error:
+        web_runner_logger.error(f"generate_html_report write failed: {error!r}")

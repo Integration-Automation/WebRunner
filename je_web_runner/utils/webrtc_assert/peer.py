@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -81,12 +81,12 @@ class PeerSnapshot:
     signaling_state: SignalingState = SignalingState.STABLE
     local_sdp: str = ""
     remote_sdp: str = ""
-    local_tracks: List[TrackInfo] = field(default_factory=list)
-    remote_tracks: List[TrackInfo] = field(default_factory=list)
-    selected_candidate_pair_id: Optional[str] = None
+    local_tracks: list[TrackInfo] = field(default_factory=list)
+    remote_tracks: list[TrackInfo] = field(default_factory=list)
+    selected_candidate_pair_id: str | None = None
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PeerSnapshot":
+    def from_dict(cls, data: dict[str, Any]) -> PeerSnapshot:
         """Build from a raw JSON dict (e.g. ``page.evaluate(...)`` result)."""
         if not isinstance(data, dict):
             raise WebRtcAssertError(f"from_dict expects dict, got {type(data).__name__}")
@@ -108,8 +108,8 @@ class PeerSnapshot:
         )
 
 
-def _coerce_tracks(items: Iterable[Any]) -> List[TrackInfo]:
-    out: List[TrackInfo] = []
+def _coerce_tracks(items: Iterable[Any]) -> list[TrackInfo]:
+    out: list[TrackInfo] = []
     for item in items:
         if not isinstance(item, dict):
             continue
@@ -137,13 +137,13 @@ class RtpStats:
     jitter: float = 0.0
 
 
-def aggregate_stats(stats_report: Sequence[Dict[str, Any]]) -> List[RtpStats]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+def aggregate_stats(stats_report: Sequence[dict[str, Any]]) -> list[RtpStats]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """Reduce a raw ``getStats()`` list into one :class:`RtpStats` per direction+kind."""
     if not isinstance(stats_report, list):
         raise WebRtcAssertError(
             f"stats_report must be a list, got {type(stats_report).__name__}"
         )
-    bucket: Dict[tuple, RtpStats] = {}
+    bucket: dict[tuple, RtpStats] = {}
     for record in stats_report:
         if not isinstance(record, dict):
             continue
@@ -219,13 +219,13 @@ def assert_sdp_has_codec(snapshot: PeerSnapshot, codec_name: str, *, side: str =
 def assert_no_packet_loss(
     stats: Sequence[RtpStats],
     *,
-    direction: Optional[str] = None,
+    direction: str | None = None,
     max_loss_ratio: float = 0.01,
 ) -> None:
     """Assert packets_lost / packets <= ``max_loss_ratio`` for matching streams."""
     if not 0.0 <= max_loss_ratio <= 1.0:
         raise WebRtcAssertError("max_loss_ratio must be in [0, 1]")
-    breaches: List[str] = []
+    breaches: list[str] = []
     for s in stats:
         if direction is not None and s.direction != direction:
             continue
@@ -266,7 +266,7 @@ def assert_min_bytes_flowed(
 
 # ---------- helpers -----------------------------------------------------
 
-def export_snapshot(snapshot: PeerSnapshot) -> Dict[str, Any]:
+def export_snapshot(snapshot: PeerSnapshot) -> dict[str, Any]:
     """Render the snapshot as a plain dict (for failure bundles)."""
     out = asdict(snapshot)
     out["connection_state"] = snapshot.connection_state.value

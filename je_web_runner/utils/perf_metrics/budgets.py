@@ -20,7 +20,7 @@ import fnmatch
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -33,9 +33,9 @@ class PerfBudgetError(WebRunnerException):
 class RouteBudget:
     """Single budget entry."""
 
-    path: Optional[str] = None
-    path_glob: Optional[str] = None
-    metrics: Dict[str, float] = field(default_factory=dict)
+    path: str | None = None
+    path_glob: str | None = None
+    metrics: dict[str, float] = field(default_factory=dict)
 
     def matches(self, route_path: str) -> bool:
         if self.path is not None and self.path == route_path:
@@ -45,7 +45,7 @@ class RouteBudget:
         return False
 
 
-def load_budgets(source: Union[str, Path, list]) -> List[RouteBudget]:
+def load_budgets(source: str | Path | list) -> list[RouteBudget]:
     """Load budgets from a path, JSON string, or in-memory list."""
     raw = _coerce_to_list(source)
     if not isinstance(raw, list):
@@ -53,7 +53,7 @@ def load_budgets(source: Union[str, Path, list]) -> List[RouteBudget]:
     return [_build_route_budget(index, entry) for index, entry in enumerate(raw)]
 
 
-def _coerce_to_list(source: Union[str, Path, list]) -> Any:
+def _coerce_to_list(source: str | Path | list) -> Any:
     if isinstance(source, list):
         return source
     if not isinstance(source, (str, Path)):
@@ -67,7 +67,7 @@ def _coerce_to_list(source: Union[str, Path, list]) -> Any:
         raise PerfBudgetError(f"{label} is not JSON: {error}") from error
 
 
-def _build_route_budget(index: int, entry: Any) -> "RouteBudget":
+def _build_route_budget(index: int, entry: Any) -> RouteBudget:
     if not isinstance(entry, dict):
         raise PerfBudgetError(f"budget[{index}] must be an object")
     if "path" not in entry and "path_glob" not in entry:
@@ -85,8 +85,8 @@ def _build_route_budget(index: int, entry: Any) -> "RouteBudget":
 @dataclass
 class BudgetCheckResult:
     route: str
-    matched_rule: Optional[RouteBudget]
-    breaches: List[Dict[str, Any]] = field(default_factory=list)
+    matched_rule: RouteBudget | None
+    breaches: list[dict[str, Any]] = field(default_factory=list)
 
     @property
     def passed(self) -> bool:
@@ -95,7 +95,7 @@ class BudgetCheckResult:
 
 def evaluate_metrics(
     route_path: str,
-    metrics: Dict[str, float],
+    metrics: dict[str, float],
     budgets: Sequence[RouteBudget],
 ) -> BudgetCheckResult:
     """Find the first matching rule and check every configured metric."""

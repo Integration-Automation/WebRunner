@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -23,7 +23,7 @@ class StorybookSnapshotError(WebRunnerException):
 
 
 Screenshot = Callable[[str], bytes]
-Comparator = Callable[[bytes, Path], Dict[str, Any]]
+Comparator = Callable[[bytes, Path], dict[str, Any]]
 
 
 def safe_filename(story: StorybookStory) -> str:
@@ -43,23 +43,23 @@ class SnapshotOutcome:
     image_path: Path
     matched_baseline: bool
     diff_percent: float = 0.0
-    note: Optional[str] = None
+    note: str | None = None
 
 
 @dataclass
 class StorybookSnapshotReport:
-    outcomes: List[SnapshotOutcome] = field(default_factory=list)
+    outcomes: list[SnapshotOutcome] = field(default_factory=list)
 
     @property
     def passed(self) -> bool:
         return all(o.matched_baseline for o in self.outcomes)
 
     @property
-    def failures(self) -> List[SnapshotOutcome]:
+    def failures(self) -> list[SnapshotOutcome]:
         return [o for o in self.outcomes if not o.matched_baseline]
 
 
-def _default_comparator(current_bytes: bytes, baseline_path: Path) -> Dict[str, Any]:
+def _default_comparator(current_bytes: bytes, baseline_path: Path) -> dict[str, Any]:
     if not baseline_path.is_file():
         return {"matched": False, "diff_percent": 100.0,
                 "note": "baseline missing"}
@@ -73,11 +73,11 @@ def capture_story_snapshots(
     stories: Iterable[StorybookStory],
     base_url: str,
     *,
-    output_dir: Union[str, Path],
+    output_dir: str | Path,
     take_screenshot: Screenshot,
     navigate: Callable[[str], None],
-    baseline_dir: Optional[Union[str, Path]] = None,
-    comparator: Optional[Comparator] = None,
+    baseline_dir: str | Path | None = None,
+    comparator: Comparator | None = None,
 ) -> StorybookSnapshotReport:
     """
     對每個 story 截圖並（可選）跟 baseline 比對；回傳 :class:`StorybookSnapshotReport`。
@@ -112,7 +112,7 @@ def _snapshot_story(
     out_dir: Path,
     take_screenshot: Screenshot,
     navigate: Callable[[str], None],
-    baseline_path_root: Optional[Path],
+    baseline_path_root: Path | None,
     compare: Comparator,
 ) -> SnapshotOutcome:
     if not isinstance(story, StorybookStory):
@@ -144,7 +144,7 @@ def _snapshot_story(
 
 
 def assert_no_visual_regressions(report: StorybookSnapshotReport,
-                                 allow_stories: Optional[Iterable[str]] = None) -> None:
+                                 allow_stories: Iterable[str] | None = None) -> None:
     allow = set(allow_stories or [])
     bad = [o for o in report.failures if o.story_id not in allow]
     if bad:

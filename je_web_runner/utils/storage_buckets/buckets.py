@@ -13,7 +13,7 @@ bucket B was written. This module:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -66,13 +66,13 @@ class BucketSnapshot:
     """One storage bucket's snapshot."""
 
     name: str
-    idb_databases: List[str] = field(default_factory=list)
-    cache_names: List[str] = field(default_factory=list)
-    durability: Optional[str] = None  # 'strict' / 'relaxed'
-    quota: Optional[int] = None
-    estimate: Optional[Dict[str, Any]] = None
+    idb_databases: list[str] = field(default_factory=list)
+    cache_names: list[str] = field(default_factory=list)
+    durability: str | None = None  # 'strict' / 'relaxed'
+    quota: int | None = None
+    estimate: dict[str, Any] | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -81,9 +81,9 @@ class BucketsReport:
     """Full snapshot of all buckets."""
 
     supported: bool
-    buckets: List[BucketSnapshot] = field(default_factory=list)
+    buckets: list[BucketSnapshot] = field(default_factory=list)
 
-    def by_name(self) -> Dict[str, BucketSnapshot]:
+    def by_name(self) -> dict[str, BucketSnapshot]:
         return {b.name: b for b in self.buckets}
 
 
@@ -95,7 +95,7 @@ def parse_snapshot(payload: Any) -> BucketsReport:
     raw_buckets = payload.get("buckets") or []
     if not isinstance(raw_buckets, list):
         raise StorageBucketsError("buckets must be a list")
-    buckets: List[BucketSnapshot] = []
+    buckets: list[BucketSnapshot] = []
     for raw in raw_buckets:
         if not isinstance(raw, dict) or "name" not in raw:
             continue

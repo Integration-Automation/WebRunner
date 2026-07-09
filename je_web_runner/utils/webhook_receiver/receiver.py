@@ -20,7 +20,7 @@ import threading
 import time
 from dataclasses import asdict, dataclass, field
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 from urllib.parse import parse_qs, urlsplit
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -39,8 +39,8 @@ class ReceivedRequest:
 
     method: str
     path: str
-    query: Dict[str, List[str]] = field(default_factory=dict)
-    headers: Dict[str, str] = field(default_factory=dict)
+    query: dict[str, list[str]] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
     body: bytes = b""
     timestamp: float = field(default_factory=time.time)
 
@@ -55,7 +55,7 @@ class ReceivedRequest:
                 f"body is not JSON ({error}): {self.body[:80]!r}"
             ) from error
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
         out["body"] = self.body.decode("utf-8", errors="replace")
         return out
@@ -63,7 +63,7 @@ class ReceivedRequest:
 
 # ---------- handler factory --------------------------------------------
 
-ResponseFn = Callable[[ReceivedRequest], Optional[Dict[str, Any]]]
+ResponseFn = Callable[[ReceivedRequest], dict[str, Any] | None]
 
 
 def _free_port() -> int:
@@ -73,9 +73,9 @@ def _free_port() -> int:
 
 
 def _build_handler(
-    received: List[ReceivedRequest],
+    received: list[ReceivedRequest],
     lock: threading.Lock,
-    response_fn: Optional[ResponseFn],
+    response_fn: ResponseFn | None,
 ) -> type:
     class WebhookHandler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -96,7 +96,7 @@ def _build_handler(
             )
             with lock:
                 received.append(request)
-            response: Dict[str, Any] = {
+            response: dict[str, Any] = {
                 "status": 200,
                 "headers": {"Content-Type": "application/json"},
                 "body": b'{"received":true}',
@@ -142,8 +142,8 @@ class WebhookServer:
         self,
         *,
         host: str = "127.0.0.1",
-        port: Optional[int] = None,
-        response_fn: Optional[ResponseFn] = None,
+        port: int | None = None,
+        response_fn: ResponseFn | None = None,
     ) -> None:
         if not isinstance(host, str) or not host:
             raise WebhookReceiverError("host must be non-empty string")
@@ -152,18 +152,18 @@ class WebhookServer:
         self._host = host
         self._port = port or _free_port()
         self._response_fn = response_fn
-        self._received: List[ReceivedRequest] = []
+        self._received: list[ReceivedRequest] = []
         self._lock = threading.Lock()
-        self._server: Optional[ThreadingHTTPServer] = None
-        self._thread: Optional[threading.Thread] = None
+        self._server: ThreadingHTTPServer | None = None
+        self._thread: threading.Thread | None = None
 
     @property
     def base_url(self) -> str:
         # S5332 ok: this is a localhost test-fixture HTTP server with random
         # port, intentionally plain HTTP so callers can hit it without certs.
-        return f"http://{self._host}:{self._port}"  # noqa: S5332
+        return f"http://{self._host}:{self._port}"  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
 
-    def start(self) -> "WebhookServer":
+    def start(self) -> WebhookServer:
         if self._server is not None:
             raise WebhookReceiverError("server already started")
         handler_cls = _build_handler(
@@ -192,13 +192,13 @@ class WebhookServer:
         self._server = None
         self._thread = None
 
-    def __enter__(self) -> "WebhookServer":
+    def __enter__(self) -> WebhookServer:
         return self.start()
 
     def __exit__(self, exc_type, exc, tb) -> None:
         self.stop()
 
-    def received(self) -> List[ReceivedRequest]:
+    def received(self) -> list[ReceivedRequest]:
         with self._lock:
             return list(self._received)
 
@@ -239,7 +239,7 @@ def assert_received_path(
     server: WebhookServer,
     path: str,
     *,
-    method: Optional[str] = None,
+    method: str | None = None,
     minimum: int = 1,
 ) -> int:
     """Assert at least ``minimum`` requests hit ``path``."""

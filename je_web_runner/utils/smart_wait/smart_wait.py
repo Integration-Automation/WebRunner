@@ -7,7 +7,7 @@ mutations to detect route stabilisation.
 from __future__ import annotations
 
 import time
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -104,7 +104,7 @@ def wait_for_fetch_idle(
     """
     install_hooks(driver)
     deadline = time.monotonic() + timeout
-    quiet_started: Optional[float] = None
+    quiet_started: float | None = None
     while time.monotonic() < deadline:
         in_flight = _read_int(driver, "(window.__wrFetchInflight || 0)")
         now = time.monotonic()

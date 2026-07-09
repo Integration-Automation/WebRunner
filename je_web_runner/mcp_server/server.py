@@ -17,7 +17,7 @@ import json
 import sys
 import traceback
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, TextIO
+from typing import Any, Callable, TextIO
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -41,10 +41,10 @@ _SERVER_VERSION = "0.1.0"
 class Tool:
     name: str
     description: str
-    input_schema: Dict[str, Any]
-    handler: Callable[[Dict[str, Any]], Any]
+    input_schema: dict[str, Any]
+    handler: Callable[[dict[str, Any]], Any]
 
-    def schema(self) -> Dict[str, Any]:
+    def schema(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "description": self.description,
@@ -56,7 +56,7 @@ class Tool:
 class McpServer:
     """JSON-RPC 2.0 server that speaks the MCP wire protocol over stdio."""
 
-    tools: Dict[str, Tool] = field(default_factory=dict)
+    tools: dict[str, Tool] = field(default_factory=dict)
     initialized: bool = False
 
     def register(self, tool: Tool) -> None:
@@ -64,7 +64,7 @@ class McpServer:
             raise McpServerError(f"tool {tool.name!r} already registered")
         self.tools[tool.name] = tool
 
-    def handle(self, message: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    def handle(self, message: dict[str, Any]) -> dict[str, Any] | None:
         request_id = message.get("id")
         method = message.get("method")
         params = message.get("params") or {}
@@ -79,9 +79,7 @@ class McpServer:
                 result = self._tools_call(params)
             elif method == "resources/list":
                 result = {"resources": []}
-            elif method == "ping":
-                result = {}
-            elif method == "shutdown":
+            elif method == "ping" or method == "shutdown":
                 result = {}
             elif method == "notifications/initialized":
                 self.initialized = True
@@ -99,7 +97,7 @@ class McpServer:
             return None
         return {"jsonrpc": "2.0", "id": request_id, "result": result}
 
-    def _initialize(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _initialize(self, params: dict[str, Any]) -> dict[str, Any]:
         client_version = params.get("protocolVersion")
         web_runner_logger.info(f"mcp initialize from clientProtocol={client_version!r}")
         return {
@@ -108,10 +106,10 @@ class McpServer:
             "serverInfo": {"name": _SERVER_NAME, "version": _SERVER_VERSION},
         }
 
-    def _tools_list(self) -> Dict[str, Any]:
+    def _tools_list(self) -> dict[str, Any]:
         return {"tools": [tool.schema() for tool in self.tools.values()]}
 
-    def _tools_call(self, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _tools_call(self, params: dict[str, Any]) -> dict[str, Any]:
         name = params.get("name")
         arguments = params.get("arguments") or {}
         if not isinstance(name, str):
@@ -133,7 +131,7 @@ class McpServer:
         return {"content": [{"type": "text", "text": rendered}], "isError": False}
 
     @staticmethod
-    def _error(request_id: Any, code: int, message: str) -> Dict[str, Any]:
+    def _error(request_id: Any, code: int, message: str) -> dict[str, Any]:
         return {
             "jsonrpc": "2.0",
             "id": request_id,
@@ -145,7 +143,7 @@ class McpServer:
 # Default tool registry — wired to the existing WebRunner modules
 # --------------------------------------------------------------------------
 
-def _tool_lint_action(arguments: Dict[str, Any]) -> Any:
+def _tool_lint_action(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.linter.action_linter import lint_action
     actions = arguments.get("actions")
     if not isinstance(actions, list):
@@ -156,7 +154,7 @@ def _tool_lint_action(arguments: Dict[str, Any]) -> Any:
     return list(lint_action(actions))
 
 
-def _tool_locator_strength(arguments: Dict[str, Any]) -> Any:
+def _tool_locator_strength(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.linter.locator_strength import score_locator
     score = score_locator(
         str(arguments.get("strategy", "")),
@@ -170,7 +168,7 @@ def _tool_locator_strength(arguments: Dict[str, Any]) -> Any:
     }
 
 
-def _tool_render_template(arguments: Dict[str, Any]) -> Any:
+def _tool_render_template(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.action_templates.templates import render_template
     return render_template(
         str(arguments.get("template", "")),
@@ -178,12 +176,12 @@ def _tool_render_template(arguments: Dict[str, Any]) -> Any:
     )
 
 
-def _tool_compute_trend(arguments: Dict[str, Any]) -> Any:
+def _tool_compute_trend(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.trend_dashboard.trend import compute_trend
     return compute_trend(str(arguments.get("ledger_path", "")))
 
 
-def _tool_validate_response(arguments: Dict[str, Any]) -> Any:
+def _tool_validate_response(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.contract_testing.contract import validate_response
     body = arguments.get("body")
     schema = arguments.get("schema")
@@ -193,7 +191,7 @@ def _tool_validate_response(arguments: Dict[str, Any]) -> Any:
     return {"valid": result.valid, "errors": result.errors}
 
 
-def _tool_summary_markdown(arguments: Dict[str, Any]) -> Any:
+def _tool_summary_markdown(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.pr_comment.poster import (
         PrSummary,
         build_summary_markdown,
@@ -209,14 +207,14 @@ def _tool_summary_markdown(arguments: Dict[str, Any]) -> Any:
     return build_summary_markdown(summary, run_url=arguments.get("run_url"))
 
 
-def _tool_diff_shard(arguments: Dict[str, Any]) -> Any:
+def _tool_diff_shard(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.sharding.diff_shard import select_action_files
     candidates = arguments.get("candidates") or []
     changed = arguments.get("changed") or []
     return select_action_files(list(candidates), list(changed))
 
 
-def _tool_render_k8s(arguments: Dict[str, Any]) -> Any:
+def _tool_render_k8s(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.k8s_runner.manifest import (
         ShardJobConfig,
         render_job_manifests,
@@ -230,7 +228,7 @@ def _tool_render_k8s(arguments: Dict[str, Any]) -> Any:
     return render_job_manifests(config)
 
 
-def _tool_partition(arguments: Dict[str, Any]) -> Any:
+def _tool_partition(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.sharding.shard import partition
     return partition(
         list(arguments.get("paths") or []),
@@ -239,7 +237,7 @@ def _tool_partition(arguments: Dict[str, Any]) -> Any:
     )
 
 
-def _tool_format_actions(arguments: Dict[str, Any]) -> Any:
+def _tool_format_actions(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.action_formatter.formatter import format_actions
     actions = arguments.get("actions")
     if not isinstance(actions, list):
@@ -247,7 +245,7 @@ def _tool_format_actions(arguments: Dict[str, Any]) -> Any:
     return format_actions(actions, indent=int(arguments.get("indent", 2)))
 
 
-def _tool_parse_markdown(arguments: Dict[str, Any]) -> Any:
+def _tool_parse_markdown(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.md_authoring.markdown_to_actions import parse_markdown
     text = arguments.get("text")
     if not isinstance(text, str):
@@ -255,7 +253,7 @@ def _tool_parse_markdown(arguments: Dict[str, Any]) -> Any:
     return parse_markdown(text)
 
 
-def _tool_translate_actions_to_playwright(arguments: Dict[str, Any]) -> Any:
+def _tool_translate_actions_to_playwright(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.sel_to_pw.translator import translate_action_list
     actions = arguments.get("actions")
     if not isinstance(actions, list):
@@ -263,7 +261,7 @@ def _tool_translate_actions_to_playwright(arguments: Dict[str, Any]) -> Any:
     return translate_action_list(actions)
 
 
-def _tool_translate_python_to_playwright(arguments: Dict[str, Any]) -> Any:
+def _tool_translate_python_to_playwright(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.sel_to_pw.translator import translate_python_source
     source = arguments.get("source")
     if not isinstance(source, str):
@@ -276,7 +274,7 @@ def _tool_translate_python_to_playwright(arguments: Dict[str, Any]) -> Any:
     ]
 
 
-def _tool_pom_from_html(arguments: Dict[str, Any]) -> Any:
+def _tool_pom_from_html(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.pom_codegen.codegen import (
         discover_elements_from_html,
         render_pom_module,
@@ -296,7 +294,7 @@ def _tool_pom_from_html(arguments: Dict[str, Any]) -> Any:
     }
 
 
-def _tool_scan_pii(arguments: Dict[str, Any]) -> Any:
+def _tool_scan_pii(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.pii_scanner.scanner import scan_text
     text = arguments.get("text")
     if not isinstance(text, str):
@@ -310,7 +308,7 @@ def _tool_scan_pii(arguments: Dict[str, Any]) -> Any:
     ]
 
 
-def _tool_redact_pii(arguments: Dict[str, Any]) -> Any:
+def _tool_redact_pii(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.pii_scanner.scanner import redact_text
     text = arguments.get("text")
     if not isinstance(text, str):
@@ -322,7 +320,7 @@ def _tool_redact_pii(arguments: Dict[str, Any]) -> Any:
     )
 
 
-def _tool_cluster_failures(arguments: Dict[str, Any]) -> Any:
+def _tool_cluster_failures(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.failure_cluster.clustering import (
         cluster_failures,
         cluster_summary,
@@ -337,7 +335,7 @@ def _tool_cluster_failures(arguments: Dict[str, Any]) -> Any:
     return cluster_summary(clusters)
 
 
-def _tool_a11y_diff(arguments: Dict[str, Any]) -> Any:
+def _tool_a11y_diff(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.accessibility.a11y_diff import diff_violations
     baseline = arguments.get("baseline")
     current = arguments.get("current")
@@ -352,7 +350,7 @@ def _tool_a11y_diff(arguments: Dict[str, Any]) -> Any:
     }
 
 
-def _tool_score_action_locators(arguments: Dict[str, Any]) -> Any:
+def _tool_score_action_locators(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.linter.locator_strength import score_action_locators
     actions = arguments.get("actions")
     if not isinstance(actions, list):
@@ -360,7 +358,7 @@ def _tool_score_action_locators(arguments: Dict[str, Any]) -> Any:
     return list(score_action_locators(actions))
 
 
-def build_default_tools() -> List[Tool]:
+def build_default_tools() -> list[Tool]:
     """Construct the default tool list shipped with the server."""
     return [
         Tool(
@@ -636,9 +634,9 @@ def make_default_server() -> McpServer:
 
 
 def serve_stdio(
-    stdin: Optional[TextIO] = None,
-    stdout: Optional[TextIO] = None,
-    server: Optional[McpServer] = None,
+    stdin: TextIO | None = None,
+    stdout: TextIO | None = None,
+    server: McpServer | None = None,
 ) -> None:
     """
     主迴圈：每行一個 JSON-RPC 2.0 訊息，直到 stdin EOF
@@ -681,6 +679,6 @@ def _dispatch(message: Any, server: McpServer, out_stream: TextIO) -> None:
         _write_message(out_stream, response)
 
 
-def _write_message(out_stream: TextIO, message: Dict[str, Any]) -> None:
+def _write_message(out_stream: TextIO, message: dict[str, Any]) -> None:
     out_stream.write(json.dumps(message, ensure_ascii=False) + "\n")
     out_stream.flush()

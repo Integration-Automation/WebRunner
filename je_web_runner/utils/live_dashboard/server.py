@@ -30,7 +30,7 @@ import urllib.parse
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.flake_detector.detector import (
@@ -52,11 +52,11 @@ class DashboardConfig:
     """
     指定每個資料來源檔案路徑。任何一個 None 就會在 UI 上顯示成空白。
     """
-    ledger_path: Optional[Union[str, Path]] = None
-    quarantine_path: Optional[Union[str, Path]] = None
-    locator_findings_path: Optional[Union[str, Path]] = None
-    schedule_path: Optional[Union[str, Path]] = None
-    triage_report_path: Optional[Union[str, Path]] = None
+    ledger_path: str | Path | None = None
+    quarantine_path: str | Path | None = None
+    locator_findings_path: str | Path | None = None
+    schedule_path: str | Path | None = None
+    triage_report_path: str | Path | None = None
     bind_host: str = "127.0.0.1"
     bind_port: int = 0
 
@@ -72,7 +72,7 @@ class DashboardConfig:
 
 # ---------- data loaders -------------------------------------------------
 
-def _load_runs(ledger_path: Optional[Path], limit: int = 50) -> List[Dict[str, Any]]:
+def _load_runs(ledger_path: Path | None, limit: int = 50) -> list[dict[str, Any]]:
     if ledger_path is None or not ledger_path.exists():
         return []
     try:
@@ -87,7 +87,7 @@ def _load_runs(ledger_path: Optional[Path], limit: int = 50) -> List[Dict[str, A
     return [r for r in runs[-limit:][::-1] if isinstance(r, dict)]
 
 
-def _load_flake_scores(ledger_path: Optional[Path]) -> List[Dict[str, Any]]:
+def _load_flake_scores(ledger_path: Path | None) -> list[dict[str, Any]]:
     if ledger_path is None or not ledger_path.exists():
         return []
     try:
@@ -100,7 +100,7 @@ def _load_flake_scores(ledger_path: Optional[Path]) -> List[Dict[str, Any]]:
     return entries
 
 
-def _load_quarantine(quarantine_path: Optional[Path]) -> List[Dict[str, Any]]:
+def _load_quarantine(quarantine_path: Path | None) -> list[dict[str, Any]]:
     if quarantine_path is None or not quarantine_path.exists():
         return []
     try:
@@ -111,7 +111,7 @@ def _load_quarantine(quarantine_path: Optional[Path]) -> List[Dict[str, Any]]:
     return [e.to_dict() for e in registry.list()]
 
 
-def _load_locator_report(path: Optional[Path]) -> Dict[str, Any]:
+def _load_locator_report(path: Path | None) -> dict[str, Any]:
     if path is None or not path.exists():
         return {}
     try:
@@ -122,7 +122,7 @@ def _load_locator_report(path: Optional[Path]) -> Dict[str, Any]:
         return {}
 
 
-def _load_schedule(path: Optional[Path]) -> Dict[str, Any]:
+def _load_schedule(path: Path | None) -> dict[str, Any]:
     if path is None or not path.exists():
         return {}
     try:
@@ -133,7 +133,7 @@ def _load_schedule(path: Optional[Path]) -> Dict[str, Any]:
         return {}
 
 
-def _load_triage(path: Optional[Path]) -> Dict[str, Any]:
+def _load_triage(path: Path | None) -> dict[str, Any]:
     if path is None or not path.exists():
         return {}
     try:
@@ -146,7 +146,7 @@ def _load_triage(path: Optional[Path]) -> Dict[str, Any]:
 
 # ---------- summary ------------------------------------------------------
 
-def build_summary(config: DashboardConfig) -> Dict[str, Any]:
+def build_summary(config: DashboardConfig) -> dict[str, Any]:
     """One-shot snapshot used by ``/`` and ``/api/summary``."""
     runs = _load_runs(config.ledger_path, limit=10_000)
     total = len(runs)
@@ -227,7 +227,7 @@ def _layout(title: str, body: str) -> str:
     )
 
 
-def _render_overview(summary: Dict[str, Any]) -> str:
+def _render_overview(summary: dict[str, Any]) -> str:
     pass_rate_pct = f"{summary['pass_rate'] * 100:.1f}%"
     cards = [
         ("Total runs", summary["total_runs"]),
@@ -251,7 +251,7 @@ def _render_overview(summary: Dict[str, Any]) -> str:
     return _layout("Overview", body)
 
 
-def _render_runs(runs: List[Dict[str, Any]]) -> str:
+def _render_runs(runs: list[dict[str, Any]]) -> str:
     if not runs:
         return _layout("Runs", "<h1>Runs</h1><div class='empty'>No runs recorded yet.</div>")
     rows = []
@@ -271,7 +271,7 @@ def _render_runs(runs: List[Dict[str, Any]]) -> str:
     return _layout("Runs", body)
 
 
-def _render_flake(entries: List[Dict[str, Any]]) -> str:
+def _render_flake(entries: list[dict[str, Any]]) -> str:
     flaky_only = [e for e in entries if e.get("is_flaky")]
     if not flaky_only:
         return _layout("Flake", "<h1>Flake leaderboard</h1><div class='empty'>No flaky tests detected.</div>")
@@ -293,7 +293,7 @@ def _render_flake(entries: List[Dict[str, Any]]) -> str:
     return _layout("Flake", body)
 
 
-def _render_quarantine(entries: List[Dict[str, Any]]) -> str:
+def _render_quarantine(entries: list[dict[str, Any]]) -> str:
     if not entries:
         return _layout("Quarantine", "<h1>Quarantine</h1><div class='empty'>Registry is empty.</div>")
     rows = []
@@ -313,7 +313,7 @@ def _render_quarantine(entries: List[Dict[str, Any]]) -> str:
     return _layout("Quarantine", body)
 
 
-def _render_locators(report: Dict[str, Any]) -> str:
+def _render_locators(report: dict[str, Any]) -> str:
     if not report:
         return _layout("Locators", "<h1>Locators</h1><div class='empty'>No locator report loaded.</div>")
     summary_cards = [
@@ -358,13 +358,13 @@ def _render_locators(report: Dict[str, Any]) -> str:
 
 # ---------- request handler ---------------------------------------------
 
-def _make_handler(config: DashboardConfig) -> Type[BaseHTTPRequestHandler]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+def _make_handler(config: DashboardConfig) -> type[BaseHTTPRequestHandler]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """Bind ``config`` into a fresh handler class so each server is isolated."""
 
     class DashboardHandler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
 
-        def log_message(self, format: str, *args: Any) -> None:  # noqa: A003 # pylint: disable=redefined-builtin — match BaseHTTPRequestHandler signature
+        def log_message(self, format: str, *args: Any) -> None:  # pylint: disable=redefined-builtin — match BaseHTTPRequestHandler signature
             web_runner_logger.info(f"dashboard: {format % args}")
 
         def _send(self, status: int, content_type: str, body: bytes) -> None:
@@ -396,7 +396,7 @@ def _make_handler(config: DashboardConfig) -> Type[BaseHTTPRequestHandler]:  # N
                 value = 50
             return max(1, min(value, 5000))
 
-        def do_GET(self) -> None:  # noqa: N802 — http.server requires camelCase
+        def do_GET(self) -> None:
             parsed = urllib.parse.urlparse(self.path)
             path = parsed.path
             try:
@@ -449,11 +449,11 @@ class DashboardServer:
     所以可以從測試 / shell 直接用。
     """
 
-    def __init__(self, config: Optional[DashboardConfig] = None) -> None:
+    def __init__(self, config: DashboardConfig | None = None) -> None:
         self.config = config or DashboardConfig()
-        self._httpd: Optional[ThreadingHTTPServer] = None
-        self._thread: Optional[threading.Thread] = None
-        self._bound: Optional[Tuple[str, int]] = None
+        self._httpd: ThreadingHTTPServer | None = None
+        self._thread: threading.Thread | None = None
+        self._bound: tuple[str, int] | None = None
 
     def start(self) -> str:
         """Bind + spawn a daemon thread serving requests. Returns the URL."""
@@ -498,13 +498,13 @@ class DashboardServer:
         if self._bound is None:
             raise LiveDashboardError("server not started")
         host, port = self._bound
-        if host in {"0.0.0.0", "::"}:  # noqa: S5332 # nosec B104 — string compare detecting "bind all"; rewritten to 127.0.0.1 in the URL below
+        if host in {"0.0.0.0", "::"}:  # nosec B104 — string compare detecting "bind all"; rewritten to 127.0.0.1 in the URL below
             host = "127.0.0.1"
         # S5332 ok: dashboard binds to loopback by default; intentionally HTTP
         # so the user can open it in a browser without a self-signed cert.
-        return f"http://{host}:{port}"  # noqa: S5332
+        return f"http://{host}:{port}"  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
 
-    def __enter__(self) -> "DashboardServer":
+    def __enter__(self) -> DashboardServer:
         self.start()
         return self
 

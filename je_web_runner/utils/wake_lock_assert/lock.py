@@ -12,7 +12,7 @@ Common bugs:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -60,7 +60,7 @@ class WakeLockEvent:
 
 @dataclass
 class WakeLockLog:
-    events: List[WakeLockEvent] = field(default_factory=list)
+    events: list[WakeLockEvent] = field(default_factory=list)
 
     @property
     def acquired_count(self) -> int:
@@ -74,7 +74,7 @@ class WakeLockLog:
 def parse_log(payload: Any) -> WakeLockLog:
     if not isinstance(payload, list):
         raise WakeLockAssertError("payload must be a list")
-    events: List[WakeLockEvent] = []
+    events: list[WakeLockEvent] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue

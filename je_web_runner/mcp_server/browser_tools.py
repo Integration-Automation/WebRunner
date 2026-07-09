@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import io
 from contextlib import redirect_stdout
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.mcp_server.server import McpServerError, Tool
 
@@ -34,11 +34,11 @@ def _serialize_value(value: Any) -> Any:
     return repr(value)
 
 
-def _serialize_record(record: Dict[Any, Any]) -> Dict[str, Any]:
+def _serialize_record(record: dict[Any, Any]) -> dict[str, Any]:
     return {str(key): _serialize_value(value) for key, value in record.items()}
 
 
-def _tool_run_actions(arguments: Dict[str, Any]) -> Any:
+def _tool_run_actions(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.executor.action_executor import execute_action
     actions = arguments.get("actions")
     if not isinstance(actions, list):
@@ -49,7 +49,7 @@ def _tool_run_actions(arguments: Dict[str, Any]) -> Any:
     return {"stdout": buffer.getvalue(), "record": _serialize_record(record)}
 
 
-def _tool_run_action_files(arguments: Dict[str, Any]) -> Any:
+def _tool_run_action_files(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.executor.action_executor import execute_files
     files = arguments.get("files")
     if not isinstance(files, list):
@@ -65,12 +65,12 @@ def _tool_run_action_files(arguments: Dict[str, Any]) -> Any:
     }
 
 
-def _tool_list_commands(_arguments: Dict[str, Any]) -> Any:
+def _tool_list_commands(_arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.executor.action_executor import executor
     return sorted(name for name in executor.event_dict if name.startswith("WR_"))
 
 
-def build_browser_tools() -> List[Tool]:
+def build_browser_tools() -> list[Tool]:
     """Return the browser-execution MCP tools."""
     return [
         Tool(

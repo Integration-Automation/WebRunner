@@ -15,7 +15,7 @@ import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -29,11 +29,11 @@ class CdpTapError(WebRunnerException):
 class CdpRecord:
     timestamp: float
     method: str
-    params: Dict[str, Any]
+    params: dict[str, Any]
     return_value: Any = None
-    error: Optional[str] = None
+    error: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "timestamp": self.timestamp,
             "method": self.method,
@@ -47,11 +47,11 @@ class CdpRecord:
 class CdpRecorder:
     """Wrap a driver's ``execute_cdp_cmd`` and persist every call."""
 
-    output_path: Union[str, Path]
+    output_path: str | Path
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
-    _records: List[CdpRecord] = field(default_factory=list, init=False, repr=False)
+    _records: list[CdpRecord] = field(default_factory=list, init=False, repr=False)
 
-    def attach(self, driver: Any) -> Callable[[str, Dict[str, Any]], Any]:
+    def attach(self, driver: Any) -> Callable[[str, dict[str, Any]], Any]:
         """
         Replace ``driver.execute_cdp_cmd`` with a recording wrapper. Returns
         the *original* method so the caller can ``detach`` later.
@@ -60,17 +60,17 @@ class CdpRecorder:
             raise CdpTapError("driver does not expose execute_cdp_cmd")
         original = driver.execute_cdp_cmd
 
-        def recorded(method: str, params: Optional[Dict[str, Any]] = None) -> Any:
+        def recorded(method: str, params: dict[str, Any] | None = None) -> Any:
             return self._invoke(original, method, params or {})
 
         driver.execute_cdp_cmd = recorded  # type: ignore[assignment]
         return original
 
-    def detach(self, driver: Any, original: Callable[[str, Dict[str, Any]], Any]) -> None:
+    def detach(self, driver: Any, original: Callable[[str, dict[str, Any]], Any]) -> None:
         driver.execute_cdp_cmd = original  # type: ignore[assignment]
         self.flush()
 
-    def _invoke(self, original: Callable, method: str, params: Dict[str, Any]) -> Any:
+    def _invoke(self, original: Callable, method: str, params: dict[str, Any]) -> Any:
         timestamp = time.time()
         try:
             value = original(method, params)
@@ -108,15 +108,15 @@ class CdpRecorder:
         web_runner_logger.info(f"cdp_tap flushed {len(self._records)} record(s) to {path}")
         return path
 
-    def records(self) -> List[CdpRecord]:
+    def records(self) -> list[CdpRecord]:
         return list(self._records)
 
 
-def load_recording(path: Union[str, Path]) -> List[CdpRecord]:
+def load_recording(path: str | Path) -> list[CdpRecord]:
     fp = Path(path)
     if not fp.is_file():
         raise CdpTapError(f"recording file not found: {path!r}")
-    records: List[CdpRecord] = []
+    records: list[CdpRecord] = []
     for line_no, line in enumerate(fp.read_text(encoding="utf-8").splitlines(), 1):
         if not line.strip():
             continue
@@ -140,10 +140,10 @@ def load_recording(path: Union[str, Path]) -> List[CdpRecord]:
 class CdpReplayer:
     """Match incoming ``execute_cdp_cmd`` calls against a recording."""
 
-    records: List[CdpRecord]
+    records: list[CdpRecord]
     _cursor: int = field(default=0, init=False)
 
-    def execute_cdp_cmd(self, method: str, _params: Optional[Dict[str, Any]] = None) -> Any:
+    def execute_cdp_cmd(self, method: str, _params: dict[str, Any] | None = None) -> Any:
         # ``_params`` mirrors driver.execute_cdp_cmd's signature for
         # duck-typing but the replay sequence is keyed only on ``method``,
         # so the params payload is intentionally ignored here.

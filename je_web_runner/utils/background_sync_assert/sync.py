@@ -16,7 +16,7 @@ when the first attempt failed.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -61,8 +61,8 @@ class SyncFire:
 
 @dataclass
 class SyncLog:
-    registered: List[str] = field(default_factory=list)
-    fired: List[SyncFire] = field(default_factory=list)
+    registered: list[str] = field(default_factory=list)
+    fired: list[SyncFire] = field(default_factory=list)
 
 
 def parse_log(payload: Any) -> SyncLog:
@@ -73,7 +73,7 @@ def parse_log(payload: Any) -> SyncLog:
         raise BackgroundSyncAssertError(
             "registered list must contain strings only"
         )
-    fired: List[SyncFire] = []
+    fired: list[SyncFire] = []
     for raw in payload.get("fired") or []:
         if not isinstance(raw, dict):
             continue

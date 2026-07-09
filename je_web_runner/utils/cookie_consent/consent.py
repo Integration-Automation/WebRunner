@@ -10,7 +10,7 @@ Didomi, GoogleFundingChoices, plus common per-region fallbacks.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -20,7 +20,7 @@ class ConsentBannerError(WebRunnerException):
     """Raised when consent dismissal fails or driver is unsupported."""
 
 
-_DEFAULT_SELECTORS: List[str] = [
+_DEFAULT_SELECTORS: list[str] = [
     "#onetrust-accept-btn-handler",
     "#truste-consent-button",
     "#CybotCookiebotDialogBodyLevelButtonAccept",
@@ -41,14 +41,14 @@ _DEFAULT_SELECTORS: List[str] = [
 class ConsentDismisser:
     """Try each selector against a driver / page; click the first hit."""
 
-    selectors: List[str] = field(default_factory=lambda: list(_DEFAULT_SELECTORS))
+    selectors: list[str] = field(default_factory=lambda: list(_DEFAULT_SELECTORS))
 
     def add_selector(self, selector: str) -> None:
         if not selector or selector in self.selectors:
             return
         self.selectors.append(selector)
 
-    def dismiss(self, driver: Any, timeout_per_selector: float = 0.5) -> Optional[str]:
+    def dismiss(self, driver: Any, timeout_per_selector: float = 0.5) -> str | None:
         """
         嘗試點擊 banner 上的 Accept 按鈕；找不到時回傳 None
         Click the first matching consent button. Returns the selector that
@@ -90,7 +90,7 @@ class ConsentDismisser:
             return False
 
 
-def common_dismiss_selectors() -> List[str]:
+def common_dismiss_selectors() -> list[str]:
     return list(_DEFAULT_SELECTORS)
 
 

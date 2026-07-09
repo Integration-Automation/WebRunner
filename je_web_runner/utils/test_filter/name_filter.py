@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, List, Optional, Sequence, Union
+from typing import Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -23,10 +23,10 @@ class NameFilterError(WebRunnerException):
 class NameFilter:
     """Compiled include / exclude regex sets."""
 
-    include: List[re.Pattern] = field(default_factory=list)
-    exclude: List[re.Pattern] = field(default_factory=list)
+    include: list[re.Pattern] = field(default_factory=list)
+    exclude: list[re.Pattern] = field(default_factory=list)
 
-    def matches(self, path: Union[str, Path]) -> bool:
+    def matches(self, path: str | Path) -> bool:
         text = str(path).replace("\\", "/")
         for pattern in self.exclude:
             if pattern.search(text):
@@ -36,8 +36,8 @@ class NameFilter:
         return any(pattern.search(text) for pattern in self.include)
 
 
-def _compile_each(patterns: Optional[Sequence[str]]) -> List[re.Pattern]:
-    compiled: List[re.Pattern] = []
+def _compile_each(patterns: Sequence[str] | None) -> list[re.Pattern]:
+    compiled: list[re.Pattern] = []
     for index, pattern in enumerate(patterns or []):
         if not isinstance(pattern, str) or not pattern:
             raise NameFilterError(f"pattern[{index}] must be non-empty string")
@@ -51,8 +51,8 @@ def _compile_each(patterns: Optional[Sequence[str]]) -> List[re.Pattern]:
 
 
 def build_filter(
-    include: Optional[Sequence[str]] = None,
-    exclude: Optional[Sequence[str]] = None,
+    include: Sequence[str] | None = None,
+    exclude: Sequence[str] | None = None,
 ) -> NameFilter:
     """Compile ``include`` / ``exclude`` regex lists."""
     return NameFilter(
@@ -62,10 +62,10 @@ def build_filter(
 
 
 def filter_paths(
-    paths: Iterable[Union[str, Path]],
-    include: Optional[Sequence[str]] = None,
-    exclude: Optional[Sequence[str]] = None,
-) -> List[str]:
+    paths: Iterable[str | Path],
+    include: Sequence[str] | None = None,
+    exclude: Sequence[str] | None = None,
+) -> list[str]:
     """Return only those ``paths`` whose name matches the include / exclude rules."""
     name_filter = build_filter(include=include, exclude=exclude)
     return [str(path) for path in paths if name_filter.matches(path)]

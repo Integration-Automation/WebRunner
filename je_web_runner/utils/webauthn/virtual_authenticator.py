@@ -8,7 +8,7 @@ Reference: https://chromedevtools.github.io/devtools-protocol/tot/WebAuthn/
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -27,7 +27,7 @@ class VirtualAuthenticator:
     is_user_verified: bool = True
 
 
-def _send(driver: Any, method: str, params: Dict[str, Any]) -> Dict[str, Any]:
+def _send(driver: Any, method: str, params: dict[str, Any]) -> dict[str, Any]:
     if not hasattr(driver, "execute_cdp_cmd"):
         raise WebAuthnError("driver does not expose execute_cdp_cmd (Chromium only)")
     return driver.execute_cdp_cmd(method, params) or {}
@@ -73,7 +73,7 @@ def enable_virtual_authenticator(
     )
 
 
-def list_credentials(driver: Any, authenticator: VirtualAuthenticator) -> List[Dict[str, Any]]:
+def list_credentials(driver: Any, authenticator: VirtualAuthenticator) -> list[dict[str, Any]]:
     response = _send(driver, "WebAuthn.getCredentials", {
         "authenticatorId": authenticator.authenticator_id,
     })
@@ -86,7 +86,7 @@ def list_credentials(driver: Any, authenticator: VirtualAuthenticator) -> List[D
 def add_credential(
     driver: Any,
     authenticator: VirtualAuthenticator,
-    credential: Dict[str, Any],
+    credential: dict[str, Any],
 ) -> None:
     _send(driver, "WebAuthn.addCredential", {
         "authenticatorId": authenticator.authenticator_id,

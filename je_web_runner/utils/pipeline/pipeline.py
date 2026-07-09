@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Callable, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -36,8 +36,8 @@ class PipelineError(WebRunnerException):
 @dataclass
 class PipelineStage:
     name: str
-    files: List[str]
-    required_status: List[str] = field(default_factory=lambda: ["passed"])
+    files: list[str]
+    required_status: list[str] = field(default_factory=lambda: ["passed"])
     continue_on_failure: bool = False
 
 
@@ -45,15 +45,15 @@ class PipelineStage:
 class PipelineResult:
     stage_name: str
     status: str  # "passed" / "failed" / "skipped"
-    file_results: List[Dict[str, Any]] = field(default_factory=list)
-    error: Optional[str] = None
+    file_results: list[dict[str, Any]] = field(default_factory=list)
+    error: str | None = None
 
 
 @dataclass
 class Pipeline:
-    stages: List[PipelineStage] = field(default_factory=list)
+    stages: list[PipelineStage] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {"stages": [
             {
                 "name": stage.name,
@@ -65,20 +65,20 @@ class Pipeline:
         ]}
 
 
-def load_pipeline(source: Union[str, Path, Dict[str, Any]]) -> Pipeline:
+def load_pipeline(source: str | Path | dict[str, Any]) -> Pipeline:
     """Load a pipeline definition from a path / JSON string / dict."""
     document = _coerce_pipeline_document(source)
     raw_stages = document.get("stages")
     if not isinstance(raw_stages, list) or not raw_stages:
         raise PipelineError("'stages' must be a non-empty list")
-    stages: List[PipelineStage] = []
+    stages: list[PipelineStage] = []
     seen: set = set()
     for index, entry in enumerate(raw_stages):
         stages.append(_parse_stage(index, entry, seen))
     return Pipeline(stages=stages)
 
 
-def _coerce_pipeline_document(source: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:
+def _coerce_pipeline_document(source: str | Path | dict[str, Any]) -> dict[str, Any]:
     if isinstance(source, dict):
         document = source
     elif isinstance(source, (str, Path)):
@@ -90,7 +90,7 @@ def _coerce_pipeline_document(source: Union[str, Path, Dict[str, Any]]) -> Dict[
     return document
 
 
-def _load_pipeline_from_text(source: Union[str, Path]) -> Dict[str, Any]:
+def _load_pipeline_from_text(source: str | Path) -> dict[str, Any]:
     path = Path(source)
     text = path.read_text(encoding="utf-8") if path.is_file() else str(source)
     try:
@@ -125,14 +125,14 @@ def _parse_stage(index: int, entry: Any, seen: set) -> PipelineStage:
     )
 
 
-FileRunner = Callable[[str], Dict[str, Any]]
+FileRunner = Callable[[str], dict[str, Any]]
 
 
 def run_pipeline(
     pipeline: Pipeline,
     runner: FileRunner,
-    file_resolver: Optional[Callable[[str], List[str]]] = None,
-) -> List[PipelineResult]:
+    file_resolver: Callable[[str], list[str]] | None = None,
+) -> list[PipelineResult]:
     """
     依宣告順序跑 pipeline。Stage 失敗時：
     - ``continue_on_failure=True`` → 收集失敗、進下一 stage
@@ -143,8 +143,8 @@ def run_pipeline(
     if not callable(runner):
         raise PipelineError("runner must be callable")
     resolver = file_resolver or (lambda pattern: [pattern])
-    results: List[PipelineResult] = []
-    short_circuit_cause: Optional[PipelineResult] = None
+    results: list[PipelineResult] = []
+    short_circuit_cause: PipelineResult | None = None
     for stage in pipeline.stages:
         if short_circuit_cause is not None:
             results.append(PipelineResult(
@@ -162,7 +162,7 @@ def run_pipeline(
 
 
 def _run_stage(stage: PipelineStage, runner: FileRunner,
-               resolver: Callable[[str], List[str]]) -> PipelineResult:
+               resolver: Callable[[str], list[str]]) -> PipelineResult:
     try:
         files = _flatten_files(stage.files, resolver)
     except PipelineError as error:
@@ -171,7 +171,7 @@ def _run_stage(stage: PipelineStage, runner: FileRunner,
         )
     if not files:
         return PipelineResult(stage_name=stage.name, status="passed")
-    file_outcomes: List[Dict[str, Any]] = []
+    file_outcomes: list[dict[str, Any]] = []
     overall = "passed"
     for path in files:
         try:
@@ -191,8 +191,8 @@ def _run_stage(stage: PipelineStage, runner: FileRunner,
 
 
 def _flatten_files(patterns: Sequence[str],
-                   resolver: Callable[[str], List[str]]) -> List[str]:
-    files: List[str] = []
+                   resolver: Callable[[str], list[str]]) -> list[str]:
+    files: list[str] = []
     seen: set = set()
     for pattern in patterns:
         resolved = resolver(pattern)

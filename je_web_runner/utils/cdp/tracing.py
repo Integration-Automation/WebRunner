@@ -21,7 +21,6 @@ from __future__ import annotations
 import json
 import threading
 import time
-from typing import List, Optional
 
 from je_web_runner.utils.cdp.event_loop import CDPEventListener, CDPEventLoopError
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -35,8 +34,8 @@ class TracingError(WebRunnerException):
 def record_trace(
         driver,
         file_path: str,
-        categories: Optional[List[str]] = None,
-        duration: Optional[float] = None,
+        categories: list[str] | None = None,
+        duration: float | None = None,
         completion_timeout: float = 30.0,
 ) -> str:
     """
@@ -60,7 +59,7 @@ def record_trace(
         f"record_trace, file_path: {file_path}, categories: {categories}, "
         f"duration: {duration}"
     )
-    events: List[dict] = []
+    events: list[dict] = []
     done = threading.Event()
 
     def _on_data(params: dict) -> None:

@@ -9,7 +9,6 @@ from __future__ import annotations
 import re
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import requests
 
@@ -31,15 +30,15 @@ class _InteractiveElementCollector(HTMLParser):
 
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
-        self.elements: List[Dict[str, Optional[str]]] = []
-        self._current_button_text: List[str] = []
+        self.elements: list[dict[str, str | None]] = []
+        self._current_button_text: list[str] = []
         self._inside_button: bool = False
 
     def handle_starttag(self, tag: str, attrs):
         if tag not in _INTERACTIVE_TAGS:
             return
         attr_dict = dict(attrs)
-        record: Dict[str, Optional[str]] = {
+        record: dict[str, str | None] = {
             "tag": tag,
             "id": attr_dict.get("id"),
             "name": attr_dict.get("name"),
@@ -67,7 +66,7 @@ class _InteractiveElementCollector(HTMLParser):
             self._current_button_text.append(data)
 
 
-def extract_elements_from_html(html: str) -> List[Dict[str, Optional[str]]]:
+def extract_elements_from_html(html: str) -> list[dict[str, str | None]]:
     """Parse ``html`` and return a list of interactive element dicts."""
     parser = _InteractiveElementCollector()
     parser.feed(html)
@@ -88,7 +87,7 @@ def _safe_method_name(prefix: str, candidate: str, used: set) -> str:
     return name
 
 
-def _locator_for(element: Dict[str, Optional[str]]):
+def _locator_for(element: dict[str, str | None]):
     """Return a (strategy, value) tuple suitable for TestObject."""
     if element.get("id"):
         return ("ID", element["id"])
@@ -102,7 +101,7 @@ def _locator_for(element: Dict[str, Optional[str]]):
     return None
 
 
-def _hint_for(element: Dict[str, Optional[str]]) -> str:
+def _hint_for(element: dict[str, str | None]) -> str:
     return (
         element.get("id")
         or element.get("name")
@@ -115,7 +114,7 @@ def _hint_for(element: Dict[str, Optional[str]]) -> str:
     )
 
 
-def _action_kind(element: Dict[str, Optional[str]]) -> str:
+def _action_kind(element: dict[str, str | None]) -> str:
     """Decide whether to scaffold a click or an input method."""
     tag = element.get("tag")
     type_attr = (element.get("type") or "").lower()
@@ -131,7 +130,7 @@ def _action_kind(element: Dict[str, Optional[str]]) -> str:
 _METHOD_STUB_BODY = "        pass"
 
 
-def _render_method(method_name: str, kind: str, locator_constant: str) -> List[str]:
+def _render_method(method_name: str, kind: str, locator_constant: str) -> list[str]:
     register_todo = "        # TODO: register self." + locator_constant + " as a TestObject before calling."
     if kind == "input":
         return [
@@ -166,15 +165,15 @@ def _prefix_for(kind: str) -> str:
     return "click"
 
 
-def generate_pom_class(class_name: str, elements: List[Dict[str, Optional[str]]]) -> str:
+def generate_pom_class(class_name: str, elements: list[dict[str, str | None]]) -> str:
     """
     產生 POM Python 類別原始碼
     Render Python source for a POM class with one constant + method per element.
     """
     used_constants: set = set()
     used_methods: set = set()
-    constants: List[str] = []
-    methods: List[str] = []
+    constants: list[str] = []
+    methods: list[str] = []
     for element in elements:
         locator = _locator_for(element)
         if locator is None:
@@ -225,7 +224,7 @@ def generate_pom_from_url(url: str, class_name: str, timeout: int = 30) -> str:
     從 URL 下載 HTML 並產生 POM 類別
     Fetch the URL and emit a POM class. ``http`` / ``https`` schemes only.
     """
-    if not isinstance(url, str) or not (url.startswith("http://") or url.startswith("https://")):  # NOSONAR — scheme allow-list, not an outbound HTTP call
+    if not isinstance(url, str) or not (url.startswith(("http://", "https://"))):  # NOSONAR — scheme allow-list, not an outbound HTTP call
         raise POMGeneratorError(f"URL must be http(s): {url!r}")
     web_runner_logger.info(f"generate_pom_from_url: {url}")
     response = requests.get(url, timeout=timeout)

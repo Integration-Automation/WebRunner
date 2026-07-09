@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -19,10 +19,10 @@ class LLMAssistError(WebRunnerException):
     """Raised when no LLM callable is registered or the response is malformed."""
 
 
-_llm_callable: Optional[Callable[[str], str]] = None
+_llm_callable: Callable[[str], str] | None = None
 
 
-def set_llm_callable(callable_obj: Optional[Callable[[str], str]]) -> None:
+def set_llm_callable(callable_obj: Callable[[str], str] | None) -> None:
     """登錄一個 ``Callable[[str], str]`` 用於後續所有 prompt。"""
     global _llm_callable
     _llm_callable = callable_obj
@@ -52,7 +52,7 @@ _LOCATOR_PROMPT = (
 )
 
 
-def suggest_locator(html: str, description: str) -> Dict[str, str]:
+def suggest_locator(html: str, description: str) -> dict[str, str]:
     """
     讓 LLM 從 HTML 推斷一個合理的 locator
     Ask the registered LLM to pick a locator. Returns
@@ -77,8 +77,8 @@ _ACTION_PROMPT = (
 
 def generate_actions_from_prompt(
     request: str,
-    context: Optional[str] = None,
-) -> List[Any]:
+    context: str | None = None,
+) -> list[Any]:
     """
     把自然語言敘述轉成 WR_* action JSON 草稿
     Translate a natural-language request into an action JSON list. The LLM
@@ -117,7 +117,7 @@ def _extract_json_array(text: str) -> Any:
 
 # ----- self-healing locator hook ------------------------------------------
 
-def llm_self_heal_locator(name: str, html_provider: Callable[[], str]) -> Dict[str, str]:
+def llm_self_heal_locator(name: str, html_provider: Callable[[], str]) -> dict[str, str]:
     """
     當既有 fallback locator 都失敗時，呼叫 LLM 提供新的選擇器
     Last-resort hook for the self-healing locator: when the registered
@@ -148,10 +148,10 @@ _RCA_PROMPT = (
 def explain_failure(
     test_name: str,
     error_repr: str,
-    console: Optional[List[Dict[str, Any]]] = None,
-    network: Optional[List[Dict[str, Any]]] = None,
-    steps: Optional[List[Any]] = None,
-) -> Dict[str, Any]:
+    console: list[dict[str, Any]] | None = None,
+    network: list[dict[str, Any]] | None = None,
+    steps: list[Any] | None = None,
+) -> dict[str, Any]:
     """
     要求 LLM 從失敗素材中產出 RCA 草稿
     Ask the registered LLM to draft a root-cause analysis. Returns

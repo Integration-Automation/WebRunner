@@ -14,7 +14,7 @@ from __future__ import annotations
 import math
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Sequence, Tuple
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -45,9 +45,9 @@ class TouchFrame:
     """One CDP ``Input.dispatchTouchEvent`` payload."""
 
     type: Phase
-    points: List[TouchPoint] = field(default_factory=list)
+    points: list[TouchPoint] = field(default_factory=list)
 
-    def to_cdp(self) -> Dict[str, Any]:
+    def to_cdp(self) -> dict[str, Any]:
         return {
             "type": self.type.value,
             "touchPoints": [
@@ -64,7 +64,7 @@ def _validate_point(x: float, y: float) -> None:
         raise TouchGestureError("x/y must be numbers")
 
 
-def tap(x: float, y: float) -> List[TouchFrame]:
+def tap(x: float, y: float) -> list[TouchFrame]:
     _validate_point(x, y)
     return [
         TouchFrame(type=Phase.START, points=[TouchPoint(x=x, y=y, id=1)]),
@@ -72,7 +72,7 @@ def tap(x: float, y: float) -> List[TouchFrame]:
     ]
 
 
-def long_press(x: float, y: float, *, hold_ms: int = 800) -> List[TouchFrame]:
+def long_press(x: float, y: float, *, hold_ms: int = 800) -> list[TouchFrame]:
     if hold_ms < 500:
         raise TouchGestureError(
             "hold_ms must be >= 500 to count as long-press on most platforms"
@@ -88,16 +88,16 @@ def long_press(x: float, y: float, *, hold_ms: int = 800) -> List[TouchFrame]:
 
 
 def swipe(
-    start: Tuple[float, float], end: Tuple[float, float],
+    start: tuple[float, float], end: tuple[float, float],
     *, steps: int = 8,
-) -> List[TouchFrame]:
+) -> list[TouchFrame]:
     if steps < 2:
         raise TouchGestureError("steps must be >= 2 for a credible swipe")
     sx, sy = start
     ex, ey = end
     _validate_point(sx, sy)
     _validate_point(ex, ey)
-    frames: List[TouchFrame] = [
+    frames: list[TouchFrame] = [
         TouchFrame(type=Phase.START, points=[TouchPoint(x=sx, y=sy, id=1)]),
     ]
     for i in range(1, steps):
@@ -110,9 +110,9 @@ def swipe(
 
 
 def pinch(
-    centre: Tuple[float, float], *, start_radius: float, end_radius: float,
+    centre: tuple[float, float], *, start_radius: float, end_radius: float,
     steps: int = 8,
-) -> List[TouchFrame]:
+) -> list[TouchFrame]:
     """Two-finger pinch: spread if end > start, pinch if end < start."""
     if start_radius <= 0 or end_radius <= 0:
         raise TouchGestureError("radii must be positive")
@@ -120,7 +120,7 @@ def pinch(
         raise TouchGestureError("steps must be >= 2")
     cx, cy = centre
     _validate_point(cx, cy)
-    def at(r: float) -> Tuple[TouchPoint, TouchPoint]:
+    def at(r: float) -> tuple[TouchPoint, TouchPoint]:
         return (TouchPoint(x=cx - r, y=cy, id=1),
                 TouchPoint(x=cx + r, y=cy, id=2))
     frames = [TouchFrame(type=Phase.START, points=list(at(start_radius)))]
@@ -142,10 +142,10 @@ class RecordedTouch:
     target: str = ""
 
 
-def parse_touch_events(payload: Any) -> List[RecordedTouch]:
+def parse_touch_events(payload: Any) -> list[RecordedTouch]:
     if not isinstance(payload, list):
         raise TouchGestureError("payload must be a list")
-    out: List[RecordedTouch] = []
+    out: list[RecordedTouch] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -179,4 +179,4 @@ def gesture_distance_px(frames: Sequence[TouchFrame]) -> float:
     if len(points) < 2:
         return 0.0
     return sum(math.hypot(b.x - a.x, b.y - a.y)
-               for a, b in zip(points, points[1:]))
+               for a, b in zip(points, points[1:], strict=False))

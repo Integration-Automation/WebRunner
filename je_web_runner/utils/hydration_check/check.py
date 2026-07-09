@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional
+from typing import Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -51,9 +51,9 @@ class HydrationFinding:
 
 # ---------- console scan ----------------------------------------------
 
-def scan_console(messages: Iterable[str]) -> List[HydrationFinding]:
+def scan_console(messages: Iterable[str]) -> list[HydrationFinding]:
     """Pull hydration-related lines out of console messages."""
-    findings: List[HydrationFinding] = []
+    findings: list[HydrationFinding] = []
     for line in messages:
         if not isinstance(line, str):
             continue
@@ -71,7 +71,7 @@ def scan_console(messages: Iterable[str]) -> List[HydrationFinding]:
 
 _WS = re.compile(r"\s+")
 # NOSONAR python:S5852 — input is a finite SSR HTML snapshot, not attacker text
-_WS_AROUND_TAGS = re.compile(r"\s*(<[^>]+>)\s*")  # noqa: S5852
+_WS_AROUND_TAGS = re.compile(r"\s*(<[^>]+>)\s*")
 _COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
 _FRAMEWORK_ATTRS = re.compile(
     r"\s+(?:data-reactroot|data-reactid|data-react-helmet|data-n-head|"
@@ -90,7 +90,7 @@ def _normalise_html(html: str) -> str:
     return text
 
 
-def diff_dom(server_html: str, client_html: str) -> List[HydrationFinding]:
+def diff_dom(server_html: str, client_html: str) -> list[HydrationFinding]:
     """
     Compare server-rendered HTML to post-hydration HTML.
     Returns findings only if the *normalised* representations differ.
@@ -122,13 +122,13 @@ def diff_dom(server_html: str, client_html: str) -> List[HydrationFinding]:
 class HydrationReport:
     """Combined console + DOM-diff finding set."""
 
-    findings: List[HydrationFinding] = field(default_factory=list)
+    findings: list[HydrationFinding] = field(default_factory=list)
 
     def passed(self) -> bool:
         return not self.findings
 
-    def by_kind(self) -> Dict[str, int]:
-        out: Dict[str, int] = {}
+    def by_kind(self) -> dict[str, int]:
+        out: dict[str, int] = {}
         for f in self.findings:
             out[f.kind] = out.get(f.kind, 0) + 1
         return out
@@ -136,12 +136,12 @@ class HydrationReport:
 
 def audit(
     *,
-    server_html: Optional[str] = None,
-    client_html: Optional[str] = None,
-    console_messages: Optional[Iterable[str]] = None,
+    server_html: str | None = None,
+    client_html: str | None = None,
+    console_messages: Iterable[str] | None = None,
 ) -> HydrationReport:
     """Run all available checks. Either pair of inputs may be ``None``."""
-    findings: List[HydrationFinding] = []
+    findings: list[HydrationFinding] = []
     if server_html is not None and client_html is not None:
         findings.extend(diff_dom(server_html, client_html))
     if console_messages is not None:

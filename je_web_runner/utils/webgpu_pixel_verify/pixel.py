@@ -16,7 +16,6 @@ from __future__ import annotations
 import base64
 import statistics
 from dataclasses import dataclass
-from typing import List, Tuple
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -90,7 +89,7 @@ def parse_frame(payload: dict) -> CanvasFrame:
     return CanvasFrame(width=width, height=height, rgba=raw)
 
 
-def mean_rgba(frame: CanvasFrame) -> Tuple[float, float, float, float]:
+def mean_rgba(frame: CanvasFrame) -> tuple[float, float, float, float]:
     n = frame.pixel_count
     if n == 0:
         return (0.0, 0.0, 0.0, 0.0)
@@ -166,7 +165,7 @@ def tile_diff_score(
 
 def _tile_mean_diff(a: CanvasFrame, b: CanvasFrame,
                     tx: int, ty: int, tw: int, th: int) -> float:
-    diffs: List[int] = []
+    diffs: list[int] = []
     for y in range(ty * th, min((ty + 1) * th, a.height)):
         row_start = (y * a.width + tx * tw) * 4
         row_end = row_start + tw * 4

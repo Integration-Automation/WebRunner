@@ -24,7 +24,7 @@ import math
 from dataclasses import dataclass
 from io import BytesIO
 from pathlib import Path
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -46,7 +46,7 @@ def _require_pillow():
         ) from error
 
 
-def _load_image(source: Union[bytes, str, Path, Any]) -> Any:
+def _load_image(source: bytes | str | Path | Any) -> Any:
     """Accept bytes / path / PIL.Image and return an open PIL.Image."""
     pil_image = _require_pillow()
     if hasattr(source, "convert") and hasattr(source, "size"):
@@ -54,7 +54,7 @@ def _load_image(source: Union[bytes, str, Path, Any]) -> Any:
     if isinstance(source, (bytes, bytearray)):
         try:
             return pil_image.open(BytesIO(bytes(source)))
-        except Exception as error:  # noqa: BLE001 — Pillow raises many
+        except Exception as error:
             raise VisualAIError(f"cannot decode image bytes: {error!r}") from error
     if isinstance(source, (str, Path)):
         path = Path(source)
@@ -62,7 +62,7 @@ def _load_image(source: Union[bytes, str, Path, Any]) -> Any:
             raise VisualAIError(f"image not found: {path}")
         try:
             return pil_image.open(path)
-        except Exception as error:  # noqa: BLE001
+        except Exception as error:
             raise VisualAIError(f"cannot open image {path}: {error!r}") from error
     raise VisualAIError(
         f"unsupported image source: {type(source).__name__}"
@@ -71,10 +71,10 @@ def _load_image(source: Union[bytes, str, Path, Any]) -> Any:
 
 # ---------- Region-of-Interest preprocessing ----------------------------
 
-BoundingBox = Tuple[int, int, int, int]  # (left, top, right, bottom)
+BoundingBox = tuple[int, int, int, int]  # (left, top, right, bottom)
 
 
-def _validate_box(box: Any, name: str, *, image_size: Optional[Tuple[int, int]] = None) -> BoundingBox:
+def _validate_box(box: Any, name: str, *, image_size: tuple[int, int] | None = None) -> BoundingBox:
     if (not isinstance(box, (tuple, list))) or len(box) != 4:
         raise VisualAIError(f"{name} must be a 4-tuple (left, top, right, bottom)")
     try:
@@ -99,8 +99,8 @@ def _validate_box(box: Any, name: str, *, image_size: Optional[Tuple[int, int]] 
 def _preprocess(
     img: Any,
     *,
-    crop_box: Optional[BoundingBox] = None,
-    mask_boxes: Optional[Sequence[BoundingBox]] = None,
+    crop_box: BoundingBox | None = None,
+    mask_boxes: Sequence[BoundingBox] | None = None,
     mask_fill: int = 0,
 ) -> Any:
     """
@@ -123,10 +123,10 @@ def _preprocess(
 
 
 def _load_and_preprocess(
-    source: Union[bytes, str, Path, Any],
+    source: bytes | str | Path | Any,
     *,
-    crop_box: Optional[BoundingBox] = None,
-    mask_boxes: Optional[Sequence[BoundingBox]] = None,
+    crop_box: BoundingBox | None = None,
+    mask_boxes: Sequence[BoundingBox] | None = None,
 ) -> Any:
     img = _load_image(source)
     if crop_box is None and not mask_boxes:
@@ -134,10 +134,23 @@ def _load_and_preprocess(
     return _preprocess(img, crop_box=crop_box, mask_boxes=mask_boxes)
 
 
-def _to_grayscale_pixels(img: Any, size: int) -> List[int]:
+def _flattened_pixels(image: Any) -> list[int]:
+    """Return a flat list of pixel values for a single-band image.
+
+    Prefers Pillow's ``get_flattened_data`` (the replacement for the
+    deprecated ``Image.getdata``, which is removed in Pillow 14) and falls
+    back to ``getdata`` on older Pillow releases that lack the new method.
+    """
+    flattened_getter = getattr(image, "get_flattened_data", None)
+    if flattened_getter is not None:
+        return list(flattened_getter())
+    return list(image.getdata())
+
+
+def _to_grayscale_pixels(img: Any, size: int) -> list[int]:
     pil_image = _require_pillow()
     resized = img.convert("L").resize((size, size), pil_image.Resampling.LANCZOS)
-    return list(resized.getdata())
+    return _flattened_pixels(resized)
 
 
 # ---------- hashes --------------------------------------------------------
@@ -157,16 +170,16 @@ class HashResult:
         return f"{int(bits, 2):x}".zfill(len(bits) // 4)
 
 
-def _bits_to_str(values: List[int], threshold: float) -> str:
+def _bits_to_str(values: list[int], threshold: float) -> str:
     return "".join("1" if v >= threshold else "0" for v in values)
 
 
 def average_hash(
-    source: Union[bytes, str, Path, Any],
+    source: bytes | str | Path | Any,
     *,
     size: int = 8,
-    crop_box: Optional[BoundingBox] = None,
-    mask_boxes: Optional[Sequence[BoundingBox]] = None,
+    crop_box: BoundingBox | None = None,
+    mask_boxes: Sequence[BoundingBox] | None = None,
 ) -> HashResult:
     """
     aHash:縮成 size×size 灰階,以平均值二值化。
@@ -183,11 +196,11 @@ def average_hash(
 
 
 def difference_hash(
-    source: Union[bytes, str, Path, Any],
+    source: bytes | str | Path | Any,
     *,
     size: int = 8,
-    crop_box: Optional[BoundingBox] = None,
-    mask_boxes: Optional[Sequence[BoundingBox]] = None,
+    crop_box: BoundingBox | None = None,
+    mask_boxes: Sequence[BoundingBox] | None = None,
 ) -> HashResult:
     """
     dHash:每列相鄰像素的差值二值化(size+1 寬)。
@@ -195,7 +208,7 @@ def difference_hash(
     """
     img = _load_and_preprocess(source, crop_box=crop_box, mask_boxes=mask_boxes)
     pixels = _to_grayscale_pixels(img, size + 1)  # need one extra column
-    bits: List[int] = []
+    bits: list[int] = []
     width = size + 1
     for row in range(size + 1):
         # only compare within row; only use rows 0..size-1
@@ -211,7 +224,7 @@ def difference_hash(
 
 # ---------- pHash (8×8 DCT) ----------------------------------------------
 
-def _dct_1d(vector: List[float]) -> List[float]:
+def _dct_1d(vector: list[float]) -> list[float]:
     """Standard DCT-II implementation. O(n^2) but n is tiny (32) here."""
     n = len(vector)
     out = [0.0] * n
@@ -224,12 +237,12 @@ def _dct_1d(vector: List[float]) -> List[float]:
 
 
 def perceptual_hash(
-    source: Union[bytes, str, Path, Any],
+    source: bytes | str | Path | Any,
     *,
     size: int = 32,
     hash_size: int = 8,
-    crop_box: Optional[BoundingBox] = None,
-    mask_boxes: Optional[Sequence[BoundingBox]] = None,
+    crop_box: BoundingBox | None = None,
+    mask_boxes: Sequence[BoundingBox] | None = None,
 ) -> HashResult:
     """
     pHash:對 32×32 灰階做 2D DCT,取左上 8×8 低頻區與其中位數二值化。
@@ -237,19 +250,19 @@ def perceptual_hash(
     """
     img = _load_and_preprocess(source, crop_box=crop_box, mask_boxes=mask_boxes)
     pixels = _to_grayscale_pixels(img, size)
-    matrix: List[List[float]] = [
+    matrix: list[list[float]] = [
         [float(pixels[row * size + col]) for col in range(size)]
         for row in range(size)
     ]
     # rows
     matrix = [_dct_1d(row) for row in matrix]
     # cols
-    cols_transposed: List[List[float]] = [
+    cols_transposed: list[list[float]] = [
         [matrix[r][c] for r in range(size)] for c in range(size)
     ]
     cols_transposed = [_dct_1d(col) for col in cols_transposed]
     # take low-freq top-left hash_size×hash_size, skip DC (0,0)
-    low_freq: List[float] = []
+    low_freq: list[float] = []
     for c in range(hash_size):
         for r in range(hash_size):
             if r == 0 and c == 0:
@@ -273,7 +286,7 @@ def hamming_distance(a: HashResult, b: HashResult) -> int:
         raise VisualAIError(
             f"hash lengths differ: {len(a.bits)} vs {len(b.bits)}"
         )
-    return sum(1 for x, y in zip(a.bits, b.bits) if x != y)
+    return sum(1 for x, y in zip(a.bits, b.bits, strict=False) if x != y)
 
 
 def hash_similarity(a: HashResult, b: HashResult) -> float:
@@ -297,12 +310,12 @@ class SimilarityResult:
 
 
 def _ssim_proxy(
-    source_a: Union[bytes, str, Path, Any],
-    source_b: Union[bytes, str, Path, Any],
+    source_a: bytes | str | Path | Any,
+    source_b: bytes | str | Path | Any,
     *,
     size: int = 32,
-    crop_box: Optional[BoundingBox] = None,
-    mask_boxes: Optional[Sequence[BoundingBox]] = None,
+    crop_box: BoundingBox | None = None,
+    mask_boxes: Sequence[BoundingBox] | None = None,
 ) -> float:
     """
     一個輕量級 SSIM 取代:用 mean / var / covariance 的灰階近似。
@@ -315,8 +328,8 @@ def _ssim_proxy(
     img_b = _load_and_preprocess(source_b, crop_box=crop_box, mask_boxes=mask_boxes)
     a = img_a.convert("L").resize((size, size), pil_image.Resampling.LANCZOS)
     b = img_b.convert("L").resize((size, size), pil_image.Resampling.LANCZOS)
-    pa = [p / 255.0 for p in a.getdata()]
-    pb = [p / 255.0 for p in b.getdata()]
+    pa = [p / 255.0 for p in _flattened_pixels(a)]
+    pb = [p / 255.0 for p in _flattened_pixels(b)]
     n = len(pa)
     if n == 0:
         return 0.0
@@ -324,7 +337,7 @@ def _ssim_proxy(
     mean_b = sum(pb) / n
     var_a = sum((x - mean_a) ** 2 for x in pa) / n
     var_b = sum((y - mean_b) ** 2 for y in pb) / n
-    cov = sum((x - mean_a) * (y - mean_b) for x, y in zip(pa, pb)) / n
+    cov = sum((x - mean_a) * (y - mean_b) for x, y in zip(pa, pb, strict=False)) / n
     c1 = 0.01 ** 2
     c2 = 0.03 ** 2
     num = (2 * mean_a * mean_b + c1) * (2 * cov + c2)
@@ -335,13 +348,13 @@ def _ssim_proxy(
 
 
 def compare_images(
-    source_a: Union[bytes, str, Path, Any],
-    source_b: Union[bytes, str, Path, Any],
+    source_a: bytes | str | Path | Any,
+    source_b: bytes | str | Path | Any,
     *,
     threshold: float = 0.9,
-    weights: Tuple[float, float, float, float] = (0.2, 0.3, 0.3, 0.2),
-    crop_box: Optional[BoundingBox] = None,
-    mask_boxes: Optional[Sequence[BoundingBox]] = None,
+    weights: tuple[float, float, float, float] = (0.2, 0.3, 0.3, 0.2),
+    crop_box: BoundingBox | None = None,
+    mask_boxes: Sequence[BoundingBox] | None = None,
 ) -> SimilarityResult:
     """
     跑三種 hash + SSIM proxy,加權算出 composite 相似度,跟 threshold 比。
@@ -398,13 +411,13 @@ def compare_images(
 
 
 def assert_visual_similar(
-    baseline: Union[bytes, str, Path, Any],
-    candidate: Union[bytes, str, Path, Any],
+    baseline: bytes | str | Path | Any,
+    candidate: bytes | str | Path | Any,
     *,
     threshold: float = 0.9,
-    weights: Tuple[float, float, float, float] = (0.2, 0.3, 0.3, 0.2),
-    crop_box: Optional[BoundingBox] = None,
-    mask_boxes: Optional[Sequence[BoundingBox]] = None,
+    weights: tuple[float, float, float, float] = (0.2, 0.3, 0.3, 0.2),
+    crop_box: BoundingBox | None = None,
+    mask_boxes: Sequence[BoundingBox] | None = None,
 ) -> SimilarityResult:
     """
     Raises :class:`VisualAIError` 當 composite 相似度低於 threshold。

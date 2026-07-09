@@ -6,7 +6,7 @@ status diffs.
 """
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -20,11 +20,11 @@ class MultiUserError(WebRunnerException):
 _NO_EXCEPTION = "None"
 
 
-def _step_status(record: Dict[str, Any]) -> str:
+def _step_status(record: dict[str, Any]) -> str:
     return "failed" if record.get("program_exception", _NO_EXCEPTION) != _NO_EXCEPTION else "passed"
 
 
-def _capture_records() -> List[Dict[str, Any]]:
+def _capture_records() -> list[dict[str, Any]]:
     return [dict(record) for record in test_record_instance.test_record_list]
 
 
@@ -35,9 +35,9 @@ def _default_runner(action_data):
 
 def run_for_users(
     action_data: Any,
-    user_setups: List[Tuple[str, Optional[Callable[[], Any]]]],
-    runner: Optional[Callable[[Any], Any]] = None,
-) -> Dict[str, Any]:
+    user_setups: list[tuple[str, Callable[[], Any] | None]],
+    runner: Callable[[Any], Any] | None = None,
+) -> dict[str, Any]:
     """
     對每位使用者執行一次 ``action_data``，回傳記錄與差異
     Run ``action_data`` once per user context. ``user_setups`` is a list of
@@ -51,7 +51,7 @@ def run_for_users(
         raise MultiUserError("user_setups must not be empty")
     actual_runner = runner if runner is not None else _default_runner
 
-    by_user: Dict[str, List[Dict[str, Any]]] = {}
+    by_user: dict[str, list[dict[str, Any]]] = {}
     for name, setup in user_setups:
         web_runner_logger.info(f"run_for_users user={name}")
         test_record_instance.clean_record()
@@ -63,16 +63,16 @@ def run_for_users(
     return {"by_user": by_user, "diff": _build_diff(by_user)}
 
 
-def _build_diff(by_user: Dict[str, List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+def _build_diff(by_user: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
     """For every step index, list users whose status disagrees with the rest."""
     if not by_user:
         return []
     names = list(by_user.keys())
     max_steps = max(len(records) for records in by_user.values())
-    diffs: List[Dict[str, Any]] = []
+    diffs: list[dict[str, Any]] = []
     for step_index in range(max_steps):
-        per_user_status: Dict[str, Optional[str]] = {}
-        per_user_function: Dict[str, Optional[str]] = {}
+        per_user_status: dict[str, str | None] = {}
+        per_user_function: dict[str, str | None] = {}
         for name in names:
             records = by_user[name]
             if step_index < len(records):

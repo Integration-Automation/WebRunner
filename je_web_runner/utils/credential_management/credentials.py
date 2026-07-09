@@ -19,7 +19,7 @@ This module installs a shim that:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -79,11 +79,11 @@ class SeedCredential:
     password: str = ""
     provider: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def build_seed(credentials: List[SeedCredential]) -> Dict[str, Any]:
+def build_seed(credentials: list[SeedCredential]) -> dict[str, Any]:
     if not isinstance(credentials, list):
         raise CredentialManagementError("credentials must be a list")
     for c in credentials:
@@ -104,8 +104,8 @@ class StoredCall:
 
 @dataclass
 class CmLog:
-    stored: List[StoredCall] = field(default_factory=list)
-    gets: List[Dict[str, Any]] = field(default_factory=list)
+    stored: list[StoredCall] = field(default_factory=list)
+    gets: list[dict[str, Any]] = field(default_factory=list)
     prevent_count: int = 0
 
 

@@ -8,7 +8,7 @@ Geolocation, timezone, and locale override helpers. Returns CDP commands
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -19,11 +19,11 @@ class GeoLocaleError(WebRunnerException):
 
 @dataclass(frozen=True)
 class GeoOverride:
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
+    latitude: float | None = None
+    longitude: float | None = None
     accuracy_meters: float = 50.0
-    timezone: Optional[str] = None
-    locale: Optional[str] = None
+    timezone: str | None = None
+    locale: str | None = None
 
     def validate(self) -> None:
         if (self.latitude is None) ^ (self.longitude is None):
@@ -40,10 +40,10 @@ class GeoOverride:
             raise GeoLocaleError(f"locale must be like 'en-US': {self.locale!r}")
 
 
-def cdp_payloads(override: GeoOverride) -> List[Dict[str, Any]]:
+def cdp_payloads(override: GeoOverride) -> list[dict[str, Any]]:
     """Return a list of ``(method, params)`` CDP commands."""
     override.validate()
-    payloads: List[Dict[str, Any]] = []
+    payloads: list[dict[str, Any]] = []
     if override.latitude is not None and override.longitude is not None:
         payloads.append({
             "method": "Emulation.setGeolocationOverride",
@@ -66,10 +66,10 @@ def cdp_payloads(override: GeoOverride) -> List[Dict[str, Any]]:
     return payloads
 
 
-def playwright_context_kwargs(override: GeoOverride) -> Dict[str, Any]:
+def playwright_context_kwargs(override: GeoOverride) -> dict[str, Any]:
     """Return ``new_context`` kwargs for Playwright."""
     override.validate()
-    kwargs: Dict[str, Any] = {}
+    kwargs: dict[str, Any] = {}
     if override.latitude is not None and override.longitude is not None:
         kwargs["geolocation"] = {
             "latitude": override.latitude,
@@ -84,7 +84,7 @@ def playwright_context_kwargs(override: GeoOverride) -> Dict[str, Any]:
     return kwargs
 
 
-def apply_overrides(driver: Any, override: GeoOverride) -> List[str]:
+def apply_overrides(driver: Any, override: GeoOverride) -> list[str]:
     """
     對 Selenium driver 透過 ``execute_cdp_cmd`` 套用所有 override
     Issue every CDP command from :func:`cdp_payloads`. Returns the list of
@@ -92,7 +92,7 @@ def apply_overrides(driver: Any, override: GeoOverride) -> List[str]:
     """
     if not hasattr(driver, "execute_cdp_cmd"):
         raise GeoLocaleError("driver does not expose execute_cdp_cmd")
-    methods: List[str] = []
+    methods: list[str] = []
     for command in cdp_payloads(override):
         driver.execute_cdp_cmd(command["method"], command["params"])
         methods.append(command["method"])

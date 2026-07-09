@@ -18,7 +18,7 @@ import json
 import re
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Iterable, Sequence
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -60,7 +60,7 @@ class MixedFinding:
     severity: Severity
     source_url: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "severity": self.severity.value}
 
 
@@ -99,10 +99,10 @@ def _hostname(url: str) -> str:
 # ---------- scanners ---------------------------------------------------
 
 def scan_har(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
-    har: Union[str, Dict[str, Any]],
+    har: str | dict[str, Any],
     *,
-    page_url: Optional[str] = None,
-) -> List[MixedFinding]:
+    page_url: str | None = None,
+) -> list[MixedFinding]:
     """
     Parse a HAR object/string, returning one finding per http request on
     an https page. When ``page_url`` is None, we assume the first entry's
@@ -117,7 +117,7 @@ def scan_har(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     if document_url and not _is_https_origin(document_url):
         return []  # no risk if the page itself is http
 
-    findings: List[MixedFinding] = []
+    findings: list[MixedFinding] = []
     for entry in entries:
         if not isinstance(entry, dict):
             continue
@@ -142,7 +142,7 @@ def scan_har(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     return findings
 
 
-def _coerce_har(har: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
+def _coerce_har(har: str | dict[str, Any]) -> dict[str, Any]:
     if isinstance(har, str):
         try:
             parsed = json.loads(har)
@@ -158,7 +158,7 @@ def _coerce_har(har: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
     )
 
 
-def _first_page_url(har: Dict[str, Any]) -> Optional[str]:
+def _first_page_url(har: dict[str, Any]) -> str | None:
     pages = ((har.get("log") or {}).get("pages")) or []
     if isinstance(pages, list) and pages:
         first = pages[0]
@@ -180,9 +180,9 @@ def scan_console_errors(
     messages: Iterable[str],
     *,
     page_url: str = "",
-) -> List[MixedFinding]:
+) -> list[MixedFinding]:
     """Heuristic scan over console errors for ``Mixed Content:`` lines."""
-    out: List[MixedFinding] = []
+    out: list[MixedFinding] = []
     for line in messages:
         if not isinstance(line, str):
             continue
@@ -224,9 +224,9 @@ def assert_clean(findings: Sequence[MixedFinding]) -> None:
         raise MixedContentAuditError(f"mixed content detected: {sample}{more}")
 
 
-def summary(findings: Sequence[MixedFinding]) -> Dict[str, int]:
+def summary(findings: Sequence[MixedFinding]) -> dict[str, int]:
     """Return ``{severity: count}`` summary."""
-    out: Dict[str, int] = {}
+    out: dict[str, int] = {}
     for f in findings:
         out[f.severity.value] = out.get(f.severity.value, 0) + 1
     return out

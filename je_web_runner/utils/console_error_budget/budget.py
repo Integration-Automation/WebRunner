@@ -20,7 +20,7 @@ from __future__ import annotations
 import re
 import time
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Pattern, Sequence, Union
+from typing import Any, Iterable, Pattern, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -41,10 +41,10 @@ class ConsoleMessage:
 
     severity: str
     text: str
-    url: Optional[str] = None
-    line: Optional[int] = None
+    url: str | None = None
+    line: int | None = None
     timestamp: float = field(default_factory=time.time)
-    source: Optional[str] = None  # 'console' or 'exception' or driver-specific
+    source: str | None = None  # 'console' or 'exception' or driver-specific
 
     def __post_init__(self) -> None:
         normalised = (self.severity or "").lower()
@@ -56,7 +56,7 @@ class ConsoleMessage:
             normalised = "info"
         object.__setattr__(self, "severity", normalised)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -68,8 +68,8 @@ class BudgetReport:
     error_count: int
     warning_count: int
     ignored_count: int
-    breaches: List[str] = field(default_factory=list)
-    sampled: List[ConsoleMessage] = field(default_factory=list)
+    breaches: list[str] = field(default_factory=list)
+    sampled: list[ConsoleMessage] = field(default_factory=list)
 
     def raise_if_failed(self) -> None:
         if not self.passed:
@@ -84,7 +84,7 @@ class ErrorBudget:
     max_errors: int = 0
     max_warnings: int = 5
     count_warnings: bool = True
-    ignore_patterns: Sequence[Union[str, Pattern[str]]] = ()
+    ignore_patterns: Sequence[str | Pattern[str]] = ()
     sample_size: int = 10
 
     def __post_init__(self) -> None:
@@ -97,9 +97,9 @@ class ErrorBudget:
 # ---------- evaluator ---------------------------------------------------
 
 def _compiled_patterns(
-    patterns: Sequence[Union[str, Pattern[str]]],
-) -> List[Pattern[str]]:
-    compiled: List[Pattern[str]] = []
+    patterns: Sequence[str | Pattern[str]],
+) -> list[Pattern[str]]:
+    compiled: list[Pattern[str]] = []
     for p in patterns:
         if hasattr(p, "search"):
             compiled.append(p)  # type: ignore[arg-type]
@@ -111,7 +111,7 @@ def _compiled_patterns(
     return compiled
 
 
-def _is_ignored(message: ConsoleMessage, patterns: List[Pattern[str]]) -> bool:
+def _is_ignored(message: ConsoleMessage, patterns: list[Pattern[str]]) -> bool:
     if not patterns:
         return False
     haystack = f"{message.text}\n{message.url or ''}"
@@ -126,8 +126,8 @@ def evaluate(
     if not isinstance(budget, ErrorBudget):
         raise ConsoleBudgetError("budget must be an ErrorBudget instance")
     patterns = _compiled_patterns(budget.ignore_patterns)
-    errors: List[ConsoleMessage] = []
-    warnings: List[ConsoleMessage] = []
+    errors: list[ConsoleMessage] = []
+    warnings: list[ConsoleMessage] = []
     ignored = 0
     for msg in messages:
         if not isinstance(msg, ConsoleMessage):
@@ -141,7 +141,7 @@ def evaluate(
             errors.append(msg)
         elif msg.severity == "warning" and budget.count_warnings:
             warnings.append(msg)
-    breaches: List[str] = []
+    breaches: list[str] = []
     if len(errors) > budget.max_errors:
         breaches.append(
             f"errors {len(errors)} > max_errors {budget.max_errors}"
@@ -169,9 +169,9 @@ def evaluate(
 
 # ---------- adapters ----------------------------------------------------
 
-def from_selenium_log(entries: Iterable[Dict[str, Any]]) -> List[ConsoleMessage]:
+def from_selenium_log(entries: Iterable[dict[str, Any]]) -> list[ConsoleMessage]:
     """Convert Selenium ``driver.get_log('browser')`` entries to messages."""
-    out: List[ConsoleMessage] = []
+    out: list[ConsoleMessage] = []
     for entry in entries:
         if not isinstance(entry, dict):
             continue
@@ -184,17 +184,17 @@ def from_selenium_log(entries: Iterable[Dict[str, Any]]) -> List[ConsoleMessage]
     return out
 
 
-def from_cdp_console_events(events: Iterable[Dict[str, Any]]) -> List[ConsoleMessage]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+def from_cdp_console_events(events: Iterable[dict[str, Any]]) -> list[ConsoleMessage]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     """
     Convert CDP ``Runtime.consoleAPICalled`` payloads into messages.
     Each event dict is expected to have ``type`` and ``args`` like CDP returns.
     """
-    out: List[ConsoleMessage] = []
+    out: list[ConsoleMessage] = []
     for event in events:
         if not isinstance(event, dict):
             continue
         args = event.get("args") or []
-        text_parts: List[str] = []
+        text_parts: list[str] = []
         for arg in args:
             if isinstance(arg, dict):
                 value = arg.get("value")
@@ -212,9 +212,9 @@ def from_cdp_console_events(events: Iterable[Dict[str, Any]]) -> List[ConsoleMes
     return out
 
 
-def from_cdp_exception_events(events: Iterable[Dict[str, Any]]) -> List[ConsoleMessage]:
+def from_cdp_exception_events(events: Iterable[dict[str, Any]]) -> list[ConsoleMessage]:
     """Convert CDP ``Runtime.exceptionThrown`` payloads to error messages."""
-    out: List[ConsoleMessage] = []
+    out: list[ConsoleMessage] = []
     for event in events:
         if not isinstance(event, dict):
             continue

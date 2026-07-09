@@ -12,7 +12,53 @@ from unittest.mock import MagicMock, patch
 
 from je_web_runner.utils.cdp.cdp_commands import CDPError
 from je_web_runner.utils.exception.exceptions import WebRunnerException
-from je_web_runner.webdriver.webdriver_wrapper import WebDriverWrapper
+from je_web_runner.webdriver.webdriver_wrapper import (
+    WebDriverWrapper,
+    _options_dict,
+    _webdriver_manager_dict,
+)
+
+
+class TestWebdriverManagerDict(unittest.TestCase):
+    """Every manager entry must be callable with no args — the launch path does
+    ``_webdriver_manager_dict.get(name)().install()``. A pre-built instance
+    (not callable) silently broke chromium with a TypeError."""
+
+    def test_all_entries_callable(self):
+        for name, value in _webdriver_manager_dict.items():
+            self.assertTrue(callable(value), f"{name} manager entry not callable")
+
+    def test_chromium_resolves_to_manager(self):
+        from webdriver_manager.chrome import ChromeDriverManager
+        # Calling the entry (as the launch path does) must construct a manager,
+        # not raise TypeError. ``.install()`` is intentionally not called here.
+        self.assertIsInstance(_webdriver_manager_dict["chromium"](), ChromeDriverManager)
+
+    def test_chromium_options_declare_browser_name(self):
+        # chromium launches via webdriver.Chrome; its Options must declare
+        # browserName, else webdriver.Chrome raises KeyError('browserName').
+        self.assertIn("browserName", _options_dict["chromium"]().default_capabilities)
+        self.assertIn("browserName", _options_dict["chrome"]().default_capabilities)
+
+
+class TestQuit(unittest.TestCase):
+    """``quit`` must quit the live driver, reset state, and no-op when idle."""
+
+    def test_quit_calls_driver_and_resets_state(self):
+        wrapper = WebDriverWrapper()
+        driver = MagicMock(name="driver")
+        wrapper.current_webdriver = driver
+        wrapper._webdriver_name = "chrome"
+        wrapper.quit()
+        driver.quit.assert_called_once()
+        self.assertIsNone(wrapper.current_webdriver)
+        self.assertIsNone(wrapper._webdriver_name)
+
+    def test_quit_no_driver_is_noop(self):
+        wrapper = WebDriverWrapper()
+        wrapper.current_webdriver = None
+        wrapper.quit()  # must not raise
+        self.assertIsNone(wrapper.current_webdriver)
 
 
 class TestSetDriverExperimentalOptions(unittest.TestCase):
@@ -281,6 +327,21 @@ class TestExtensionsAndAttach(unittest.TestCase):
             wrapper = WebDriverWrapper()
             with self.assertRaises(WebRunnerException):
                 wrapper.set_driver("ie", extension_paths=["/opt/a.crx"])
+
+    def test_browser_without_manager_skips_install(self):
+        # Safari (and any browser with no webdriver-manager entry) must launch
+        # without crashing at the install step — there is no None() to call.
+        fake_driver = MagicMock(name="SafariDriver")
+        fake_driver_cls = MagicMock(name="SafariDriverClass", return_value=fake_driver)
+        with patch.dict(
+            "je_web_runner.webdriver.webdriver_wrapper._webdriver_dict",
+            {"safari": fake_driver_cls},
+            clear=False,
+        ):
+            wrapper = WebDriverWrapper()
+            result = wrapper.set_driver("safari")
+        self.assertIs(result, fake_driver)
+        fake_driver_cls.assert_called_once()
 
     def test_attach_to_existing_browser_merges_debugger_address(self):
         wrapper = WebDriverWrapper()

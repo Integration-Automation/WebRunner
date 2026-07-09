@@ -23,7 +23,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -63,7 +63,7 @@ class ConversionStats:
     actions_emitted: int = 0
     skipped_events: int = 0
     comment_actions: int = 0
-    reasons: Dict[str, int] = field(default_factory=dict)
+    reasons: dict[str, int] = field(default_factory=dict)
 
     def note_skip(self, reason: str) -> None:
         self.skipped_events += 1
@@ -74,26 +74,24 @@ class ConversionStats:
 class ConversionResult:
     """Output of :func:`convert_events`: actions plus stats."""
 
-    actions: List[Dict[str, Any]]
+    actions: list[dict[str, Any]]
     stats: ConversionStats
 
 
 # ---------- entry points ------------------------------------------------
 
-def convert_rrweb_events(events: Sequence[Dict[str, Any]]) -> ConversionResult:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
+def convert_rrweb_events(events: Sequence[dict[str, Any]]) -> ConversionResult:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up PR
     """Convert an rrweb event list into WR action JSON."""
     if not isinstance(events, list):
         raise SessionToTestError("rrweb events must be a list")
     stats = ConversionStats(input_events=len(events))
-    actions: List[Dict[str, Any]] = []
-    last_ts: Optional[int] = None
+    actions: list[dict[str, Any]] = []
 
     for event in events:
         if not isinstance(event, dict):
             stats.note_skip("non-dict event")
             continue
         kind = event.get("type")
-        timestamp = event.get("timestamp")
         if kind == _RRWEB_META and isinstance(event.get("data"), dict):
             url = event["data"].get("href")
             if isinstance(url, str) and url:
@@ -101,21 +99,13 @@ def convert_rrweb_events(events: Sequence[Dict[str, Any]]) -> ConversionResult: 
                 stats.actions_emitted += 1
             else:
                 stats.note_skip("meta without href")
-            last_ts = timestamp
             continue
         if kind == _RRWEB_FULL_SNAPSHOT:
             stats.note_skip("full snapshot (no action)")
-            last_ts = timestamp
             continue
         if kind != _RRWEB_INCREMENTAL:
             stats.note_skip(f"unknown rrweb type {kind!r}")
             continue
-
-        # Track the latest timestamp so future iterations can compute deltas.
-        # We do not currently emit explicit waits for fast bursts; this hook is
-        # kept for future "WR_implicitly_wait" insertion logic.
-        if last_ts is not None and isinstance(timestamp, (int, float)):
-            last_ts = timestamp
 
         emitted = _convert_rrweb_incremental(event, stats)
         if emitted is not None:
@@ -130,12 +120,12 @@ def convert_rrweb_events(events: Sequence[Dict[str, Any]]) -> ConversionResult: 
     return ConversionResult(actions=actions, stats=stats)
 
 
-def convert_generic_events(events: Sequence[Dict[str, Any]]) -> ConversionResult:
+def convert_generic_events(events: Sequence[dict[str, Any]]) -> ConversionResult:
     """Convert a provider-agnostic event list into WR action JSON."""
     if not isinstance(events, list):
         raise SessionToTestError("generic events must be a list")
     stats = ConversionStats(input_events=len(events))
-    actions: List[Dict[str, Any]] = []
+    actions: list[dict[str, Any]] = []
     for event in events:
         if not isinstance(event, dict):
             stats.note_skip("non-dict event")
@@ -151,7 +141,7 @@ def convert_generic_events(events: Sequence[Dict[str, Any]]) -> ConversionResult
     return ConversionResult(actions=actions, stats=stats)
 
 
-def convert_events(payload: Union[str, Path, Sequence[Dict[str, Any]]]) -> ConversionResult:
+def convert_events(payload: str | Path | Sequence[dict[str, Any]]) -> ConversionResult:
     """
     Sniff the input: file → list / list → list. rrweb vs generic is
     detected by the presence of an integer ``type`` field on the events.
@@ -164,7 +154,7 @@ def convert_events(payload: Union[str, Path, Sequence[Dict[str, Any]]]) -> Conve
     return convert_generic_events(events)
 
 
-def _load_events(payload: Union[str, Path, Sequence[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+def _load_events(payload: str | Path | Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
     if isinstance(payload, (list, tuple)):
         return list(payload)
     if isinstance(payload, (str, Path)):
@@ -188,9 +178,9 @@ def _load_events(payload: Union[str, Path, Sequence[Dict[str, Any]]]) -> List[Di
 # ---------- rrweb mappings ----------------------------------------------
 
 def _convert_rrweb_incremental(
-    event: Dict[str, Any],
+    event: dict[str, Any],
     stats: ConversionStats,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     data = event.get("data") if isinstance(event.get("data"), dict) else None
     if not data:
         stats.note_skip("incremental without data")
@@ -223,7 +213,7 @@ def _convert_rrweb_incremental(
     return None
 
 
-def _selector_for_node(node_id: Any) -> Optional[str]:
+def _selector_for_node(node_id: Any) -> str | None:
     """
     rrweb identifies nodes by integer id from its DOM mirror. Without the
     full snapshot we can't recover a stable CSS path, so we emit a custom
@@ -236,7 +226,7 @@ def _selector_for_node(node_id: Any) -> Optional[str]:
 
 # ---------- generic mappings --------------------------------------------
 
-def _generic_navigate(event: Dict[str, Any], stats: ConversionStats) -> Optional[Dict[str, Any]]:
+def _generic_navigate(event: dict[str, Any], stats: ConversionStats) -> dict[str, Any] | None:
     url = event.get("url")
     if isinstance(url, str) and url:
         return {"WR_to_url": [url]}
@@ -244,14 +234,14 @@ def _generic_navigate(event: Dict[str, Any], stats: ConversionStats) -> Optional
     return None
 
 
-def _generic_click(locator: Optional[Tuple[str, str]], stats: ConversionStats) -> Optional[Dict[str, Any]]:
+def _generic_click(locator: tuple[str, str] | None, stats: ConversionStats) -> dict[str, Any] | None:
     if locator is None:
         stats.note_skip("click without target")
         return None
     return {"WR_click_element": list(locator)}
 
 
-def _generic_input(event: Dict[str, Any], locator: Optional[Tuple[str, str]], stats: ConversionStats) -> Optional[Dict[str, Any]]:
+def _generic_input(event: dict[str, Any], locator: tuple[str, str] | None, stats: ConversionStats) -> dict[str, Any] | None:
     if locator is None:
         stats.note_skip("input without target")
         return None
@@ -259,13 +249,13 @@ def _generic_input(event: Dict[str, Any], locator: Optional[Tuple[str, str]], st
     return {"WR_input_to_element": [*locator, str(value)]}
 
 
-def _generic_submit(locator: Optional[Tuple[str, str]]) -> Dict[str, Any]:
+def _generic_submit(locator: tuple[str, str] | None) -> dict[str, Any]:
     if locator is None:
         return {"WR_comment": ["submit form (no target)"]}
     return {"WR_submit_element": list(locator)}
 
 
-def _generic_wait(event: Dict[str, Any], stats: ConversionStats) -> Optional[Dict[str, Any]]:
+def _generic_wait(event: dict[str, Any], stats: ConversionStats) -> dict[str, Any] | None:
     try:
         seconds = float(event.get("seconds", 0))
     except (TypeError, ValueError):
@@ -284,9 +274,9 @@ _GENERIC_DISPATCH = {
 
 
 def _convert_generic_event(
-    event: Dict[str, Any],
+    event: dict[str, Any],
     stats: ConversionStats,
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     kind = str(event.get("kind") or "").lower()
     handler = _GENERIC_DISPATCH.get(kind)
     if handler is None:
@@ -295,7 +285,7 @@ def _convert_generic_event(
     return handler(event, _coerce_locator(event.get("target")), stats)
 
 
-def _coerce_locator(target: Any) -> Optional[Tuple[str, str]]:
+def _coerce_locator(target: Any) -> tuple[str, str] | None:
     if isinstance(target, dict):
         by = target.get("by") or _CSS_SELECTOR_BY
         value = target.get("value")
@@ -311,7 +301,7 @@ def _coerce_locator(target: Any) -> Optional[Tuple[str, str]]:
 
 def write_actions_json(
     result: ConversionResult,
-    output_path: Union[str, Path],
+    output_path: str | Path,
 ) -> Path:
     """Persist the converted actions list to disk in WR action format."""
     path = Path(output_path)

@@ -16,7 +16,7 @@ import urllib.request
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, List, Optional, Union
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -33,8 +33,8 @@ class PinnedDriver:
     url: str             # direct download URL (CDN, GitHub release asset, etc.)
     archive_format: str  # "zip" | "tar.gz"
     binary_inside: str   # filename inside the archive
-    platforms: List[str] = field(default_factory=list)
-    cache_subdir: Optional[str] = None  # default: f"{name}/{version}"
+    platforms: list[str] = field(default_factory=list)
+    cache_subdir: str | None = None  # default: f"{name}/{version}"
 
     def matches_current_platform(self) -> bool:
         if not self.platforms:
@@ -56,7 +56,7 @@ def current_platform_marker() -> str:
     return "linux"
 
 
-def load_pinfile(path: Union[str, Path]) -> List[PinnedDriver]:
+def load_pinfile(path: str | Path) -> list[PinnedDriver]:
     fp = Path(path)
     if not fp.is_file():
         raise DriverPinError(f"pin file not found: {path!r}")
@@ -70,7 +70,7 @@ def load_pinfile(path: Union[str, Path]) -> List[PinnedDriver]:
     return [_pin_from_dict(index, entry) for index, entry in enumerate(drivers)]
 
 
-def save_pinfile(path: Union[str, Path], drivers: List[PinnedDriver]) -> Path:
+def save_pinfile(path: str | Path, drivers: list[PinnedDriver]) -> Path:
     fp = Path(path)
     fp.parent.mkdir(parents=True, exist_ok=True)
     document = {"drivers": [
@@ -118,8 +118,8 @@ def _pin_from_dict(index: int, entry: Any) -> PinnedDriver:
 
 def download_pinned(
     pinned: PinnedDriver,
-    cache_dir: Union[str, Path] = ".webrunner/drivers",
-    fetch: Optional[Any] = None,
+    cache_dir: str | Path = ".webrunner/drivers",
+    fetch: Any | None = None,
 ) -> Path:
     """
     確認對應的 driver 已下載並解壓；回傳可執行檔路徑
@@ -154,7 +154,7 @@ def download_pinned(
 
 
 def _default_fetch(url: str) -> bytes:
-    if not (url.startswith("https://") or url.startswith("http://")):  # NOSONAR — guarded above
+    if not (url.startswith(("https://", "http://"))):  # NOSONAR — guarded above
         raise DriverPinError(f"refusing non-http(s) url: {url!r}")
     ssl_context = ssl.create_default_context()  # NOSONAR — Py3.10+ default enforces TLS 1.2+
     with urllib.request.urlopen(url, context=ssl_context, timeout=120) as response:  # nosec B310 — scheme validated
@@ -195,15 +195,23 @@ def _safe_extract_tar(archive: tarfile.TarFile, target_dir: Path) -> None:
             candidate.relative_to(base)
         except ValueError as error:
             raise DriverPinError(f"unsafe tar member {member.name!r}") from error
-    archive.extractall(target_dir)  # nosec B202 — members validated above
+    # Name validation above does not cover symlink/hardlink *targets* that
+    # escape ``target_dir`` (the link resolves at extract time, not by name).
+    # Prefer the hardened "data" filter (Python 3.12+, security-backported to
+    # 3.9.17 / 3.10.12 / 3.11.4) which rejects escaping links; fall back to a
+    # plain extract on older interpreters that lack the parameter.
+    try:
+        archive.extractall(target_dir, filter="data")  # nosec B202 — members validated + data filter  # NOSONAR S930 — valid tarfile 'filter' kwarg (Py3.12+), guarded by except TypeError
+    except TypeError:
+        archive.extractall(target_dir)  # nosec B202 — members validated above
 
 
 def install_for_browser(
-    pin_file: Union[str, Path],
+    pin_file: str | Path,
     browser: str,
-    cache_dir: Union[str, Path] = ".webrunner/drivers",
-    fetch: Optional[Any] = None,
-) -> Optional[Path]:
+    cache_dir: str | Path = ".webrunner/drivers",
+    fetch: Any | None = None,
+) -> Path | None:
     """High-level helper: load the pin file, find the entry for ``browser``,
     download if needed, and return the on-disk binary path."""
     drivers = load_pinfile(pin_file)

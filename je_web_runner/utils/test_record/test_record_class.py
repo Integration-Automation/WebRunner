@@ -1,10 +1,9 @@
 import datetime
-from typing import Union
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
 
-class TestRecord(object):
+class TestRecord:
     """
     測試紀錄管理器
     Test record manager
@@ -47,8 +46,8 @@ test_record_instance = TestRecord()
 
 
 def record_action_to_list(function_name: str,
-                          local_param: Union[dict, None],
-                          program_exception: Union[Exception, None] = None):
+                          local_param: dict | None,
+                          program_exception: Exception | None = None):
     """
     將一次函式呼叫紀錄到 test_record_list
     Record a function call into test_record_list
@@ -61,10 +60,9 @@ def record_action_to_list(function_name: str,
         # 若未啟用紀錄，則直接跳過
         # Skip if recording is disabled
         return
-    else:
-        test_record_instance.test_record_list.append({
-            "function_name": function_name,
-            "local_param": local_param,
-            "time": str(datetime.datetime.now()),
-            "program_exception": repr(program_exception)
-        })
+    test_record_instance.test_record_list.append({
+        "function_name": function_name,
+        "local_param": local_param,
+        "time": str(datetime.datetime.now()),
+        "program_exception": repr(program_exception)
+    })

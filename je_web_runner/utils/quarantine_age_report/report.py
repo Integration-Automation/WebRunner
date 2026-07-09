@@ -13,7 +13,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -48,10 +48,10 @@ class AgedEntry:
     quarantined_at: str
     age_days: float
     tier: EscalationTier
-    triage_url: Optional[str] = None
+    triage_url: str | None = None
     runs_when_added: int = 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "tier": self.tier.value}
 
 
@@ -60,9 +60,9 @@ class AgeReport:
     """Roll-up over a whole quarantine registry."""
 
     total_entries: int = 0
-    by_tier: Dict[str, int] = field(default_factory=dict)
-    entries: List[AgedEntry] = field(default_factory=list)
-    abandoned: List[str] = field(default_factory=list)
+    by_tier: dict[str, int] = field(default_factory=dict)
+    entries: list[AgedEntry] = field(default_factory=list)
+    abandoned: list[str] = field(default_factory=list)
 
 
 def _parse_iso(value: str) -> datetime:
@@ -87,7 +87,7 @@ def _tier_for(age_days: float) -> EscalationTier:
     return EscalationTier.ABANDONED
 
 
-def _load_registry(path: Union[str, Path]) -> List[Dict[str, Any]]:
+def _load_registry(path: str | Path) -> list[dict[str, Any]]:
     p = Path(path)
     if not p.exists():
         raise QuarantineAgeReportError(f"registry not found: {p}")
@@ -104,15 +104,15 @@ def _load_registry(path: Union[str, Path]) -> List[Dict[str, Any]]:
 
 
 def age_entries(
-    entries: Sequence[Dict[str, Any]],
+    entries: Sequence[dict[str, Any]],
     *,
-    now: Optional[datetime] = None,
-) -> List[AgedEntry]:
+    now: datetime | None = None,
+) -> list[AgedEntry]:
     """Convert raw registry rows into typed entries with age + tier."""
     moment = now if now is not None else datetime.now(tz=timezone.utc)
     if moment.tzinfo is None:
         raise QuarantineAgeReportError("now must be tz-aware")
-    out: List[AgedEntry] = []
+    out: list[AgedEntry] = []
     for raw in entries:
         if not isinstance(raw, dict):
             continue
@@ -155,9 +155,9 @@ def build_report(entries: Iterable[AgedEntry]) -> AgeReport:
 
 
 def load_and_age(
-    registry_path: Union[str, Path],
+    registry_path: str | Path,
     *,
-    now: Optional[datetime] = None,
+    now: datetime | None = None,
 ) -> AgeReport:
     """One-shot: load JSON registry, age every row, build report."""
     return build_report(age_entries(_load_registry(registry_path), now=now))

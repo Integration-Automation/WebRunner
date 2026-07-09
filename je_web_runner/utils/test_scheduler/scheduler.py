@@ -24,7 +24,7 @@ from __future__ import annotations
 import json
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -33,12 +33,16 @@ from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 class TestSchedulerError(WebRunnerException):
     """Raised on invalid inputs or impossible budgets."""
 
+    __test__ = False  # domain exception, not a pytest test class
+
 
 # ---------- data ---------------------------------------------------------
 
 @dataclass
 class TestCandidate:
     """One test the scheduler can choose to run."""
+
+    __test__ = False  # dataclass, not a pytest test class
 
     test_id: str
     duration_seconds: float
@@ -47,7 +51,7 @@ class TestCandidate:
     last_run_age_hours: float = 0.0
     manual_priority: float = 0.0
     needs_cloud_session: bool = False
-    tags: List[str] = field(default_factory=list)
+    tags: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not isinstance(self.test_id, str) or not self.test_id:
@@ -64,7 +68,7 @@ class TestCandidate:
                     f"{name} must be in [0,1] for {self.test_id!r}, got {v}"
                 )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -72,15 +76,15 @@ class TestCandidate:
 class Schedule:
     """Output of :func:`schedule_tests`."""
 
-    selected: List[str] = field(default_factory=list)
-    skipped: List[str] = field(default_factory=list)
+    selected: list[str] = field(default_factory=list)
+    skipped: list[str] = field(default_factory=list)
     total_seconds: float = 0.0
     total_cloud_slots: int = 0
     leftover_seconds: float = 0.0
     leftover_cloud_slots: int = 0
     value_recovered: float = 0.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -113,8 +117,8 @@ def schedule_tests(  # NOSONAR S3776 — cohesive logic; planned refactor in fol
     candidates: Sequence[TestCandidate],
     *,
     time_budget_seconds: float,
-    cloud_slot_budget: Optional[int] = None,
-    pinned_test_ids: Optional[Iterable[str]] = None,
+    cloud_slot_budget: int | None = None,
+    pinned_test_ids: Iterable[str] | None = None,
 ) -> Schedule:
     """
     Greedy value-density schedule subject to time + cloud-slot budgets。
@@ -138,7 +142,7 @@ def schedule_tests(  # NOSONAR S3776 — cohesive logic; planned refactor in fol
             f"pinned test ids not in candidate set: {sorted(missing)}"
         )
 
-    selected_ids: List[str] = []
+    selected_ids: list[str] = []
     selected_cost = 0.0
     selected_cloud = 0
     value_recovered = 0.0
@@ -208,14 +212,14 @@ def schedule_tests(  # NOSONAR S3776 — cohesive logic; planned refactor in fol
 # ---------- ledger / flake integration -----------------------------------
 
 def build_candidates_from_ledger(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
-    ledger_path: Union[str, Path],
+    ledger_path: str | Path,
     *,
     default_duration_seconds: float = 60.0,
-    fail_rate_lookup: Optional[Dict[str, float]] = None,
-    impact_lookup: Optional[Dict[str, float]] = None,
-    cloud_tests: Optional[Iterable[str]] = None,
-    now_epoch: Optional[float] = None,
-) -> List[TestCandidate]:
+    fail_rate_lookup: dict[str, float] | None = None,
+    impact_lookup: dict[str, float] | None = None,
+    cloud_tests: Iterable[str] | None = None,
+    now_epoch: float | None = None,
+) -> list[TestCandidate]:
     """
     從 run_ledger 推每個 test 的 duration / fail_rate / last_run_age,
     再選擇性帶入 impact_score / cloud flag。
@@ -240,7 +244,7 @@ def build_candidates_from_ledger(  # NOSONAR S3776 — cohesive logic; planned r
     fail_rates = fail_rate_lookup or {}
     impacts = impact_lookup or {}
     cloud_set = set(cloud_tests or [])
-    buckets: Dict[str, Dict[str, Any]] = {}
+    buckets: dict[str, dict[str, Any]] = {}
     for run in runs:
         if not isinstance(run, dict):
             continue
@@ -262,7 +266,7 @@ def build_candidates_from_ledger(  # NOSONAR S3776 — cohesive logic; planned r
         if epoch and epoch > record["latest_epoch"]:
             record["latest_epoch"] = epoch
 
-    candidates: List[TestCandidate] = []
+    candidates: list[TestCandidate] = []
     for test_id, rec in buckets.items():
         avg_duration = (
             rec["duration_sum"] / rec["duration_count"]

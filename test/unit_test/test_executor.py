@@ -69,6 +69,12 @@ class TestExecutorMapping(unittest.TestCase):
         with self.assertRaises(WebRunnerExecuteException):
             self.executor.execute_action({"wrong_key": []})
 
+    def test_execute_action_non_list_raises(self):
+        # A string (or any non-list) must be rejected, not iterated char by
+        # char — the validation raise used to be swallowed by its own except.
+        with self.assertRaises(WebRunnerExecuteException):
+            self.executor.execute_action("WR_quit")
+
     def test_execute_action_with_builtins(self):
         actions = [
             ["print", ["test output"]],

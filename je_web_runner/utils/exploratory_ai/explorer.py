@@ -19,7 +19,7 @@ from __future__ import annotations
 import random
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Protocol, Sequence
+from typing import Any, Callable, Protocol, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -48,7 +48,7 @@ class InteractiveElement:
     selector: str
     tag: str
     text: str = ""
-    role: Optional[str] = None
+    role: str | None = None
     is_visible: bool = True
     is_enabled: bool = True
 
@@ -65,12 +65,12 @@ class PageObservation:
 
     url: str
     title: str
-    elements: List[InteractiveElement] = field(default_factory=list)
-    console_errors: List[str] = field(default_factory=list)
-    network_errors: List[Dict[str, Any]] = field(default_factory=list)
+    elements: list[InteractiveElement] = field(default_factory=list)
+    console_errors: list[str] = field(default_factory=list)
+    network_errors: list[dict[str, Any]] = field(default_factory=list)
     step: int = 0
 
-    def actionable(self) -> List[InteractiveElement]:
+    def actionable(self) -> list[InteractiveElement]:
         return [e for e in self.elements if e.is_visible and e.is_enabled]
 
 
@@ -79,8 +79,8 @@ class PlannedAction:
     """The next step the explorer wants the runner to perform."""
 
     kind: ActionKind
-    selector: Optional[str] = None
-    value: Optional[str] = None
+    selector: str | None = None
+    value: str | None = None
     rationale: str = ""
 
     def __post_init__(self) -> None:
@@ -101,7 +101,7 @@ class BugSignal:
     kind: str  # 'console_error' | 'network_error' | 'planner_stuck' | ...
     detail: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -110,9 +110,9 @@ class ExplorationReport:
     """Roll-up returned by :func:`Explorer.run`."""
 
     steps_taken: int
-    pages_visited: List[str] = field(default_factory=list)
-    bugs: List[BugSignal] = field(default_factory=list)
-    actions: List[PlannedAction] = field(default_factory=list)
+    pages_visited: list[str] = field(default_factory=list)
+    bugs: list[BugSignal] = field(default_factory=list)
+    actions: list[PlannedAction] = field(default_factory=list)
     stopped_reason: str = ""
 
     def has_bugs(self) -> bool:
@@ -146,7 +146,7 @@ class RandomPlanner:
     def __init__(
         self,
         *,
-        seed: Optional[int] = None,
+        seed: int | None = None,
         sample_strings: Sequence[str] = ("test", "1234", "x"),
         type_bias: float = 0.3,
     ) -> None:
@@ -207,7 +207,7 @@ class Explorer:
 
     def run(self) -> ExplorationReport:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
         report = ExplorationReport(steps_taken=0)
-        repeat_counter: Dict[str, int] = {}
+        repeat_counter: dict[str, int] = {}
         for step in range(self.max_steps):
             observation = self._safe_observe(step)
             if observation.url and (
@@ -261,8 +261,8 @@ class Explorer:
         self,
         observation: PageObservation,
         report: ExplorationReport,
-        repeat_counter: Dict[str, int],
-    ) -> Optional[PlannedAction]:
+        repeat_counter: dict[str, int],
+    ) -> PlannedAction | None:
         try:
             # pylint: disable=assignment-from-no-return — Protocol body is `...`.
             action = self.planner.plan(observation)

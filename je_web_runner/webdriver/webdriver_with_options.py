@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Union, List, Set
 
 from selenium import webdriver
 from selenium.webdriver.ie.options import Options
@@ -29,9 +28,21 @@ selenium_options_dict = {
 }
 
 
+def _new_options_for(webdriver_name: str) -> Options:
+    """
+    依瀏覽器名稱建立對應的 Options 物件；名稱無效時拋出明確例外。
+    Build the Options object for ``webdriver_name``; raise a clear exception
+    when the name is unknown (instead of crashing on ``None()``).
+    """
+    options_class = selenium_options_dict.get(webdriver_name)
+    if options_class is None:
+        raise WebRunnerWebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
+    return options_class()
+
+
 def set_webdriver_options_argument(
-        webdriver_name: str, argument_iterable: Union[List[str], Set[str]]
-) -> None | Options | Options | Options | Options:
+        webdriver_name: str, argument_iterable: list[str] | set[str]
+) -> Options | None:
     """
     設定 WebDriver 啟動參數
     Set WebDriver startup arguments
@@ -47,8 +58,8 @@ def set_webdriver_options_argument(
     )
     param = locals()
     try:
-        webdriver_options = selenium_options_dict.get(webdriver_name)()
-        for index, value in enumerate(argument_iterable):
+        webdriver_options = _new_options_for(webdriver_name)
+        for value in argument_iterable:
             if not isinstance(value, str):
                 raise WebRunnerArgumentWrongTypeException(selenium_wrapper_set_argument_error)
             webdriver_options.add_argument(value)
@@ -57,14 +68,14 @@ def set_webdriver_options_argument(
     except Exception as error:
         web_runner_logger.error(
             f"set_webdriver_options_argument, webdriver_name: {webdriver_name}, "
-            f"argument_iterable: {argument_iterable}, failed: {repr(error)}"
+            f"argument_iterable: {argument_iterable}, failed: {error!r}"
         )
         record_action_to_list("webdriver with options set_webdriver_options_argument", param, error)
 
 
 def set_webdriver_options_capability_wrapper(
         webdriver_name: str, key_and_vale_dict: dict
-) -> None | Options | Options | Options | Options:
+) -> Options | None:
     """
     設定 WebDriver capabilities
     Set WebDriver capabilities
@@ -81,9 +92,7 @@ def set_webdriver_options_capability_wrapper(
     )
     param = locals()
     try:
-        webdriver_options = selenium_options_dict.get(webdriver_name)()
-        if webdriver_options is None:
-            raise WebRunnerWebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
+        webdriver_options = _new_options_for(webdriver_name)
         if not isinstance(key_and_vale_dict, dict):
             raise WebRunnerOptionsWrongTypeException(selenium_wrapper_set_options_error)
         for key, value in key_and_vale_dict.items():
@@ -93,6 +102,6 @@ def set_webdriver_options_capability_wrapper(
     except Exception as error:
         web_runner_logger.error(
             f"set_webdriver_options_capability_wrapper, webdriver_name: {webdriver_name}, "
-            f"key_and_vale_dict: {key_and_vale_dict}, failed: {repr(error)}"
+            f"key_and_vale_dict: {key_and_vale_dict}, failed: {error!r}"
         )
         record_action_to_list("webdriver with options set_webdriver_options_capability_wrapper", param, error)

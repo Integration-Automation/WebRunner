@@ -19,7 +19,7 @@ import os
 import subprocess  # nosec B404 — argv-only invocation, no shell
 import threading
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -48,11 +48,11 @@ class OrphanFinding:
     command_line: str = ""
 
 
-ProcessLister = Callable[[], List[OrphanFinding]]
+ProcessLister = Callable[[], list[OrphanFinding]]
 ProcessKiller = Callable[[int], bool]
 
 
-def _ps_unix_lister() -> List[OrphanFinding]:
+def _ps_unix_lister() -> list[OrphanFinding]:
     try:
         # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
         out = subprocess.check_output(  # nosec B603 B607 — explicit argv list
@@ -62,7 +62,7 @@ def _ps_unix_lister() -> List[OrphanFinding]:
         )
     except (FileNotFoundError, subprocess.CalledProcessError) as error:
         raise ProcessSupervisorError(f"ps failed: {error!r}") from error
-    findings: List[OrphanFinding] = []
+    findings: list[OrphanFinding] = []
     for line in out.splitlines():
         parts = line.strip().split(None, 2)
         if len(parts) < 2:
@@ -77,7 +77,7 @@ def _ps_unix_lister() -> List[OrphanFinding]:
     return findings
 
 
-def _tasklist_windows_lister() -> List[OrphanFinding]:
+def _tasklist_windows_lister() -> list[OrphanFinding]:
     try:
         # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
         out = subprocess.check_output(  # nosec B603 B607 — explicit argv list
@@ -87,7 +87,7 @@ def _tasklist_windows_lister() -> List[OrphanFinding]:
         )
     except (FileNotFoundError, subprocess.CalledProcessError) as error:
         raise ProcessSupervisorError(f"tasklist failed: {error!r}") from error
-    findings: List[OrphanFinding] = []
+    findings: list[OrphanFinding] = []
     for line in out.splitlines():
         # CSV with quoted fields: "Image","PID","Session","Session#","Mem"
         cleaned = [field.strip().strip('"') for field in line.split(",")]
@@ -102,7 +102,7 @@ def _tasklist_windows_lister() -> List[OrphanFinding]:
     return findings
 
 
-def default_lister() -> List[OrphanFinding]:
+def default_lister() -> list[OrphanFinding]:
     if os.name == "nt":
         return _tasklist_windows_lister()
     return _ps_unix_lister()
@@ -135,7 +135,7 @@ class ProcessSupervisor:
     lister: ProcessLister = field(default=default_lister)
     killer: ProcessKiller = field(default=default_killer)
 
-    def list_orphans(self, names: Iterable[str] = KNOWN_DRIVER_NAMES) -> List[OrphanFinding]:
+    def list_orphans(self, names: Iterable[str] = KNOWN_DRIVER_NAMES) -> list[OrphanFinding]:
         target_set = {name.lower() for name in names}
         all_processes = self.lister()
         if not isinstance(all_processes, list):
@@ -149,10 +149,10 @@ class ProcessSupervisor:
     def kill_orphans(
         self,
         names: Iterable[str] = KNOWN_DRIVER_NAMES,
-        protected_pids: Optional[Iterable[int]] = None,
-    ) -> Dict[int, bool]:
+        protected_pids: Iterable[int] | None = None,
+    ) -> dict[int, bool]:
         protected = set(protected_pids or [])
-        results: Dict[int, bool] = {}
+        results: dict[int, bool] = {}
         for finding in self.list_orphans(names):
             if finding.pid in protected:
                 continue
@@ -178,7 +178,7 @@ def with_watchdog(
     """
     if timeout_seconds <= 0:
         raise ProcessSupervisorError("timeout_seconds must be > 0")
-    container: Dict[str, Any] = {}
+    container: dict[str, Any] = {}
 
     def runner() -> None:
         try:

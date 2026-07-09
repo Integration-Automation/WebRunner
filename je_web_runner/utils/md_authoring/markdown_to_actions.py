@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -35,7 +35,7 @@ class MdAuthoringError(WebRunnerException):
 _BULLET_RE = re.compile(r"^\s*[-*]\s*(.*)$")  # NOSONAR S5852 — greedy ``.*`` anchored to ``$``, no backtracking
 
 
-def _strategy_value_for(selector: str) -> Tuple[str, str]:
+def _strategy_value_for(selector: str) -> tuple[str, str]:
     selector = selector.strip()
     if selector.startswith("#"):
         return "ID", selector[1:]
@@ -52,7 +52,7 @@ def _strategy_value_for(selector: str) -> Tuple[str, str]:
     return "CSS_SELECTOR", selector
 
 
-def _click_actions(selector: str) -> List[List[Any]]:
+def _click_actions(selector: str) -> list[list[Any]]:
     strategy, value = _strategy_value_for(selector)
     return [
         ["WR_save_test_object", {"test_object_name": value, "object_type": strategy}],
@@ -61,7 +61,7 @@ def _click_actions(selector: str) -> List[List[Any]]:
     ]
 
 
-def _type_actions(text: str, selector: str) -> List[List[Any]]:
+def _type_actions(text: str, selector: str) -> list[list[Any]]:
     strategy, value = _strategy_value_for(selector)
     return [
         ["WR_save_test_object", {"test_object_name": value, "object_type": strategy}],
@@ -89,7 +89,7 @@ _TEMPLATE_RE = re.compile(
 _QUIT_RE = re.compile(r"^quit$", re.IGNORECASE)
 
 
-def _parse_bullet(text: str) -> Optional[List[List[Any]]]:
+def _parse_bullet(text: str) -> list[list[Any]] | None:
     match = _OPEN_RE.match(text)
     if match:
         return [["WR_to_url", {"url": match.group(1)}]]
@@ -121,7 +121,7 @@ def _parse_bullet(text: str) -> Optional[List[List[Any]]]:
     return None
 
 
-def parse_markdown(text: str) -> List[List[Any]]:
+def parse_markdown(text: str) -> list[list[Any]]:
     """
     把 Markdown bullets 解析成 action list；無法辨識的條目保留為 ``WR__note``。
     Parse a Markdown body and return a flat WR_* action list. Each bullet
@@ -130,7 +130,7 @@ def parse_markdown(text: str) -> List[List[Any]]:
     """
     if not isinstance(text, str):
         raise MdAuthoringError("input must be str")
-    actions: List[List[Any]] = []
+    actions: list[list[Any]] = []
     for raw_line in text.splitlines():
         match = _BULLET_RE.match(raw_line)
         if match is None:
@@ -149,9 +149,9 @@ def parse_markdown(text: str) -> List[List[Any]]:
 
 
 def transpile_file(
-    md_path: Union[str, Path],
-    output_path: Optional[Union[str, Path]] = None,
-) -> List[List[Any]]:
+    md_path: str | Path,
+    output_path: str | Path | None = None,
+) -> list[list[Any]]:
     """
     讀 ``md_path``，轉成 action list。``output_path`` 提供時會寫成格式化 JSON。
     Read ``md_path``, transpile, and optionally write the formatted JSON
@@ -167,7 +167,7 @@ def transpile_file(
     return actions
 
 
-def supported_bullet_patterns() -> List[str]:
+def supported_bullet_patterns() -> list[str]:
     """Return the list of bullet templates the parser recognises."""
     return [
         "open <url>",

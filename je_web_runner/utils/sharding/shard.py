@@ -7,7 +7,7 @@ same shard index across machines.
 from __future__ import annotations
 
 import hashlib
-from typing import List, Sequence, Tuple
+from typing import Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -17,7 +17,7 @@ class ShardingError(WebRunnerException):
     """Raised when a shard spec is invalid."""
 
 
-def parse_shard_spec(spec: str) -> Tuple[int, int]:
+def parse_shard_spec(spec: str) -> tuple[int, int]:
     """
     把 ``"1/4"`` 解析為 ``(1, 4)``
     Parse the ``index/total`` form. Both numbers are positive integers and
@@ -47,7 +47,7 @@ def _bucket(path: str, total: int) -> int:
     return int(digest, 16) % total
 
 
-def partition(paths: Sequence[str], index: int, total: int) -> List[str]:
+def partition(paths: Sequence[str], index: int, total: int) -> list[str]:
     """
     回傳該 shard 應該執行的檔案路徑（依檔名 SHA-1 對 ``total`` 取模）
     Return the subset of ``paths`` that belongs to shard ``index`` (1-based)
@@ -65,7 +65,7 @@ def partition(paths: Sequence[str], index: int, total: int) -> List[str]:
     return selected
 
 
-def partition_with_spec(paths: Sequence[str], spec: str) -> List[str]:
+def partition_with_spec(paths: Sequence[str], spec: str) -> list[str]:
     """Convenience: parse the spec then partition."""
     index, total = parse_shard_spec(spec)
     return partition(paths, index, total)

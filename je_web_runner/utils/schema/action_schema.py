@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -18,14 +18,14 @@ class SchemaExportError(WebRunnerException):
     """Raised when a target path cannot be written."""
 
 
-def _command_names() -> List[str]:
+def _command_names() -> list[str]:
     """Pull every registered command name from the executor singleton."""
     # Imported lazily to avoid an import cycle with the executor module.
     from je_web_runner.utils.executor.action_executor import executor
-    return sorted(name for name in executor.event_dict.keys() if name.startswith("WR_"))
+    return sorted(name for name in executor.event_dict if name.startswith("WR_"))
 
 
-def build_action_schema() -> Dict[str, Any]:
+def build_action_schema() -> dict[str, Any]:
     """
     產生一份描述 action JSON 結構的 Draft 2020-12 Schema
     Build a Draft 2020-12 JSON Schema describing the action JSON format.
@@ -36,7 +36,7 @@ def build_action_schema() -> Dict[str, Any]:
     """
     web_runner_logger.info("build_action_schema")
     command_enum = _command_names()
-    action_schema: Dict[str, Any] = {
+    action_schema: dict[str, Any] = {
         "type": "array",
         "minItems": 1,
         "maxItems": 3,

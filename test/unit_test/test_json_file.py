@@ -40,6 +40,18 @@ class TestJsonFile(unittest.TestCase):
         result = read_action_json(file_path)
         self.assertEqual(result, [])
 
+    def test_write_to_bad_path_raises_json_exception(self):
+        # A write failure must surface as WebRunnerJsonException, not a raw
+        # OSError (the old except clause caught a type never raised).
+        bad_path = os.path.join(self.test_dir, "no_such_dir", "x.json")
+        with self.assertRaises(WebRunnerJsonException):
+            write_action_json(bad_path, [["WR_quit"]])
+
+    def test_write_non_serializable_raises_json_exception(self):
+        file_path = os.path.join(self.test_dir, "bad.json")
+        with self.assertRaises(WebRunnerJsonException):
+            write_action_json(file_path, [{"set": {1, 2, 3}}])
+
 
 if __name__ == "__main__":
     unittest.main()

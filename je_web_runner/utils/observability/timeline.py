@@ -7,7 +7,7 @@ on one row.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -23,10 +23,10 @@ class TimelineEvent:
     timestamp_ms: float
     kind: str
     label: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
 
 
-def _coerce_timestamp(value: Any) -> Optional[float]:
+def _coerce_timestamp(value: Any) -> float | None:
     if value is None:
         return None
     if isinstance(value, (int, float)):
@@ -39,16 +39,16 @@ def _coerce_timestamp(value: Any) -> Optional[float]:
     return None
 
 
-def _first_present(source: Dict[str, Any], *keys: str) -> Any:
+def _first_present(source: dict[str, Any], *keys: str) -> Any:
     for key in keys:
         if key in source:
             return source[key]
     return None
 
 
-def from_spans(spans: Iterable[Dict[str, Any]]) -> List[TimelineEvent]:
+def from_spans(spans: Iterable[dict[str, Any]]) -> list[TimelineEvent]:
     """Convert OTel-shaped spans (``{name, start_ms, end_ms, attrs}``)."""
-    events: List[TimelineEvent] = []
+    events: list[TimelineEvent] = []
     for span in spans:
         start = _coerce_timestamp(_first_present(span, "start_ms", "start"))
         end = _coerce_timestamp(_first_present(span, "end_ms", "end"))
@@ -72,8 +72,8 @@ def from_spans(spans: Iterable[Dict[str, Any]]) -> List[TimelineEvent]:
     return events
 
 
-def from_console(messages: Iterable[Dict[str, Any]]) -> List[TimelineEvent]:
-    events: List[TimelineEvent] = []
+def from_console(messages: Iterable[dict[str, Any]]) -> list[TimelineEvent]:
+    events: list[TimelineEvent] = []
     for index, message in enumerate(messages):
         ts = _coerce_timestamp(_first_present(message, "timestamp_ms", "ts"))
         if ts is None:
@@ -87,8 +87,8 @@ def from_console(messages: Iterable[Dict[str, Any]]) -> List[TimelineEvent]:
     return events
 
 
-def from_responses(responses: Iterable[Dict[str, Any]]) -> List[TimelineEvent]:
-    events: List[TimelineEvent] = []
+def from_responses(responses: Iterable[dict[str, Any]]) -> list[TimelineEvent]:
+    events: list[TimelineEvent] = []
     for index, response in enumerate(responses):
         ts = _coerce_timestamp(_first_present(response, "timestamp_ms", "ts"))
         if ts is None:
@@ -106,16 +106,16 @@ def from_responses(responses: Iterable[Dict[str, Any]]) -> List[TimelineEvent]:
     return events
 
 
-def merge(*event_lists: Iterable[TimelineEvent]) -> List[TimelineEvent]:
+def merge(*event_lists: Iterable[TimelineEvent]) -> list[TimelineEvent]:
     """Concatenate event lists and sort by timestamp ascending (stable)."""
-    merged: List[TimelineEvent] = []
+    merged: list[TimelineEvent] = []
     for events in event_lists:
         merged.extend(events)
     merged.sort(key=lambda evt: evt.timestamp_ms)
     return merged
 
 
-def to_dicts(events: Iterable[TimelineEvent]) -> List[Dict[str, Any]]:
+def to_dicts(events: Iterable[TimelineEvent]) -> list[dict[str, Any]]:
     return [
         {
             "timestamp_ms": e.timestamp_ms,
@@ -128,10 +128,10 @@ def to_dicts(events: Iterable[TimelineEvent]) -> List[Dict[str, Any]]:
 
 
 def build(
-    spans: Optional[Iterable[Dict[str, Any]]] = None,
-    console: Optional[Iterable[Dict[str, Any]]] = None,
-    responses: Optional[Iterable[Dict[str, Any]]] = None,
-) -> List[Dict[str, Any]]:
+    spans: Iterable[dict[str, Any]] | None = None,
+    console: Iterable[dict[str, Any]] | None = None,
+    responses: Iterable[dict[str, Any]] | None = None,
+) -> list[dict[str, Any]]:
     """Top-level helper: take three optional sources, return one ordered list."""
     return to_dicts(merge(
         from_spans(spans or []),

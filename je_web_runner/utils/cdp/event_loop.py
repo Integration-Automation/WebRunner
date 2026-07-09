@@ -36,7 +36,7 @@ from __future__ import annotations
 import json
 import queue
 import threading
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -71,7 +71,7 @@ def _query_page_ws_url(debugger_address: str) -> str:
     url = f"http://{debugger_address}/json"  # NOSONAR python:S5332 — DevTools endpoint is HTTP-only by design
     # Bandit B310: scheme is fixed-literal ``http://`` above, not user-controlled — only
     # ``debugger_address`` (host:port) varies, so no file:// or custom-scheme risk.
-    with urllib.request.urlopen(url, timeout=5) as response:  # nosec B310  # noqa: S310 — local devtools endpoint
+    with urllib.request.urlopen(url, timeout=5) as response:  # nosec B310
         targets = json.loads(response.read())
     pages = [t for t in targets if t.get("type") == "page"]
     if not pages:
@@ -125,21 +125,21 @@ class CDPEventListener:
     def __init__(self, ws_url: str):
         self._ws_url = ws_url
         self._ws = None
-        self._thread: Optional[threading.Thread] = None
+        self._thread: threading.Thread | None = None
         self._stop_flag = threading.Event()
-        self._handlers: Dict[str, List[Callable[[dict], None]]] = {}
+        self._handlers: dict[str, list[Callable[[dict], None]]] = {}
         self._handlers_lock = threading.Lock()
-        self._pending: Dict[int, queue.Queue] = {}
+        self._pending: dict[int, queue.Queue] = {}
         self._pending_lock = threading.Lock()
         self._next_id_lock = threading.Lock()
         self._next_id = 1
 
     @classmethod
-    def from_driver(cls, driver) -> "CDPEventListener":
+    def from_driver(cls, driver) -> CDPEventListener:
         """從現有 driver 自動解析 WebSocket URL 並建立 listener。"""
         return cls(resolve_cdp_ws_url(driver))
 
-    def __enter__(self) -> "CDPEventListener":
+    def __enter__(self) -> CDPEventListener:
         self.start()
         return self
 
@@ -188,7 +188,7 @@ class CDPEventListener:
         if ws is not None:
             try:
                 ws.close()
-            except Exception as error:  # noqa: BLE001 — best-effort cleanup
+            except Exception as error:
                 web_runner_logger.debug(f"CDPEventListener ws.close failed: {error!r}")
         thread = self._thread
         self._thread = None
@@ -198,7 +198,7 @@ class CDPEventListener:
     def send(
             self,
             method: str,
-            params: Optional[dict] = None,
+            params: dict | None = None,
             timeout: float = 5.0,
     ) -> Any:
         """
@@ -244,7 +244,7 @@ class CDPEventListener:
                 break
             try:
                 raw = ws.recv()
-            except Exception as error:  # noqa: BLE001
+            except Exception as error:
                 if not self._stop_flag.is_set():
                     web_runner_logger.error(f"CDPEventListener recv failed: {error!r}")
                 break
@@ -252,7 +252,7 @@ class CDPEventListener:
                 continue
             try:
                 message = json.loads(raw)
-            except Exception as error:  # noqa: BLE001
+            except Exception as error:
                 web_runner_logger.warning(f"CDPEventListener bad JSON: {error!r}")
                 continue
             self._dispatch(message)
@@ -274,7 +274,7 @@ class CDPEventListener:
         for callback in handlers:
             try:
                 callback(params)
-            except Exception as error:  # noqa: BLE001 — never let a handler kill the loop
+            except Exception as error:
                 web_runner_logger.error(
                     f"CDPEventListener handler for {method!r} raised: {error!r}"
                 )

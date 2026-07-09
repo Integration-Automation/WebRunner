@@ -8,7 +8,7 @@ Both Selenium and Playwright backends are supported.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from selenium.webdriver.common.by import By
 
@@ -33,9 +33,9 @@ class HealingRegistry:
     """In-memory store of fallback locators keyed by element name."""
 
     def __init__(self) -> None:
-        self._fallbacks: Dict[str, List[Tuple[str, str]]] = {}
+        self._fallbacks: dict[str, list[tuple[str, str]]] = {}
 
-    def register(self, name: str, fallbacks: List[Tuple[str, str]]) -> None:
+    def register(self, name: str, fallbacks: list[tuple[str, str]]) -> None:
         """
         登錄某元素名稱的備援定位器
         Register an ordered list of (strategy, value) fallbacks for ``name``.
@@ -46,7 +46,7 @@ class HealingRegistry:
         """Append a single fallback entry."""
         self._fallbacks.setdefault(name, []).append((strategy, value))
 
-    def get(self, name: str) -> List[Tuple[str, str]]:
+    def get(self, name: str) -> list[tuple[str, str]]:
         return list(self._fallbacks.get(name, []))
 
     def clear(self) -> None:
@@ -56,10 +56,10 @@ class HealingRegistry:
 healing_registry = HealingRegistry()
 
 
-def _candidates(name: str) -> List[Tuple[str, str]]:
+def _candidates(name: str) -> list[tuple[str, str]]:
     """Primary TestObject (if recorded) followed by registered fallbacks."""
-    candidates: List[Tuple[str, str]] = []
-    primary: Optional[TestObject] = test_object_record.test_object_record_dict.get(name)
+    candidates: list[tuple[str, str]] = []
+    primary: TestObject | None = test_object_record.test_object_record_dict.get(name)
     if primary is not None:
         candidates.append((primary.test_object_type, primary.test_object_name))
     candidates.extend(healing_registry.get(name))
@@ -85,7 +85,7 @@ def find_with_healing_selenium(name: str):
     candidates = _candidates(name)
     if not candidates:
         raise HealingError(f"no primary or fallback locator for {name!r}")
-    last_error: Optional[Exception] = None
+    last_error: Exception | None = None
     for strategy, value in candidates:
         try:
             element = webdriver_wrapper_instance.current_webdriver.find_element(
@@ -96,7 +96,7 @@ def find_with_healing_selenium(name: str):
             )
             web_element_wrapper.current_web_element = element
             return element
-        except Exception as error:  # noqa: BLE001 — fall through to next candidate
+        except Exception as error:
             last_error = error
     raise HealingError(
         f"no candidate matched for {name!r}; last error: {last_error!r}"
@@ -111,7 +111,7 @@ def find_with_healing_playwright(name: str):
     candidates = _candidates(name)
     if not candidates:
         raise HealingError(f"no primary or fallback locator for {name!r}")
-    last_error: Optional[Exception] = None
+    last_error: Exception | None = None
     for strategy, value in candidates:
         probe = TestObject.__new__(TestObject)
         probe.test_object_name = value
@@ -127,7 +127,7 @@ def find_with_healing_playwright(name: str):
             )
             playwright_element_wrapper.current_element = element
             return element
-        except Exception as error:  # noqa: BLE001 — try the next candidate
+        except Exception as error:
             last_error = error
     raise HealingError(
         f"no Playwright candidate matched for {name!r}; last error: {last_error!r}"
@@ -139,7 +139,7 @@ def register_fallback(name: str, strategy: str, value: str) -> None:
     healing_registry.append(name, strategy, value)
 
 
-def register_fallbacks(name: str, fallbacks: List[Any]) -> None:
+def register_fallbacks(name: str, fallbacks: list[Any]) -> None:
     """
     Public helper for use as a WR_* command.
 

@@ -41,6 +41,14 @@ class TestAuditOne(unittest.TestCase):
         rules = {f.rule for f in findings}
         self.assertIn("session-no-httponly", rules)
 
+    def test_no_httponly_honours_explicit_false(self):
+        # An explicit httpOnly=False must not be masked by a stray snake_case
+        # http_only=True (the audit flags *missing* HttpOnly).
+        findings = audit_cookie(
+            _c(httpOnly=False, http_only=True), page_host="app.example.com"
+        )
+        self.assertIn("session-no-httponly", {f.rule for f in findings})
+
     def test_no_secure(self):
         findings = audit_cookie(_c(secure=False), page_host="app.example.com")
         self.assertIn("session-no-secure", {f.rule for f in findings})

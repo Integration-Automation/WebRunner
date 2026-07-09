@@ -5,7 +5,7 @@ from selenium.webdriver.common.by import By
 type_list = [attr for attr in dir(By) if not attr.startswith('_')]
 
 
-class TestObject(object):
+class TestObject:
     """
     測試物件類別，用來封裝定位資訊
     TestObject class, used to encapsulate locator information

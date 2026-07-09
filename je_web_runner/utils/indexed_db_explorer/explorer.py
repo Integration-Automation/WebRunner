@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -86,11 +86,11 @@ class StoreSnapshot:
     name: str
     key_path: Any = None
     auto_increment: bool = False
-    index_names: List[str] = field(default_factory=list)
-    records: List[Any] = field(default_factory=list)
-    keys: List[Any] = field(default_factory=list)
+    index_names: list[str] = field(default_factory=list)
+    records: list[Any] = field(default_factory=list)
+    keys: list[Any] = field(default_factory=list)
 
-    def find_one(self, predicate: Callable[[Any], bool]) -> Optional[Any]:
+    def find_one(self, predicate: Callable[[Any], bool]) -> Any | None:
         for r in self.records:
             try:
                 if predicate(r):
@@ -106,18 +106,18 @@ class IdbSnapshot:
 
     name: str
     exists: bool
-    version: Optional[int] = None
-    stores: Dict[str, StoreSnapshot] = field(default_factory=dict)
+    version: int | None = None
+    stores: dict[str, StoreSnapshot] = field(default_factory=dict)
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "IdbSnapshot":
+    def from_dict(cls, data: dict[str, Any]) -> IdbSnapshot:
         if not isinstance(data, dict):
             raise IndexedDbExplorerError(
                 f"snapshot must be dict, got {type(data).__name__}"
             )
         if "stores" in data and not isinstance(data["stores"], dict):
             raise IndexedDbExplorerError("snapshot.stores must be a dict")
-        stores: Dict[str, StoreSnapshot] = {}
+        stores: dict[str, StoreSnapshot] = {}
         for name, raw in (data.get("stores") or {}).items():
             if not isinstance(raw, dict):
                 continue
@@ -136,7 +136,7 @@ class IdbSnapshot:
             stores=stores,
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "exists": self.exists,
@@ -171,7 +171,7 @@ def assert_record_count(
     store_name: str,
     *,
     minimum: int = 0,
-    maximum: Optional[int] = None,
+    maximum: int | None = None,
 ) -> int:
     """Assert ``minimum <= len(records) <= maximum``."""
     if minimum < 0:
@@ -230,9 +230,9 @@ def assert_index_present(
 class SnapshotDiff:
     """High-level diff between two snapshots."""
 
-    added_stores: List[str] = field(default_factory=list)
-    removed_stores: List[str] = field(default_factory=list)
-    record_count_changes: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    added_stores: list[str] = field(default_factory=list)
+    removed_stores: list[str] = field(default_factory=list)
+    record_count_changes: dict[str, dict[str, int]] = field(default_factory=dict)
 
 
 def diff_snapshots(before: IdbSnapshot, after: IdbSnapshot) -> SnapshotDiff:

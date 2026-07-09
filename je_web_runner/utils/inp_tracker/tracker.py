@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -82,7 +82,7 @@ class InteractionEvent:
     name: str
     interaction_id: int
     duration_ms: float
-    target_tag: Optional[str] = None
+    target_tag: str | None = None
     start_time: float = 0.0
     processing_start: float = 0.0
     processing_end: float = 0.0
@@ -90,7 +90,7 @@ class InteractionEvent:
     def rating(self) -> InpRating:
         return _rate(self.duration_ms)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "rating": self.rating().value}
 
 
@@ -102,13 +102,13 @@ def _rate(duration_ms: float) -> InpRating:
     return InpRating.POOR
 
 
-def parse_log(payload: Any) -> List[InteractionEvent]:
+def parse_log(payload: Any) -> list[InteractionEvent]:
     """Convert the harvested ``__wr_inp_log__`` array into typed events."""
     if not isinstance(payload, list):
         raise InpTrackerError(
             f"payload must be list, got {type(payload).__name__}"
         )
-    out: List[InteractionEvent] = []
+    out: list[InteractionEvent] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue
@@ -136,13 +136,13 @@ def parse_log(payload: Any) -> List[InteractionEvent]:
 class InpReport:
     """Rolled-up view of the events captured in a page session."""
 
-    events: List[InteractionEvent] = field(default_factory=list)
+    events: list[InteractionEvent] = field(default_factory=list)
 
-    def filtered(self) -> List[InteractionEvent]:
+    def filtered(self) -> list[InteractionEvent]:
         """Discard zero-id non-interaction entries (mouse-move, raw events)."""
         return [e for e in self.events if e.interaction_id > 0]
 
-    def inp(self) -> Optional[float]:
+    def inp(self) -> float | None:
         """
         Returns Google's INP: 98th percentile if 50+ interactions, else worst.
         ``None`` if no interactions observed.
@@ -161,7 +161,7 @@ class InpReport:
             return InpRating.GOOD
         return _rate(value)
 
-    def percentile(self, pct: float) -> Optional[float]:
+    def percentile(self, pct: float) -> float | None:
         """Arbitrary percentile (0..100) over interaction durations."""
         if not 0 <= pct <= 100:
             raise InpTrackerError("pct must be in [0, 100]")

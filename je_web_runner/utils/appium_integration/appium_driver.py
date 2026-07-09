@@ -9,7 +9,7 @@ so the existing WR_* commands keep working against a mobile session.
 """
 from __future__ import annotations
 
-from typing import Any, Dict
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -21,9 +21,15 @@ class AppiumIntegrationError(WebRunnerException):
 
 
 def _require_appium():
+    """Return ``(appium.webdriver, AppiumOptions)`` or raise an install hint.
+
+    Appium-Python-Client v3 removed the ``desired_capabilities`` kwarg, so the
+    caller builds an ``AppiumOptions`` from the capability dict instead.
+    """
     try:
         from appium import webdriver  # type: ignore[import-not-found]
-        return webdriver
+        from appium.options.common import AppiumOptions  # type: ignore[import-not-found]
+        return webdriver, AppiumOptions
     except ImportError as error:
         raise AppiumIntegrationError(
             "Appium-Python-Client is not installed. "
@@ -33,7 +39,7 @@ def _require_appium():
 
 def start_appium_session(
     server_url: str,
-    capabilities: Dict[str, Any],
+    capabilities: dict[str, Any],
     register: bool = True,
 ) -> Any:
     """
@@ -44,16 +50,19 @@ def start_appium_session(
     """
     web_runner_logger.info(f"start_appium_session: {server_url}")
     if not isinstance(server_url, str) or not (
-        server_url.startswith("http://") or server_url.startswith("https://")  # NOSONAR — scheme allow-list, not an outbound HTTP call
+        server_url.startswith(("http://", "https://"))  # NOSONAR — scheme allow-list, not an outbound HTTP call
     ):
         raise AppiumIntegrationError(f"server_url must be http(s): {server_url!r}")
     if not isinstance(capabilities, dict) or not capabilities:
         raise AppiumIntegrationError("capabilities must be a non-empty dict")
-    appium_webdriver = _require_appium()
-    driver = appium_webdriver.Remote(command_executor=server_url, options=None,
-                                     desired_capabilities=capabilities)
+    appium_webdriver, appium_options_cls = _require_appium()
+    options = appium_options_cls()
+    options.load_capabilities(capabilities)
+    driver = appium_webdriver.Remote(command_executor=server_url, options=options)
     if register:
-        webdriver_wrapper_instance.current_webdriver = driver
+        # set_active_driver (not a bare current_webdriver assignment) so the
+        # wrapper's ActionChains bind to this driver.
+        webdriver_wrapper_instance.set_active_driver(driver)
     return driver
 
 
@@ -73,10 +82,10 @@ def build_android_caps(
     device_name: str = "Android Emulator",
     platform_version: str = "13",
     automation_name: str = "UiAutomator2",
-    extra: Dict[str, Any] = None,
-) -> Dict[str, Any]:
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     """Convenience: build a capabilities dict for Android."""
-    caps: Dict[str, Any] = {
+    caps: dict[str, Any] = {
         "platformName": "Android",
         "appium:platformVersion": platform_version,
         "appium:deviceName": device_name,
@@ -93,9 +102,9 @@ def build_ios_caps(
     device_name: str = "iPhone 15",
     platform_version: str = "17",
     automation_name: str = "XCUITest",
-    extra: Dict[str, Any] = None,
-) -> Dict[str, Any]:
-    caps: Dict[str, Any] = {
+    extra: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    caps: dict[str, Any] = {
         "platformName": "iOS",
         "appium:platformVersion": platform_version,
         "appium:deviceName": device_name,

@@ -9,7 +9,7 @@ from __future__ import annotations
 import sched
 import threading
 import time
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -24,9 +24,9 @@ class ScheduledRunner:
 
     def __init__(self) -> None:
         self._scheduler = sched.scheduler(time.monotonic, time.sleep)
-        self._jobs: List[Dict[str, Any]] = []
+        self._jobs: list[dict[str, Any]] = []
         self._stop_event = threading.Event()
-        self._counts: Dict[str, int] = {}
+        self._counts: dict[str, int] = {}
 
     def add(self, name: str, interval_seconds: float, callback: Callable[[], Any]) -> None:
         """Register a job; takes effect once ``run_for`` / ``run_forever`` is called."""
@@ -39,21 +39,21 @@ class ScheduledRunner:
         })
         self._counts[name] = 0
 
-    def counts(self) -> Dict[str, int]:
+    def counts(self) -> dict[str, int]:
         """Number of times each job has fired (since the last clear)."""
         return dict(self._counts)
 
     def stop(self) -> None:
         self._stop_event.set()
 
-    def _enqueue(self, job: Dict[str, Any]) -> None:
+    def _enqueue(self, job: dict[str, Any]) -> None:
         def _fire():
             if self._stop_event.is_set():
                 return
             try:
                 job["callback"]()
                 self._counts[job["name"]] = self._counts.get(job["name"], 0) + 1
-            except Exception as error:  # noqa: BLE001 — schedulers must keep running
+            except Exception as error:
                 web_runner_logger.error(f"scheduled job {job['name']!r} raised: {error!r}")
             self._enqueue(job)
         self._scheduler.enter(job["interval"], 1, _fire)
@@ -115,7 +115,7 @@ def stop_scheduler() -> None:
     _runner.stop()
 
 
-def scheduler_counts() -> Dict[str, int]:
+def scheduler_counts() -> dict[str, int]:
     return _runner.counts()
 
 

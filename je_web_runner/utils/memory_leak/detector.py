@@ -7,7 +7,7 @@ linear regression to flag steady growth.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -46,7 +46,7 @@ def sample_used_heap(driver: Any) -> int:
     return int(value)
 
 
-def _slope(samples: List[MemorySample]) -> float:
+def _slope(samples: list[MemorySample]) -> float:
     n = len(samples)
     if n < 2:
         return 0.0
@@ -65,8 +65,8 @@ def detect_growth(
     action: Callable[[], None],
     iterations: int = 5,
     warmup: int = 1,
-    growth_bytes_per_iter_budget: Optional[int] = None,
-    sampler: Optional[Callable[[Any], int]] = None,
+    growth_bytes_per_iter_budget: int | None = None,
+    sampler: Callable[[Any], int] | None = None,
 ) -> dict:
     """
     跑 ``action`` N 次，回傳每輪的 heap 樣本與線性斜率
@@ -82,7 +82,7 @@ def detect_growth(
     for _ in range(max(0, warmup)):
         action()
         used_sampler(driver)  # discard
-    samples: List[MemorySample] = []
+    samples: list[MemorySample] = []
     for index in range(iterations):
         action()
         size = used_sampler(driver)

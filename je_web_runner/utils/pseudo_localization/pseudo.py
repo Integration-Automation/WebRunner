@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Dict, List, Mapping, Optional
+from typing import Mapping
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -80,9 +80,9 @@ def _pad_to_ratio(text: str, ratio: float) -> str:
     return f"{_PADDING_CHAR * left} {text} {_PADDING_CHAR * right}"
 
 
-def _split_around_placeholders(text: str) -> List[tuple]:
+def _split_around_placeholders(text: str) -> list[tuple]:
     """Return list of (segment, is_placeholder) tuples preserving order."""
-    parts: List[tuple] = []
+    parts: list[tuple] = []
     last = 0
     for match in _PLACEHOLDER_RE.finditer(text):
         if match.start() > last:
@@ -98,7 +98,7 @@ def _split_around_placeholders(text: str) -> List[tuple]:
 
 def pseudo_localize(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     text: str,
-    config: Optional[PseudoConfig] = None,
+    config: PseudoConfig | None = None,
 ) -> str:
     """Return a pseudo-localised version of ``text``."""
     if not isinstance(text, str):
@@ -109,7 +109,7 @@ def pseudo_localize(  # NOSONAR S3776 — cohesive logic; planned refactor in fo
     if not text:
         return text
     if cfg.preserve_placeholders:
-        chunks: List[str] = []
+        chunks: list[str] = []
         for segment, is_placeholder in _split_around_placeholders(text):
             if is_placeholder:
                 chunks.append(segment)
@@ -128,12 +128,12 @@ def pseudo_localize(  # NOSONAR S3776 — cohesive logic; planned refactor in fo
 
 def pseudo_localize_dict(
     catalogue: Mapping[str, str],
-    config: Optional[PseudoConfig] = None,
-) -> Dict[str, str]:
+    config: PseudoConfig | None = None,
+) -> dict[str, str]:
     """Apply :func:`pseudo_localize` to every value in a {key: string} map."""
     if not isinstance(catalogue, Mapping):
         raise PseudoLocalizationError("catalogue must be a mapping")
-    out: Dict[str, str] = {}
+    out: dict[str, str] = {}
     for key, value in catalogue.items():
         if not isinstance(value, str):
             raise PseudoLocalizationError(
@@ -158,7 +158,7 @@ class PseudoAuditReport:
     """Roll-up of :func:`scan_for_hardcoded`."""
 
     rendered_chars: int = 0
-    hits: List[HardcodedHit] = field(default_factory=list)
+    hits: list[HardcodedHit] = field(default_factory=list)
 
     def passed(self) -> bool:
         return not self.hits
@@ -181,7 +181,7 @@ def scan_for_hardcoded(
     if min_length < 1:
         raise PseudoLocalizationError("min_length must be >= 1")
     report = PseudoAuditReport(rendered_chars=len(rendered_text))
-    seen: Dict[str, int] = {}
+    seen: dict[str, int] = {}
     for value in catalogue.values():
         if not isinstance(value, str) or len(value) < min_length:
             continue

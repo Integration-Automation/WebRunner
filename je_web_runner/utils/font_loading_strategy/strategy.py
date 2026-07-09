@@ -23,7 +23,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable, List
+from typing import Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -59,10 +59,10 @@ _FONT_FACE_RE = re.compile(
 _DECL_RE = re.compile(r"([\w-]+)\s*:\s*([^;]*)(?:;|$)")  # NOSONAR python:S5852
 
 
-def parse_font_faces(css: str) -> List[FontFace]:
+def parse_font_faces(css: str) -> list[FontFace]:
     if not isinstance(css, str):
         raise FontLoadingStrategyError("css must be a string")
-    out: List[FontFace] = []
+    out: list[FontFace] = []
     for block_match in _FONT_FACE_RE.finditer(css):
         decls = dict(_DECL_RE.findall(block_match.group(1)))
         family = (decls.get("font-family") or "").strip().strip("'\"")

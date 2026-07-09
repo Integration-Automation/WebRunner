@@ -110,6 +110,11 @@ class TestAssertRejected(unittest.TestCase):
                 case="x", outcome=ReplayOutcome.ACCEPTED, status_code=200,
             )])
 
+    def test_empty_results_rejected(self):
+        # No results means nothing was tested — must fail, not vacuously pass.
+        with self.assertRaises(OauthPkceReplayError):
+            assert_all_rejected([])
+
 
 if __name__ == "__main__":
     unittest.main()

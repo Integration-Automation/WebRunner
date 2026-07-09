@@ -32,7 +32,7 @@ def create_dir(dir_name: str) -> None:
     )
 
 
-def create_template(parent_name: str, project_path: str = None) -> None:
+def create_template(parent_name: str, project_path: str | None = None) -> None:
     """
     在專案目錄下建立範本檔案
     Create template files in the project directory
@@ -61,21 +61,21 @@ def create_template(parent_name: str, project_path: str = None) -> None:
     if executor_dir_path.exists() and executor_dir_path.is_dir():
         lock.acquire()
         try:
-            with open(project_root + EXECUTOR_DIR + "/executor_one_file.py", "w+") as file:
+            with open(project_root + EXECUTOR_DIR + "/executor_one_file.py", "w+", encoding="utf-8") as file:
                 file.write(
                     executor_template_1.replace(
                         TEMP_PLACEHOLDER,
                         project_root + KEYWORD_DIR + "/keyword1.json"
                     )
                 )
-            with open(project_root + EXECUTOR_DIR + "/executor_bad_file.py", "w+") as file:
+            with open(project_root + EXECUTOR_DIR + "/executor_bad_file.py", "w+", encoding="utf-8") as file:
                 file.write(
                     bad_executor_template_1.replace(
                         TEMP_PLACEHOLDER,
                         project_root + KEYWORD_DIR + "/bad_keyword_1.json"
                     )
                 )
-            with open(project_root + EXECUTOR_DIR + "/executor_folder.py", "w+") as file:
+            with open(project_root + EXECUTOR_DIR + "/executor_folder.py", "w+", encoding="utf-8") as file:
                 file.write(
                     executor_template_2.replace(
                         TEMP_PLACEHOLDER,
@@ -86,7 +86,7 @@ def create_template(parent_name: str, project_path: str = None) -> None:
             lock.release()
 
 
-def create_project_dir(project_path: str = None, parent_name: str = "WebRunner") -> None:
+def create_project_dir(project_path: str | None = None, parent_name: str = "WebRunner") -> None:
     """
     建立專案資料夾結構，並生成範本檔案
     Create project directory structure and generate template files

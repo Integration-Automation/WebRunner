@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -33,15 +33,15 @@ class ShardJobConfig:
     actions_dir: str
     namespace: str = "default"
     command: Sequence[str] = field(default_factory=lambda: ["python", "-m", "je_web_runner"])
-    env: Dict[str, str] = field(default_factory=dict)
-    resources: Dict[str, Dict[str, str]] = field(default_factory=lambda: {
+    env: dict[str, str] = field(default_factory=dict)
+    resources: dict[str, dict[str, str]] = field(default_factory=lambda: {
         "requests": {"cpu": "500m", "memory": "1Gi"},
         "limits": {"cpu": "1", "memory": "2Gi"},
     })
     backoff_limit: int = 1
     parallelism: int = 1
     completions: int = 1
-    labels: Dict[str, str] = field(default_factory=dict)
+    labels: dict[str, str] = field(default_factory=dict)
     extra_args: Sequence[str] = field(default_factory=tuple)
 
 
@@ -58,10 +58,10 @@ def _validate(config: ShardJobConfig) -> None:
         raise K8sRunnerError("actions_dir must be non-empty")
 
 
-def render_job_manifests(config: ShardJobConfig) -> List[Dict[str, Any]]:
+def render_job_manifests(config: ShardJobConfig) -> list[dict[str, Any]]:
     """Produce one ``batch/v1`` Job dict per shard."""
     _validate(config)
-    manifests: List[Dict[str, Any]] = []
+    manifests: list[dict[str, Any]] = []
     base_labels = {
         "app.kubernetes.io/name": "webrunner",
         "app.kubernetes.io/component": "shard",
@@ -80,8 +80,8 @@ def _render_one(
     config: ShardJobConfig,
     shard_index: int,
     job_name: str,
-    labels: Dict[str, str],
-) -> Dict[str, Any]:
+    labels: dict[str, str],
+) -> dict[str, Any]:
     args = [
         "--execute_dir", config.actions_dir,
         "--shard", f"{shard_index}/{config.total_shards}",
@@ -120,9 +120,9 @@ def _render_one(
     }
 
 
-def render_yaml_documents(manifests: List[Dict[str, Any]]) -> str:
+def render_yaml_documents(manifests: list[dict[str, Any]]) -> str:
     """Render to a multi-doc YAML string (basic dumper, no PyYAML dependency)."""
-    pieces: List[str] = []
+    pieces: list[str] = []
     for index, manifest in enumerate(manifests):
         if index > 0:
             pieces.append("---")
@@ -139,7 +139,7 @@ def _dump_yaml(value: Any, indent: int = 0) -> str:
     return f"{pad}{_scalar(value)}"
 
 
-def _dump_dict(value: Dict[str, Any], pad: str, indent: int) -> str:
+def _dump_dict(value: dict[str, Any], pad: str, indent: int) -> str:
     if not value:
         return f"{pad}{{}}"
     lines = []
@@ -152,7 +152,7 @@ def _dump_dict(value: Dict[str, Any], pad: str, indent: int) -> str:
     return "\n".join(lines)
 
 
-def _dump_list(value: List[Any], pad: str, indent: int) -> str:
+def _dump_list(value: list[Any], pad: str, indent: int) -> str:
     if not value:
         return f"{pad}[]"
     lines = []

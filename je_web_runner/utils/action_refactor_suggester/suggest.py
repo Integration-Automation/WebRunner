@@ -16,7 +16,7 @@ import re
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -36,9 +36,9 @@ class Suggestion:
     rule: str
     severity: Severity
     message: str
-    step_indexes: List[int] = field(default_factory=list)
+    step_indexes: list[int] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "severity": self.severity.value}
 
 
@@ -46,7 +46,7 @@ _POSITIONAL_XPATH = re.compile(r"\[\d+\]")
 _ENGLISH_SENTENCE = re.compile(r"^[A-Z][\w\s\.,!?:'-]{15,}$")
 
 
-def _normalize(actions: Sequence[Dict[str, Any]]) -> None:
+def _normalize(actions: Sequence[dict[str, Any]]) -> None:
     if not isinstance(actions, (list, tuple)):
         raise ActionRefactorSuggesterError("actions must be a sequence")
     for i, action in enumerate(actions):
@@ -54,7 +54,7 @@ def _normalize(actions: Sequence[Dict[str, Any]]) -> None:
             raise ActionRefactorSuggesterError(f"action #{i} is not a dict")
 
 
-def _hard_sleep_steps(actions: Sequence[Dict[str, Any]]) -> List[int]:
+def _hard_sleep_steps(actions: Sequence[dict[str, Any]]) -> list[int]:
     hits = []
     for i, action in enumerate(actions):
         name = (action.get("action_name") or "").lower()
@@ -66,7 +66,7 @@ def _hard_sleep_steps(actions: Sequence[Dict[str, Any]]) -> List[int]:
     return hits
 
 
-def _positional_xpath_steps(actions: Sequence[Dict[str, Any]]) -> List[int]:
+def _positional_xpath_steps(actions: Sequence[dict[str, Any]]) -> list[int]:
     return [
         i for i, a in enumerate(actions)
         if (a.get("by") or "").lower() == "xpath"
@@ -75,14 +75,14 @@ def _positional_xpath_steps(actions: Sequence[Dict[str, Any]]) -> List[int]:
     ]
 
 
-def _duplicated_locators(actions: Sequence[Dict[str, Any]]) -> List[str]:
+def _duplicated_locators(actions: Sequence[dict[str, Any]]) -> list[str]:
     locators = [a.get("by_value") for a in actions
                 if isinstance(a.get("by_value"), str) and a.get("by_value")]
     counts = Counter(locators)
     return [k for k, v in counts.items() if v >= 3]
 
 
-def _english_string_assertions(actions: Sequence[Dict[str, Any]]) -> List[int]:
+def _english_string_assertions(actions: Sequence[dict[str, Any]]) -> list[int]:
     out = []
     for i, action in enumerate(actions):
         name = (action.get("action_name") or "").lower()
@@ -94,8 +94,8 @@ def _english_string_assertions(actions: Sequence[Dict[str, Any]]) -> List[int]:
 
 
 def _click_wait_click_bursts(
-    actions: Sequence[Dict[str, Any]],
-) -> List[int]:
+    actions: Sequence[dict[str, Any]],
+) -> list[int]:
     out = []
     for i in range(len(actions) - 2):
         names = [
@@ -109,10 +109,10 @@ def _click_wait_click_bursts(
     return out
 
 
-def analyze(actions: Sequence[Dict[str, Any]]) -> List[Suggestion]:
+def analyze(actions: Sequence[dict[str, Any]]) -> list[Suggestion]:
     """Run all rules and return suggestions sorted by severity."""
     _normalize(actions)
-    out: List[Suggestion] = []
+    out: list[Suggestion] = []
     sleeps = _hard_sleep_steps(actions)
     if sleeps:
         out.append(Suggestion(

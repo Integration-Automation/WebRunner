@@ -13,7 +13,7 @@ the right metadata clients need to back off correctly:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -25,7 +25,7 @@ class RateLimitAssertError(WebRunnerException):
 @dataclass
 class RateLimitResponse:
     status_code: int
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
     body: Any = None
 
     @property
@@ -33,7 +33,7 @@ class RateLimitResponse:
         return self.status_code == 429
 
     @property
-    def retry_after_seconds(self) -> Optional[float]:
+    def retry_after_seconds(self) -> float | None:
         raw = self.headers.get("Retry-After") or self.headers.get("retry-after")
         if not raw:
             return None
@@ -43,12 +43,12 @@ class RateLimitResponse:
             return None
 
     @property
-    def limit(self) -> Optional[int]:
+    def limit(self) -> int | None:
         raw = self.headers.get("X-RateLimit-Limit") or self.headers.get("x-ratelimit-limit")
         return int(raw) if raw and raw.isdigit() else None
 
     @property
-    def remaining(self) -> Optional[int]:
+    def remaining(self) -> int | None:
         raw = self.headers.get("X-RateLimit-Remaining") or self.headers.get("x-ratelimit-remaining")
         return int(raw) if raw and raw.isdigit() else None
 
@@ -90,7 +90,7 @@ def assert_remaining_monotonic(
     responses: Sequence[RateLimitResponse],
 ) -> None:
     """``X-RateLimit-Remaining`` must decrease (or stay flat) until 429."""
-    last: Optional[int] = None
+    last: int | None = None
     for i, r in enumerate(responses):
         rem = r.remaining
         if rem is None:

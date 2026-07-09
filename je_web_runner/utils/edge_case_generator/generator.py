@@ -19,7 +19,7 @@ import re
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Sequence
 
 from je_web_runner.utils.ai_assist.llm_assist import LLMAssistError, _invoke
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -56,11 +56,11 @@ class EdgeCase:
     name: str
     category: EdgeCaseCategory
     rationale: str
-    actions: List[Any]
+    actions: list[Any]
     expected_outcome: str = "fail"  # "fail" | "pass" — what the LLM thinks should happen
     severity: str = "medium"        # "low" | "medium" | "high"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         out = asdict(self)
         out["category"] = self.category.value
         return out
@@ -71,9 +71,9 @@ class EdgeCaseSuite:
     """A bundle of edge-case variants for one source test."""
 
     source_test_name: str
-    cases: List[EdgeCase] = field(default_factory=list)
+    cases: list[EdgeCase] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "source_test_name": self.source_test_name,
             "cases": [c.to_dict() for c in self.cases],
@@ -101,7 +101,7 @@ _GEN_PROMPT = (
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 
 
-def _parse_payload(text: str) -> Dict[str, Any]:
+def _parse_payload(text: str) -> dict[str, Any]:
     match = _JSON_OBJECT_RE.search(text)
     if match is None:
         raise EdgeCaseGeneratorError("LLM did not return a JSON object")
@@ -134,7 +134,7 @@ def _coerce_outcome(value: Any) -> str:
     return text if text in {"pass", "fail"} else "fail"
 
 
-def _parse_case(raw: Any) -> Optional[EdgeCase]:
+def _parse_case(raw: Any) -> EdgeCase | None:
     if not isinstance(raw, dict):
         return None
     actions = raw.get("actions")
@@ -152,7 +152,7 @@ def _parse_case(raw: Any) -> Optional[EdgeCase]:
 
 
 def generate_edge_cases(
-    actions: List[Any],
+    actions: list[Any],
     *,
     test_name: str = "",
     n: int = 5,
@@ -189,7 +189,7 @@ def generate_edge_cases(
     cases_raw = payload.get("cases")
     if not isinstance(cases_raw, list):
         raise EdgeCaseGeneratorError("LLM payload missing 'cases' list")
-    cases: List[EdgeCase] = []
+    cases: list[EdgeCase] = []
     for item in cases_raw:
         parsed = _parse_case(item)
         if parsed is not None:
@@ -201,7 +201,7 @@ def generate_edge_cases(
 
 
 def generate_edge_cases_from_file(
-    action_path: Union[str, Path],
+    action_path: str | Path,
     *,
     n: int = 5,
     categories: Sequence[EdgeCaseCategory] = DEFAULT_CATEGORIES,
@@ -231,10 +231,10 @@ def generate_edge_cases_from_file(
 
 def write_suite_to_dir(
     suite: EdgeCaseSuite,
-    output_dir: Union[str, Path],
+    output_dir: str | Path,
     *,
-    filename_prefix: Optional[str] = None,
-) -> List[Path]:
+    filename_prefix: str | None = None,
+) -> list[Path]:
     """
     把每個 edge case 寫成一個 action JSON 檔到 ``output_dir``。
     File names are slug-of-name with a numeric prefix so they sort in the
@@ -243,7 +243,7 @@ def write_suite_to_dir(
     target = Path(output_dir)
     target.mkdir(parents=True, exist_ok=True)
     prefix = filename_prefix or _slugify(suite.source_test_name) or "edge"
-    written: List[Path] = []
+    written: list[Path] = []
     for idx, case in enumerate(suite.cases, 1):
         slug = _slugify(case.name) or f"case-{idx}"
         path = target / f"{prefix}__{idx:02d}__{slug}.json"

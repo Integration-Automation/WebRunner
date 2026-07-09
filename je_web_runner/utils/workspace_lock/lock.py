@@ -20,7 +20,7 @@ import sys
 from dataclasses import asdict, dataclass, field
 from importlib import metadata as importlib_metadata
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -37,19 +37,19 @@ class LockEntry:
     name: str
     version: str
     kind: str  # "python" / "driver" / "playwright"
-    extras: Dict[str, Any] = field(default_factory=dict)
+    extras: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class WorkspaceLock:
     python_version: str
     generated_at: str
-    entries: List[LockEntry] = field(default_factory=list)
+    entries: list[LockEntry] = field(default_factory=list)
 
-    def by_kind(self, kind: str) -> List[LockEntry]:
+    def by_kind(self, kind: str) -> list[LockEntry]:
         return [entry for entry in self.entries if entry.kind == kind]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "python_version": self.python_version,
             "generated_at": self.generated_at,
@@ -62,15 +62,15 @@ def _python_runtime_version() -> str:
     return f"{info.major}.{info.minor}.{info.micro}"
 
 
-_DISTRIBUTION_CACHE: Optional[List[tuple]] = None
+_DISTRIBUTION_CACHE: list[tuple] | None = None
 
 
-def _scan_distributions() -> List[tuple]:
+def _scan_distributions() -> list[tuple]:
     """Walk ``importlib.metadata`` once and cache the (name, version) tuples."""
     global _DISTRIBUTION_CACHE
     if _DISTRIBUTION_CACHE is not None:
         return _DISTRIBUTION_CACHE
-    scanned: List[tuple] = []
+    scanned: list[tuple] = []
     for dist in importlib_metadata.distributions():
         try:
             name = dist.metadata.get("Name") or ""
@@ -93,8 +93,8 @@ def reset_distribution_cache() -> None:
     _DISTRIBUTION_CACHE = None
 
 
-def _python_distributions(allow_distributions: Optional[Iterable[str]] = None) -> List[LockEntry]:
-    entries: List[LockEntry] = []
+def _python_distributions(allow_distributions: Iterable[str] | None = None) -> list[LockEntry]:
+    entries: list[LockEntry] = []
     seen: set = set()
     allow = set(allow_distributions) if allow_distributions else None
     for name, version in _scan_distributions():
@@ -109,16 +109,16 @@ def _python_distributions(allow_distributions: Optional[Iterable[str]] = None) -
 
 
 def build_lock(
-    drivers: Optional[Iterable[Dict[str, Any]]] = None,
-    playwright_versions: Optional[Dict[str, str]] = None,
-    allow_distributions: Optional[Iterable[str]] = None,
-    now: Optional[_dt.datetime] = None,
+    drivers: Iterable[dict[str, Any]] | None = None,
+    playwright_versions: dict[str, str] | None = None,
+    allow_distributions: Iterable[str] | None = None,
+    now: _dt.datetime | None = None,
 ) -> WorkspaceLock:
     """
     Build a :class:`WorkspaceLock` from the active interpreter + caller-supplied
     driver / Playwright versions.
     """
-    entries: List[LockEntry] = []
+    entries: list[LockEntry] = []
     entries.extend(_python_distributions(allow_distributions=allow_distributions))
     for driver_entry in drivers or []:
         if not isinstance(driver_entry, dict) or not driver_entry.get("name") or not driver_entry.get("version"):
@@ -148,7 +148,7 @@ def build_lock(
     )
 
 
-def write_lock(lock: WorkspaceLock, path: Union[str, Path]) -> Path:
+def write_lock(lock: WorkspaceLock, path: str | Path) -> Path:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(
@@ -158,7 +158,7 @@ def write_lock(lock: WorkspaceLock, path: Union[str, Path]) -> Path:
     return target
 
 
-def load_lock(path: Union[str, Path]) -> WorkspaceLock:
+def load_lock(path: str | Path) -> WorkspaceLock:
     fp = Path(path)
     if not fp.is_file():
         raise WorkspaceLockError(f"lock file not found: {path!r}")
@@ -171,7 +171,7 @@ def load_lock(path: Union[str, Path]) -> WorkspaceLock:
     raw_entries = document.get("entries")
     if not isinstance(raw_entries, list):
         raise WorkspaceLockError("lock 'entries' must be a list")
-    entries: List[LockEntry] = []
+    entries: list[LockEntry] = []
     for index, entry in enumerate(raw_entries):
         if not isinstance(entry, dict):
             raise WorkspaceLockError(f"entries[{index}] must be an object")
@@ -193,7 +193,7 @@ def load_lock(path: Union[str, Path]) -> WorkspaceLock:
     )
 
 
-def diff_locks(before: WorkspaceLock, after: WorkspaceLock) -> Dict[str, List[Dict[str, Any]]]:
+def diff_locks(before: WorkspaceLock, after: WorkspaceLock) -> dict[str, list[dict[str, Any]]]:
     """
     Compare two locks and return ``{added, removed, version_changed}`` lists.
     """
@@ -201,7 +201,7 @@ def diff_locks(before: WorkspaceLock, after: WorkspaceLock) -> Dict[str, List[Di
     after_index = {(e.name, e.kind): e for e in after.entries}
     added = [asdict(after_index[k]) for k in sorted(after_index.keys() - before_index.keys())]
     removed = [asdict(before_index[k]) for k in sorted(before_index.keys() - after_index.keys())]
-    changed: List[Dict[str, Any]] = []
+    changed: list[dict[str, Any]] = []
     for key in sorted(before_index.keys() & after_index.keys()):
         if before_index[key].version != after_index[key].version:
             changed.append({

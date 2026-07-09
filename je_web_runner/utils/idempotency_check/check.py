@@ -13,7 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -46,15 +46,15 @@ class IdempotencyReport:
 
     first: IdemResponse
     second: IdemResponse
-    state_before_first: Optional[Any] = None
-    state_after_first: Optional[Any] = None
-    state_after_second: Optional[Any] = None
-    violations: List[str] = field(default_factory=list)
+    state_before_first: Any | None = None
+    state_after_first: Any | None = None
+    state_after_second: Any | None = None
+    violations: list[str] = field(default_factory=list)
 
     def passed(self) -> bool:
         return not self.violations
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "first": asdict(self.first),
             "second": asdict(self.second),
@@ -75,8 +75,8 @@ StateProbe = Callable[[], Any]
 def check(
     request_runner: RequestRunner,
     *,
-    state_probe: Optional[StateProbe] = None,
-    allow_status_change_to: Optional[Sequence[int]] = None,
+    state_probe: StateProbe | None = None,
+    allow_status_change_to: Sequence[int] | None = None,
     ignore_body_keys: Sequence[str] = (),
 ) -> IdempotencyReport:
     """
@@ -98,7 +98,7 @@ def check(
     second = _safe_call(request_runner, "second")
     state_after_second = state_probe() if state_probe else None
 
-    violations: List[str] = []
+    violations: list[str] = []
     if (
         first.status_code != second.status_code
         and second.status_code not in allowed

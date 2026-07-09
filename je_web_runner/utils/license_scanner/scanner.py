@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 from dataclasses import dataclass
-from typing import Iterable, List, Optional, Sequence
+from typing import Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -40,14 +40,14 @@ _KEYWORD_LICENSES = {
 }
 
 
-def scan_text(text: str) -> List[LicenseFinding]:
+def scan_text(text: str) -> list[LicenseFinding]:
     """
     從文字內容找出 SPDX/已知授權字樣
     Find every SPDX identifier and known license phrase in ``text``.
     """
     if not isinstance(text, str):
         raise LicenseScannerError("text must be str")
-    findings: List[LicenseFinding] = []
+    findings: list[LicenseFinding] = []
     for index, line in enumerate(text.splitlines(), start=1):
         match = _SPDX_PATTERN.search(line)
         if match:
@@ -77,7 +77,7 @@ def summarise(findings: Iterable[LicenseFinding]) -> Counter:
 def assert_allowed_licenses(
     findings: Iterable[LicenseFinding],
     allow: Sequence[str],
-    deny: Optional[Sequence[str]] = None,
+    deny: Sequence[str] | None = None,
 ) -> None:
     """
     斷言所有偵測到的授權都在 ``allow``、且不在 ``deny`` 名單中
@@ -85,7 +85,7 @@ def assert_allowed_licenses(
     """
     allow_set = {a.strip() for a in allow}
     deny_set = {d.strip() for d in (deny or [])}
-    bad: List[LicenseFinding] = []
+    bad: list[LicenseFinding] = []
     for finding in findings:
         if finding.license_id in deny_set or finding.license_id not in allow_set:
             bad.append(finding)

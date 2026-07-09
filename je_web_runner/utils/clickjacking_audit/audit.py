@@ -18,7 +18,7 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Iterable
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -48,8 +48,8 @@ _CSP_FRAME_ANCESTORS_RE = re.compile(
 class HeaderPolicy:
     """Parsed clickjacking-related response headers."""
 
-    x_frame_options: Optional[str] = None
-    csp_frame_ancestors: Optional[str] = None
+    x_frame_options: str | None = None
+    csp_frame_ancestors: str | None = None
 
     def normalized_xfo(self) -> str:
         return (self.x_frame_options or "").strip().upper()
@@ -59,11 +59,11 @@ class HeaderPolicy:
 
 
 def parse_response_headers(
-    headers: Iterable[Tuple[str, str]],
+    headers: Iterable[tuple[str, str]],
 ) -> HeaderPolicy:
     """Parse a header iterable (case-insensitive) into a :class:`HeaderPolicy`."""
-    xfo: Optional[str] = None
-    csp_fa: Optional[str] = None
+    xfo: str | None = None
+    csp_fa: str | None = None
     for name, value in headers:
         if not isinstance(name, str) or not isinstance(value, str):
             continue
@@ -160,8 +160,8 @@ class AuditReport:
     target_url: str
     verdict: Verdict
     policy: HeaderPolicy
-    probe_status: Optional[str] = None
-    notes: List[str] = field(default_factory=list)
+    probe_status: str | None = None
+    notes: list[str] = field(default_factory=list)
 
     def passed(self) -> bool:
         if self.verdict in (Verdict.STRICT, Verdict.SAMEORIGIN):
@@ -170,7 +170,7 @@ class AuditReport:
             return self.probe_status.upper().startswith("BLOCKED")
         return False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "target_url": self.target_url,
             "verdict": self.verdict.value,
@@ -183,14 +183,14 @@ class AuditReport:
 
 def audit(
     target_url: str,
-    headers: Iterable[Tuple[str, str]],
+    headers: Iterable[tuple[str, str]],
     *,
-    probe_status: Optional[str] = None,
+    probe_status: str | None = None,
 ) -> AuditReport:
     """One-shot: parse headers → classify → (optionally) consider probe."""
     policy = parse_response_headers(headers)
     verdict = classify(policy)
-    notes: List[str] = []
+    notes: list[str] = []
     if verdict == Verdict.MISSING:
         notes.append("no X-Frame-Options or frame-ancestors set")
     if verdict == Verdict.ALLOWED:

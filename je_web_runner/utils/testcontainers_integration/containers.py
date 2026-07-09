@@ -8,7 +8,7 @@ Postgres / Redis up for a single run.
 """
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -21,7 +21,7 @@ class TestcontainersError(WebRunnerException):
     __test__ = False
 
 
-_started: List[Any] = []
+_started: list[Any] = []
 
 
 def _require(module: str, attribute: str) -> Any:
@@ -42,7 +42,7 @@ def _require(module: str, attribute: str) -> Any:
 
 def start_postgres(
     image: str = "postgres:16-alpine",
-    user: str = "test",
+    username: str = "test",
     password: str = "test",  # NOSONAR  # nosec B107 — testcontainers default
     dbname: str = "test",
 ) -> Any:
@@ -52,7 +52,8 @@ def start_postgres(
     """
     web_runner_logger.info(f"start_postgres image={image}")
     postgres_cls = _require("postgres", "PostgresContainer")
-    container = postgres_cls(image, user=user, password=password, dbname=dbname)
+    # testcontainers' PostgresContainer expects ``username`` (not ``user``).
+    container = postgres_cls(image, username=username, password=password, dbname=dbname)
     container.start()
     _started.append(container)
     return container
@@ -67,7 +68,7 @@ def start_redis(image: str = "redis:7-alpine") -> Any:
     return container
 
 
-def start_generic(image: str, ports: Optional[Dict[int, int]] = None) -> Any:
+def start_generic(image: str, ports: dict[int, int] | None = None) -> Any:
     """
     啟動任意 Docker image
     Start any Docker image. ``ports`` is a {container_port: host_port} map.
@@ -99,7 +100,7 @@ def cleanup_all() -> None:
         container = _started.pop()
         try:
             container.stop()
-        except Exception as error:  # noqa: BLE001 — keep cleaning up the rest
+        except Exception as error:
             web_runner_logger.warning(f"failed to stop container: {error!r}")
 
 

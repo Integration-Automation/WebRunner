@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Pattern, Sequence, Union
+from typing import Any, Callable, Pattern, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.ocr_assert.ocr import OcrBackend, extract_text, normalise_text
@@ -35,7 +35,7 @@ class PiiRule:
     pattern: Pattern[str]
     severity: str = "high"
     # If validator returns False, the match is discarded (e.g. Luhn check).
-    validator: Optional[Callable[[str], bool]] = None
+    validator: Callable[[str], bool] | None = None
 
 
 def _luhn(card: str) -> bool:
@@ -112,7 +112,7 @@ class PiiFinding:
     image: str = ""
     raw_excerpt: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -126,12 +126,12 @@ def _redact_match(value: str) -> str:
 # ---------- scan --------------------------------------------------------
 
 def scan_image(
-    source: Union[bytes, str, Path, Any],
+    source: bytes | str | Path | Any,
     *,
-    backend: Optional[OcrBackend] = None,
+    backend: OcrBackend | None = None,
     rules: Sequence[PiiRule] = DEFAULT_RULES,
     image_label: str = "",
-) -> List[PiiFinding]:
+) -> list[PiiFinding]:
     """OCR the image and return one :class:`PiiFinding` per (rule, match)."""
     try:
         raw_text = extract_text(source, backend=backend)
@@ -145,7 +145,7 @@ def scan_text_only(
     *,
     rules: Sequence[PiiRule] = DEFAULT_RULES,
     image_label: str = "",
-) -> List[PiiFinding]:
+) -> list[PiiFinding]:
     """Variant for callers that already have OCR'd text in hand."""
     if not isinstance(text, str):
         raise PiiInScreenshotError(
@@ -159,8 +159,8 @@ def _scan_text(
     *,
     rules: Sequence[PiiRule],
     image_label: str,
-) -> List[PiiFinding]:
-    findings: List[PiiFinding] = []
+) -> list[PiiFinding]:
+    findings: list[PiiFinding] = []
     seen: set = set()
     normalised = normalise_text(text, lowercase=False, strip_accents=False)
     for rule in rules:
@@ -200,17 +200,17 @@ class ScanReport:
     """Aggregate over many screenshots."""
 
     scanned: int = 0
-    findings: List[PiiFinding] = field(default_factory=list)
-    by_severity: Dict[str, int] = field(default_factory=dict)
+    findings: list[PiiFinding] = field(default_factory=list)
+    by_severity: dict[str, int] = field(default_factory=dict)
 
     def passed(self) -> bool:
         return not self.findings
 
 
 def scan_screenshots(
-    sources: Sequence[Union[bytes, str, Path, Any]],
+    sources: Sequence[bytes | str | Path | Any],
     *,
-    backend: Optional[OcrBackend] = None,
+    backend: OcrBackend | None = None,
     rules: Sequence[PiiRule] = DEFAULT_RULES,
 ) -> ScanReport:
     """Scan a batch of screenshots and return a :class:`ScanReport`."""

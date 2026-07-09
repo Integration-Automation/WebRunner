@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -68,7 +68,7 @@ _BUILTIN_VENDORS: Sequence[Vendor] = (
 )
 
 
-def builtin_vendors() -> List[Vendor]:
+def builtin_vendors() -> list[Vendor]:
     return list(_BUILTIN_VENDORS)
 
 
@@ -80,22 +80,22 @@ class BlockOutcome:
 
     vendor: str
     resilience: Resilience
-    error: Optional[str] = None
-    notes: List[str] = field(default_factory=list)
+    error: str | None = None
+    notes: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "resilience": self.resilience.value}
 
 
 @dataclass
 class BlockReport:
-    outcomes: List[BlockOutcome] = field(default_factory=list)
+    outcomes: list[BlockOutcome] = field(default_factory=list)
 
-    def broken(self) -> List[BlockOutcome]:
+    def broken(self) -> list[BlockOutcome]:
         """Non-critical vendors that broke the flow."""
         return [o for o in self.outcomes if o.resilience == Resilience.BROKEN]
 
-    def by_vendor(self) -> Dict[str, BlockOutcome]:
+    def by_vendor(self) -> dict[str, BlockOutcome]:
         return {o.vendor: o for o in self.outcomes}
 
 
@@ -106,7 +106,7 @@ CdpBlockApply = Callable[[Sequence[str]], None]
 def run_block_matrix(
     vendors: Sequence[Vendor],
     cdp_block: CdpBlockApply,
-    flow: Callable[[], Optional[str]],
+    flow: Callable[[], str | None],
 ) -> BlockReport:
     """
     For each vendor: install block, run ``flow()``, record outcome.
@@ -143,7 +143,7 @@ def run_block_matrix(
     return report
 
 
-def _execute_flow(vendor: Vendor, flow: Callable[[], Optional[str]]) -> BlockOutcome:
+def _execute_flow(vendor: Vendor, flow: Callable[[], str | None]) -> BlockOutcome:
     try:
         message = flow()
     except Exception as error:

@@ -9,7 +9,7 @@ guards, not full Draft-7 conformance.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -21,7 +21,7 @@ class ContractError(WebRunnerException):
 @dataclass
 class SchemaResult:
     valid: bool
-    errors: List[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
 
 _TYPE_CHECKS = {
@@ -35,8 +35,8 @@ _TYPE_CHECKS = {
 }
 
 
-def _validate(value: Any, schema: Dict[str, Any], path: str,
-              errors: List[str]) -> None:
+def _validate(value: Any, schema: dict[str, Any], path: str,
+              errors: list[str]) -> None:
     if not isinstance(schema, dict):
         errors.append(f"{path}: schema must be a dict")
         return
@@ -54,17 +54,17 @@ def _validate(value: Any, schema: Dict[str, Any], path: str,
         _validate_array(value, schema, path, errors)
 
 
-def _validate_one_of(value: Any, candidates: List[Any], path: str,
-                     errors: List[str]) -> None:
+def _validate_one_of(value: Any, candidates: list[Any], path: str,
+                     errors: list[str]) -> None:
     for sub in candidates:
-        sub_errors: List[str] = []
+        sub_errors: list[str] = []
         _validate(value, sub, path, sub_errors)
         if not sub_errors:
             return
     errors.append(f"{path}: did not match any oneOf candidate")
 
 
-def _check_type(value: Any, expected: str, path: str, errors: List[str]) -> bool:
+def _check_type(value: Any, expected: str, path: str, errors: list[str]) -> bool:
     check = _TYPE_CHECKS.get(expected)
     if check is None:
         errors.append(f"{path}: unsupported type {expected!r}")
@@ -75,8 +75,8 @@ def _check_type(value: Any, expected: str, path: str, errors: List[str]) -> bool
     return True
 
 
-def _check_enum(value: Any, schema: Dict[str, Any], path: str,
-                errors: List[str]) -> bool:
+def _check_enum(value: Any, schema: dict[str, Any], path: str,
+                errors: list[str]) -> bool:
     enum = schema.get("enum")
     if enum is not None and value not in enum:
         errors.append(f"{path}: value {value!r} not in enum {enum!r}")
@@ -84,8 +84,8 @@ def _check_enum(value: Any, schema: Dict[str, Any], path: str,
     return True
 
 
-def _validate_object(value: Dict[str, Any], schema: Dict[str, Any],
-                     path: str, errors: List[str]) -> None:
+def _validate_object(value: dict[str, Any], schema: dict[str, Any],
+                     path: str, errors: list[str]) -> None:
     properties = schema.get("properties") or {}
     required = schema.get("required") or []
     for prop in required:
@@ -100,8 +100,8 @@ def _validate_object(value: Dict[str, Any], schema: Dict[str, Any],
             errors.append(f"{path}: unexpected properties {sorted(extras)}")
 
 
-def _validate_array(value: List[Any], schema: Dict[str, Any],
-                    path: str, errors: List[str]) -> None:
+def _validate_array(value: list[Any], schema: dict[str, Any],
+                    path: str, errors: list[str]) -> None:
     items_schema = schema.get("items")
     if items_schema is None:
         return
@@ -109,16 +109,16 @@ def _validate_array(value: List[Any], schema: Dict[str, Any],
         _validate(item, items_schema, f"{path}[{index}]", errors)
 
 
-def validate_response(response_body: Any, schema: Dict[str, Any]) -> SchemaResult:
+def validate_response(response_body: Any, schema: dict[str, Any]) -> SchemaResult:
     """Validate ``response_body`` against ``schema``."""
-    errors: List[str] = []
+    errors: list[str] = []
     _validate(response_body, schema, "$", errors)
     return SchemaResult(valid=not errors, errors=errors)
 
 
 def validate_against_openapi(
     response_body: Any,
-    openapi_doc: Dict[str, Any],
+    openapi_doc: dict[str, Any],
     path: str,
     method: str,
     status: int,
@@ -149,7 +149,7 @@ def validate_against_openapi(
     return validate_response(response_body, _resolve_refs(schema, openapi_doc))
 
 
-def _resolve_refs(schema: Any, doc: Dict[str, Any], depth: int = 0) -> Any:
+def _resolve_refs(schema: Any, doc: dict[str, Any], depth: int = 0) -> Any:
     """Inline ``$ref`` definitions from ``components/schemas`` (max depth 8)."""
     if depth > 8 or not isinstance(schema, dict):
         return schema
@@ -162,7 +162,7 @@ def _resolve_refs(schema: Any, doc: Dict[str, Any], depth: int = 0) -> Any:
         if target is None:
             return schema
         return _resolve_refs(target, doc, depth + 1)
-    resolved: Dict[str, Any] = {}
+    resolved: dict[str, Any] = {}
     for key, value in schema.items():
         if isinstance(value, dict):
             resolved[key] = _resolve_refs(value, doc, depth + 1)
@@ -173,7 +173,7 @@ def _resolve_refs(schema: Any, doc: Dict[str, Any], depth: int = 0) -> Any:
     return resolved
 
 
-def assert_valid(response_body: Any, schema: Dict[str, Any]) -> None:
+def assert_valid(response_body: Any, schema: dict[str, Any]) -> None:
     """Convenience: raise on validation failure."""
     result = validate_response(response_body, schema)
     if not result.valid:

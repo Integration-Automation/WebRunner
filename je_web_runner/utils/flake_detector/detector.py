@@ -22,10 +22,11 @@ import time
 from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+import builtins
 
 
 class FlakeDetectorError(WebRunnerException):
@@ -48,14 +49,14 @@ class FlakeScore:
     fails: int
     pass_rate: float
     flake_score: float
-    last_run: Optional[str] = None
+    last_run: str | None = None
     is_flaky: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def _load_runs(ledger_path: Union[str, Path]) -> List[Dict[str, Any]]:
+def _load_runs(ledger_path: str | Path) -> list[dict[str, Any]]:
     path = Path(ledger_path)
     if not path.exists():
         return []
@@ -95,13 +96,13 @@ def _decay_weight(age_seconds: float, half_life_days: float) -> float:
 
 
 def compute_flake_scores(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
-    ledger_path: Union[str, Path],
+    ledger_path: str | Path,
     *,
     half_life_days: float = _DEFAULT_HALF_LIFE_DAYS,
     min_runs: int = _DEFAULT_MIN_RUNS,
     threshold: float = _DEFAULT_FLAKE_THRESHOLD,
-    now_epoch: Optional[float] = None,
-) -> Dict[str, FlakeScore]:
+    now_epoch: float | None = None,
+) -> dict[str, FlakeScore]:
     """
     從 ledger 歷史計算每個 file 的 time-decayed flake score。
     Produce per-file :class:`FlakeScore` records. A test is flagged ``is_flaky``
@@ -111,7 +112,7 @@ def compute_flake_scores(  # NOSONAR S3776 — cohesive logic; planned refactor 
     """
     runs = _load_runs(ledger_path)
     now = now_epoch if now_epoch is not None else time.time()
-    buckets: Dict[str, Dict[str, Any]] = {}
+    buckets: dict[str, dict[str, Any]] = {}
     for run in runs:
         path = run.get("path")
         if not isinstance(path, str):
@@ -137,7 +138,7 @@ def compute_flake_scores(  # NOSONAR S3776 — cohesive logic; planned refactor 
             if existing is None or last_run > existing:
                 record["last_run"] = last_run
 
-    out: Dict[str, FlakeScore] = {}
+    out: dict[str, FlakeScore] = {}
     for path, rec in buckets.items():
         runs_n = rec["runs"]
         passes = rec["passes"]
@@ -161,12 +162,12 @@ def compute_flake_scores(  # NOSONAR S3776 — cohesive logic; planned refactor 
 
 
 def flaky_paths(
-    ledger_path: Union[str, Path],
+    ledger_path: str | Path,
     *,
     half_life_days: float = _DEFAULT_HALF_LIFE_DAYS,
     min_runs: int = _DEFAULT_MIN_RUNS,
     threshold: float = _DEFAULT_FLAKE_THRESHOLD,
-) -> List[str]:
+) -> list[str]:
     """Return paths whose decayed flake score is at or above ``threshold``."""
     scores = compute_flake_scores(
         ledger_path,
@@ -190,9 +191,9 @@ class QuarantineEntry:
     flake_score: float
     quarantined_at: str
     runs_when_added: int = 0
-    triage_url: Optional[str] = None
+    triage_url: str | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -207,9 +208,9 @@ class QuarantineRegistry:
     alongside the ledger so the pytest plugin can read it on every run.
     """
 
-    def __init__(self, registry_path: Union[str, Path]) -> None:
+    def __init__(self, registry_path: str | Path) -> None:
         self.registry_path = Path(registry_path)
-        self._entries: Dict[str, QuarantineEntry] = {}
+        self._entries: dict[str, QuarantineEntry] = {}
         self._load()
 
     def _load(self) -> None:
@@ -251,7 +252,7 @@ class QuarantineRegistry:
     def is_quarantined(self, test_id: str) -> bool:
         return test_id in self._entries
 
-    def get(self, test_id: str) -> Optional[QuarantineEntry]:
+    def get(self, test_id: str) -> QuarantineEntry | None:
         return self._entries.get(test_id)
 
     def add(self, entry: QuarantineEntry) -> None:
@@ -270,7 +271,7 @@ class QuarantineRegistry:
         web_runner_logger.info(f"quarantine remove: {test_id}")
         return True
 
-    def list(self) -> List[QuarantineEntry]:
+    def list(self) -> builtins.list[QuarantineEntry]:
         return sorted(
             self._entries.values(),
             key=lambda e: (-e.flake_score, e.test_id),
@@ -278,14 +279,14 @@ class QuarantineRegistry:
 
 
 def quarantine_flaky(
-    ledger_path: Union[str, Path],
-    registry_path: Union[str, Path],
+    ledger_path: str | Path,
+    registry_path: str | Path,
     *,
     half_life_days: float = _DEFAULT_HALF_LIFE_DAYS,
     min_runs: int = _DEFAULT_MIN_RUNS,
     threshold: float = _DEFAULT_FLAKE_THRESHOLD,
     reason_template: str = "auto: flake_score={score:.2f} after {runs} runs",
-) -> List[str]:
+) -> list[str]:
     """
     自動把 flake score ≥ threshold 的 test 加入 quarantine registry。
     Walk the ledger, score each test, and write any newly-flaky tests into
@@ -299,7 +300,7 @@ def quarantine_flaky(
         threshold=threshold,
     )
     registry = QuarantineRegistry(registry_path)
-    newly_added: List[str] = []
+    newly_added: list[str] = []
     for score in scores.values():
         if not score.is_flaky:
             continue
@@ -318,13 +319,13 @@ def quarantine_flaky(
 
 
 def release_if_stable(
-    ledger_path: Union[str, Path],
-    registry_path: Union[str, Path],
+    ledger_path: str | Path,
+    registry_path: str | Path,
     *,
     half_life_days: float = _DEFAULT_HALF_LIFE_DAYS,
     release_threshold: float = 0.05,
     min_runs_since: int = 5,
-) -> List[str]:
+) -> list[str]:
     """
     放出 flake score 已穩定下降到 ``release_threshold`` 以下的 quarantine test。
     Promote stable tests out of quarantine: each entry whose current score
@@ -338,7 +339,7 @@ def release_if_stable(
         threshold=release_threshold + 1.0,  # ensure is_flaky=False is meaningful
     )
     registry = QuarantineRegistry(registry_path)
-    released: List[str] = []
+    released: list[str] = []
     for entry in registry.list():
         current = scores.get(entry.test_id)
         if current is None:
@@ -355,7 +356,7 @@ def release_if_stable(
 
 def flaky_quarantine(
     test_id: str,
-    registry_path: Union[str, Path],
+    registry_path: str | Path,
     *,
     skip_when_quarantined: bool = True,
 ) -> Callable:
@@ -383,10 +384,10 @@ def flaky_quarantine(
                 return fn(*args, **kwargs)
             try:
                 import pytest  # local import keeps decorator pytest-optional
-            except ImportError:
+            except ImportError as import_error:
                 raise FlakeDetectorError(
                     f"test {test_id!r} is quarantined: {entry.reason}"
-                )
+                ) from import_error
             pytest.skip(f"flaky-quarantine: {entry.reason}")
             return None
         return wrapper

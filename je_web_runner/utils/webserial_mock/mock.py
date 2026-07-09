@@ -11,7 +11,7 @@ page and observe what the page writes back.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -76,15 +76,15 @@ INSTALL_SCRIPT = r"""
 
 @dataclass
 class MockSerialPort:
-    vendor_id: Optional[int] = None
-    product_id: Optional[int] = None
+    vendor_id: int | None = None
+    product_id: int | None = None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 def build_mock_port(
-    vendor_id: Optional[int] = None, product_id: Optional[int] = None,
+    vendor_id: int | None = None, product_id: int | None = None,
 ) -> MockSerialPort:
     for tag, value in (("vendor", vendor_id), ("product", product_id)):
         if value is not None and not 0 <= value <= 0xFFFF:
@@ -92,12 +92,12 @@ def build_mock_port(
     return MockSerialPort(vendor_id=vendor_id, product_id=product_id)
 
 
-def encode_lines(lines: Sequence[str], newline: str = "\n") -> List[int]:
+def encode_lines(lines: Sequence[str], newline: str = "\n") -> list[int]:
     if not isinstance(lines, (list, tuple)):
         raise WebserialMockError("lines must be a sequence of str")
     if not isinstance(newline, str):
         raise WebserialMockError("newline must be a string")
-    out: List[int] = []
+    out: list[int] = []
     for line in lines:
         if not isinstance(line, str):
             raise WebserialMockError("each line must be string")
@@ -105,10 +105,10 @@ def encode_lines(lines: Sequence[str], newline: str = "\n") -> List[int]:
     return out
 
 
-def parse_outbound(payload: Any) -> List[bytes]:
+def parse_outbound(payload: Any) -> list[bytes]:
     if not isinstance(payload, list):
         raise WebserialMockError("payload must be a list")
-    out: List[bytes] = []
+    out: list[bytes] = []
     for raw in payload:
         if not isinstance(raw, list):
             continue
@@ -120,7 +120,7 @@ def assert_lines_written(
     chunks: Iterable[bytes], *, expected: Sequence[str], newline: str = "\n",
 ) -> None:
     joined = b"".join(chunks).decode("utf-8", errors="replace")
-    actual = [l for l in joined.split(newline) if l != ""]
+    actual = [line for line in joined.split(newline) if line != ""]
     if actual != list(expected):
         raise WebserialMockError(
             f"line mismatch: expected {list(expected)}, got {actual}"

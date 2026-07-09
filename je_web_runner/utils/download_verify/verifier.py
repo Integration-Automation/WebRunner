@@ -22,7 +22,7 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Pattern, Union
+from typing import Any, Callable, Iterable, Pattern
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -35,9 +35,9 @@ class DownloadVerifyError(WebRunnerException):
 # ---------- waiting -------------------------------------------------------
 
 def wait_for_download(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
-    download_dir: Union[str, Path],
+    download_dir: str | Path,
     *,
-    pattern: Union[str, Pattern[str]] = r".+",
+    pattern: str | Pattern[str] = r".+",
     timeout: float = 30.0,
     poll_interval: float = 0.5,
     stable_for: float = 0.5,
@@ -59,8 +59,8 @@ def wait_for_download(  # NOSONAR S3776 — cohesive logic; planned refactor in 
     regex = re.compile(pattern) if isinstance(pattern, str) else pattern
     excluded = tuple(e.lower() for e in exclude_extensions)
     start = time_fn()
-    last_seen_size: Dict[str, int] = {}
-    last_seen_time: Dict[str, float] = {}
+    last_seen_size: dict[str, int] = {}
+    last_seen_time: dict[str, float] = {}
     while True:
         for entry in directory.iterdir():
             if not entry.is_file():
@@ -89,7 +89,7 @@ def wait_for_download(  # NOSONAR S3776 — cohesive logic; planned refactor in 
 
 # ---------- hashing -------------------------------------------------------
 
-def sha256_of_file(path: Union[str, Path], *, chunk_size: int = 65_536) -> str:
+def sha256_of_file(path: str | Path, *, chunk_size: int = 65_536) -> str:
     """Stream-hash a file with SHA-256."""
     p = Path(path)
     if not p.is_file():
@@ -104,7 +104,7 @@ def sha256_of_file(path: Union[str, Path], *, chunk_size: int = 65_536) -> str:
     return hasher.hexdigest()
 
 
-def assert_file_sha256(path: Union[str, Path], expected: str) -> None:
+def assert_file_sha256(path: str | Path, expected: str) -> None:
     """Raise unless ``path``'s SHA-256 equals ``expected`` (case-insensitive)."""
     actual = sha256_of_file(path)
     if actual.lower() != expected.lower():
@@ -116,7 +116,7 @@ def assert_file_sha256(path: Union[str, Path], expected: str) -> None:
 # ---------- PDF -----------------------------------------------------------
 
 def extract_pdf_text(
-    path: Union[str, Path],
+    path: str | Path,
     *,
     page_separator: str = "\n",
 ) -> str:
@@ -139,7 +139,7 @@ def extract_pdf_text(
         pass
     try:
         import pdfplumber  # type: ignore[import-not-found]
-        pieces: List[str] = []
+        pieces: list[str] = []
         with pdfplumber.open(str(p)) as pdf:
             for page in pdf.pages:
                 pieces.append(page.extract_text() or "")
@@ -149,11 +149,11 @@ def extract_pdf_text(
             "PDF text extraction requires pypdf or pdfplumber. "
             "Install one: pip install pypdf"
         ) from error
-    except Exception as error:  # noqa: BLE001 — library-specific parse errors
+    except Exception as error:
         raise DownloadVerifyError(f"failed to extract PDF text from {p}: {error!r}") from error
 
 
-def assert_pdf_contains(path: Union[str, Path], substring: str) -> None:
+def assert_pdf_contains(path: str | Path, substring: str) -> None:
     """Raise if the extracted PDF text doesn't include ``substring``."""
     text = extract_pdf_text(path)
     if substring not in text:
@@ -162,7 +162,7 @@ def assert_pdf_contains(path: Union[str, Path], substring: str) -> None:
         )
 
 
-def assert_pdf_matches(path: Union[str, Path], pattern: Union[str, Pattern[str]]) -> str:
+def assert_pdf_matches(path: str | Path, pattern: str | Pattern[str]) -> str:
     """Raise unless the PDF text matches ``pattern``; returns the match."""
     text = extract_pdf_text(path)
     regex = re.compile(pattern) if isinstance(pattern, str) else pattern
@@ -177,11 +177,11 @@ def assert_pdf_matches(path: Union[str, Path], pattern: Union[str, Pattern[str]]
 # ---------- CSV -----------------------------------------------------------
 
 def read_csv_rows(
-    path: Union[str, Path],
+    path: str | Path,
     *,
     encoding: str = "utf-8-sig",
     dialect: str = "excel",
-) -> List[Dict[str, str]]:
+) -> list[dict[str, str]]:
     """Read a CSV file as a list of dicts (header-driven)."""
     p = Path(path)
     if not p.is_file():
@@ -194,7 +194,7 @@ def read_csv_rows(
         raise DownloadVerifyError(f"cannot read CSV {p}: {error!r}") from error
 
 
-def assert_csv_columns(path: Union[str, Path], expected_columns: Iterable[str]) -> None:
+def assert_csv_columns(path: str | Path, expected_columns: Iterable[str]) -> None:
     """Raise if the CSV is missing any of ``expected_columns``."""
     rows = read_csv_rows(path)
     if not rows:
@@ -208,10 +208,10 @@ def assert_csv_columns(path: Union[str, Path], expected_columns: Iterable[str]) 
 
 
 def assert_csv_row_count(
-    path: Union[str, Path],
+    path: str | Path,
     *,
-    minimum: Optional[int] = None,
-    maximum: Optional[int] = None,
+    minimum: int | None = None,
+    maximum: int | None = None,
 ) -> int:
     """Raise unless the row count is within bounds. Returns the actual count."""
     count = len(read_csv_rows(path))
@@ -229,10 +229,10 @@ def assert_csv_row_count(
 # ---------- Excel ---------------------------------------------------------
 
 def read_excel_rows(
-    path: Union[str, Path],
+    path: str | Path,
     *,
-    sheet: Optional[Union[str, int]] = None,
-) -> List[Dict[str, Any]]:
+    sheet: str | int | None = None,
+) -> list[dict[str, Any]]:
     """
     讀 .xlsx 為 list of dict (假設第一列是 header)。
     Read an Excel sheet (defaults to the first/active one). Requires
@@ -249,7 +249,7 @@ def read_excel_rows(
         ) from error
     try:
         wb = load_workbook(filename=str(p), read_only=True, data_only=True)
-    except Exception as error:  # noqa: BLE001 — openpyxl raises many types
+    except Exception as error:
         raise DownloadVerifyError(f"cannot open {p}: {error!r}") from error
     try:
         if sheet is None:
@@ -274,7 +274,7 @@ def read_excel_rows(
 
 # ---------- JSON ----------------------------------------------------------
 
-def read_json_file(path: Union[str, Path]) -> Any:
+def read_json_file(path: str | Path) -> Any:
     p = Path(path)
     if not p.is_file():
         raise DownloadVerifyError(f"JSON file not found: {p}")
@@ -285,7 +285,7 @@ def read_json_file(path: Union[str, Path]) -> Any:
         raise DownloadVerifyError(f"cannot read JSON {p}: {error!r}") from error
 
 
-def assert_json_matches_schema(path: Union[str, Path], schema: Dict[str, Any]) -> None:
+def assert_json_matches_schema(path: str | Path, schema: dict[str, Any]) -> None:
     """
     用簡化版 schema 驗證 JSON:``{"key": "type" or {nested}}``。
     Minimal schema validator (NO jsonschema dependency). Schema example::
@@ -299,7 +299,7 @@ def assert_json_matches_schema(path: Union[str, Path], schema: Dict[str, Any]) -
     _check_schema(payload, schema, path=str(path))
 
 
-_TYPE_ALIASES: Dict[str, type] = {
+_TYPE_ALIASES: dict[str, type] = {
     "str": str,
     "int": int,
     "float": float,
@@ -343,16 +343,16 @@ def _check_schema(payload: Any, schema: Any, *, path: str, prefix: str = "$") ->
 class DownloadAssertion:
     """All the constraints :func:`assert_download` can check at once."""
 
-    filename_pattern: Optional[Union[str, Pattern[str]]] = None
-    sha256: Optional[str] = None
-    pdf_contains: Optional[str] = None
-    csv_columns: Optional[List[str]] = None
-    json_schema: Optional[Dict[str, Any]] = None
-    min_size_bytes: Optional[int] = None
-    max_size_bytes: Optional[int] = None
+    filename_pattern: str | Pattern[str] | None = None
+    sha256: str | None = None
+    pdf_contains: str | None = None
+    csv_columns: list[str] | None = None
+    json_schema: dict[str, Any] | None = None
+    min_size_bytes: int | None = None
+    max_size_bytes: int | None = None
 
 
-def assert_download(path: Union[str, Path], assertion: DownloadAssertion) -> None:
+def assert_download(path: str | Path, assertion: DownloadAssertion) -> None:
     """
     一次跑完整套 download 驗證,任何一條不過就 raise。
     Combined check that walks every populated field of ``assertion`` and

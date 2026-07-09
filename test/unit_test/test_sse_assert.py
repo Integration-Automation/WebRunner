@@ -191,6 +191,18 @@ class TestStrictlyIncreasing(unittest.TestCase):
         with self.assertRaises(SseAssertError):
             assert_strictly_increasing_ids(rec)
 
+    def test_numeric_ids_compared_numerically(self):
+        # "9" -> "10" is increasing numerically; lexicographic would wrongly fail.
+        rec = SseRecorder()
+        rec.feed("id: 9\ndata: 1\n\nid: 10\ndata: 2\n\n")
+        assert_strictly_increasing_ids(rec)
+
+    def test_numeric_ids_detect_decrease(self):
+        rec = SseRecorder()
+        rec.feed("id: 10\ndata: 1\n\nid: 9\ndata: 2\n\n")
+        with self.assertRaises(SseAssertError):
+            assert_strictly_increasing_ids(rec)
+
 
 class TestToJson(unittest.TestCase):
 

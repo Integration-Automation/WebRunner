@@ -16,7 +16,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from enum import Enum
 from itertools import product
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -57,7 +57,7 @@ def build_matrix(
         "null",                     # sandboxed iframe / data:
     ),
     credentials_modes: Sequence[bool] = (False, True),
-) -> List[CorsCase]:
+) -> list[CorsCase]:
     """Cartesian product of the matrix axes."""
     if not verbs:
         raise CorsMatrixError("verbs must be non-empty")
@@ -78,7 +78,7 @@ class CorsResponse:
     """What the probe callable must return."""
 
     status_code: int
-    allow_origin: Optional[str]
+    allow_origin: str | None
     allow_credentials: bool = False
     allow_methods: Sequence[str] = ()
     allow_headers: Sequence[str] = ()
@@ -93,7 +93,7 @@ class CorsResult:
     response: CorsResponse
     note: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "case": asdict(self.case),
             "outcome": self.outcome.value,
@@ -138,13 +138,13 @@ ProbeFn = Callable[[CorsCase], CorsResponse]
 
 def run_matrix(
     cases: Sequence[CorsCase], probe: ProbeFn,
-) -> List[CorsResult]:
+) -> list[CorsResult]:
     """Drive ``probe`` once per case and classify the response."""
     if not cases:
         raise CorsMatrixError("cases must be non-empty")
     if not callable(probe):
         raise CorsMatrixError("probe must be callable")
-    out: List[CorsResult] = []
+    out: list[CorsResult] = []
     for case in cases:
         try:
             response = probe(case)

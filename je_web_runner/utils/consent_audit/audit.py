@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -42,8 +42,8 @@ class CookieCategory(str, Enum):
 class CookieRule:
     """Match by cookie name regex and / or domain suffix."""
 
-    name_pattern: Optional[str]
-    domain_suffix: Optional[str]
+    name_pattern: str | None
+    domain_suffix: str | None
     category: CookieCategory
     vendor: str
 
@@ -80,9 +80,9 @@ class Cookie:
 
     name: str
     domain: str = ""
-    value: Optional[str] = None
+    value: str | None = None
     secure: bool = True
-    same_site: Optional[str] = None
+    same_site: str | None = None
 
     def __post_init__(self) -> None:
         if not self.name or not isinstance(self.name, str):
@@ -97,7 +97,7 @@ class ClassifiedCookie:
     category: CookieCategory
     vendor: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.cookie.name,
             "domain": self.cookie.domain,
@@ -141,7 +141,7 @@ def classify_all(
     cookies: Iterable[Cookie],
     *,
     extra_rules: Sequence[CookieRule] = (),
-) -> List[ClassifiedCookie]:
+) -> list[ClassifiedCookie]:
     """Convenience: classify every cookie in ``cookies``."""
     return [classify_cookie(c, extra_rules=extra_rules) for c in cookies]
 
@@ -154,14 +154,14 @@ class ConsentReport:
 
     pre_consent_total: int
     post_consent_total: int
-    pre_consent_violations: List[ClassifiedCookie] = field(default_factory=list)
-    post_consent_reintroduced: List[ClassifiedCookie] = field(default_factory=list)
-    unknown_cookies: List[ClassifiedCookie] = field(default_factory=list)
+    pre_consent_violations: list[ClassifiedCookie] = field(default_factory=list)
+    post_consent_reintroduced: list[ClassifiedCookie] = field(default_factory=list)
+    unknown_cookies: list[ClassifiedCookie] = field(default_factory=list)
 
     def passed(self) -> bool:
         return not self.pre_consent_violations and not self.post_consent_reintroduced
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "pre_consent_total": self.pre_consent_total,
             "post_consent_total": self.post_consent_total,
@@ -199,7 +199,7 @@ def audit_consent(
     unknown = [
         c for c in before_classified if c.category == CookieCategory.UNKNOWN
     ]
-    reintroduced: List[ClassifiedCookie] = []
+    reintroduced: list[ClassifiedCookie] = []
     if user_rejected:
         reintroduced = [
             c for c in after_classified if c.category in NON_ESSENTIAL
@@ -231,9 +231,9 @@ def assert_passes(report: ConsentReport) -> None:
     raise ConsentAuditError("; ".join(parts))
 
 
-def from_selenium_cookies(cookies: Iterable[Dict[str, Any]]) -> List[Cookie]:
+def from_selenium_cookies(cookies: Iterable[dict[str, Any]]) -> list[Cookie]:
     """Convert Selenium ``driver.get_cookies()`` dicts to :class:`Cookie`."""
-    out: List[Cookie] = []
+    out: list[Cookie] = []
     for entry in cookies:
         if not isinstance(entry, dict):
             continue

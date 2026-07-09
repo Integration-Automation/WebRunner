@@ -7,7 +7,7 @@ JSON can call any faker provider without bespoke wrappers.
 """
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -103,7 +103,7 @@ def fake_password(length: int = 12) -> str:
     return _require_faker().password(length=int(length))
 
 
-def fake_text(max_chars: Optional[int] = None) -> str:
+def fake_text(max_chars: int | None = None) -> str:
     fake = _require_faker()
     if max_chars is None:
         return fake.text()

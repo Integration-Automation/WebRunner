@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -59,12 +59,12 @@ class DigestInputs:
     """Everything a digest can include. Each field is optional."""
 
     period_label: str = "last 7 days"
-    flake_changes: List[FlakeStat] = field(default_factory=list)
-    risky_prs: List[RiskyPr] = field(default_factory=list)
-    cost: Optional[CostTrend] = None
-    suite_pass_rate: Optional[float] = None  # 0..1
-    suite_pass_rate_previous: Optional[float] = None
-    extra_lines: List[str] = field(default_factory=list)
+    flake_changes: list[FlakeStat] = field(default_factory=list)
+    risky_prs: list[RiskyPr] = field(default_factory=list)
+    cost: CostTrend | None = None
+    suite_pass_rate: float | None = None  # 0..1
+    suite_pass_rate_previous: float | None = None
+    extra_lines: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if self.suite_pass_rate is not None and not 0.0 <= self.suite_pass_rate <= 1.0:
@@ -76,7 +76,7 @@ class DigestInputs:
 
 # ---------- rendering --------------------------------------------------
 
-def _header_block(period_label: str) -> Dict[str, Any]:
+def _header_block(period_label: str) -> dict[str, Any]:
     today = datetime.now(tz=timezone.utc).strftime("%Y-%m-%d")
     return {
         "type": "header",
@@ -85,7 +85,7 @@ def _header_block(period_label: str) -> Dict[str, Any]:
     }
 
 
-def _suite_health_block(inputs: DigestInputs) -> Optional[Dict[str, Any]]:
+def _suite_health_block(inputs: DigestInputs) -> dict[str, Any] | None:
     if inputs.suite_pass_rate is None:
         return None
     pct = inputs.suite_pass_rate * 100
@@ -97,13 +97,13 @@ def _suite_health_block(inputs: DigestInputs) -> Optional[Dict[str, Any]]:
     return {"type": "section", "text": {"type": "mrkdwn", "text": line}}
 
 
-def _flake_block(stats: Sequence[FlakeStat]) -> Optional[Dict[str, Any]]:
+def _flake_block(stats: Sequence[FlakeStat]) -> dict[str, Any] | None:
     if not stats:
         return None
     added = [s for s in stats if s.action == "added"]
     released = [s for s in stats if s.action == "released"]
     still_in = [s for s in stats if s.action == "still_in"]
-    parts: List[str] = ["*Quarantine activity:*"]
+    parts: list[str] = ["*Quarantine activity:*"]
     parts.append(f"• Added: {len(added)}")
     parts.append(f"• Released: {len(released)}")
     parts.append(f"• Still in quarantine: {len(still_in)}")
@@ -114,7 +114,7 @@ def _flake_block(stats: Sequence[FlakeStat]) -> Optional[Dict[str, Any]]:
     return {"type": "section", "text": {"type": "mrkdwn", "text": "\n".join(parts)}}
 
 
-def _risky_pr_block(prs: Sequence[RiskyPr]) -> Optional[Dict[str, Any]]:
+def _risky_pr_block(prs: Sequence[RiskyPr]) -> dict[str, Any] | None:
     if not prs:
         return None
     lines = ["*High-risk PRs:*"]
@@ -124,7 +124,7 @@ def _risky_pr_block(prs: Sequence[RiskyPr]) -> Optional[Dict[str, Any]]:
     return {"type": "section", "text": {"type": "mrkdwn", "text": "\n".join(lines)}}
 
 
-def _cost_block(cost: Optional[CostTrend]) -> Optional[Dict[str, Any]]:
+def _cost_block(cost: CostTrend | None) -> dict[str, Any] | None:
     if cost is None:
         return None
     delta = cost.delta_pct()
@@ -136,14 +136,14 @@ def _cost_block(cost: Optional[CostTrend]) -> Optional[Dict[str, Any]]:
     return {"type": "section", "text": {"type": "mrkdwn", "text": line}}
 
 
-def _extra_block(lines: Sequence[str]) -> Optional[Dict[str, Any]]:
+def _extra_block(lines: Sequence[str]) -> dict[str, Any] | None:
     if not lines:
         return None
     text = "\n".join(f"• {line}" for line in lines)
     return {"type": "section", "text": {"type": "mrkdwn", "text": text}}
 
 
-def build_slack_blocks(inputs: DigestInputs) -> List[Dict[str, Any]]:
+def build_slack_blocks(inputs: DigestInputs) -> list[dict[str, Any]]:
     """Render the digest as a Slack Block-Kit ``blocks`` list."""
     if not isinstance(inputs, DigestInputs):
         raise SlackDigestError("build_slack_blocks expects DigestInputs")
@@ -168,10 +168,10 @@ def build_slack_blocks(inputs: DigestInputs) -> List[Dict[str, Any]]:
 def build_slack_payload(
     inputs: DigestInputs,
     *,
-    channel: Optional[str] = None,
-) -> Dict[str, Any]:
+    channel: str | None = None,
+) -> dict[str, Any]:
     """Wrap the blocks in a complete ``chat.postMessage`` payload."""
-    payload: Dict[str, Any] = {"blocks": build_slack_blocks(inputs)}
+    payload: dict[str, Any] = {"blocks": build_slack_blocks(inputs)}
     if channel:
         if not isinstance(channel, str):
             raise SlackDigestError("channel must be a string")
@@ -181,10 +181,10 @@ def build_slack_payload(
 
 # ---------- teams card -------------------------------------------------
 
-def build_teams_card(inputs: DigestInputs) -> Dict[str, Any]:
+def build_teams_card(inputs: DigestInputs) -> dict[str, Any]:
     """Render a simple Adaptive Card body for Microsoft Teams webhooks."""
     blocks = build_slack_blocks(inputs)
-    body: List[Dict[str, Any]] = []
+    body: list[dict[str, Any]] = []
     for block in blocks:
         text = ""
         block_text = block.get("text") or {}
@@ -202,7 +202,7 @@ def build_teams_card(inputs: DigestInputs) -> Dict[str, Any]:
         "type": "AdaptiveCard",
         # S5332 ok: this is the well-known AdaptiveCards $schema literal that
         # Microsoft Teams expects verbatim; it is NOT fetched.
-        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",  # noqa: S5332
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
         "version": "1.5",
         "body": body,
     }
@@ -213,7 +213,7 @@ def build_teams_card(inputs: DigestInputs) -> Dict[str, Any]:
 def render_plain_text(inputs: DigestInputs) -> str:
     """Render a fallback plain-text digest (email / Markdown alike)."""
     blocks = build_slack_blocks(inputs)
-    lines: List[str] = []
+    lines: list[str] = []
     for block in blocks:
         block_text = block.get("text") or {}
         if isinstance(block_text, dict):

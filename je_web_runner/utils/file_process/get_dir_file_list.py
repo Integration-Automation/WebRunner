@@ -1,9 +1,8 @@
 from os import getcwd, walk
 from os.path import abspath, join
-from typing import List
 
 
-def get_dir_files_as_list(dir_path: str = getcwd(), default_search_file_extension: str = ".json") -> List[str]:
+def get_dir_files_as_list(dir_path: str = getcwd(), default_search_file_extension: str = ".json") -> list[str]:
     """
     取得指定資料夾下所有符合副檔名的檔案清單
     Get all files in a directory that end with the given extension

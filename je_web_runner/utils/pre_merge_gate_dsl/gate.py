@@ -19,7 +19,7 @@ from __future__ import annotations
 import fnmatch
 import re
 from dataclasses import asdict, dataclass, field
-from typing import Any, Callable, Dict, Iterable, List, Optional
+from typing import Any, Callable, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -31,13 +31,13 @@ class PreMergeGateDslError(WebRunnerException):
 @dataclass
 class PrFacts:
     title: str = ""
-    files_changed: List[str] = field(default_factory=list)
+    files_changed: list[str] = field(default_factory=list)
     additions: int = 0
     deletions: int = 0
     review_approvals: int = 0
-    failing_checks: List[str] = field(default_factory=list)
+    failing_checks: list[str] = field(default_factory=list)
     flake_score_delta: float = 0
-    labels: List[str] = field(default_factory=list)
+    labels: list[str] = field(default_factory=list)
 
     @property
     def is_docs_only(self) -> bool:
@@ -53,7 +53,7 @@ class PrFacts:
 @dataclass
 class Rule:
     when: str
-    require: List[str]
+    require: list[str]
 
     def __post_init__(self) -> None:
         if not isinstance(self.when, str) or not self.when:
@@ -108,47 +108,47 @@ def _safe_eval_when(expr: str, facts: PrFacts) -> bool:
 
 
 # requirement name -> predicate (facts -> bool, "" or "reason string")
-Predicate = Callable[[PrFacts], Optional[str]]
+Predicate = Callable[[PrFacts], str | None]
 
 
-def _pr_title_has_jira(facts: PrFacts) -> Optional[str]:
+def _pr_title_has_jira(facts: PrFacts) -> str | None:
     if re.search(r"\b[A-Z]{2,}-\d+\b", facts.title):
         return None
     return "PR title missing JIRA key (e.g. ABC-123)"
 
 
-def _two_reviewers(facts: PrFacts) -> Optional[str]:
+def _two_reviewers(facts: PrFacts) -> str | None:
     if facts.review_approvals >= 2:
         return None
     return f"need 2 reviewers, have {facts.review_approvals}"
 
 
-def _one_reviewer(facts: PrFacts) -> Optional[str]:
+def _one_reviewer(facts: PrFacts) -> str | None:
     if facts.review_approvals >= 1:
         return None
     return "need at least 1 reviewer"
 
 
-def _no_failing_checks(facts: PrFacts) -> Optional[str]:
+def _no_failing_checks(facts: PrFacts) -> str | None:
     if not facts.failing_checks:
         return None
     return f"failing checks: {facts.failing_checks}"
 
 
-def _no_flake_regression(facts: PrFacts) -> Optional[str]:
+def _no_flake_regression(facts: PrFacts) -> str | None:
     if facts.flake_score_delta <= 0.05:
         return None
     return f"flake score regressed by {facts.flake_score_delta:.2f}"
 
 
-def _small_pr(facts: PrFacts) -> Optional[str]:
+def _small_pr(facts: PrFacts) -> str | None:
     total = facts.additions + facts.deletions
     if total <= 400:
         return None
     return f"PR too large ({total} LOC > 400)"
 
 
-BUILTIN_PREDICATES: Dict[str, Predicate] = {
+BUILTIN_PREDICATES: dict[str, Predicate] = {
     "pr_title_has_jira": _pr_title_has_jira,
     "two_reviewers": _two_reviewers,
     "one_reviewer": _one_reviewer,
@@ -161,16 +161,16 @@ BUILTIN_PREDICATES: Dict[str, Predicate] = {
 @dataclass
 class GateResult:
     passed: bool
-    failures: List[str] = field(default_factory=list)
+    failures: list[str] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def parse_rules(raw: Any) -> List[Rule]:
+def parse_rules(raw: Any) -> list[Rule]:
     if not isinstance(raw, list):
         raise PreMergeGateDslError("rules must be a list of dicts")
-    out: List[Rule] = []
+    out: list[Rule] = []
     for i, item in enumerate(raw):
         if not isinstance(item, dict):
             raise PreMergeGateDslError(f"rule #{i} must be a dict")
@@ -182,14 +182,14 @@ def parse_rules(raw: Any) -> List[Rule]:
 def evaluate(
     rules: Iterable[Rule],
     facts: PrFacts,
-    predicates: Optional[Dict[str, Predicate]] = None,
+    predicates: dict[str, Predicate] | None = None,
 ) -> GateResult:
     if not isinstance(facts, PrFacts):
         raise PreMergeGateDslError("facts must be PrFacts")
     table = dict(BUILTIN_PREDICATES)
     if predicates:
         table.update(predicates)
-    failures: List[str] = []
+    failures: list[str] = []
     for rule in rules:
         if not _safe_eval_when(rule.when, facts):
             continue

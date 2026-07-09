@@ -19,7 +19,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, List, Optional, Union
+from typing import Any, Callable, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -32,9 +32,9 @@ class EventBusError(WebRunnerException):
 class EventEnvelope:
     event_id: str
     topic: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
     timestamp_ms: int = field(default_factory=lambda: int(time.time() * 1000))
-    sender: Optional[str] = None
+    sender: str | None = None
 
     def to_json_line(self) -> str:
         return json.dumps({
@@ -46,7 +46,7 @@ class EventEnvelope:
         }, ensure_ascii=False) + "\n"
 
     @staticmethod
-    def from_dict(data: Dict[str, Any]) -> "EventEnvelope":
+    def from_dict(data: dict[str, Any]) -> EventEnvelope:
         try:
             return EventEnvelope(
                 event_id=str(data["event_id"]),
@@ -63,14 +63,14 @@ class EventEnvelope:
 class EventBus:
     """File-backed publish/subscribe primitive."""
 
-    log_path: Union[str, Path]
-    sender: Optional[str] = None
+    log_path: str | Path
+    sender: str | None = None
     _lock: threading.Lock = field(default_factory=threading.Lock, init=False, repr=False)
 
     def _path(self) -> Path:
         return Path(self.log_path)
 
-    def publish(self, topic: str, payload: Optional[Dict[str, Any]] = None) -> EventEnvelope:
+    def publish(self, topic: str, payload: dict[str, Any] | None = None) -> EventEnvelope:
         if not topic:
             raise EventBusError("topic must be non-empty")
         if payload is not None and not isinstance(payload, dict):
@@ -97,13 +97,13 @@ class EventBus:
     def poll(
         self,
         offset: int = 0,
-        topics: Optional[Iterable[str]] = None,
-    ) -> List[EventEnvelope]:
+        topics: Iterable[str] | None = None,
+    ) -> list[EventEnvelope]:
         path = self._path()
         if not path.is_file():
             return []
         topics_set = set(topics) if topics else None
-        events: List[EventEnvelope] = []
+        events: list[EventEnvelope] = []
         with open(path, "rb") as handle:
             handle.seek(offset)
             for raw_line in handle:
@@ -126,7 +126,7 @@ class EventBus:
         self,
         topic: str,
         offset: int = 0,
-        predicate: Optional[Callable[[EventEnvelope], bool]] = None,
+        predicate: Callable[[EventEnvelope], bool] | None = None,
         timeout: float = 30.0,
         poll_interval: float = 0.1,
         sleep: Callable[[float], None] = time.sleep,

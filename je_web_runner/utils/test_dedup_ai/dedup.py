@@ -19,7 +19,7 @@ import json
 import math
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Sequence, Union
+from typing import Any, Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -27,10 +27,12 @@ from je_web_runner.utils.exception.exceptions import WebRunnerException
 class TestDedupError(WebRunnerException):
     """Raised on malformed action files, bad embeddings, or bad config."""
 
+    __test__ = False  # domain exception, not a pytest test class
+
 
 # ---------- canonicalisation -------------------------------------------
 
-def _canonicalise(actions: Sequence[Dict[str, Any]]) -> str:
+def _canonicalise(actions: Sequence[dict[str, Any]]) -> str:
     """
     Reduce an action list to a structure-only fingerprint.
     Drops user-data (URL paths, typed text) so two tests that differ only
@@ -38,7 +40,7 @@ def _canonicalise(actions: Sequence[Dict[str, Any]]) -> str:
     """
     if not isinstance(actions, list):
         raise TestDedupError("actions must be a list")
-    pieces: List[str] = []
+    pieces: list[str] = []
     for index, action in enumerate(actions):
         if not isinstance(action, dict) or len(action) != 1:
             raise TestDedupError(
@@ -54,8 +56,8 @@ def _canonicalise(actions: Sequence[Dict[str, Any]]) -> str:
     return " > ".join(pieces)
 
 
-def _arg_type_signature(args: List[Any]) -> str:
-    parts: List[str] = []
+def _arg_type_signature(args: list[Any]) -> str:
+    parts: list[str] = []
     for arg in args:
         if isinstance(arg, bool):
             parts.append("bool")
@@ -75,7 +77,7 @@ def _arg_type_signature(args: List[Any]) -> str:
 def _string_kind(value: str) -> str:
     """Crude bucket: 'locator' / 'url' / 'short' / 'long' so canonical."""
     # S5332 ok: we are *classifying* a string, not making an HTTP request.
-    if value.startswith(("http://", "https://")):  # noqa: S5332
+    if value.startswith(("http://", "https://")):  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
         return "url"
     if value in {"id", "name", "xpath", "link text", "partial link text",
                  "tag name", "class name", "css selector"}:
@@ -92,11 +94,11 @@ class ActionFile:
     """One on-disk action JSON file."""
 
     path: str
-    actions: List[Dict[str, Any]]
+    actions: list[dict[str, Any]]
     fingerprint: str = ""
 
     @classmethod
-    def load(cls, path: Union[str, Path]) -> "ActionFile":
+    def load(cls, path: str | Path) -> ActionFile:
         p = Path(path)
         if not p.exists():
             raise TestDedupError(f"action file not found: {p}")
@@ -111,7 +113,7 @@ class ActionFile:
         return instance
 
 
-def load_dir(directory: Union[str, Path]) -> List[ActionFile]:
+def load_dir(directory: str | Path) -> list[ActionFile]:
     """Load every ``*.json`` file in ``directory`` (non-recursive)."""
     d = Path(directory)
     if not d.is_dir():
@@ -126,25 +128,25 @@ class DuplicateCluster:
     """A set of files judged equivalent under the chosen mode."""
 
     mode: str  # 'structural' | 'semantic'
-    members: List[str] = field(default_factory=list)
+    members: list[str] = field(default_factory=list)
     representative: str = ""
     similarity_threshold: float = 1.0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 # ---------- structural dedupe -------------------------------------------
 
-def structural_clusters(files: Sequence[ActionFile]) -> List[DuplicateCluster]:
+def structural_clusters(files: Sequence[ActionFile]) -> list[DuplicateCluster]:
     """Group by canonical fingerprint. Singletons are dropped."""
     if not files:
         raise TestDedupError("files must be a non-empty sequence")
-    buckets: Dict[str, List[str]] = {}
+    buckets: dict[str, list[str]] = {}
     for f in files:
         buckets.setdefault(f.fingerprint, []).append(f.path)
-    clusters: List[DuplicateCluster] = []
-    for fingerprint, paths in buckets.items():
+    clusters: list[DuplicateCluster] = []
+    for paths in buckets.values():
         if len(paths) <= 1:
             continue
         sorted_paths = sorted(paths)
@@ -167,7 +169,7 @@ Embedder = Callable[[str], Sequence[float]]
 def _cosine(a: Sequence[float], b: Sequence[float]) -> float:
     if len(a) != len(b) or not a:
         raise TestDedupError("embeddings must be non-empty and equal-length")
-    dot = sum(x * y for x, y in zip(a, b))
+    dot = sum(x * y for x, y in zip(a, b, strict=False))
     norm_a = math.sqrt(sum(x * x for x in a))
     norm_b = math.sqrt(sum(x * x for x in b))
     if norm_a == 0 or norm_b == 0:
@@ -177,7 +179,7 @@ def _cosine(a: Sequence[float], b: Sequence[float]) -> float:
 
 def _summary_for(file: ActionFile) -> str:
     """Compact text representation an embedder will encode."""
-    parts: List[str] = []
+    parts: list[str] = []
     for action in file.actions[:25]:  # cap to keep embeddings stable
         if not isinstance(action, dict) or len(action) != 1:
             continue
@@ -189,7 +191,7 @@ def _summary_for(file: ActionFile) -> str:
             parts.append(name)
     return " | ".join(parts)
 
-def _embed_one(embedder: Embedder, file: ActionFile) -> List[float]:
+def _embed_one(embedder: Embedder, file: ActionFile) -> list[float]:
     """Call ``embedder`` for one file and validate the returned vector."""
     try:
         vector = embedder(_summary_for(file))
@@ -227,7 +229,7 @@ def semantic_clusters(
     embedder: Embedder,
     *,
     similarity_threshold: float = 0.92,
-) -> List[DuplicateCluster]:
+) -> list[DuplicateCluster]:
     """
     Group files whose summary embeddings are pairwise above
     ``similarity_threshold``. Uses simple agglomerative union-find; fine
@@ -244,11 +246,11 @@ def semantic_clusters(
             if _cosine(embeddings[i], embeddings[j]) >= similarity_threshold:
                 uf.union(i, j)
 
-    groups: Dict[int, List[int]] = {}
+    groups: dict[int, list[int]] = {}
     for i in range(len(files)):
         groups.setdefault(uf.find(i), []).append(i)
 
-    clusters: List[DuplicateCluster] = []
+    clusters: list[DuplicateCluster] = []
     for indices in groups.values():
         if len(indices) <= 1:
             continue
@@ -283,7 +285,7 @@ def clusters_markdown(clusters: Sequence[DuplicateCluster]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def stable_fingerprint(actions: Sequence[Dict[str, Any]]) -> str:
+def stable_fingerprint(actions: Sequence[dict[str, Any]]) -> str:
     """SHA-256 of the canonical fingerprint. Stable across processes."""
     raw = _canonicalise(actions)
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()

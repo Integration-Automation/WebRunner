@@ -20,7 +20,7 @@ import json
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Sequence
 
 from je_web_runner.utils.ai_assist.llm_assist import LLMAssistError, _invoke
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -48,12 +48,12 @@ class WalkthroughStep:
     action_command: str
     narration: str = ""
     summary: str = ""
-    kwargs: Dict[str, Any] = field(default_factory=dict)
-    screenshot_path: Optional[str] = None
-    screenshot_b64: Optional[str] = None
+    kwargs: dict[str, Any] = field(default_factory=dict)
+    screenshot_path: str | None = None
+    screenshot_b64: str | None = None
     screenshot_mime: str = "image/png"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -63,10 +63,10 @@ class Walkthrough:
 
     title: str
     description: str = ""
-    steps: List[WalkthroughStep] = field(default_factory=list)
+    steps: list[WalkthroughStep] = field(default_factory=list)
     audience: str = "end-user"  # "end-user" | "developer" | "support"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "title": self.title,
             "description": self.description,
@@ -80,9 +80,9 @@ class Walkthrough:
 def collect_steps(
     actions: Sequence[Any],
     *,
-    screenshots: Optional[Dict[int, Union[str, Path, bytes]]] = None,
+    screenshots: dict[int, str | Path | bytes] | None = None,
     skip_noise: bool = True,
-) -> List[WalkthroughStep]:
+) -> list[WalkthroughStep]:
     """
     把 action list 變成 walkthrough step。``screenshots`` 可選擇用 action
     index → 檔案路徑 / bytes 來附對應截圖。
@@ -92,7 +92,7 @@ def collect_steps(
             f"actions must be a sequence, got {type(actions).__name__}"
         )
     screenshots = screenshots or {}
-    steps: List[WalkthroughStep] = []
+    steps: list[WalkthroughStep] = []
     for idx, action in enumerate(actions):
         if not isinstance(action, list) or not action:
             continue
@@ -114,7 +114,7 @@ def collect_steps(
     return steps
 
 
-def _extract_kwargs(action: List[Any]) -> Dict[str, Any]:
+def _extract_kwargs(action: list[Any]) -> dict[str, Any]:
     if len(action) >= 3 and isinstance(action[2], dict):
         return action[2]
     if len(action) >= 2 and isinstance(action[1], dict):
@@ -123,7 +123,7 @@ def _extract_kwargs(action: List[Any]) -> Dict[str, Any]:
 
 
 def _attach_screenshot(
-    step: WalkthroughStep, source: Union[str, Path, bytes],
+    step: WalkthroughStep, source: str | Path | bytes,
 ) -> None:
     if isinstance(source, (bytes, bytearray)):
         step.screenshot_b64 = base64.b64encode(bytes(source)).decode("ascii")
@@ -165,9 +165,9 @@ _NARRATE_PROMPT = (
 _JSON_OBJECT_RE = re.compile(r"\{.*\}", re.DOTALL)
 
 
-def _summarise_kwargs(kwargs: Dict[str, Any]) -> str:
+def _summarise_kwargs(kwargs: dict[str, Any]) -> str:
     """Print kwargs compactly for the prompt — drop verbose payloads."""
-    out: Dict[str, Any] = {}
+    out: dict[str, Any] = {}
     for key in ("url", "test_object_name", "text", "value", "expected", "selector"):
         if key in kwargs:
             val = kwargs[key]
@@ -180,7 +180,7 @@ def _summarise_kwargs(kwargs: Dict[str, Any]) -> str:
 def narrate_steps(
     walkthrough: Walkthrough,
     *,
-    audience: Optional[str] = None,
+    audience: str | None = None,
 ) -> Walkthrough:
     """
     呼叫 LLM 對每個 step 補一句敘述。原 Walkthrough 物件被就地更新並回傳。
@@ -203,7 +203,7 @@ def narrate_steps(
     narrations = payload.get("steps")
     if not isinstance(narrations, list):
         raise WalkthroughError("LLM payload missing 'steps' list")
-    for step, narration in zip(walkthrough.steps, narrations):
+    for step, narration in zip(walkthrough.steps, narrations, strict=False):
         step.narration = str(narration or "").strip()
     web_runner_logger.info(
         f"narrate_steps: title={walkthrough.title!r} steps={len(walkthrough.steps)}"
@@ -211,7 +211,7 @@ def narrate_steps(
     return walkthrough
 
 
-def _parse_payload(text: str) -> Dict[str, Any]:
+def _parse_payload(text: str) -> dict[str, Any]:
     match = _JSON_OBJECT_RE.search(text)
     if match is None:
         raise WalkthroughError("LLM did not return a JSON object")
@@ -257,7 +257,7 @@ def render_confluence(walkthrough: Walkthrough) -> str:
     Confluence storage 格式(XHTML),用 ``<ac:image>`` + ``<ri:attachment>``。
     Caller is responsible for uploading screenshots as attachments first.
     """
-    pieces: List[str] = [
+    pieces: list[str] = [
         f"<h1>{_xml_escape(walkthrough.title or 'Walkthrough')}</h1>",
     ]
     if walkthrough.description:
@@ -301,7 +301,7 @@ def build_walkthrough(
     *,
     description: str = "",
     audience: str = "end-user",
-    screenshots: Optional[Dict[int, Union[str, Path, bytes]]] = None,
+    screenshots: dict[int, str | Path | bytes] | None = None,
     narrate: bool = True,
 ) -> Walkthrough:
     """
@@ -322,7 +322,7 @@ def build_walkthrough(
 
 def save_walkthrough(
     walkthrough: Walkthrough,
-    output_path: Union[str, Path],
+    output_path: str | Path,
     *,
     fmt: str = "markdown",
 ) -> Path:

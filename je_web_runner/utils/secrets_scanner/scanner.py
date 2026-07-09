@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -27,7 +27,7 @@ _SUSPICIOUS_KEY_RE = re.compile(
     re.IGNORECASE,
 )
 
-_PATTERNS: List[Dict[str, Any]] = [
+_PATTERNS: list[dict[str, Any]] = [
     {"id": "aws_access_key", "regex": re.compile(r"\bAKIA[0-9A-Z]{16}\b")},
     {"id": "github_token", "regex": re.compile(r"\bghp_[A-Za-z0-9]{36}\b")},
     {"id": "github_oauth", "regex": re.compile(r"\bgho_[A-Za-z0-9]{36}\b")},
@@ -51,16 +51,16 @@ def _looks_high_entropy(value: str) -> bool:
     return distinct >= 12
 
 
-def _scan_string(value: str, path: str) -> List[Dict[str, Any]]:
-    findings: List[Dict[str, Any]] = []
+def _scan_string(value: str, path: str) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
     for pattern in _PATTERNS:
         if pattern["regex"].search(value):
             findings.append({"path": path, "rule": pattern["id"], "preview": value[:60]})
     return findings
 
 
-def _scan_value_for_key(key: str, value: Any, path: str) -> List[Dict[str, Any]]:
-    findings: List[Dict[str, Any]] = []
+def _scan_value_for_key(key: str, value: Any, path: str) -> list[dict[str, Any]]:
+    findings: list[dict[str, Any]] = []
     if not isinstance(value, str):
         return findings
     if _SUSPICIOUS_KEY_RE.search(key) and _looks_high_entropy(value):
@@ -68,7 +68,7 @@ def _scan_value_for_key(key: str, value: Any, path: str) -> List[Dict[str, Any]]
     return findings
 
 
-def _walk(data: Any, path: str, findings: List[Dict[str, Any]]) -> None:
+def _walk(data: Any, path: str, findings: list[dict[str, Any]]) -> None:
     if isinstance(data, str):
         findings.extend(_scan_string(data, path))
         return
@@ -83,18 +83,18 @@ def _walk(data: Any, path: str, findings: List[Dict[str, Any]]) -> None:
             _walk(item, f"{path}[{index}]", findings)
 
 
-def scan_action(data: Any) -> List[Dict[str, Any]]:
+def scan_action(data: Any) -> list[dict[str, Any]]:
     """
     掃描 action 結構，回傳所有疑似秘密的位置
     Scan an action structure and return a list of {path, rule, preview} findings.
     """
     web_runner_logger.info("scan_action")
-    findings: List[Dict[str, Any]] = []
+    findings: list[dict[str, Any]] = []
     _walk(data, "", findings)
     return findings
 
 
-def scan_action_file(path: str) -> List[Dict[str, Any]]:
+def scan_action_file(path: str) -> list[dict[str, Any]]:
     """讀取 action JSON 檔並掃描 / Load an action JSON file and scan it."""
     file_path = Path(path)
     if not file_path.exists():

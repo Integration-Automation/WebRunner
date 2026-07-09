@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -41,13 +41,13 @@ _PREFERRED_KWARGS_ORDER = (
 )
 
 
-def _sorted_kwargs(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+def _sorted_kwargs(kwargs: dict[str, Any]) -> dict[str, Any]:
     """Return kwargs with the canonical key order applied."""
     if not isinstance(kwargs, dict):
         raise ActionFormatterError("action kwargs must be a dict")
     preferred_present = [k for k in _PREFERRED_KWARGS_ORDER if k in kwargs]
-    rest = sorted(k for k in kwargs.keys() if k not in _PREFERRED_KWARGS_ORDER)
-    ordered: Dict[str, Any] = {}
+    rest = sorted(k for k in kwargs if k not in _PREFERRED_KWARGS_ORDER)
+    ordered: dict[str, Any] = {}
     for key in preferred_present + rest:
         value = kwargs[key]
         ordered[key] = _canonicalise(value)
@@ -62,7 +62,7 @@ def _canonicalise(value: Any) -> Any:
     return value
 
 
-def _format_action_line(action: List[Any]) -> str:
+def _format_action_line(action: list[Any]) -> str:
     if not isinstance(action, list) or not action:
         raise ActionFormatterError(f"action must be a non-empty list: {action!r}")
     command = action[0]
@@ -100,7 +100,7 @@ def _format_action_line(action: List[Any]) -> str:
     )
 
 
-def format_actions(actions: List[Any], indent: int = 2) -> str:
+def format_actions(actions: list[Any], indent: int = 2) -> str:
     """
     把 action list 轉成 canonical 多行 JSON。``indent`` 為頂層 array 縮排空白數。
     Format an action list as canonical JSON. Each action lives on its own
@@ -126,8 +126,8 @@ def format_text(text: str, indent: int = 2) -> str:
     return format_actions(actions, indent=indent)
 
 
-def format_file(path: Union[str, Path], write: bool = True,
-                indent: int = 2) -> Tuple[str, bool]:
+def format_file(path: str | Path, write: bool = True,
+                indent: int = 2) -> tuple[str, bool]:
     """
     讀檔、格式化、（可選）寫回；回傳 ``(formatted_text, changed)``。
     Reformat ``path``. When ``write`` is True the file is rewritten only
@@ -141,5 +141,5 @@ def format_file(path: Union[str, Path], write: bool = True,
     formatted = format_text(original, indent=indent)
     changed = formatted != original
     if write and changed:
-        target.write_text(formatted, encoding="utf-8")
+        target.write_text(formatted, encoding="utf-8")  # NOSONAR S2083 — developer-supplied path (own action-JSON file), not untrusted input
     return formatted, changed

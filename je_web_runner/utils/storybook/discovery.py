@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Union
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -25,7 +25,7 @@ class StorybookStory:
     title: str
     name: str
     kind: str = "story"
-    parameters: Optional[Dict[str, Any]] = None
+    parameters: dict[str, Any] | None = None
 
     @property
     def iframe_path(self) -> str:
@@ -34,9 +34,9 @@ class StorybookStory:
 
 
 def discover_stories(
-    source: Union[str, Path, Dict[str, Any]],
+    source: str | Path | dict[str, Any],
     skip_examples: bool = True,
-) -> List[StorybookStory]:
+) -> list[StorybookStory]:
     """
     從 ``index.json`` / ``stories.json`` 抽出每個 story 的最小描述
     Read a Storybook index file (or in-memory dict) and return the list of
@@ -44,7 +44,7 @@ def discover_stories(
     that the default-init template ships with.
     """
     items = _entries_map(_load(source))
-    stories: List[StorybookStory] = []
+    stories: list[StorybookStory] = []
     for story_id, payload in items.items():
         story = _story_from_entry(story_id, payload, skip_examples)
         if story is not None:
@@ -52,7 +52,7 @@ def discover_stories(
     return stories
 
 
-def _entries_map(document: Dict[str, Any]) -> Dict[str, Any]:
+def _entries_map(document: dict[str, Any]) -> dict[str, Any]:
     items = document.get("entries") or document.get("stories")
     if items is None:
         raise StorybookError("index missing 'entries' / 'stories' map")
@@ -62,7 +62,7 @@ def _entries_map(document: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _story_from_entry(story_id: Any, payload: Any,
-                      skip_examples: bool) -> Optional[StorybookStory]:
+                      skip_examples: bool) -> StorybookStory | None:
     if not isinstance(payload, dict):
         raise StorybookError(f"entry {story_id!r} must be an object")
     kind = str(payload.get("type") or payload.get("kind") or "story")
@@ -82,7 +82,7 @@ def _story_from_entry(story_id: Any, payload: Any,
     )
 
 
-def _load(source: Union[str, Path, Dict[str, Any]]) -> Dict[str, Any]:
+def _load(source: str | Path | dict[str, Any]) -> dict[str, Any]:
     if isinstance(source, dict):
         return source
     if isinstance(source, (str, Path)):
@@ -102,8 +102,8 @@ def plan_actions_for_stories(
     *,
     run_a11y: bool = True,
     capture_screenshot: bool = True,
-    extra_per_story: Optional[Sequence[List[Any]]] = None,
-) -> List[List[Any]]:
+    extra_per_story: Sequence[list[Any]] | None = None,
+) -> list[list[Any]]:
     """
     對每個 story 產生 ``[navigate, optional a11y, optional screenshot, extras]``。
     Build a flat action list that visits each story under ``base_url`` and
@@ -113,7 +113,7 @@ def plan_actions_for_stories(
     if not isinstance(base_url, str) or not base_url:
         raise StorybookError("base_url must be non-empty")
     base_url = base_url.rstrip("/")
-    actions: List[List[Any]] = []
+    actions: list[list[Any]] = []
     extras = list(extra_per_story or [])
     for story in stories:
         url = f"{base_url}/{story.iframe_path}"
@@ -129,6 +129,6 @@ def plan_actions_for_stories(
 def filter_stories_by_kind(
     stories: Iterable[StorybookStory],
     kind_prefix: str,
-) -> List[StorybookStory]:
+) -> list[StorybookStory]:
     """Return stories whose ``title`` starts with ``kind_prefix``."""
     return [s for s in stories if s.title.startswith(kind_prefix)]

@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Protocol, Sequence
+from typing import Any, Protocol, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -114,18 +114,18 @@ class Finding:
     severity: Severity
     leaked: bool
     response_excerpt: str
-    matched_indicators: List[str] = field(default_factory=list)
+    matched_indicators: list[str] = field(default_factory=list)
     refused: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "severity": self.severity.value}
 
 
 @dataclass
 class ScanReport:
-    findings: List[Finding] = field(default_factory=list)
+    findings: list[Finding] = field(default_factory=list)
 
-    def leaks(self) -> List[Finding]:
+    def leaks(self) -> list[Finding]:
         return [f for f in self.findings if f.leaked]
 
     def passed(self) -> bool:

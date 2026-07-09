@@ -7,7 +7,6 @@ Playwright only supports the unpacked-directory flag (Chromium only).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import List, Optional
 
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 
@@ -30,7 +29,7 @@ def _check_path(path: str, expect_dir: bool = False) -> Path:
 
 def selenium_chrome_options_with_extension(
     crx_or_dir: str,
-    options: Optional[ChromeOptions] = None,
+    options: ChromeOptions | None = None,
 ) -> ChromeOptions:
     """
     回傳已掛上擴充功能的 ChromeOptions
@@ -47,7 +46,7 @@ def selenium_chrome_options_with_extension(
     return opts
 
 
-def playwright_extension_launch_args(extension_dir: str) -> List[str]:
+def playwright_extension_launch_args(extension_dir: str) -> list[str]:
     """
     回傳給 ``pw_launch(args=...)`` 用的旗標清單（Chromium only）
     Build the ``args=[...]`` list to pass to ``pw_launch`` so the persistent

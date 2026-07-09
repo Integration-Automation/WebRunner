@@ -16,7 +16,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 from dataclasses import dataclass
-from typing import Callable, List, Sequence
+from typing import Callable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -46,7 +46,7 @@ _VERB_PREFIX = re.compile(
 
 @dataclass
 class DiffStat:
-    files: List[str]
+    files: list[str]
     additions: int = 0
     deletions: int = 0
 

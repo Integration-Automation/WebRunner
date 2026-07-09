@@ -9,7 +9,6 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -102,7 +101,7 @@ _SCHEMA_HINT = {
 }
 
 
-def starter_files() -> List[StarterFile]:
+def starter_files() -> list[StarterFile]:
     """Return the full list of files written by :func:`init_workspace`."""
     return [
         StarterFile(
@@ -131,8 +130,8 @@ def starter_files() -> List[StarterFile]:
 def init_workspace(
     directory: str,
     overwrite: bool = False,
-    files_to_write: List[StarterFile] = None,
-) -> Dict[str, str]:
+    files_to_write: list[StarterFile] | None = None,
+) -> dict[str, str]:
     """
     建立 starter 結構。回傳 ``{relative_path: 'created' | 'skipped'}``。
     Write each starter file under ``directory``; existing files are skipped
@@ -143,7 +142,7 @@ def init_workspace(
         raise BootstrapError(f"target {directory!r} is not a directory")
     base.mkdir(parents=True, exist_ok=True)
     files = files_to_write if files_to_write is not None else starter_files()
-    report: Dict[str, str] = {}
+    report: dict[str, str] = {}
     for entry in files:
         target = base / entry.relative_path
         if target.exists() and not overwrite:

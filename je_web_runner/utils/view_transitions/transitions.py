@@ -16,7 +16,7 @@ This module:
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -114,27 +114,27 @@ class TransitionRun:
 
     id: str
     started_at: float
-    finished_at: Optional[float] = None
-    duration_ms: Optional[float] = None
-    error: Optional[str] = None
+    finished_at: float | None = None
+    duration_ms: float | None = None
+    error: str | None = None
     layout_shifts: float = 0.0
     max_shift_value: float = 0.0
-    groups: List[str] = field(default_factory=list)
+    groups: list[str] = field(default_factory=list)
 
     def is_finished(self) -> bool:
         return self.finished_at is not None and self.error is None
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def parse_log(log: Sequence[Dict[str, Any]]) -> List[TransitionRun]:
+def parse_log(log: Sequence[dict[str, Any]]) -> list[TransitionRun]:
     """Convert the harvested ``window.__wr_vt_log__`` array into typed runs."""
     if not isinstance(log, list):
         raise ViewTransitionsError(
             f"parse_log expects list, got {type(log).__name__}"
         )
-    runs: List[TransitionRun] = []
+    runs: list[TransitionRun] = []
     for entry in log:
         if not isinstance(entry, dict):
             continue
@@ -156,7 +156,7 @@ def parse_log(log: Sequence[Dict[str, Any]]) -> List[TransitionRun]:
     return runs
 
 
-def _coerce_optional_float(value: Any) -> Optional[float]:
+def _coerce_optional_float(value: Any) -> float | None:
     if value is None:
         return None
     try:
@@ -187,7 +187,7 @@ def assert_under_duration(
     """Assert each finished run's duration is ``<= max_duration_ms``."""
     if max_duration_ms <= 0:
         raise ViewTransitionsError("max_duration_ms must be > 0")
-    breaches: List[str] = []
+    breaches: list[str] = []
     for r in runs:
         if r.duration_ms is None:
             continue
@@ -208,7 +208,7 @@ def assert_cls_under(
     """Assert cumulative layout-shift and per-shift caps are respected."""
     if max_cls < 0 or max_single_shift < 0:
         raise ViewTransitionsError("cls thresholds must be >= 0")
-    breaches: List[str] = []
+    breaches: list[str] = []
     for r in runs:
         if r.layout_shifts > max_cls:
             breaches.append(f"{r.id}: cumulative {r.layout_shifts:.3f} > {max_cls}")

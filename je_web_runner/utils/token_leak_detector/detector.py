@@ -14,7 +14,7 @@ import base64
 import json
 import re
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List, Optional, Pattern, Sequence, Union
+from typing import Any, Iterable, Pattern, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -114,7 +114,7 @@ class TokenFinding:
     source: str  # 'response_body' | 'har' | 'log' | caller-provided
     location: str = ""  # url / request id / log line offset
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -139,7 +139,7 @@ def _looks_like_jwt(value: str) -> bool:
 
 # ---------- core scan ---------------------------------------------------
 
-def _extract_token(match: "re.Match[str]") -> str:
+def _extract_token(match: re.Match[str]) -> str:
     return match.group(1) if match.groups() else match.group(0)
 
 
@@ -155,8 +155,8 @@ def _accepts_token(pattern: TokenPattern, token: str) -> bool:
 def _scan_with_pattern(
     pattern: TokenPattern, text: str, source: str, location: str,
     seen: set,
-) -> List[TokenFinding]:
-    out: List[TokenFinding] = []
+) -> list[TokenFinding]:
+    out: list[TokenFinding] = []
     for match in pattern.pattern.finditer(text):
         token = _extract_token(match)
         if not _accepts_token(pattern, token):
@@ -182,18 +182,18 @@ def scan_text(
     source: str = "text",
     location: str = "",
     patterns: Sequence[TokenPattern] = DEFAULT_PATTERNS,
-) -> List[TokenFinding]:
+) -> list[TokenFinding]:
     """Apply each pattern against ``text`` and return deduped findings."""
     if not isinstance(text, str):
         raise TokenLeakError(f"scan_text expects str, got {type(text).__name__}")
     seen: set = set()
-    findings: List[TokenFinding] = []
+    findings: list[TokenFinding] = []
     for pattern in patterns:
         findings.extend(_scan_with_pattern(pattern, text, source, location, seen))
     return findings
 
 
-def _har_body_text(entry: Dict[str, Any], direction: str) -> Optional[str]:
+def _har_body_text(entry: dict[str, Any], direction: str) -> str | None:
     """Return the body text of one HAR direction, or None when absent."""
     if direction == "request":
         content = (entry.get("request") or {}).get("postData") or {}
@@ -206,14 +206,14 @@ def _har_body_text(entry: Dict[str, Any], direction: str) -> Optional[str]:
 
 
 def scan_har(
-    har: Union[str, Dict[str, Any]],
+    har: str | dict[str, Any],
     *,
     patterns: Sequence[TokenPattern] = DEFAULT_PATTERNS,
-) -> List[TokenFinding]:
+) -> list[TokenFinding]:
     """Scan request/response bodies in a HAR object/string."""
     har_obj = _coerce_har(har)
     entries = ((har_obj.get("log") or {}).get("entries")) or []
-    out: List[TokenFinding] = []
+    out: list[TokenFinding] = []
     for entry in entries:
         if not isinstance(entry, dict):
             continue
@@ -228,7 +228,7 @@ def scan_har(
     return out
 
 
-def _coerce_har(har: Union[str, Dict[str, Any]]) -> Dict[str, Any]:
+def _coerce_har(har: str | dict[str, Any]) -> dict[str, Any]:
     if isinstance(har, str):
         try:
             parsed = json.loads(har)
@@ -246,9 +246,9 @@ def scan_log_lines(
     lines: Iterable[str],
     *,
     patterns: Sequence[TokenPattern] = DEFAULT_PATTERNS,
-) -> List[TokenFinding]:
+) -> list[TokenFinding]:
     """Scan an iterable of log lines (file, stream, ledger)."""
-    out: List[TokenFinding] = []
+    out: list[TokenFinding] = []
     for index, line in enumerate(lines):
         if not isinstance(line, str):
             continue
@@ -275,7 +275,7 @@ def filter_by_severity(
     findings: Sequence[TokenFinding],
     *,
     minimum: str = "high",
-) -> List[TokenFinding]:
+) -> list[TokenFinding]:
     """Keep findings at or above ``minimum`` severity."""
     order = {"low": 0, "medium": 1, "high": 2, "critical": 3}
     if minimum not in order:

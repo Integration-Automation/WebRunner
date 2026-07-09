@@ -15,7 +15,7 @@ counts + violations.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Hashable, List, Optional, Protocol
+from typing import Any, Callable, Hashable, Protocol
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -30,8 +30,8 @@ class PaginationAuditError(WebRunnerException):
 class Page:
     """One fetched page."""
 
-    items: List[Any]
-    next_cursor: Optional[Any] = None
+    items: list[Any]
+    next_cursor: Any | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.items, list):
@@ -41,7 +41,7 @@ class Page:
 class PageFetcher(Protocol):
     """Caller-supplied fetcher."""
 
-    def __call__(self, cursor: Optional[Any]) -> Page: ...
+    def __call__(self, cursor: Any | None) -> Page: ...
 
 
 KeyFn = Callable[[Any], Hashable]
@@ -57,12 +57,12 @@ class PaginationFindings:
     page_count: int = 0
     total_items: int = 0
     unique_items: int = 0
-    duplicates: List[Hashable] = field(default_factory=list)
-    duplicate_pages: Dict[Hashable, List[int]] = field(default_factory=dict)
-    empty_pages: List[int] = field(default_factory=list)
+    duplicates: list[Hashable] = field(default_factory=list)
+    duplicate_pages: dict[Hashable, list[int]] = field(default_factory=dict)
+    empty_pages: list[int] = field(default_factory=list)
     cursor_loop: bool = False
     hit_max_pages: bool = False
-    item_keys_by_page: List[List[Hashable]] = field(default_factory=list)
+    item_keys_by_page: list[list[Hashable]] = field(default_factory=list)
 
     def passed(self) -> bool:
         return not self.duplicates and not self.cursor_loop and not self.hit_max_pages
@@ -73,7 +73,7 @@ def walk_all_pages(  # NOSONAR S3776 — cohesive logic; planned refactor in fol
     key_fn: KeyFn,
     *,
     max_pages: int = 1_000,
-    initial_cursor: Optional[Any] = None,
+    initial_cursor: Any | None = None,
 ) -> PaginationFindings:
     """
     Iterate pages until ``next_cursor`` is None (or ``max_pages`` reached),
@@ -88,8 +88,8 @@ def walk_all_pages(  # NOSONAR S3776 — cohesive logic; planned refactor in fol
 
     findings = PaginationFindings()
     seen_cursors: set = set()
-    seen_items: Dict[Hashable, List[int]] = {}
-    cursor: Optional[Any] = initial_cursor
+    seen_items: dict[Hashable, list[int]] = {}
+    cursor: Any | None = initial_cursor
     page_index = 0
     while page_index < max_pages:
         try:
@@ -103,7 +103,7 @@ def walk_all_pages(  # NOSONAR S3776 — cohesive logic; planned refactor in fol
                 f"fetcher must return Page, got {type(page).__name__}"
             )
         findings.page_count = page_index + 1
-        page_keys: List[Hashable] = []
+        page_keys: list[Hashable] = []
         for item in page.items:
             try:
                 key = key_fn(item)
@@ -209,9 +209,16 @@ def assert_sorted_by(
     """
     if not callable(items_by_page_key):
         raise PaginationAuditError("items_by_page_key must be callable")
-    flattened: List[Hashable] = [
-        key for page_keys in findings.item_keys_by_page for key in page_keys
-    ]
+    try:
+        flattened: list[Hashable] = [
+            items_by_page_key(key)
+            for page_keys in findings.item_keys_by_page
+            for key in page_keys
+        ]
+    except Exception as error:
+        raise PaginationAuditError(
+            f"items_by_page_key failed: {error!r}"
+        ) from error
     if not flattened:
         return
     last = flattened[0]

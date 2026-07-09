@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from typing import Any, Optional
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -40,13 +40,19 @@ async function refresh(){
     document.getElementById('summary').textContent =
       `total=${data.total}  passed=${data.passed}  failed=${data.failed}`;
     const rows = document.getElementById('rows');
-    rows.innerHTML = '';
+    rows.replaceChildren();
     data.records.forEach((r, i) => {
       const tr = document.createElement('tr');
       tr.className = r.status === 'failed' ? 'fail' : 'ok';
-      tr.innerHTML = `<td>${i+1}</td><td>${r.time||''}</td>
-        <td>${r.function_name||''}</td><td>${r.status}</td>
-        <td>${r.exception||''}</td>`;
+      // Use textContent (never innerHTML) so recorded values — function
+      // names and exception text that may quote page content from a site
+      // under test — cannot inject HTML/script into this origin.
+      [i + 1, r.time || '', r.function_name || '', r.status, r.exception || '']
+        .forEach((value) => {
+          const td = document.createElement('td');
+          td.textContent = value;
+          tr.appendChild(td);
+        });
       rows.appendChild(tr);
     });
   } catch (e) { /* ignore — keep polling */ }
@@ -84,7 +90,7 @@ class _Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def do_GET(self):  # noqa: N802 — http.server convention
+    def do_GET(self):
         if self.path == "/" or self.path == "/index.html":
             self._send(200, _INDEX_HTML.encode("utf-8"), "text/html; charset=utf-8")
             return
@@ -107,8 +113,8 @@ class LiveDashboard:
     def __init__(self, host: str = "127.0.0.1", port: int = 0) -> None:
         self._host = host
         self._port = int(port)
-        self._server: Optional[ThreadingHTTPServer] = None
-        self._thread: Optional[threading.Thread] = None
+        self._server: ThreadingHTTPServer | None = None
+        self._thread: threading.Thread | None = None
 
     @property
     def address(self) -> str:

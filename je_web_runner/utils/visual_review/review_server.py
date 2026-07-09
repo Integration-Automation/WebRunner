@@ -15,7 +15,7 @@ import threading
 from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Callable
 from urllib.parse import parse_qs, urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -29,16 +29,16 @@ class VisualReviewError(WebRunnerException):
 @dataclass
 class _Pair:
     name: str
-    baseline: Optional[Path]
-    current: Optional[Path]
+    baseline: Path | None
+    current: Path | None
     status: str  # "match" | "diff" | "missing-baseline" | "missing-current"
 
 
-def _pairs(baseline_dir: Path, current_dir: Path) -> List[_Pair]:
+def _pairs(baseline_dir: Path, current_dir: Path) -> list[_Pair]:
     baseline_files = {p.name: p for p in baseline_dir.glob("*.png")} if baseline_dir.is_dir() else {}
     current_files = {p.name: p for p in current_dir.glob("*.png")} if current_dir.is_dir() else {}
     names = sorted(set(baseline_files) | set(current_files))
-    pairs: List[_Pair] = []
+    pairs: list[_Pair] = []
     for name in names:
         baseline = baseline_files.get(name)
         current = current_files.get(name)
@@ -53,7 +53,7 @@ def _pairs(baseline_dir: Path, current_dir: Path) -> List[_Pair]:
     return pairs
 
 
-def list_diffs(baseline_dir: str, current_dir: str) -> List[Dict[str, str]]:
+def list_diffs(baseline_dir: str, current_dir: str) -> list[dict[str, str]]:
     """Return ``[{name, status}]`` for every paired snapshot."""
     pairs = _pairs(Path(baseline_dir), Path(current_dir))
     return [{"name": p.name, "status": p.status} for p in pairs]
@@ -149,9 +149,9 @@ class VisualReviewServer:
         self.current_dir = current_dir
         self.host = host
         self.port = port
-        self._server: Optional[HTTPServer] = None
-        self._thread: Optional[threading.Thread] = None
-        self.accepted: List[str] = []
+        self._server: HTTPServer | None = None
+        self._thread: threading.Thread | None = None
+        self.accepted: list[str] = []
 
     def start(self) -> str:
         if self._server is not None:
@@ -193,7 +193,7 @@ def _make_handler(server: VisualReviewServer) -> Callable:
             self.end_headers()
             self.wfile.write(body)
 
-        def do_GET(self):  # noqa: N802
+        def do_GET(self):
             parsed = urlparse(self.path)
             if parsed.path in {"/", "/index.html"}:
                 self._send(
@@ -221,7 +221,7 @@ def _make_handler(server: VisualReviewServer) -> Callable:
                 return
             self._send(200, target.read_bytes(), "image/png")
 
-        def do_POST(self):  # noqa: N802
+        def do_POST(self):
             if self.path != "/accept":
                 self._send(404, b"not found", _TEXT_PLAIN)
                 return

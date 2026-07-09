@@ -15,7 +15,7 @@ from __future__ import annotations
 import fnmatch
 from collections import Counter
 from dataclasses import dataclass, field
-from typing import Iterable, List, Optional, Sequence
+from typing import Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -33,13 +33,13 @@ class BlameLine:
 @dataclass
 class CodeownersRule:
     pattern: str
-    owners: List[str] = field(default_factory=list)
+    owners: list[str] = field(default_factory=list)
 
 
-def parse_codeowners(text: str) -> List[CodeownersRule]:
+def parse_codeowners(text: str) -> list[CodeownersRule]:
     if not isinstance(text, str):
         raise BlameOwnerError("CODEOWNERS text must be a string")
-    rules: List[CodeownersRule] = []
+    rules: list[CodeownersRule] = []
     for raw_line in text.splitlines():
         line = raw_line.split("#", 1)[0].strip()
         if not line:
@@ -61,11 +61,11 @@ def _glob_match(path: str, pattern: str) -> bool:
 
 def owners_from_codeowners(
     rules: Sequence[CodeownersRule], test_path: str,
-) -> List[str]:
+) -> list[str]:
     """The *last* matching rule wins, per GitHub semantics."""
     if not isinstance(test_path, str) or not test_path:
         raise BlameOwnerError("test_path must be non-empty")
-    selected: Optional[CodeownersRule] = None
+    selected: CodeownersRule | None = None
     for rule in rules:
         if _glob_match(test_path, rule.pattern):
             selected = rule
@@ -74,7 +74,7 @@ def owners_from_codeowners(
 
 def owners_from_blame(
     blame: Iterable[BlameLine],
-) -> List[str]:
+) -> list[str]:
     counts = Counter(b.author for b in blame if b.author)
     return [name for name, _ in counts.most_common(3)]
 
@@ -82,7 +82,7 @@ def owners_from_blame(
 @dataclass
 class OwnerVerdict:
     primary: str
-    backups: List[str] = field(default_factory=list)
+    backups: list[str] = field(default_factory=list)
     source: str = ""   # "codeowners" | "blame" | "head" | "default"
 
 

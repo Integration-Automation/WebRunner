@@ -25,7 +25,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -35,7 +35,7 @@ class OpenAPIGeneratorError(WebRunnerException):
     """Raised when the spec is unreadable or required fields are missing."""
 
 
-SUPPORTED_METHODS: Tuple[str, ...] = (
+SUPPORTED_METHODS: tuple[str, ...] = (
     "get", "post", "put", "patch", "delete", "head", "options",
 )
 
@@ -48,10 +48,10 @@ class GeneratedTest:
     method: str
     path: str
     expected_status: int
-    actions: List[Any]
+    actions: list[Any]
     scenario: str  # "happy" | "missing_body" | "bad_path_param" | etc.
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "method": self.method,
@@ -68,10 +68,10 @@ class GenerationResult:
 
     spec_title: str
     base_url: str
-    tests: List[GeneratedTest] = field(default_factory=list)
-    skipped: List[Dict[str, str]] = field(default_factory=list)
+    tests: list[GeneratedTest] = field(default_factory=list)
+    skipped: list[dict[str, str]] = field(default_factory=list)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "spec_title": self.spec_title,
             "base_url": self.base_url,
@@ -82,7 +82,7 @@ class GenerationResult:
 
 # ---------- spec loading ------------------------------------------------
 
-def load_spec(spec_path: Union[str, Path]) -> Dict[str, Any]:
+def load_spec(spec_path: str | Path) -> dict[str, Any]:
     """
     讀 JSON 或 YAML 格式的 OpenAPI spec。
     YAML support is soft-dependency on ``PyYAML``; JSON specs work without.
@@ -115,7 +115,7 @@ def load_spec(spec_path: Union[str, Path]) -> Dict[str, Any]:
 _REF_RE = re.compile(r"^#/(.+)$")
 
 
-def _resolve_ref(spec: Dict[str, Any], ref: str) -> Any:
+def _resolve_ref(spec: dict[str, Any], ref: str) -> Any:
     match = _REF_RE.match(ref or "")
     if not match:
         return None
@@ -128,7 +128,7 @@ def _resolve_ref(spec: Dict[str, Any], ref: str) -> Any:
     return node
 
 
-def _maybe_resolve(spec: Dict[str, Any], schema: Any, *, depth: int = 0) -> Any:
+def _maybe_resolve(spec: dict[str, Any], schema: Any, *, depth: int = 0) -> Any:
     if depth > 6 or not isinstance(schema, dict):
         return schema
     if "$ref" in schema:
@@ -141,7 +141,7 @@ def _maybe_resolve(spec: Dict[str, Any], schema: Any, *, depth: int = 0) -> Any:
 
 # ---------- example synthesis ------------------------------------------
 
-_TYPE_DEFAULTS: Dict[str, Any] = {
+_TYPE_DEFAULTS: dict[str, Any] = {
     "string": "sample",
     "integer": 1,
     "number": 1.0,
@@ -152,7 +152,7 @@ _TYPE_DEFAULTS: Dict[str, Any] = {
 
 
 def synthesize_example(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
-    spec: Dict[str, Any],
+    spec: dict[str, Any],
     schema: Any,
     *,
     depth: int = 0,
@@ -183,7 +183,7 @@ def synthesize_example(  # NOSONAR S3776 — cohesive logic; planned refactor in
         return copy.deepcopy(schema["default"])
     schema_type = schema.get("type")
     if schema_type == "object" or "properties" in schema:
-        out: Dict[str, Any] = {}
+        out: dict[str, Any] = {}
         properties = schema.get("properties") or {}
         required = set(schema.get("required") or [])
         for key, prop in properties.items():
@@ -205,7 +205,7 @@ def synthesize_example(  # NOSONAR S3776 — cohesive logic; planned refactor in
 
 # ---------- url assembly ------------------------------------------------
 
-def _base_url(spec: Dict[str, Any]) -> str:
+def _base_url(spec: dict[str, Any]) -> str:
     """Honour OpenAPI 3 ``servers`` first, then Swagger 2 ``host`` + ``basePath``."""
     servers = spec.get("servers")
     if isinstance(servers, list) and servers:
@@ -231,14 +231,14 @@ _PATH_PARAM_RE = re.compile(r"\{([^{}]+)\}")
 
 def _expand_path(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     template: str,
-    parameters: List[Dict[str, Any]],
-    spec: Dict[str, Any],
+    parameters: list[dict[str, Any]],
+    spec: dict[str, Any],
     *,
-    invalid_param: Optional[str] = None,
-) -> Tuple[str, Dict[str, Any]]:
+    invalid_param: str | None = None,
+) -> tuple[str, dict[str, Any]]:
     """Returns ``(expanded_path, query_params)``."""
     resolved = template
-    query: Dict[str, Any] = {}
+    query: dict[str, Any] = {}
     for raw_param in parameters:
         param = _maybe_resolve(spec, raw_param)
         if not isinstance(param, dict):
@@ -267,13 +267,13 @@ def _action_command(method: str) -> str:
 
 # ---------- auth heuristics --------------------------------------------
 
-def _auth_headers(spec: Dict[str, Any]) -> Dict[str, str]:
+def _auth_headers(spec: dict[str, Any]) -> dict[str, str]:
     """
     粗略偵測 Bearer / API-key,塞 ``${TOKEN}`` placeholder 讓 env_loader 補。
     """
     components = spec.get("components") or {}
     security_schemes = components.get("securitySchemes") or spec.get("securityDefinitions") or {}
-    headers: Dict[str, str] = {}
+    headers: dict[str, str] = {}
     if not isinstance(security_schemes, dict):
         return headers
     for scheme in security_schemes.values():
@@ -296,11 +296,11 @@ def _build_action(
     base_url: str,
     *,
     body: Any = None,
-    query: Optional[Dict[str, Any]] = None,
-    headers: Optional[Dict[str, str]] = None,
+    query: dict[str, Any] | None = None,
+    headers: dict[str, str] | None = None,
     timeout: int = 15,
-) -> List[Any]:
-    kwargs: Dict[str, Any] = {"url": f"{base_url}{path}", "timeout": timeout}
+) -> list[Any]:
+    kwargs: dict[str, Any] = {"url": f"{base_url}{path}", "timeout": timeout}
     if query:
         kwargs["params"] = query
     if headers:
@@ -310,7 +310,7 @@ def _build_action(
     return [_action_command(method), kwargs]
 
 
-def _request_body_example(spec: Dict[str, Any], operation: Dict[str, Any]) -> Any:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+def _request_body_example(spec: dict[str, Any], operation: dict[str, Any]) -> Any:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
     body = operation.get("requestBody")
     if isinstance(body, dict):
         body = _maybe_resolve(spec, body)
@@ -334,7 +334,7 @@ def _request_body_example(spec: Dict[str, Any], operation: Dict[str, Any]) -> An
     return None
 
 
-def _success_status(operation: Dict[str, Any]) -> int:
+def _success_status(operation: dict[str, Any]) -> int:
     responses = operation.get("responses") or {}
     if not isinstance(responses, dict):
         return 200
@@ -347,7 +347,7 @@ def _success_status(operation: Dict[str, Any]) -> int:
     return 200
 
 
-def _operation_name(method: str, path: str, operation: Dict[str, Any]) -> str:
+def _operation_name(method: str, path: str, operation: dict[str, Any]) -> str:
     op_id = operation.get("operationId")
     if isinstance(op_id, str) and op_id:
         return op_id
@@ -356,12 +356,12 @@ def _operation_name(method: str, path: str, operation: Dict[str, Any]) -> str:
 
 
 def _build_happy_test(
-    spec: Dict[str, Any],
+    spec: dict[str, Any],
     base_url: str,
     method: str,
     path: str,
-    operation: Dict[str, Any],
-    extra_headers: Dict[str, str],
+    operation: dict[str, Any],
+    extra_headers: dict[str, str],
 ) -> GeneratedTest:
     parameters = list(operation.get("parameters") or [])
     expanded_path, query = _expand_path(path, parameters, spec)
@@ -386,13 +386,13 @@ def _build_happy_test(
 
 
 def _build_missing_body_test(
-    spec: Dict[str, Any],
+    spec: dict[str, Any],
     base_url: str,
     method: str,
     path: str,
-    operation: Dict[str, Any],
-    extra_headers: Dict[str, str],
-) -> Optional[GeneratedTest]:
+    operation: dict[str, Any],
+    extra_headers: dict[str, str],
+) -> GeneratedTest | None:
     if method.lower() not in {"post", "put", "patch"}:
         return None
     if not operation.get("requestBody") and not any(
@@ -421,13 +421,13 @@ def _build_missing_body_test(
 
 
 def _build_bad_path_param_test(
-    spec: Dict[str, Any],
+    spec: dict[str, Any],
     base_url: str,
     method: str,
     path: str,
-    operation: Dict[str, Any],
-    extra_headers: Dict[str, str],
-) -> Optional[GeneratedTest]:
+    operation: dict[str, Any],
+    extra_headers: dict[str, str],
+) -> GeneratedTest | None:
     path_params = _PATH_PARAM_RE.findall(path)
     if not path_params:
         return None
@@ -455,7 +455,7 @@ def _build_bad_path_param_test(
 
 # ---------- public entry points ----------------------------------------
 
-def _validate_spec_shape(spec: Any) -> Dict[str, Any]:
+def _validate_spec_shape(spec: Any) -> dict[str, Any]:
     if not isinstance(spec, dict):
         raise OpenAPIGeneratorError("spec must be a dict")
     paths = spec.get("paths")
@@ -464,16 +464,16 @@ def _validate_spec_shape(spec: Any) -> Dict[str, Any]:
     return paths
 
 
-def _spec_title(spec: Dict[str, Any]) -> str:
+def _spec_title(spec: dict[str, Any]) -> str:
     info = spec.get("info")
     return str(((info or {}).get("title") or "") if isinstance(info, dict) else "")
 
 
 def _build_negative_tests(
-    spec: Dict[str, Any], base_url: str, method: str, path: str,
-    operation: Dict[str, Any], extra_headers: Dict[str, str],
-) -> List[GeneratedTest]:
-    out: List[GeneratedTest] = []
+    spec: dict[str, Any], base_url: str, method: str, path: str,
+    operation: dict[str, Any], extra_headers: dict[str, str],
+) -> list[GeneratedTest]:
+    out: list[GeneratedTest] = []
     missing = _build_missing_body_test(spec, base_url, method, path, operation, extra_headers)
     if missing:
         out.append(missing)
@@ -484,14 +484,14 @@ def _build_negative_tests(
 
 
 def _expand_operation(
-    spec: Dict[str, Any], base_url: str, path: str, method: str, operation: Any,
-    extra_headers: Dict[str, str], include_negative: bool,
-    skipped: List[Dict[str, str]],
-) -> List[GeneratedTest]:
+    spec: dict[str, Any], base_url: str, path: str, method: str, operation: Any,
+    extra_headers: dict[str, str], include_negative: bool,
+    skipped: list[dict[str, str]],
+) -> list[GeneratedTest]:
     if not isinstance(operation, dict):
         skipped.append({"path": path, "method": method, "reason": "operation not a dict"})
         return []
-    out: List[GeneratedTest] = [
+    out: list[GeneratedTest] = [
         _build_happy_test(spec, base_url, method, path, operation, extra_headers),
     ]
     if include_negative:
@@ -510,11 +510,11 @@ def _select_method(
 
 
 def generate_tests_from_spec(
-    spec: Dict[str, Any],
+    spec: dict[str, Any],
     *,
     include_negative: bool = True,
-    method_filter: Optional[Iterable[str]] = None,
-    path_prefix_filter: Optional[str] = None,
+    method_filter: Iterable[str] | None = None,
+    path_prefix_filter: str | None = None,
 ) -> GenerationResult:
     """
     從已 load 的 spec 直接產出 GenerationResult。
@@ -528,8 +528,8 @@ def generate_tests_from_spec(
     methods_lower = (
         {m.lower() for m in method_filter} if method_filter else set(SUPPORTED_METHODS)
     )
-    tests: List[GeneratedTest] = []
-    skipped: List[Dict[str, str]] = []
+    tests: list[GeneratedTest] = []
+    skipped: list[dict[str, str]] = []
     for path, operations in paths.items():
         if not isinstance(path, str) or not isinstance(operations, dict):
             continue
@@ -555,11 +555,11 @@ def generate_tests_from_spec(
 
 
 def generate_tests_from_file(
-    spec_path: Union[str, Path],
+    spec_path: str | Path,
     *,
     include_negative: bool = True,
-    method_filter: Optional[Iterable[str]] = None,
-    path_prefix_filter: Optional[str] = None,
+    method_filter: Iterable[str] | None = None,
+    path_prefix_filter: str | None = None,
 ) -> GenerationResult:
     """Convenience: load + generate in one shot."""
     spec = load_spec(spec_path)
@@ -573,12 +573,12 @@ def generate_tests_from_file(
 
 def write_tests_to_dir(
     result: GenerationResult,
-    output_dir: Union[str, Path],
-) -> List[Path]:
+    output_dir: str | Path,
+) -> list[Path]:
     """One JSON file per generated test (slug-named, sorted by name)."""
     target = Path(output_dir)
     target.mkdir(parents=True, exist_ok=True)
-    written: List[Path] = []
+    written: list[Path] = []
     for test in result.tests:
         slug = re.sub(r"[^A-Za-z0-9_-]+", "_", test.name).strip("_")
         path = target / f"{slug}.json"

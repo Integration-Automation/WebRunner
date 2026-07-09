@@ -15,7 +15,7 @@ checks the captured pairs against an attack payload.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, Iterable, List, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -71,11 +71,11 @@ class TaintFinding:
     canary: str
     snippet: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
-def make_canaries(test_name: str) -> List[str]:
+def make_canaries(test_name: str) -> list[str]:
     """Generate a couple of unique sentinel strings to inject as source
     values (location.hash, postMessage payload, etc.)."""
     if not isinstance(test_name, str) or not test_name:
@@ -86,10 +86,10 @@ def make_canaries(test_name: str) -> List[str]:
     ]
 
 
-def parse_findings(payload: Any) -> List[TaintFinding]:
+def parse_findings(payload: Any) -> list[TaintFinding]:
     if not isinstance(payload, list):
         raise DomXssTaintError("payload must be a list")
-    out: List[TaintFinding] = []
+    out: list[TaintFinding] = []
     for raw in payload:
         if not isinstance(raw, dict):
             continue

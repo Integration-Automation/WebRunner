@@ -8,7 +8,7 @@ so the helpers below detect the backend at runtime.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -21,16 +21,16 @@ class StateDiffError(WebRunnerException):
 class BrowserStateSnapshot:
     """One snapshot of cookies + localStorage + sessionStorage."""
 
-    cookies: Dict[str, Dict[str, Any]] = field(default_factory=dict)
-    local_storage: Dict[str, str] = field(default_factory=dict)
-    session_storage: Dict[str, str] = field(default_factory=dict)
+    cookies: dict[str, dict[str, Any]] = field(default_factory=dict)
+    local_storage: dict[str, str] = field(default_factory=dict)
+    session_storage: dict[str, str] = field(default_factory=dict)
 
 
 @dataclass
 class StateChanges:
-    added: Dict[str, Any] = field(default_factory=dict)
-    removed: Dict[str, Any] = field(default_factory=dict)
-    changed: Dict[str, Tuple[Any, Any]] = field(default_factory=dict)
+    added: dict[str, Any] = field(default_factory=dict)
+    removed: dict[str, Any] = field(default_factory=dict)
+    changed: dict[str, tuple[Any, Any]] = field(default_factory=dict)
 
     @property
     def has_changes(self) -> bool:
@@ -51,7 +51,7 @@ class StateDiff:
         )
 
 
-def _diff_dicts(before: Dict[str, Any], after: Dict[str, Any]) -> StateChanges:
+def _diff_dicts(before: dict[str, Any], after: dict[str, Any]) -> StateChanges:
     before_keys = set(before.keys())
     after_keys = set(after.keys())
     changes = StateChanges()
@@ -105,7 +105,7 @@ def _execute_js(driver: Any, expression: str) -> Any:
     raise StateDiffError("driver has neither execute_script nor evaluate")
 
 
-def _selenium_cookies(driver: Any) -> Dict[str, Dict[str, Any]]:
+def _selenium_cookies(driver: Any) -> dict[str, dict[str, Any]]:
     if not hasattr(driver, "get_cookies"):
         return {}
     cookies = driver.get_cookies() or []
@@ -116,7 +116,7 @@ def _selenium_cookies(driver: Any) -> Dict[str, Dict[str, Any]]:
     }
 
 
-def _playwright_cookies(driver: Any) -> Dict[str, Dict[str, Any]]:
+def _playwright_cookies(driver: Any) -> dict[str, dict[str, Any]]:
     context = getattr(driver, "context", None)
     if context is None or not hasattr(context, "cookies"):
         return {}
@@ -152,7 +152,7 @@ def capture_state(driver: Any) -> BrowserStateSnapshot:
 
 
 def assert_no_state_change(diff: StateDiff,
-                           allow_keys: Optional[Iterable[str]] = None) -> None:
+                           allow_keys: Iterable[str] | None = None) -> None:
     """Raise if the diff has any change outside ``allow_keys``."""
     allow = set(allow_keys or [])
     bad = []

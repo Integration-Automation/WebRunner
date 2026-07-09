@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import difflib
 from pathlib import Path
-from typing import Optional
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -29,7 +28,7 @@ def _snapshot_path(name: str, snapshot_dir: str) -> Path:
     return Path(snapshot_dir) / f"{safe}.snap"
 
 
-def _load(path: Path) -> Optional[str]:
+def _load(path: Path) -> str | None:
     if not path.exists():
         return None
     return path.read_text(encoding="utf-8")

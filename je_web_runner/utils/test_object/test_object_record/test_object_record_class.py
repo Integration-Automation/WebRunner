@@ -1,10 +1,9 @@
-from typing import Union
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_object.test_object_class import TestObject
 
 
-class TestObjectRecord(object):
+class TestObjectRecord:
     """
     測試物件紀錄管理器
     Test object record manager
@@ -26,7 +25,7 @@ class TestObjectRecord(object):
         """
         self.test_object_record_dict = {}
 
-    def save_test_object(self, test_object_name: str, object_type: str = None, **kwargs) -> None:
+    def save_test_object(self, test_object_name: str, object_type: str | None = None, **kwargs) -> None:
         """
         儲存新的測試物件
         Save a new test object.
@@ -44,7 +43,7 @@ class TestObjectRecord(object):
         test_object = TestObject(test_object_name, object_type)
         self.test_object_record_dict.update({test_object.test_object_name: test_object})
 
-    def remove_test_object(self, test_object_name: str) -> Union[TestObject, bool]:
+    def remove_test_object(self, test_object_name: str) -> TestObject | bool:
         """
         移除指定名稱的測試物件
         Remove a test object by name

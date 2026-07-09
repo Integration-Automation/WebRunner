@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -17,7 +17,7 @@ class MigrationError(WebRunnerException):
     """Raised when a file cannot be read or written."""
 
 
-_LEGACY_TO_NEW: Dict[str, str] = {
+_LEGACY_TO_NEW: dict[str, str] = {
     "WR_get_webdriver_manager": "WR_new_driver",
     "WR_quit": "WR_quit_all",
     "WR_single_quit": "WR_quit_current",
@@ -32,9 +32,9 @@ _LEGACY_TO_NEW: Dict[str, str] = {
 }
 
 
-def _migrate_action_list(action_list: List[Any]) -> Tuple[List[Any], List[Dict[str, Any]]]:
-    rewritten: List[Any] = []
-    changes: List[Dict[str, Any]] = []
+def _migrate_action_list(action_list: list[Any]) -> tuple[list[Any], list[dict[str, Any]]]:
+    rewritten: list[Any] = []
+    changes: list[dict[str, Any]] = []
     for index, action in enumerate(action_list):
         if isinstance(action, list) and action and isinstance(action[0], str):
             new_name = _LEGACY_TO_NEW.get(action[0])
@@ -50,7 +50,7 @@ def _migrate_action_list(action_list: List[Any]) -> Tuple[List[Any], List[Dict[s
     return rewritten, changes
 
 
-def migrate_action(data: Any) -> Tuple[Any, List[Dict[str, Any]]]:
+def migrate_action(data: Any) -> tuple[Any, list[dict[str, Any]]]:
     """
     將 action 結構內所有舊命令名改寫為新名
     Rewrite legacy command names to their preferred aliases. Returns
@@ -70,7 +70,7 @@ def migrate_action(data: Any) -> Tuple[Any, List[Dict[str, Any]]]:
     return data, []
 
 
-def migrate_action_file(path: str, dry_run: bool = True) -> Dict[str, Any]:
+def migrate_action_file(path: str, dry_run: bool = True) -> dict[str, Any]:
     """
     Read ``path``, rewrite legacy names, optionally write back when
     ``dry_run`` is False. Returns ``{path, changes, written}``.
@@ -80,20 +80,20 @@ def migrate_action_file(path: str, dry_run: bool = True) -> Dict[str, Any]:
         raise MigrationError(f"action file not found: {path}")
     web_runner_logger.info(f"migrate_action_file: {path} dry_run={dry_run}")
     try:
-        with open(file_path, encoding="utf-8") as action_file:
+        with open(file_path, encoding="utf-8") as action_file:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             data = json.load(action_file)
     except ValueError as error:
         raise MigrationError(f"action file not valid JSON: {path}") from error
     new_data, changes = migrate_action(data)
     written = False
     if changes and not dry_run:
-        with open(file_path, "w", encoding="utf-8") as action_file:
+        with open(file_path, "w", encoding="utf-8") as action_file:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             json.dump(new_data, action_file, indent=2, ensure_ascii=False)
         written = True
     return {"path": str(file_path), "changes": changes, "written": written}
 
 
-def migrate_directory(directory: str, dry_run: bool = True) -> List[Dict[str, Any]]:
+def migrate_directory(directory: str, dry_run: bool = True) -> list[dict[str, Any]]:
     """
     遍歷目錄內所有 ``.json`` 檔做遷移
     Walk a directory, migrate every ``.json`` file, return a list of per-file

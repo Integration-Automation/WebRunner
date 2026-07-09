@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -27,11 +27,11 @@ class CrossBrowserError(WebRunnerException):
 @dataclass
 class BrowserRunResult:
     browser: str
-    title: Optional[str] = None
-    dom_text: Optional[str] = None
-    console: List[Dict[str, Any]] = field(default_factory=list)
-    network: List[Dict[str, Any]] = field(default_factory=list)
-    screenshot: Optional[bytes] = None
+    title: str | None = None
+    dom_text: str | None = None
+    console: list[dict[str, Any]] = field(default_factory=list)
+    network: list[dict[str, Any]] = field(default_factory=list)
+    screenshot: bytes | None = None
 
 
 @dataclass
@@ -46,20 +46,20 @@ class ParityFinding:
 @dataclass
 class ParityReport:
     reference: str
-    findings_by_browser: Dict[str, List[ParityFinding]] = field(default_factory=dict)
+    findings_by_browser: dict[str, list[ParityFinding]] = field(default_factory=dict)
 
     @property
     def matches(self) -> bool:
         return all(not findings for findings in self.findings_by_browser.values())
 
-    def major_findings(self) -> List[ParityFinding]:
+    def major_findings(self) -> list[ParityFinding]:
         return [
             finding for findings in self.findings_by_browser.values()
             for finding in findings if finding.severity == "major"
         ]
 
 
-def _normalise_console(messages: Iterable[Dict[str, Any]]) -> List[str]:
+def _normalise_console(messages: Iterable[dict[str, Any]]) -> list[str]:
     return sorted(
         f"{m.get('type')}:{m.get('text')}"
         for m in messages
@@ -67,7 +67,7 @@ def _normalise_console(messages: Iterable[Dict[str, Any]]) -> List[str]:
     )
 
 
-def _network_status_set(responses: Iterable[Dict[str, Any]]) -> set:
+def _network_status_set(responses: Iterable[dict[str, Any]]) -> set:
     """Bucket responses by status code so cross-browser ordering doesn't matter."""
     return {
         (str(r.get("url", "")), int(r.get("status", 0)))
@@ -76,20 +76,20 @@ def _network_status_set(responses: Iterable[Dict[str, Any]]) -> set:
     }
 
 
-def _dom_hash(text: Optional[str]) -> Optional[str]:
+def _dom_hash(text: str | None) -> str | None:
     if text is None:
         return None
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
-def _screenshot_hash(payload: Optional[bytes]) -> Optional[str]:
+def _screenshot_hash(payload: bytes | None) -> str | None:
     if not payload:
         return None
     return hashlib.sha256(payload).hexdigest()
 
 
-def _diff_one(reference: BrowserRunResult, other: BrowserRunResult) -> List[ParityFinding]:
-    findings: List[ParityFinding] = []
+def _diff_one(reference: BrowserRunResult, other: BrowserRunResult) -> list[ParityFinding]:
+    findings: list[ParityFinding] = []
     if reference.title != other.title:
         findings.append(ParityFinding(
             browser=other.browser, field="title",
@@ -130,7 +130,7 @@ def _diff_one(reference: BrowserRunResult, other: BrowserRunResult) -> List[Pari
 
 def diff_runs(
     runs: Iterable[BrowserRunResult],
-    reference_browser: Optional[str] = None,
+    reference_browser: str | None = None,
 ) -> ParityReport:
     """
     比對每個 run 與 ``reference_browser`` 的結果差異
@@ -139,7 +139,7 @@ def diff_runs(
     runs_list = list(runs)
     if not runs_list:
         raise CrossBrowserError("at least one run required")
-    by_browser: Dict[str, BrowserRunResult] = {}
+    by_browser: dict[str, BrowserRunResult] = {}
     for run in runs_list:
         if not isinstance(run, BrowserRunResult):
             raise CrossBrowserError("runs must be BrowserRunResult instances")
@@ -160,7 +160,7 @@ def diff_runs(
 
 def assert_parity(
     report: ParityReport,
-    allow_fields: Optional[Iterable[str]] = None,
+    allow_fields: Iterable[str] | None = None,
     only_major: bool = True,
 ) -> None:
     """Raise if any disallowed finding remains."""

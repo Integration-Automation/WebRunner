@@ -52,6 +52,19 @@ class TestParseOutgoing(unittest.TestCase):
         out = parse_outgoing([{"reportId": 1, "data": [10, 20]}])
         self.assertEqual(out[0].data, [10, 20])
 
+    def test_report_id_zero_preserved(self):
+        # report id 0 is valid (single-report devices) and must survive.
+        out = parse_outgoing([{"reportId": 0, "data": [1]}])
+        self.assertEqual(out[0].report_id, 0)
+
+    def test_report_id_zero_not_overridden_by_snake_case(self):
+        out = parse_outgoing([{"reportId": 0, "report_id": 5, "data": []}])
+        self.assertEqual(out[0].report_id, 0)
+
+    def test_report_id_snake_case_fallback(self):
+        out = parse_outgoing([{"report_id": 3, "data": []}])
+        self.assertEqual(out[0].report_id, 3)
+
     def test_skip_non_dict(self):
         self.assertEqual(parse_outgoing(["x"]), [])
 

@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Union
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -32,13 +32,13 @@ class ExtensionInfo:
     name: str
     version: str
     manifest_version: int
-    popup: Optional[str] = None
-    background_script: Optional[str] = None
-    permissions: Optional[List[str]] = None
-    extension_dir: Optional[str] = None
+    popup: str | None = None
+    background_script: str | None = None
+    permissions: list[str] | None = None
+    extension_dir: str | None = None
 
 
-def parse_manifest(manifest: Union[str, Path, Dict[str, Any]]) -> ExtensionInfo:
+def parse_manifest(manifest: str | Path | dict[str, Any]) -> ExtensionInfo:
     """Parse a manifest dict / file path into :class:`ExtensionInfo`."""
     if isinstance(manifest, (str, Path)):
         path = Path(manifest)
@@ -75,14 +75,14 @@ def parse_manifest(manifest: Union[str, Path, Dict[str, Any]]) -> ExtensionInfo:
     )
 
 
-def _popup_path(data: Dict[str, Any], manifest_version: int) -> Optional[str]:
+def _popup_path(data: dict[str, Any], manifest_version: int) -> str | None:
     action_key = "action" if manifest_version == 3 else "browser_action"
     action = data.get(action_key) or {}
     popup = action.get("default_popup")
     return popup if isinstance(popup, str) else None
 
 
-def _background_script(data: Dict[str, Any], manifest_version: int) -> Optional[str]:
+def _background_script(data: dict[str, Any], manifest_version: int) -> str | None:
     background = data.get("background") or {}
     if manifest_version == 3:
         worker = background.get("service_worker")
@@ -94,14 +94,14 @@ def _background_script(data: Dict[str, Any], manifest_version: int) -> Optional[
     return page if isinstance(page, str) else None
 
 
-def extension_info(directory: Union[str, Path]) -> ExtensionInfo:
+def extension_info(directory: str | Path) -> ExtensionInfo:
     """Convenience: parse manifest under ``directory`` and stamp ``extension_dir``."""
     info = parse_manifest(directory)
     info.extension_dir = str(Path(directory).resolve())
     return info
 
 
-def apply_to_chrome_options(options: Any, extensions: Iterable[Union[str, Path]]) -> Any:
+def apply_to_chrome_options(options: Any, extensions: Iterable[str | Path]) -> Any:
     """
     給 Selenium ``ChromeOptions`` 加上 ``--load-extension``。
     Add ``--load-extension`` flags for each unpacked extension directory.
@@ -119,10 +119,10 @@ def apply_to_chrome_options(options: Any, extensions: Iterable[Union[str, Path]]
 
 
 def playwright_persistent_context_args(
-    extensions: Iterable[Union[str, Path]],
-    user_data_dir: Union[str, Path],
+    extensions: Iterable[str | Path],
+    user_data_dir: str | Path,
     headless: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Return kwargs for Playwright's ``launch_persistent_context``.
 
@@ -134,7 +134,7 @@ def playwright_persistent_context_args(
     for path in paths:
         if not Path(path).is_dir():
             raise ExtensionHarnessError(f"extension directory missing: {path!r}")
-    args: List[str] = []
+    args: list[str] = []
     if paths:
         args.extend([
             f"--disable-extensions-except={','.join(paths)}",

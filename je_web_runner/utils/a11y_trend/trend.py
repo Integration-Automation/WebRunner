@@ -10,7 +10,7 @@ import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Union
+from typing import Any, Iterable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -22,7 +22,7 @@ class A11yTrendError(WebRunnerException):
 @dataclass
 class A11yTrendPoint:
     label: str  # YYYY-MM-DD
-    impacts: Dict[str, int] = field(default_factory=dict)
+    impacts: dict[str, int] = field(default_factory=dict)
 
     @property
     def total(self) -> int:
@@ -38,7 +38,7 @@ def _bucket_label(timestamp: Any) -> str:
         return timestamp[:10] if len(timestamp) >= 10 else "unknown"
 
 
-def aggregate_history(history: Iterable[Dict[str, Any]]) -> List[A11yTrendPoint]:
+def aggregate_history(history: Iterable[dict[str, Any]]) -> list[A11yTrendPoint]:
     """
     把 ``[{timestamp, violations:[{impact,...}]}, …]`` 按天彙總每個 impact 的計數。
     Bucket history entries by day and count each violation's ``impact``
@@ -46,13 +46,13 @@ def aggregate_history(history: Iterable[Dict[str, Any]]) -> List[A11yTrendPoint]
     """
     if history is None:
         raise A11yTrendError("history must be iterable")
-    buckets: Dict[str, A11yTrendPoint] = {}
+    buckets: dict[str, A11yTrendPoint] = {}
     for index, entry in enumerate(history):
         _absorb_entry(buckets, index, entry)
     return sorted(buckets.values(), key=lambda p: p.label)
 
 
-def _absorb_entry(buckets: Dict[str, A11yTrendPoint], index: int, entry: Any) -> None:
+def _absorb_entry(buckets: dict[str, A11yTrendPoint], index: int, entry: Any) -> None:
     if not isinstance(entry, dict):
         raise A11yTrendError(f"history[{index}] must be an object")
     label = _bucket_label(entry.get("timestamp"))
@@ -73,10 +73,10 @@ def _count_violation(point: A11yTrendPoint, violation: Any) -> None:
     point.impacts[impact] = point.impacts.get(impact, 0) + count
 
 
-def render_html(points: List[A11yTrendPoint], title: str = "A11y trend") -> str:
+def render_html(points: list[A11yTrendPoint], title: str = "A11y trend") -> str:
     """Render a self-contained HTML page with table + SVG line chart."""
     rows = []
-    impact_keys = sorted({impact for point in points for impact in point.impacts.keys()})
+    impact_keys = sorted({impact for point in points for impact in point.impacts})
     for point in points:
         cells = "".join(
             f"<td>{point.impacts.get(key, 0)}</td>" for key in impact_keys
@@ -102,7 +102,7 @@ def render_html(points: List[A11yTrendPoint], title: str = "A11y trend") -> str:
     """
 
 
-def _render_svg(points: List[A11yTrendPoint]) -> str:
+def _render_svg(points: list[A11yTrendPoint]) -> str:
     if not points:
         return "<p><em>No history yet.</em></p>"
     width, height, margin = 720, 200, 30
@@ -132,7 +132,7 @@ def _render_svg(points: List[A11yTrendPoint]) -> str:
     )
 
 
-def write_dashboard(history: Iterable[Dict[str, Any]], output_path: Union[str, Path],
+def write_dashboard(history: Iterable[dict[str, Any]], output_path: str | Path,
                     title: str = "A11y trend") -> Path:
     """Aggregate ``history`` and write the HTML dashboard to ``output_path``."""
     points = aggregate_history(history)
@@ -143,7 +143,7 @@ def write_dashboard(history: Iterable[Dict[str, Any]], output_path: Union[str, P
     return target
 
 
-def load_history(path: Union[str, Path]) -> List[Dict[str, Any]]:
+def load_history(path: str | Path) -> list[dict[str, Any]]:
     """Read an ``a11y-history.json`` file (``[{timestamp, violations}, …]``)."""
     fp = Path(path)
     if not fp.is_file():

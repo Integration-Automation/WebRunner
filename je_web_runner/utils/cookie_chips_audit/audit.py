@@ -14,7 +14,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional
+from typing import Any, Iterable
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -34,7 +34,7 @@ class Severity(str, Enum):
 class SetCookie:
     name: str
     value: str = ""
-    attributes: Dict[str, Optional[str]] = field(default_factory=dict)
+    attributes: dict[str, str | None] = field(default_factory=dict)
 
     @property
     def is_partitioned(self) -> bool:
@@ -56,7 +56,7 @@ def parse_set_cookie(header: str) -> SetCookie:
         raise CookieChipsAuditError(f"invalid Set-Cookie header: {header!r}")
     parts = [p.strip() for p in header.split(";")]
     name, _, value = parts[0].partition("=")
-    attrs: Dict[str, Optional[str]] = {}
+    attrs: dict[str, str | None] = {}
     for part in parts[1:]:
         if not part:
             continue
@@ -77,7 +77,7 @@ class Finding:
     cookie_origin: str
     message: str
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "severity": self.severity.value}
 
 
@@ -96,9 +96,9 @@ def _is_third_party(page_url: str, cookie_url: str) -> bool:
 
 
 def _partitioned_findings(
-    cookie: SetCookie, third_party: bool, common: Dict[str, str],
-) -> List[Finding]:
-    out: List[Finding] = []
+    cookie: SetCookie, third_party: bool, common: dict[str, str],
+) -> list[Finding]:
+    out: list[Finding] = []
     if not cookie.is_secure:
         out.append(Finding(
             severity=Severity.ERROR, rule="partitioned-requires-secure",
@@ -123,7 +123,7 @@ def _partitioned_findings(
 
 def _check_cookie(
     cookie: SetCookie, page_url: str, cookie_url: str,
-) -> List[Finding]:
+) -> list[Finding]:
     third_party = _is_third_party(page_url, cookie_url)
     common = {
         "cookie": cookie.name,
@@ -141,8 +141,8 @@ def _check_cookie(
     return []
 
 
-def _findings_for_entry(entry: Dict[str, Any], page_url: str) -> List[Finding]:
-    out: List[Finding] = []
+def _findings_for_entry(entry: dict[str, Any], page_url: str) -> list[Finding]:
+    out: list[Finding] = []
     request_url = (entry.get("request") or {}).get("url", "")
     headers = (entry.get("response") or {}).get("headers", []) or []
     for header in headers:
@@ -156,7 +156,7 @@ def _findings_for_entry(entry: Dict[str, Any], page_url: str) -> List[Finding]:
     return out
 
 
-def audit_har(har: Dict[str, Any], page_url: str) -> List[Finding]:
+def audit_har(har: dict[str, Any], page_url: str) -> list[Finding]:
     """Walk a HAR's responses and emit findings for every Set-Cookie header."""
     if not isinstance(har, dict):
         raise CookieChipsAuditError("har must be a dict")
@@ -165,7 +165,7 @@ def audit_har(har: Dict[str, Any], page_url: str) -> List[Finding]:
     entries = har.get("log", {}).get("entries", [])
     if not isinstance(entries, list):
         raise CookieChipsAuditError("har.log.entries must be a list")
-    findings: List[Finding] = []
+    findings: list[Finding] = []
     for entry in entries:
         findings.extend(_findings_for_entry(entry, page_url))
     return findings
@@ -173,8 +173,8 @@ def audit_har(har: Dict[str, Any], page_url: str) -> List[Finding]:
 
 def audit_headers(
     headers: Iterable[str], page_url: str, cookie_url: str,
-) -> List[Finding]:
-    findings: List[Finding] = []
+) -> list[Finding]:
+    findings: list[Finding] = []
     for header in headers:
         try:
             cookie = parse_set_cookie(header)

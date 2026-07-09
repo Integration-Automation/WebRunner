@@ -35,7 +35,7 @@ def __process_json(json_string: str, **kwargs) -> str:
         except TypeError:
             # 如果仍然失敗，拋出自訂例外
             # If still fails, raise custom exception
-            raise WebRunnerJsonException(wrong_json_data_error)
+            raise WebRunnerJsonException(wrong_json_data_error) from None
 
 
 def reformat_json(json_string: str, **kwargs) -> str:
@@ -55,4 +55,4 @@ def reformat_json(json_string: str, **kwargs) -> str:
     except WebRunnerJsonException:
         # 如果內部處理失敗，統一拋出「無法重新格式化 JSON」的錯誤
         # If processing fails, raise unified "cannot reformat JSON" exception
-        raise WebRunnerJsonException(cant_reformat_json_error)
+        raise WebRunnerJsonException(cant_reformat_json_error) from None

@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Sequence
+from typing import Any, Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -39,7 +39,7 @@ class Hint:
     as_: str = ""        # only for preload
     crossorigin: bool = False
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "kind": self.kind.value}
 
 
@@ -48,18 +48,18 @@ _ATTR_RE = re.compile(r'(\w+)\s*=\s*(?:"([^"]*)"|\'([^\']*)\'|([^\s>]+))',
                       re.IGNORECASE)
 
 
-def _parse_attrs(tag: str) -> Dict[str, str]:
-    attrs: Dict[str, str] = {}
+def _parse_attrs(tag: str) -> dict[str, str]:
+    attrs: dict[str, str] = {}
     for match in _ATTR_RE.finditer(tag):
         key = match.group(1).lower()
         attrs[key] = match.group(2) or match.group(3) or match.group(4) or ""
     return attrs
 
 
-def parse_hints(html: str) -> List[Hint]:
+def parse_hints(html: str) -> list[Hint]:
     if not isinstance(html, str):
         raise ResourceHintsAuditError("html must be a string")
-    out: List[Hint] = []
+    out: list[Hint] = []
     for tag in _LINK_RE.findall(html):
         attrs = _parse_attrs(tag)
         rel = (attrs.get("rel") or "").lower()
@@ -88,7 +88,7 @@ def assert_preload_has_as(hints: Iterable[Hint]) -> None:
 
 def find_unused_hints(
     hints: Sequence[Hint], used_urls: Iterable[str],
-) -> List[Hint]:
+) -> list[Hint]:
     used = {u for u in used_urls if isinstance(u, str)}
     return [h for h in hints
             if h.kind in (HintKind.PRELOAD, HintKind.PREFETCH,

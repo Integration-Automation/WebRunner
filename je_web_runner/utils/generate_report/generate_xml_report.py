@@ -59,21 +59,15 @@ def generate_xml_report(xml_file_name: str = "default_name"):
     # 輸出失敗報告
     # Write failure report
     try:
-        _lock.acquire()
-        with open(xml_file_name + "_failure.xml", "w+") as file_to_write:
+        with _lock, open(xml_file_name + "_failure.xml", "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             file_to_write.write(failure_xml)
-    except Exception as error:
-        web_runner_logger.error(f"generate_xml_report, xml_file_name: {xml_file_name}, failed: {repr(error)}")
-    finally:
-        _lock.release()
+    except OSError as error:
+        web_runner_logger.error(f"generate_xml_report, xml_file_name: {xml_file_name}, failed: {error!r}")
 
     # 輸出成功報告
     # Write success report
     try:
-        _lock.acquire()
-        with open(xml_file_name + "_success.xml", "w+") as file_to_write:
+        with _lock, open(xml_file_name + "_success.xml", "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             file_to_write.write(success_xml)
-    except Exception as error:
-        web_runner_logger.error(f"generate_xml_report, xml_file_name: {xml_file_name}, failed: {repr(error)}")
-    finally:
-        _lock.release()
+    except OSError as error:
+        web_runner_logger.error(f"generate_xml_report, xml_file_name: {xml_file_name}, failed: {error!r}")

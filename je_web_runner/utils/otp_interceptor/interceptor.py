@@ -26,7 +26,7 @@ import urllib.parse
 import urllib.request
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Pattern, Union
+from typing import Any, Callable, Pattern
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -48,7 +48,7 @@ class InterceptedMessage:
     subject: str
     body: str
     received_at: float
-    headers: Dict[str, str] = field(default_factory=dict)
+    headers: dict[str, str] = field(default_factory=dict)
 
 
 # ---------- abstract provider --------------------------------------------
@@ -59,11 +59,11 @@ class OtpProvider(ABC):
     @abstractmethod
     def fetch_messages(
         self,
-        recipient: Optional[str] = None,
+        recipient: str | None = None,
         *,
-        since: Optional[float] = None,
+        since: float | None = None,
         limit: int = 25,
-    ) -> List[InterceptedMessage]:
+    ) -> list[InterceptedMessage]:
         """Return messages newest-first, optionally filtered by recipient/since."""
 
 
@@ -72,11 +72,11 @@ class OtpProvider(ABC):
 def _http_get_json(url: str, timeout: float = 10.0) -> Any:
     # S5332 ok: MailHog / Mailpit are local-only services that expose plain
     # HTTP REST APIs by design; the caller passes a localhost URL.
-    if not url.startswith(("http://", "https://")):  # noqa: S5332
+    if not url.startswith(("http://", "https://")):  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
         raise OtpInterceptError(f"refusing non-http URL: {url!r}")
     req = urllib.request.Request(url, method="GET")
     req.add_header("Accept", "application/json")
-    if url.startswith("http://"):  # noqa: S5332
+    if url.startswith("http://"):  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
         context = None  # plain HTTP for local MailHog / Mailpit
     else:
         context = ssl.create_default_context()
@@ -101,17 +101,17 @@ def _http_get_json(url: str, timeout: float = 10.0) -> Any:
 class MailHogProvider(OtpProvider):
     """Talks to a MailHog ``/api/v2/messages`` endpoint."""
 
-    def __init__(self, base_url: str, *, http_fetcher: Optional[Callable[[str], Any]] = None) -> None:
+    def __init__(self, base_url: str, *, http_fetcher: Callable[[str], Any] | None = None) -> None:
         self.base_url = base_url.rstrip("/")
         self._fetch = http_fetcher or _http_get_json
 
     def fetch_messages(
         self,
-        recipient: Optional[str] = None,
+        recipient: str | None = None,
         *,
-        since: Optional[float] = None,
+        since: float | None = None,
         limit: int = 25,
-    ) -> List[InterceptedMessage]:
+    ) -> list[InterceptedMessage]:
         url = f"{self.base_url}/api/v2/messages?limit={limit}"
         payload = self._fetch(url)
         if not isinstance(payload, dict):
@@ -119,7 +119,7 @@ class MailHogProvider(OtpProvider):
         items = payload.get("items")
         if not isinstance(items, list):
             return []
-        out: List[InterceptedMessage] = []
+        out: list[InterceptedMessage] = []
         for raw in items:
             msg = _mailhog_to_message(raw)
             if msg is None:
@@ -133,7 +133,7 @@ class MailHogProvider(OtpProvider):
         return out
 
 
-def _mailhog_to_message(raw: Any) -> Optional[InterceptedMessage]:
+def _mailhog_to_message(raw: Any) -> InterceptedMessage | None:
     if not isinstance(raw, dict):
         return None
     content = raw.get("Content") or {}
@@ -160,17 +160,17 @@ def _mailhog_to_message(raw: Any) -> Optional[InterceptedMessage]:
 class MailpitProvider(OtpProvider):
     """Talks to a Mailpit ``/api/v1/messages`` endpoint."""
 
-    def __init__(self, base_url: str, *, http_fetcher: Optional[Callable[[str], Any]] = None) -> None:
+    def __init__(self, base_url: str, *, http_fetcher: Callable[[str], Any] | None = None) -> None:
         self.base_url = base_url.rstrip("/")
         self._fetch = http_fetcher or _http_get_json
 
     def fetch_messages(
         self,
-        recipient: Optional[str] = None,
+        recipient: str | None = None,
         *,
-        since: Optional[float] = None,
+        since: float | None = None,
         limit: int = 25,
-    ) -> List[InterceptedMessage]:
+    ) -> list[InterceptedMessage]:
         url = f"{self.base_url}/api/v1/messages?limit={limit}"
         payload = self._fetch(url)
         if not isinstance(payload, dict):
@@ -178,7 +178,7 @@ class MailpitProvider(OtpProvider):
         items = payload.get("messages") or payload.get("Messages") or []
         if not isinstance(items, list):
             return []
-        out: List[InterceptedMessage] = []
+        out: list[InterceptedMessage] = []
         for raw in items:
             msg = _mailpit_to_message(raw)
             if msg is None:
@@ -192,7 +192,7 @@ class MailpitProvider(OtpProvider):
         return out
 
 
-def _mailpit_to_message(raw: Any) -> Optional[InterceptedMessage]:
+def _mailpit_to_message(raw: Any) -> InterceptedMessage | None:
     if not isinstance(raw, dict):
         return None
     to_list = raw.get("To") or []
@@ -221,7 +221,7 @@ class ImapProvider(OtpProvider):
         password: str,
         mailbox: str = "INBOX",
         use_ssl: bool = True,
-        connector: Optional[Callable[..., Any]] = None,
+        connector: Callable[..., Any] | None = None,
     ) -> None:
         if not host or not username or not password:
             raise OtpInterceptError("IMAP host/username/password are all required")
@@ -239,7 +239,7 @@ class ImapProvider(OtpProvider):
         import imaplib  # local import — IMAP is rarely needed
         return (imaplib.IMAP4_SSL if self.use_ssl else imaplib.IMAP4)(self.host, self.port)
 
-    def _fetch_one(self, conn: Any, raw_id: bytes, since: Optional[float]) -> Optional[InterceptedMessage]:
+    def _fetch_one(self, conn: Any, raw_id: bytes, since: float | None) -> InterceptedMessage | None:
         _typ, msg_data = conn.fetch(raw_id, "(RFC822)")
         if not msg_data or not msg_data[0]:
             return None
@@ -256,16 +256,16 @@ class ImapProvider(OtpProvider):
         for method_name in ("close", "logout"):
             try:
                 getattr(conn, method_name)()
-            except Exception:  # noqa: BLE001 # nosec B110 — best-effort cleanup
+            except Exception:  # nosec B110 — best-effort cleanup
                 pass
 
     def fetch_messages(
         self,
-        recipient: Optional[str] = None,
+        recipient: str | None = None,
         *,
-        since: Optional[float] = None,
+        since: float | None = None,
         limit: int = 25,
-    ) -> List[InterceptedMessage]:
+    ) -> list[InterceptedMessage]:
         conn = self._connect()
         try:
             conn.login(self.username, self.password)
@@ -273,7 +273,7 @@ class ImapProvider(OtpProvider):
             criteria = "ALL" if not recipient else f'(TO "{recipient}")'
             _typ, ids_data = conn.search(None, criteria)
             ids = (ids_data[0].split() if ids_data and ids_data[0] else [])[-limit:]
-            messages: List[InterceptedMessage] = []
+            messages: list[InterceptedMessage] = []
             for raw_id in reversed(ids):
                 msg = self._fetch_one(conn, raw_id, since)
                 if msg is not None:
@@ -283,13 +283,13 @@ class ImapProvider(OtpProvider):
             self._close_quietly(conn)
 
 
-def _imap_bytes_to_message(message_id: str, raw_bytes: bytes) -> Optional[InterceptedMessage]:
+def _imap_bytes_to_message(message_id: str, raw_bytes: bytes) -> InterceptedMessage | None:
     import email
     from email import policy
 
     try:
         msg = email.message_from_bytes(raw_bytes, policy=policy.default)
-    except Exception:  # noqa: BLE001
+    except Exception:
         return None
     body = ""
     if msg.is_multipart():
@@ -300,7 +300,7 @@ def _imap_bytes_to_message(message_id: str, raw_bytes: bytes) -> Optional[Interc
     else:
         try:
             body = msg.get_content()
-        except Exception:  # noqa: BLE001
+        except Exception:
             body = ""
     return InterceptedMessage(
         message_id=message_id,
@@ -327,7 +327,7 @@ class WebhookSmsProvider(OtpProvider):
         base_url: str,
         *,
         endpoint: str = "/messages",
-        http_fetcher: Optional[Callable[[str], Any]] = None,
+        http_fetcher: Callable[[str], Any] | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self.endpoint = "/" + endpoint.lstrip("/")
@@ -335,11 +335,11 @@ class WebhookSmsProvider(OtpProvider):
 
     def fetch_messages(
         self,
-        recipient: Optional[str] = None,
+        recipient: str | None = None,
         *,
-        since: Optional[float] = None,
+        since: float | None = None,
         limit: int = 25,
-    ) -> List[InterceptedMessage]:
+    ) -> list[InterceptedMessage]:
         query = f"limit={limit}"
         if recipient:
             query += "&to=" + urllib.parse.quote(recipient, safe="")
@@ -347,7 +347,7 @@ class WebhookSmsProvider(OtpProvider):
         payload = self._fetch(url)
         if not isinstance(payload, list):
             raise OtpInterceptError("SMS webhook payload must be a JSON list")
-        out: List[InterceptedMessage] = []
+        out: list[InterceptedMessage] = []
         for raw in payload:
             if not isinstance(raw, dict):
                 continue
@@ -372,7 +372,7 @@ class InMemoryProvider(OtpProvider):
     """Tests and dry-runs: hand it a list of messages."""
 
     def __init__(self) -> None:
-        self.messages: List[InterceptedMessage] = []
+        self.messages: list[InterceptedMessage] = []
 
     def push(self, message: InterceptedMessage) -> None:
         self.messages.append(message)
@@ -382,11 +382,11 @@ class InMemoryProvider(OtpProvider):
 
     def fetch_messages(
         self,
-        recipient: Optional[str] = None,
+        recipient: str | None = None,
         *,
-        since: Optional[float] = None,
+        since: float | None = None,
         limit: int = 25,
-    ) -> List[InterceptedMessage]:
+    ) -> list[InterceptedMessage]:
         out = list(self.messages)
         if recipient:
             out = [m for m in out if m.recipient.lower() == recipient.lower()]
@@ -427,8 +427,8 @@ _DEFAULT_OTP_REGEX = re.compile(r"\b(\d{4,8})\b")
 
 def extract_otp_from_text(
     text: str,
-    pattern: Union[str, Pattern[str], None] = None,
-) -> Optional[str]:
+    pattern: str | Pattern[str] | None = None,
+) -> str | None:
     """
     從文字中抽出 OTP code。預設 4–8 位數字。
     Apply ``pattern`` (defaults to 4–8 digits) and return the first match.
@@ -453,9 +453,9 @@ def extract_otp_from_text(
 def _otp_match(
     msg: InterceptedMessage,
     *,
-    subject_contains: Optional[str],
-    pattern: Union[str, Pattern[str], None],
-) -> Optional[str]:
+    subject_contains: str | None,
+    pattern: str | Pattern[str] | None,
+) -> str | None:
     if subject_contains and subject_contains.lower() not in msg.subject.lower():
         return None
     return (
@@ -481,11 +481,11 @@ def wait_for_otp(
     provider: OtpProvider,
     recipient: str,
     *,
-    pattern: Union[str, Pattern[str], None] = None,
+    pattern: str | Pattern[str] | None = None,
     timeout: float = 30.0,
     poll_interval: float = 1.0,
-    since: Optional[float] = None,
-    subject_contains: Optional[str] = None,
+    since: float | None = None,
+    subject_contains: str | None = None,
     sleep_fn: Callable[[float], None] = time.sleep,
     time_fn: Callable[[], float] = time.time,
 ) -> str:

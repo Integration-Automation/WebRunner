@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -39,7 +39,7 @@ class RunOutcome:
     """One probe outcome."""
 
     passed: bool
-    error_signature: Optional[str] = None
+    error_signature: str | None = None
     duration_seconds: float = 0.0
 
 
@@ -59,13 +59,13 @@ class StabilityReport:
     category: ReproCategory
     longest_pass_streak: int = 0
     longest_fail_streak: int = 0
-    errors: Dict[str, int] = field(default_factory=dict)
-    durations: List[float] = field(default_factory=list)
+    errors: dict[str, int] = field(default_factory=dict)
+    durations: list[float] = field(default_factory=list)
 
     def passed(self) -> bool:
         return self.category == ReproCategory.NON_REPRODUCIBLE
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {**asdict(self), "category": self.category.value}
 
 
@@ -104,7 +104,7 @@ def _probe_once(probe: ProbeFn, index: int) -> RunOutcome:
 
 
 def _record_outcome(
-    outcome: RunOutcome, state: _StreakState, errors: Dict[str, int],
+    outcome: RunOutcome, state: _StreakState, errors: dict[str, int],
 ) -> None:
     if outcome.passed:
         state.pass_streak += 1
@@ -137,8 +137,8 @@ def repeat(
         raise BugReproStabilityError("attempts must be > 0")
 
     state = _StreakState()
-    errors: Dict[str, int] = {}
-    durations: List[float] = []
+    errors: dict[str, int] = {}
+    durations: list[float] = []
     actual_attempts = 0
     for index in range(attempts):
         actual_attempts += 1

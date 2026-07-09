@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any, List, Tuple
+from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 
@@ -32,7 +32,7 @@ class Translation:
     note: str = ""
 
 
-_PYTHON_PATTERNS: List[Tuple[re.Pattern, str, str]] = [
+_PYTHON_PATTERNS: list[tuple[re.Pattern, str, str]] = [
     (re.compile(r"driver\.find_element\(By\.ID,\s*['\"]([^'\"]+)['\"]\)"),
      "page.locator('#\\1')",
      "ID -> CSS id selector"),
@@ -87,14 +87,14 @@ _PYTHON_PATTERNS: List[Tuple[re.Pattern, str, str]] = [
 ]
 
 
-def translate_python_source(source: str) -> List[Translation]:
+def translate_python_source(source: str) -> list[Translation]:
     """Translate Python source line-by-line, returning a Translation per hit."""
     if not isinstance(source, str):
         raise SelToPwError("source must be str")
-    translations: List[Translation] = []
+    translations: list[Translation] = []
     for line_no, line in enumerate(source.splitlines(), start=1):
         translated = line
-        notes: List[str] = []
+        notes: list[str] = []
         for pattern, replacement, note in _PYTHON_PATTERNS:
             new_text = pattern.sub(replacement, translated)
             if new_text != translated:
@@ -124,7 +124,7 @@ _ACTION_COMMAND_MAP = {
 }
 
 
-def translate_action_list(actions: List[Any]) -> List[List[Any]]:
+def translate_action_list(actions: list[Any]) -> list[list[Any]]:
     """
     把 ``WR_*`` action 清單翻譯成 Playwright 變體；無對應時保留原本的指令並加註。
     Translate a WebRunner action list. ``WR_implicitly_wait`` is dropped
@@ -133,7 +133,7 @@ def translate_action_list(actions: List[Any]) -> List[List[Any]]:
     """
     if not isinstance(actions, list):
         raise SelToPwError("actions must be a list")
-    translated: List[List[Any]] = []
+    translated: list[list[Any]] = []
     for action in actions:
         if not isinstance(action, list) or not action:
             translated.append(action)
@@ -154,9 +154,9 @@ def translate_action_list(actions: List[Any]) -> List[List[Any]]:
     return translated
 
 
-def supported_python_patterns() -> List[str]:
+def supported_python_patterns() -> list[str]:
     return [pat.pattern for pat, _replacement, _note in _PYTHON_PATTERNS]
 
 
-def supported_action_commands() -> List[str]:
+def supported_action_commands() -> list[str]:
     return sorted(_ACTION_COMMAND_MAP.keys())

@@ -14,13 +14,12 @@ This file keeps only:
 from __future__ import annotations
 
 import typing
+from functools import partial
 from pathlib import Path
-from typing import List, Union
 
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from selenium.webdriver.chromium.options import ArgOptions as ChromiumOptions
 from selenium.webdriver.edge.options import Options as EdgeOptions
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 from selenium.webdriver.ie.options import Options as IEOptions, Options
@@ -64,9 +63,14 @@ _webdriver_dict = {
 
 # 瀏覽器名稱對應到 webdriver_manager 安裝器
 # Mapping browser names to webdriver_manager installers
+# Every value must be *callable with no args* — the caller does
+# ``_webdriver_manager_dict.get(name)().install()``. ``chromium`` needs a
+# constructor kwarg, so wrap it in ``partial`` rather than pre-instantiating
+# it (a bare instance is not callable → ``instance()`` raised TypeError, and
+# pre-building it ran the manager's setup at import time).
 _webdriver_manager_dict = {
     "chrome": ChromeDriverManager,
-    "chromium": ChromeDriverManager(chrome_type=ChromeType.CHROMIUM),
+    "chromium": partial(ChromeDriverManager, chrome_type=ChromeType.CHROMIUM),
     "firefox": GeckoDriverManager,
     "edge": EdgeChromiumDriverManager,
     "ie": IEDriverManager,
@@ -75,8 +79,11 @@ _webdriver_manager_dict = {
 # 瀏覽器名稱對應到 Options 類別
 # Mapping browser names to Options classes
 _options_dict = {
+    # chromium runs through webdriver.Chrome, so it needs ChromeOptions (which
+    # sets browserName); the bare ArgOptions base has empty default_capabilities
+    # and makes webdriver.Chrome raise KeyError('browserName') at launch.
     "chrome": ChromeOptions,
-    "chromium": ChromiumOptions,
+    "chromium": ChromeOptions,
     "firefox": FirefoxOptions,
     "edge": EdgeOptions,
     "ie": IEOptions,
@@ -107,9 +114,9 @@ def _apply_extension_paths(driver_options, webdriver_name, extension_paths) -> N
 
 def _build_driver_options(
         webdriver_name: str,
-        options: List[str] | None,
+        options: list[str] | None,
         experimental_options: dict | None,
-        extension_paths: List[str] | None,
+        extension_paths: list[str] | None,
         enable_bidi: bool,
 ):
     """
@@ -163,26 +170,31 @@ class WebDriverWrapper(
     """
 
     def __init__(self):
-        self.current_webdriver: Union[WebDriver, None] = None
-        self._webdriver_name: Union[str, None] = None
-        self._action_chain: Union[ActionChains, None] = None
+        self.current_webdriver: WebDriver | None = None
+        self._webdriver_name: str | None = None
+        self._action_chain: ActionChains | None = None
+
+    def set_active_driver(self, driver: WebDriver | None) -> None:
+        """
+        將 ``driver`` 設為當前作用中的 driver 並重建 ActionChains。
+        Make ``driver`` the active driver and rebuild its ActionChains so chains
+        keep targeting the right driver after :meth:`WebdriverManager.change_webdriver`
+        switches between parallel drivers (a bare ``current_webdriver`` reassignment
+        would leave ``_action_chain`` bound to the previous driver).
+        """
+        self.current_webdriver = driver
+        self._action_chain = ActionChains(driver) if driver is not None else None
 
     def set_driver(
             self,
             webdriver_name: str,
-            webdriver_manager_option_dict: dict = None,
-            options: List[str] = None,
-            experimental_options: dict = None,
-            extension_paths: List[str] = None,
+            webdriver_manager_option_dict: dict | None = None,
+            options: list[str] | None = None,
+            experimental_options: dict | None = None,
+            extension_paths: list[str] | None = None,
             enable_bidi: bool = False,
             **kwargs
-    ) -> Union[
-        webdriver.Chrome,
-        webdriver.Firefox,
-        webdriver.Edge,
-        webdriver.Ie,
-        webdriver.Safari,
-    ]:
+    ) -> webdriver.Chrome | webdriver.Firefox | webdriver.Edge | webdriver.Ie | webdriver.Safari:
         """
         啟動一個新的 WebDriver
         Start a new WebDriver instance
@@ -233,9 +245,12 @@ class WebDriverWrapper(
             if webdriver_value is None:
                 raise WebRunnerWebDriverNotFoundException(selenium_wrapper_web_driver_not_found_error)
 
-            # 使用 webdriver_manager 安裝對應的 driver
+            # 使用 webdriver_manager 安裝對應的 driver；Safari 等沒有對應 manager
+            # 的瀏覽器(driver 內建於系統)直接跳過，避免 None().install() 崩潰。
+            # 傳入 cache_manager 讓 driver 快取落在 cwd(原本建立後卻沒被使用)。
             webdriver_install_manager = _webdriver_manager_dict.get(webdriver_name)
-            webdriver_install_manager().install()
+            if webdriver_install_manager is not None:
+                webdriver_install_manager(cache_manager=cache_manager).install()
 
             driver_options = _build_driver_options(
                 webdriver_name, options, experimental_options, extension_paths, enable_bidi,
@@ -254,10 +269,10 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(
                 f"WebDriverWrapper set_driver, webdriver_name: {webdriver_name}, "
-                f"webdriver_manager_option_dict: {webdriver_manager_option_dict}, failed: {repr(error)}"
+                f"webdriver_manager_option_dict: {webdriver_manager_option_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_driver", param, error)
-            raise WebRunnerException
+            raise WebRunnerException(f"set_driver failed: {error!r}") from error
 
     def set_webdriver_options_capability(self, key_and_vale_dict: dict) -> Options | None:
         """
@@ -281,17 +296,18 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(
                 f"WebDriverWrapper set_webdriver_options_capability, "
-                f"key_and_vale_dict: {key_and_vale_dict}, failed: {repr(error)}"
+                f"key_and_vale_dict: {key_and_vale_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_webdriver_options_capability", param, error)
-            raise WebRunnerException
+            raise WebRunnerException(
+                f"set_webdriver_options_capability failed: {error!r}") from error
 
     def attach_to_existing_browser(
             self,
             debugger_address: str,
             webdriver_name: str = "chrome",
-            options: List[str] = None,
-            experimental_options: dict = None,
+            options: list[str] | None = None,
+            experimental_options: dict | None = None,
             **kwargs,
     ):
         """
@@ -348,7 +364,7 @@ class WebDriverWrapper(
             return web_element_wrapper.current_web_element
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper find_element, test_object: {test_object}, failed: {repr(error)}"
+                f"WebDriverWrapper find_element, test_object: {test_object}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_element", param, error)
 
@@ -373,7 +389,7 @@ class WebDriverWrapper(
             return web_element_wrapper.current_web_element_list
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper find_elements, test_object: {test_object}, failed: {repr(error)}"
+                f"WebDriverWrapper find_elements, test_object: {test_object}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_elements", param, error)
 
@@ -402,7 +418,7 @@ class WebDriverWrapper(
             return web_element_wrapper.current_web_element
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper find_element_with_test_object_record, element_name: {element_name}, failed: {repr(error)}"
+                f"WebDriverWrapper find_element_with_test_object_record, element_name: {element_name}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_element_with_test_object_record", param, error)
 
@@ -431,7 +447,7 @@ class WebDriverWrapper(
             return web_element_wrapper.current_web_element_list
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper find_elements_with_test_object_record, element_name: {element_name}, failed: {repr(error)}"
+                f"WebDriverWrapper find_elements_with_test_object_record, element_name: {element_name}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_elements_with_test_object_record", param, error)
 
@@ -450,11 +466,11 @@ class WebDriverWrapper(
             record_action_to_list("webdriver wrapper implicitly_wait", param, None)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper implicitly_wait, time_to_wait: {time_to_wait}, failed: {repr(error)}"
+                f"WebDriverWrapper implicitly_wait, time_to_wait: {time_to_wait}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper implicitly_wait", param, error)
 
-    def explict_wait(self, wait_time: int, method: typing.Callable = None, until_type: bool = True):
+    def explict_wait(self, wait_time: int, method: typing.Callable | None = None, until_type: bool = True):
         """
         Selenium 顯式等待
         Selenium explicit wait
@@ -472,13 +488,12 @@ class WebDriverWrapper(
             record_action_to_list("webdriver wrapper explict_wait", param, None)
             if until_type and method:
                 return WebDriverWait(self.current_webdriver, wait_time).until(method)
-            elif until_type is False and method:
+            if until_type is False and method:
                 return WebDriverWait(self.current_webdriver, wait_time).until_not(method)
-            else:
-                return WebDriverWait(self.current_webdriver, wait_time)
+            return WebDriverWait(self.current_webdriver, wait_time)
         except Exception as error:
             web_runner_logger.error(
-                f"WebDriverWrapper explict_wait failed: {repr(error)}"
+                f"WebDriverWrapper explict_wait failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper explict_wait", param, error)
 
@@ -491,7 +506,7 @@ class WebDriverWrapper(
             self.current_webdriver.set_script_timeout(time_to_wait)
             record_action_to_list("webdriver wrapper set_script_timeout", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper set_script_timeout failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper set_script_timeout failed: {error!r}")
             record_action_to_list("webdriver wrapper set_script_timeout", param, error)
 
     def set_page_load_timeout(self, time_to_wait: int) -> None:
@@ -502,7 +517,7 @@ class WebDriverWrapper(
             self.current_webdriver.set_page_load_timeout(time_to_wait)
             record_action_to_list("webdriver wrapper set_page_load_timeout", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper set_page_load_timeout failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper set_page_load_timeout failed: {error!r}")
             record_action_to_list("webdriver wrapper set_page_load_timeout", param, error)
 
     # webdriver wrapper add function
@@ -519,7 +534,7 @@ class WebDriverWrapper(
             check_webdriver_details(self.current_webdriver, check_dict)
             record_action_to_list("webdriver wrapper check_current_webdriver", param, None)
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper check_current_webdriver failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper check_current_webdriver failed: {error!r}")
             record_action_to_list("webdriver wrapper check_current_webdriver", param, error)
 
     # close event
@@ -533,11 +548,19 @@ class WebDriverWrapper(
             test_object_record.clean_record()  # 清空測試物件紀錄
             self._action_chain = None
             record_action_to_list("webdriver wrapper quit", None, None)
-            self.current_webdriver.quit()
+            # No-op when there is no live driver (mirrors quit_appium_session);
+            # ``None.quit()`` would otherwise raise.
+            if self.current_webdriver is not None:
+                self.current_webdriver.quit()
         except Exception as error:
-            web_runner_logger.error(f"WebDriverWrapper quit failed: {repr(error)}")
+            web_runner_logger.error(f"WebDriverWrapper quit failed: {error!r}")
             record_action_to_list("webdriver wrapper quit", None, error)
-            raise WebRunnerException
+            raise WebRunnerException(f"quit failed: {error!r}") from error
+        finally:
+            # Forget the (now dead) driver so the ``is None`` guards in
+            # find_element / etc. correctly report "no active driver".
+            self.current_webdriver = None
+            self._webdriver_name = None
 
 
 # 全域單例，方便直接使用

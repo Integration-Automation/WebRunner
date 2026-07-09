@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Sequence
+from typing import Any, Callable, Sequence
 from urllib.parse import urlparse
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
@@ -41,10 +41,10 @@ class RedirectPayload:
 
     label: str
     value: str
-    expected_off_origin_host: Optional[str] = None
+    expected_off_origin_host: str | None = None
 
 
-def default_payloads(attacker_host: str = "evil.example") -> List[RedirectPayload]:
+def default_payloads(attacker_host: str = "evil.example") -> list[RedirectPayload]:
     """Return a representative payload set for the given attacker host."""
     if not isinstance(attacker_host, str) or "." not in attacker_host:
         raise OpenRedirectError("attacker_host must look like a domain")
@@ -52,7 +52,7 @@ def default_payloads(attacker_host: str = "evil.example") -> List[RedirectPayloa
         # S5332 ok: these payloads INTENTIONALLY use http:// — the whole point
         # of an open-redirect probe is to see if the app redirects to them.
         RedirectPayload("absolute_http",
-                        f"http://{attacker_host}/",  # noqa: S5332
+                        f"http://{attacker_host}/",  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
                         attacker_host),
         RedirectPayload("absolute_https",
                         f"https://{attacker_host}/",
@@ -85,12 +85,12 @@ class ProbeResult:
     """One payload → one outcome."""
 
     payload: RedirectPayload
-    final_location: Optional[str]
+    final_location: str | None
     status_code: int
     outcome: ProbeOutcome
     note: str = ""
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "payload_label": self.payload.label,
             "payload_value": self.payload.value,
@@ -103,7 +103,7 @@ class ProbeResult:
 
 def classify_response(
     payload: RedirectPayload,
-    final_location: Optional[str],
+    final_location: str | None,
     status_code: int,
     *,
     legitimate_host: str,
@@ -183,7 +183,7 @@ class ProbeResponse:
     """What the probe callable must return."""
 
     status_code: int
-    location: Optional[str]
+    location: str | None
 
 
 @dataclass
@@ -191,9 +191,9 @@ class ProbeReport:
     """Aggregate over all payloads."""
 
     legitimate_host: str
-    results: List[ProbeResult] = field(default_factory=list)
+    results: list[ProbeResult] = field(default_factory=list)
 
-    def vulnerable(self) -> List[ProbeResult]:
+    def vulnerable(self) -> list[ProbeResult]:
         return [r for r in self.results if r.outcome == ProbeOutcome.ALLOWED]
 
     def passed(self) -> bool:

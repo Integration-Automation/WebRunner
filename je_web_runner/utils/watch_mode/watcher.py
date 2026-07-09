@@ -12,7 +12,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -26,7 +26,7 @@ class WatchModeError(WebRunnerException):
 class WatchSnapshot:
     """``{path: (mtime, size)}`` snapshot of a directory tree."""
 
-    entries: Dict[str, Tuple[float, int]] = field(default_factory=dict)
+    entries: dict[str, tuple[float, int]] = field(default_factory=dict)
 
 
 def snapshot_dir(directory: str, glob: str = "**/*.json") -> WatchSnapshot:
@@ -44,9 +44,9 @@ def snapshot_dir(directory: str, glob: str = "**/*.json") -> WatchSnapshot:
 
 @dataclass
 class WatchDiff:
-    added: List[str] = field(default_factory=list)
-    removed: List[str] = field(default_factory=list)
-    changed: List[str] = field(default_factory=list)
+    added: list[str] = field(default_factory=list)
+    removed: list[str] = field(default_factory=list)
+    changed: list[str] = field(default_factory=list)
 
     @property
     def has_changes(self) -> bool:
@@ -70,7 +70,7 @@ def watch_loop(
     on_change: Callable[[WatchDiff], None],
     glob: str = "**/*.json",
     interval: float = 0.5,
-    max_iterations: Optional[int] = None,
+    max_iterations: int | None = None,
     sleep: Callable[[float], None] = time.sleep,
 ) -> int:
     """
