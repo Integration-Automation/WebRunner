@@ -44,9 +44,9 @@ def _resolve_network(driver) -> Any:
 def _add_request_handler(driver, event: str, callback: Callable[[Any], None]) -> int:
     """
     透過 Selenium 4.x BiDi ``network.add_request_handler(event, callback)``
-    註冊一個事件 handler。Selenium 的單一入口以 ``event`` 區分階段
-    (``before_request`` / ``response_started`` / ``auth_required``)，
-    並沒有獨立的 ``add_response_handler`` / callback 版 ``add_auth_handler``。
+    註冊一個事件 handler。legacy phase 入口以 ``event`` 區分階段
+    (``before_request`` / ``auth_required``；``response_started`` 於
+    Selenium 4.45 移除，改走原生 ``add_response_handler``)。
     Register a handler via Selenium 4.x BiDi ``add_request_handler(event, cb)``.
     """
     network = _resolve_network(driver)
@@ -69,14 +69,25 @@ def add_request_handler(driver, callback: Callable[[Any], None]) -> int:
     return _add_request_handler(driver, "before_request", callback)
 
 
-def add_response_handler(driver, callback: Callable[[Any], None]) -> int:
+def add_response_handler(driver, callback: Callable[[Any], None]) -> int | str:
     """
     註冊「回應開始」事件 handler，回傳訂閱 id。
-    Register a handler for the BiDi ``network.responseStarted`` event
-    (Selenium's ``add_request_handler`` only exposes the *started* response
-    phase, not ``responseCompleted``).
+    Register a handler for the BiDi ``network.responseStarted`` event.
+
+    Selenium 4.45+ 提供原生 ``network.add_response_handler``（回傳字串
+    handler id，callback 收到 ``Response`` 物件、Selenium 自動 continue）；
+    更舊的版本退回 ``add_request_handler("response_started", ...)``
+    （4.45 起該 legacy phase 已被移除，僅剩 before_request / auth_required）。
+    Selenium 4.45+ exposes a native ``network.add_response_handler`` (string
+    handler id; the callback receives a ``Response`` and Selenium continues it
+    automatically); older versions fall back to the legacy
+    ``add_request_handler("response_started", ...)`` phase, which 4.45 removed.
     """
     web_runner_logger.info("bidi network add_response_handler")
+    network = _resolve_network(driver)
+    native_add = getattr(network, "add_response_handler", None)
+    if native_add is not None:
+        return native_add(callback=callback)
     return _add_request_handler(driver, "response_started", callback)
 
 
@@ -105,8 +116,15 @@ def clear_network_handlers(driver) -> bool:
             "driver.network.clear_request_handlers missing; "
             "your Selenium version may not expose handler clearing"
         )
+    # Selenium 4.45+ 的 clear_request_handlers 不會清到原生
+    # add_response_handler 註冊的 handlers，要另外呼叫。
+    # On Selenium 4.45+ clear_request_handlers does not cover handlers
+    # registered via the native add_response_handler; clear those too.
+    clear_responses = getattr(network, "clear_response_handlers", None)
     try:
         clear()
+        if clear_responses is not None:
+            clear_responses()
         return True
     except Exception as error:
         web_runner_logger.error(f"clear_network_handlers failed: {error!r}")
