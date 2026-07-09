@@ -272,7 +272,7 @@ class WebDriverWrapper(
                 f"webdriver_manager_option_dict: {webdriver_manager_option_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_driver", param, error)
-            raise WebRunnerException from error
+            raise WebRunnerException(f"set_driver failed: {error!r}") from error
 
     def set_webdriver_options_capability(self, key_and_vale_dict: dict) -> Options | None:
         """
@@ -299,7 +299,8 @@ class WebDriverWrapper(
                 f"key_and_vale_dict: {key_and_vale_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_webdriver_options_capability", param, error)
-            raise WebRunnerException from error
+            raise WebRunnerException(
+                f"set_webdriver_options_capability failed: {error!r}") from error
 
     def attach_to_existing_browser(
             self,
@@ -554,7 +555,7 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper quit failed: {error!r}")
             record_action_to_list("webdriver wrapper quit", None, error)
-            raise WebRunnerException from error
+            raise WebRunnerException(f"quit failed: {error!r}") from error
         finally:
             # Forget the (now dead) driver so the ``is None`` guards in
             # find_element / etc. correctly report "no active driver".

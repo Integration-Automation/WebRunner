@@ -132,7 +132,7 @@ class WebdriverManager:
         except Exception as error:
             web_runner_logger.error(f"WebdriverManager quit, failed: {error!r}")
             record_action_to_list("web runner manager quit", None, error)
-            raise WebDriverException from error
+            raise WebDriverException(f"WebdriverManager quit failed: {error!r}") from error
 
 
 def get_webdriver_manager(webdriver_name: str, **kwargs) -> WebdriverManager:
