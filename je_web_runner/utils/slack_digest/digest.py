@@ -202,7 +202,7 @@ def build_teams_card(inputs: DigestInputs) -> dict[str, Any]:
         "type": "AdaptiveCard",
         # S5332 ok: this is the well-known AdaptiveCards $schema literal that
         # Microsoft Teams expects verbatim; it is NOT fetched.
-        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+        "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
         "version": "1.5",
         "body": body,
     }

@@ -42,7 +42,7 @@ class _FakeResponse:
 
 def test_http_get_json_rejects_non_http():
     with pytest.raises(OtpInterceptError):
-        _http_get_json("ftp://example/x")
+        _http_get_json("ftp://example/x")  # NOSONAR S5332 — test fixture URL, not a real transport
 
 
 def test_http_get_json_parses_json(monkeypatch):
@@ -84,8 +84,8 @@ def test_parse_time_none_is_now():
 
 
 def test_parse_time_numeric_passthrough():
-    assert _parse_time(1234) == 1234.0
-    assert _parse_time(99.5) == 99.5
+    assert _parse_time(1234) == 1234.0  # NOSONAR S1244 — exact numeric passthrough, not a computed float
+    assert _parse_time(99.5) == 99.5  # NOSONAR S1244 — exact numeric passthrough, not a computed float
 
 
 def test_parse_time_iso_with_z():
@@ -145,7 +145,7 @@ class _FakeImapConn:
 def test_imap_provider_fetches_and_extracts():
     conn = _FakeImapConn(_email_bytes())
     provider = ImapProvider(
-        "imap.example", username="u", password="p",
+        "imap.example", username="u", password="p",  # NOSONAR S2068 — test fixture credential, not a real secret
         connector=lambda _host, _port: conn,
     )
     messages = provider.fetch_messages(recipient="user@example")
@@ -157,9 +157,9 @@ def test_imap_provider_fetches_and_extracts():
 
 def test_imap_provider_requires_credentials():
     with pytest.raises(OtpInterceptError):
-        ImapProvider("host", username="", password="p")
+        ImapProvider("host", username="", password="p")  # NOSONAR S2068 — test fixture credential, not a real secret
     with pytest.raises(OtpInterceptError):
-        ImapProvider("", username="u", password="p")
+        ImapProvider("", username="u", password="p")  # NOSONAR S2068 — test fixture credential, not a real secret
 
 
 def test_imap_bytes_simple_message():
@@ -178,19 +178,19 @@ def test_imap_bytes_multipart_prefers_plain():
 # ---------- provider error branches -------------------------------------
 
 def test_mailhog_items_not_list_returns_empty():
-    provider = MailHogProvider("http://x", http_fetcher=lambda _u: {"items": "nope"})
+    provider = MailHogProvider("http://x", http_fetcher=lambda _u: {"items": "nope"})  # NOSONAR S5332 — test fixture URL, not a real transport
     assert provider.fetch_messages() == []
 
 
 def test_mailhog_skips_non_dict_items():
     provider = MailHogProvider(
-        "http://x", http_fetcher=lambda _u: {"items": ["bad", 123]}
+        "http://x", http_fetcher=lambda _u: {"items": ["bad", 123]}  # NOSONAR S5332 — test fixture URL, not a real transport
     )
     assert provider.fetch_messages() == []
 
 
 def test_mailpit_non_dict_payload_raises():
-    provider = MailpitProvider("http://x", http_fetcher=lambda _u: [])
+    provider = MailpitProvider("http://x", http_fetcher=lambda _u: [])  # NOSONAR S5332 — test fixture URL, not a real transport
     with pytest.raises(OtpInterceptError):
         provider.fetch_messages()
 
@@ -200,7 +200,7 @@ def test_webhook_sms_filters_by_since():
         {"id": "old", "to": "+1", "body": "code 111111", "received_at": 10.0},
         {"id": "new", "to": "+1", "body": "code 222222", "received_at": 30.0},
     ]
-    provider = WebhookSmsProvider("http://sms", http_fetcher=lambda _u: rows)
+    provider = WebhookSmsProvider("http://sms", http_fetcher=lambda _u: rows)  # NOSONAR S5332 — test fixture URL, not a real transport
     out = provider.fetch_messages(recipient="+1", since=20.0)
     assert [m.message_id for m in out] == ["new"]
 

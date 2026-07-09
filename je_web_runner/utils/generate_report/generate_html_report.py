@@ -173,7 +173,7 @@ def generate_html_report(html_name: str = "default_name"):
     new_html_string = generate_html()
     try:
         # ``_lock`` serialises concurrent writers; ``with`` guarantees release.
-        with _lock, open(html_name + ".html", "w", encoding="utf-8") as file_to_write:
+        with _lock, open(html_name + ".html", "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             file_to_write.write(new_html_string)
     except OSError as error:
         web_runner_logger.error(f"generate_html_report write failed: {error!r}")

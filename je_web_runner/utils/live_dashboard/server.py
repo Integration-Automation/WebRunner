@@ -502,7 +502,7 @@ class DashboardServer:
             host = "127.0.0.1"
         # S5332 ok: dashboard binds to loopback by default; intentionally HTTP
         # so the user can open it in a browser without a self-signed cert.
-        return f"http://{host}:{port}"
+        return f"http://{host}:{port}"  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
 
     def __enter__(self) -> DashboardServer:
         self.start()

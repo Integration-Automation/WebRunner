@@ -102,9 +102,9 @@ def plan_chaos(
             skipped.append(index)
             continue
         # S2245 ok: deterministic seeded scheduling for tests; not cryptographic.
-        if rng.random() >= fault_rate:
+        if rng.random() >= fault_rate:  # NOSONAR S2245 — non-crypto use (chaos/sampling), not security-sensitive
             continue
-        fault = rng.choice(list(faults))
+        fault = rng.choice(list(faults))  # NOSONAR S2245 — non-crypto use (chaos/sampling), not security-sensitive
         events.append(ChaosEvent(step_index=index, step_name=name, fault=fault))
         if max_events is not None and len(events) >= max_events:
             break

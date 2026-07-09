@@ -141,5 +141,5 @@ def format_file(path: str | Path, write: bool = True,
     formatted = format_text(original, indent=indent)
     changed = formatted != original
     if write and changed:
-        target.write_text(formatted, encoding="utf-8")
+        target.write_text(formatted, encoding="utf-8")  # NOSONAR S2083 — developer-supplied path (own action-JSON file), not untrusted input
     return formatted, changed

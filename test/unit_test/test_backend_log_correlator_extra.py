@@ -103,7 +103,7 @@ def test_fetch_loki_success(monkeypatch):
     payload = {"data": {"result": [
         {"stream": {"level": "info"}, "values": [["1", "hello"]]}]}}
     monkeypatch.setattr(requests, "get", lambda *a, **k: _FakeResponse(payload))
-    logs = fetch_loki("http://loki:3100")(_TRACE)
+    logs = fetch_loki("http://loki:3100")(_TRACE)  # NOSONAR S5332 — test fixture URL, not a real transport
     assert len(logs) == 1
     assert logs[0].message == "hello"
 
@@ -114,13 +114,13 @@ def test_fetch_loki_request_error(monkeypatch):
 
     monkeypatch.setattr(requests, "get", boom)
     with pytest.raises(BackendLogCorrelatorError):
-        fetch_loki("http://loki:3100")(_TRACE)
+        fetch_loki("http://loki:3100")(_TRACE)  # NOSONAR S5332 — test fixture URL, not a real transport
 
 
 def test_fetch_elasticsearch_success(monkeypatch):
     payload = {"hits": {"hits": [{"_source": {"message": "es-line"}}]}}
     monkeypatch.setattr(requests, "post", lambda *a, **k: _FakeResponse(payload))
-    logs = fetch_elasticsearch("http://es:9200", "logs-*")(_TRACE)
+    logs = fetch_elasticsearch("http://es:9200", "logs-*")(_TRACE)  # NOSONAR S5332 — test fixture URL, not a real transport
     assert len(logs) == 1
     assert logs[0].message == "es-line"
 
@@ -131,4 +131,4 @@ def test_fetch_elasticsearch_request_error(monkeypatch):
 
     monkeypatch.setattr(requests, "post", boom)
     with pytest.raises(BackendLogCorrelatorError):
-        fetch_elasticsearch("http://es:9200", "logs-*")(_TRACE)
+        fetch_elasticsearch("http://es:9200", "logs-*")(_TRACE)  # NOSONAR S5332 — test fixture URL, not a real transport

@@ -80,14 +80,14 @@ def migrate_action_file(path: str, dry_run: bool = True) -> dict[str, Any]:
         raise MigrationError(f"action file not found: {path}")
     web_runner_logger.info(f"migrate_action_file: {path} dry_run={dry_run}")
     try:
-        with open(file_path, encoding="utf-8") as action_file:
+        with open(file_path, encoding="utf-8") as action_file:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             data = json.load(action_file)
     except ValueError as error:
         raise MigrationError(f"action file not valid JSON: {path}") from error
     new_data, changes = migrate_action(data)
     written = False
     if changes and not dry_run:
-        with open(file_path, "w", encoding="utf-8") as action_file:
+        with open(file_path, "w", encoding="utf-8") as action_file:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             json.dump(new_data, action_file, indent=2, ensure_ascii=False)
         written = True
     return {"path": str(file_path), "changes": changes, "written": written}

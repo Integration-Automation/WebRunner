@@ -201,7 +201,7 @@ def verify_tag(
 def _needs_crossorigin(tag: ResourceTag) -> bool:
     """Cross-origin (URL absolute + scheme present) needs ``crossorigin``."""
     # S5332 ok: we are *detecting* an http:// URL here, not making a request.
-    return tag.url.startswith(("http://", "https://", "//"))
+    return tag.url.startswith(("http://", "https://", "//"))  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
 
 
 def verify_html(

@@ -201,7 +201,7 @@ def _safe_extract_tar(archive: tarfile.TarFile, target_dir: Path) -> None:
     # 3.9.17 / 3.10.12 / 3.11.4) which rejects escaping links; fall back to a
     # plain extract on older interpreters that lack the parameter.
     try:
-        archive.extractall(target_dir, filter="data")  # nosec B202 — members validated + data filter
+        archive.extractall(target_dir, filter="data")  # nosec B202 — members validated + data filter  # NOSONAR S930 — valid tarfile 'filter' kwarg (Py3.12+), guarded by except TypeError
     except TypeError:
         archive.extractall(target_dir)  # nosec B202 — members validated above
 

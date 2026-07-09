@@ -31,7 +31,7 @@ def read_metadata(path: str) -> dict[str, Any]:
     if not file_path.exists():
         raise TagFilterError(f"action file not found: {path}")
     try:
-        with open(file_path, encoding="utf-8") as action_file:
+        with open(file_path, encoding="utf-8") as action_file:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             data = json.load(action_file)
     except ValueError as error:
         raise TagFilterError(f"action file not valid JSON: {path}") from error

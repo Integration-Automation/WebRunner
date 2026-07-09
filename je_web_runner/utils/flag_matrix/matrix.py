@@ -129,7 +129,7 @@ def build_matrix(  # NOSONAR S3776 — cohesive logic; planned refactor in follo
         keep_count = max(0, sample_size - len(pinned_combos))
         # S2245 ok: deterministic seeded sampling for reproducible test combos;
         # not used for any cryptographic / security decision.
-        filtered = rng.sample(filtered, keep_count)
+        filtered = rng.sample(filtered, keep_count)  # NOSONAR S2245 — non-crypto use (chaos/sampling), not security-sensitive
         sampled = True
     else:
         sampled = False

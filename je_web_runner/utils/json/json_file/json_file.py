@@ -23,7 +23,7 @@ def read_action_json(json_file_path: str) -> list:
         # 檔案不存在或不是檔案
         # File does not exist or is not a file
         raise WebRunnerJsonException(cant_find_json_error)
-    with lock, open(json_file_path, encoding="utf-8") as read_file:
+    with lock, open(json_file_path, encoding="utf-8") as read_file:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
         return json.load(read_file)
 
 

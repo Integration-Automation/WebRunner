@@ -72,11 +72,11 @@ class OtpProvider(ABC):
 def _http_get_json(url: str, timeout: float = 10.0) -> Any:
     # S5332 ok: MailHog / Mailpit are local-only services that expose plain
     # HTTP REST APIs by design; the caller passes a localhost URL.
-    if not url.startswith(("http://", "https://")):
+    if not url.startswith(("http://", "https://")):  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
         raise OtpInterceptError(f"refusing non-http URL: {url!r}")
     req = urllib.request.Request(url, method="GET")
     req.add_header("Accept", "application/json")
-    if url.startswith("http://"):
+    if url.startswith("http://"):  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
         context = None  # plain HTTP for local MailHog / Mailpit
     else:
         context = ssl.create_default_context()
