@@ -11,7 +11,7 @@ import unittest
 
 
 def _run(args):
-    return subprocess.run(  # nosec B603 — argv list, no shell
+    return subprocess.run(  # nosec B603 — argv list, no shell  # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
         [sys.executable, "-m", "je_web_runner", *args],
         capture_output=True,
         text=True,

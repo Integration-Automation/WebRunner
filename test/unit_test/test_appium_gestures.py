@@ -32,7 +32,7 @@ def _fallback_actions(driver):
     from selenium.webdriver.remote.command import Command
     driver.execute.assert_called_once()
     command, payload = driver.execute.call_args.args
-    assert command == Command.W3C_ACTIONS, command
+    assert command == Command.W3C_ACTIONS, command  # nosec B101
     return payload["actions"]
 
 

@@ -10,8 +10,8 @@ def test_snapshot_only_tracks_json(tmp_path):
     (tmp_path / "b.json").write_text("{}", encoding="utf-8")
     (tmp_path / "c.txt").write_text("nope", encoding="utf-8")
     snapshot = _snapshot(str(tmp_path))
-    assert len(snapshot) == 2
-    assert all(key.endswith(".json") for key in snapshot)
+    assert len(snapshot) == 2  # nosec B101
+    assert all(key.endswith(".json") for key in snapshot)  # nosec B101
 
 
 def test_watch_missing_dir_raises():
@@ -26,8 +26,8 @@ def test_watch_initial_run_only_when_idle(tmp_path):
         poll_seconds=0.01, debounce_seconds=0.01, iterations=1,
     )
     # No file changed, so only the baseline run fires.
-    assert runs == 1
-    assert len(calls) == 1
+    assert runs == 1  # nosec B101
+    assert len(calls) == 1  # nosec B101
 
 
 def test_watch_detects_change_and_reruns(tmp_path):
@@ -42,8 +42,8 @@ def test_watch_detects_change_and_reruns(tmp_path):
         str(tmp_path), runner,
         poll_seconds=0.01, debounce_seconds=0.01, iterations=1,
     )
-    assert runs == 2
-    assert len(calls) == 2
+    assert runs == 2  # nosec B101
+    assert len(calls) == 2  # nosec B101
 
 
 def test_watch_stops_on_keyboard_interrupt(tmp_path):
@@ -61,8 +61,8 @@ def test_watch_stops_on_keyboard_interrupt(tmp_path):
         poll_seconds=0.01, debounce_seconds=0.01, iterations=5,
     )
     # Second invocation raised before its run was counted; loop exits cleanly.
-    assert runs == 1
-    assert len(calls) == 2
+    assert runs == 1  # nosec B101
+    assert len(calls) == 2  # nosec B101
 
 
 def test_watch_defers_while_still_changing(tmp_path, monkeypatch):
@@ -80,5 +80,5 @@ def test_watch_defers_while_still_changing(tmp_path, monkeypatch):
         poll_seconds=0.0, debounce_seconds=0.0, iterations=2,
     )
     # The directory was still changing during debounce, so no re-run fired.
-    assert runs == 1
-    assert len(calls) == 1
+    assert runs == 1  # nosec B101
+    assert len(calls) == 1  # nosec B101

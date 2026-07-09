@@ -28,21 +28,21 @@ def test_parse_loki_payload_valid():
          "values": [["1700000000", "boom"], ["1700000001", "again"]]},
     ]}}
     logs = _parse_loki_payload(payload)
-    assert len(logs) == 2
-    assert logs[0].level == "error"
-    assert logs[0].service == "api"
-    assert logs[0].extra == {"env": "prod"}
+    assert len(logs) == 2  # nosec B101
+    assert logs[0].level == "error"  # nosec B101
+    assert logs[0].service == "api"  # nosec B101
+    assert logs[0].extra == {"env": "prod"}  # nosec B101
 
 
 def test_parse_loki_payload_non_dict_returns_empty():
-    assert _parse_loki_payload("nope") == []
+    assert _parse_loki_payload("nope") == []  # nosec B101
 
 
 def test_parse_loki_payload_skips_malformed_entries():
     payload = {"data": {"result": [
         {"stream": {}, "values": [["only-one-element"], "not-a-list"]},
     ]}}
-    assert _parse_loki_payload(payload) == []
+    assert _parse_loki_payload(payload) == []  # nosec B101
 
 
 # ---------- Elasticsearch payload parser --------------------------------
@@ -54,12 +54,12 @@ def test_parse_es_payload_valid():
         "not-a-dict-hit",
     ]}}
     logs = _parse_elasticsearch_payload(payload)
-    assert len(logs) == 1
-    assert logs[0].message == "m"
+    assert len(logs) == 1  # nosec B101
+    assert logs[0].message == "m"  # nosec B101
 
 
 def test_parse_es_payload_non_dict_returns_empty():
-    assert _parse_elasticsearch_payload([]) == []
+    assert _parse_elasticsearch_payload([]) == []  # nosec B101
 
 
 # ---------- file fetcher edge cases -------------------------------------
@@ -73,8 +73,8 @@ def test_file_log_skips_empty_and_invalid_json(tmp_path):
         encoding="utf-8",
     )
     logs = fetch_file_log(path)(_TRACE)
-    assert len(logs) == 1
-    assert logs[0].message == "ok"
+    assert len(logs) == 1  # nosec B101
+    assert logs[0].message == "ok"  # nosec B101
 
 
 # ---------- attach: path exists but is a file ---------------------------
@@ -104,8 +104,8 @@ def test_fetch_loki_success(monkeypatch):
         {"stream": {"level": "info"}, "values": [["1", "hello"]]}]}}
     monkeypatch.setattr(requests, "get", lambda *a, **k: _FakeResponse(payload))
     logs = fetch_loki("http://loki:3100")(_TRACE)  # NOSONAR S5332 — test fixture URL, not a real transport
-    assert len(logs) == 1
-    assert logs[0].message == "hello"
+    assert len(logs) == 1  # nosec B101
+    assert logs[0].message == "hello"  # nosec B101
 
 
 def test_fetch_loki_request_error(monkeypatch):
@@ -121,8 +121,8 @@ def test_fetch_elasticsearch_success(monkeypatch):
     payload = {"hits": {"hits": [{"_source": {"message": "es-line"}}]}}
     monkeypatch.setattr(requests, "post", lambda *a, **k: _FakeResponse(payload))
     logs = fetch_elasticsearch("http://es:9200", "logs-*")(_TRACE)  # NOSONAR S5332 — test fixture URL, not a real transport
-    assert len(logs) == 1
-    assert logs[0].message == "es-line"
+    assert len(logs) == 1  # nosec B101
+    assert logs[0].message == "es-line"  # nosec B101
 
 
 def test_fetch_elasticsearch_request_error(monkeypatch):

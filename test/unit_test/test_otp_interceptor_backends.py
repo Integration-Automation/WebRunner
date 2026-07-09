@@ -49,14 +49,14 @@ def test_http_get_json_parses_json(monkeypatch):
     monkeypatch.setattr(
         urllib.request, "urlopen", lambda *a, **k: _FakeResponse(b'{"ok": 1}')
     )
-    assert _http_get_json("http://localhost/api") == {"ok": 1}
+    assert _http_get_json("http://localhost/api") == {"ok": 1}  # nosec B101
 
 
 def test_http_get_json_empty_body_returns_none(monkeypatch):
     monkeypatch.setattr(
         urllib.request, "urlopen", lambda *a, **k: _FakeResponse(b"")
     )
-    assert _http_get_json("http://localhost/api") is None
+    assert _http_get_json("http://localhost/api") is None  # nosec B101
 
 
 def test_http_get_json_non_json_raises(monkeypatch):
@@ -80,25 +80,25 @@ def test_http_get_json_oserror_raises(monkeypatch):
 
 def test_parse_time_none_is_now():
     before = time.time()
-    assert _parse_time(None) >= before
+    assert _parse_time(None) >= before  # nosec B101
 
 
 def test_parse_time_numeric_passthrough():
-    assert _parse_time(1234) == 1234.0  # NOSONAR S1244 — exact numeric passthrough, not a computed float
-    assert _parse_time(99.5) == 99.5  # NOSONAR S1244 — exact numeric passthrough, not a computed float
+    assert _parse_time(1234) == 1234.0  # NOSONAR S1244 — exact numeric passthrough, not a computed float  # nosec B101
+    assert _parse_time(99.5) == 99.5  # NOSONAR S1244 — exact numeric passthrough, not a computed float  # nosec B101
 
 
 def test_parse_time_iso_with_z():
-    assert _parse_time("2026-05-24T10:00:00Z") > 0
+    assert _parse_time("2026-05-24T10:00:00Z") > 0  # nosec B101
 
 
 def test_parse_time_naive_iso_assumed_utc():
-    assert _parse_time("2026-05-24T10:00:00") > 0
+    assert _parse_time("2026-05-24T10:00:00") > 0  # nosec B101
 
 
 def test_parse_time_invalid_string_is_now():
     before = time.time()
-    assert _parse_time("not-a-date") >= before
+    assert _parse_time("not-a-date") >= before  # nosec B101
 
 
 # ---------- IMAP ---------------------------------------------------------
@@ -145,48 +145,48 @@ class _FakeImapConn:
 def test_imap_provider_fetches_and_extracts():
     conn = _FakeImapConn(_email_bytes())
     provider = ImapProvider(
-        "imap.example", username="u", password="p",  # NOSONAR S2068 — test fixture credential, not a real secret
+        "imap.example", username="u", password="p",  # NOSONAR S2068 — test fixture credential, not a real secret  # nosec B106
         connector=lambda _host, _port: conn,
     )
     messages = provider.fetch_messages(recipient="user@example")
-    assert len(messages) == 1
-    assert "246810" in messages[0].body
-    assert messages[0].subject == "Your login code"
-    assert conn.logged_out  # _close_quietly ran logout
+    assert len(messages) == 1  # nosec B101
+    assert "246810" in messages[0].body  # nosec B101
+    assert messages[0].subject == "Your login code"  # nosec B101
+    assert conn.logged_out  # _close_quietly ran logout  # nosec B101
 
 
 def test_imap_provider_requires_credentials():
     with pytest.raises(OtpInterceptError):
-        ImapProvider("host", username="", password="p")  # NOSONAR S2068 — test fixture credential, not a real secret
+        ImapProvider("host", username="", password="p")  # NOSONAR S2068 — test fixture credential, not a real secret  # nosec B106
     with pytest.raises(OtpInterceptError):
-        ImapProvider("", username="u", password="p")  # NOSONAR S2068 — test fixture credential, not a real secret
+        ImapProvider("", username="u", password="p")  # NOSONAR S2068 — test fixture credential, not a real secret  # nosec B106
 
 
 def test_imap_bytes_simple_message():
     out = _imap_bytes_to_message("7", _email_bytes())
-    assert out is not None
-    assert "246810" in out.body
-    assert out.sender == "bot@example"
+    assert out is not None  # nosec B101
+    assert "246810" in out.body  # nosec B101
+    assert out.sender == "bot@example"  # nosec B101
 
 
 def test_imap_bytes_multipart_prefers_plain():
     out = _imap_bytes_to_message("8", _email_bytes(multipart=True))
-    assert out is not None
-    assert "112233" in out.body
+    assert out is not None  # nosec B101
+    assert "112233" in out.body  # nosec B101
 
 
 # ---------- provider error branches -------------------------------------
 
 def test_mailhog_items_not_list_returns_empty():
     provider = MailHogProvider("http://x", http_fetcher=lambda _u: {"items": "nope"})  # NOSONAR S5332 — test fixture URL, not a real transport
-    assert provider.fetch_messages() == []
+    assert provider.fetch_messages() == []  # nosec B101
 
 
 def test_mailhog_skips_non_dict_items():
     provider = MailHogProvider(
         "http://x", http_fetcher=lambda _u: {"items": ["bad", 123]}  # NOSONAR S5332 — test fixture URL, not a real transport
     )
-    assert provider.fetch_messages() == []
+    assert provider.fetch_messages() == []  # nosec B101
 
 
 def test_mailpit_non_dict_payload_raises():
@@ -202,7 +202,7 @@ def test_webhook_sms_filters_by_since():
     ]
     provider = WebhookSmsProvider("http://sms", http_fetcher=lambda _u: rows)  # NOSONAR S5332 — test fixture URL, not a real transport
     out = provider.fetch_messages(recipient="+1", since=20.0)
-    assert [m.message_id for m in out] == ["new"]
+    assert [m.message_id for m in out] == ["new"]  # nosec B101
 
 
 # ---------- wait arg validation -----------------------------------------
