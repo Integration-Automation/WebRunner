@@ -1,5 +1,5 @@
 je_web_runner
 defusedxml
-Pillow
+Pillow>=12.3.0
 faker
 sqlalchemy
