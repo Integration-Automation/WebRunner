@@ -287,7 +287,7 @@ class TestFramedRequests(unittest.TestCase):
         server = self._serve(auth_token="secret")  # nosec B106 — fake fixture
         host, port = server.server_address
         with socket.create_connection((host, port)) as client:
-            reply = send_command(
+            reply = send_command(  # nosec B106 — deliberately invalid fixture token
                 client, json.dumps([["WR_unknown_command"]]), auth_token="wrong",
             )
         self.assertIn(b"unauthorized", reply)
