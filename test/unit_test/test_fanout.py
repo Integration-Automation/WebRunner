@@ -1,4 +1,4 @@
-import time
+import threading
 import unittest
 
 from je_web_runner.utils.fanout import (
@@ -54,15 +54,19 @@ class TestRunFanOut(unittest.TestCase):
             run_fan_out([42])  # type: ignore[list-item]
 
     def test_actually_runs_in_parallel(self):
-        def slow():
-            time.sleep(0.05)
+        # Proving concurrency with a wall-clock budget is flaky on loaded CI
+        # boxes (thread start-up alone can exceed the margin). A barrier is
+        # deterministic: all three tasks can only clear it if they are in
+        # flight at the same time, otherwise wait() raises BrokenBarrierError.
+        barrier = threading.Barrier(3, timeout=10)
+
+        def rendezvous():
+            barrier.wait()
             return "ok"
-        start = time.monotonic()
-        result = run_fan_out([slow, slow, slow], max_workers=3)
-        elapsed = time.monotonic() - start
-        # Sequential would be ~0.15s; parallel should land well under 0.12s.
-        self.assertTrue(result.succeeded)
-        self.assertLess(elapsed, 0.12)
+
+        result = run_fan_out([rendezvous, rendezvous, rendezvous], max_workers=3)
+        self.assertTrue(result.succeeded, [o.to_dict() for o in result.failures])
+        self.assertEqual(len(result.outcomes), 3)
 
 
 if __name__ == "__main__":
