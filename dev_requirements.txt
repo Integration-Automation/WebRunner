@@ -4,7 +4,7 @@ sphinx
 je_web_runner_dev
 sphinx-rtd-theme
 Pyside6
-defusedxml
+defusedxml>=0.7.1
 Pillow>=12.3.0
 faker
 sqlalchemy

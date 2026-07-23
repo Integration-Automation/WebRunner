@@ -18,12 +18,19 @@ keywords = [
     "selenium", "automation", "testing", "web-automation",
     "webdriver", "browser", "e2e", "qa",
 ]
+# Every runtime dependency carries a lower bound so an installer cannot
+# silently resolve a version predating a known advisory or an API this
+# package relies on. Floors are minimums, not pins — upper bounds are left
+# open so the package stays co-installable.
 dependencies = [
     "selenium>=4.0.0",
-    'requests',
-    'python-dotenv',
-    "webdriver-manager",
-    "defusedxml",
+    # 2.33.0 is the first release carrying the extract_zipped_paths fix
+    # (GHSA-gc5v-m9x4-r6x2).
+    "requests>=2.33.0",
+    "python-dotenv>=1.0.0",
+    # 4.x is the line this package is developed and tested against.
+    "webdriver-manager>=4.0.0",
+    "defusedxml>=0.7.1",
     # Floor set to the first release without the known Pillow advisories;
     # wheels cover cp310-cp315, so it excludes no supported interpreter.
     "Pillow>=12.3.0",
