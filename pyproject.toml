@@ -24,7 +24,9 @@ dependencies = [
     'python-dotenv',
     "webdriver-manager",
     "defusedxml",
-    "Pillow",
+    # Floor set to the first release without the known Pillow advisories;
+    # wheels cover cp310-cp315, so it excludes no supported interpreter.
+    "Pillow>=12.3.0",
 ]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
