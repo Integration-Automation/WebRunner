@@ -223,14 +223,21 @@ def assert_sorted_by(
         return
     last = flattened[0]
     for current in flattened[1:]:
-        if reverse:
-            if current > last:
-                raise PaginationAuditError(
-                    f"order violation: {current!r} > {last!r} but reverse=True"
-                )
-        else:
-            if current < last:
-                raise PaginationAuditError(
-                    f"order violation: {current!r} < {last!r}"
-                )
+        # ``items_by_page_key`` is caller-supplied and only guaranteed to
+        # return Hashable, which is not necessarily orderable. Mixed types
+        # (str vs int, None vs anything) raise TypeError here — surface that
+        # as a PaginationAuditError instead of leaking a bare TypeError.
+        try:
+            out_of_order = current > last if reverse else current < last
+        except TypeError as error:
+            raise PaginationAuditError(
+                f"items_by_page_key returned non-comparable keys "
+                f"({current!r} vs {last!r}): {error}"
+            ) from error
+        if out_of_order:
+            symbol = ">" if reverse else "<"
+            suffix = " but reverse=True" if reverse else ""
+            raise PaginationAuditError(
+                f"order violation: {current!r} {symbol} {last!r}{suffix}"
+            )
         last = current
