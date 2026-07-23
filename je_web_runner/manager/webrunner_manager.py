@@ -76,6 +76,17 @@ class WebdriverManager:
                 f"WebdriverManager change_webdriver, index_of_webdriver: {index_of_webdriver}, failed: {error!r}")
             record_action_to_list("web runner manager change_webdriver", param, error)
 
+    def _detach_wrapper_if_active(self, driver: WebDriver) -> None:
+        """
+        若共用的 wrapper 單例正指向這個已關閉的 driver，就把它解除綁定。
+        Clear the shared ``webdriver_wrapper`` singleton when it is still
+        pointing at ``driver``. The manager owns raw Selenium handles, so
+        closing one here would otherwise leave the wrapper (and its
+        ActionChains) bound to a dead session for the next caller.
+        """
+        if self.webdriver_wrapper.current_webdriver is driver:
+            self.webdriver_wrapper.set_active_driver(None)
+
     def close_current_webdriver(self) -> None:
         """
         關閉當前 WebDriver
@@ -83,8 +94,18 @@ class WebdriverManager:
         """
         web_runner_logger.info("WebdriverManager close_current_webdriver")
         try:
-            self._current_webdriver_list.remove(self.current_webdriver)
-            self.current_webdriver.close()
+            if self.current_webdriver is None:
+                raise WebRunnerWebDriverIsNoneException(selenium_wrapper_web_driver_not_found_error)
+            # Close first, then drop the reference: if close() raises, the
+            # driver stays tracked so a later quit() can still reclaim it.
+            closed = self.current_webdriver
+            closed.close()
+            if closed in self._current_webdriver_list:
+                self._current_webdriver_list.remove(closed)
+            # Never leave ``current_webdriver`` pointing at a closed session —
+            # the next action would fail against a dead driver.
+            self.current_webdriver = None
+            self._detach_wrapper_if_active(closed)
             record_action_to_list("web runner manager close_current_webdriver", None, None)
         except Exception as error:
             web_runner_logger.error(f"WebdriverManager close_current_webdriver, failed: {error!r}")
@@ -100,9 +121,12 @@ class WebdriverManager:
         web_runner_logger.info("WebdriverManager close_choose_webdriver")
         param = locals()
         try:
-            self.current_webdriver = self._current_webdriver_list[webdriver_index]
-            self.current_webdriver.close()
-            self._current_webdriver_list.remove(self._current_webdriver_list[webdriver_index])
+            chosen = self._current_webdriver_list[webdriver_index]
+            chosen.close()
+            self._current_webdriver_list.pop(webdriver_index)
+            if self.current_webdriver is chosen:
+                self.current_webdriver = None
+            self._detach_wrapper_if_active(chosen)
             record_action_to_list("web runner manager close_choose_webdriver", param, None)
         except Exception as error:
             web_runner_logger.error(f"WebdriverManager close_choose_webdriver, failed: {error!r}")
@@ -122,12 +146,28 @@ class WebdriverManager:
             # Clean test records
             test_object_record.clean_record()
 
-            # 關閉所有 WebDriver
-            # Quit all WebDrivers
+            # 關閉所有 WebDriver；單一 driver 失敗不可中斷其餘的清理，
+            # 否則剩下的瀏覽器程序會變成 orphan。
+            # Quit every WebDriver. A failure on one must not abort the loop,
+            # or the remaining browsers leak as orphan processes.
+            quit_errors: list[Exception] = []
             for webdriver in self._current_webdriver_list:
-                webdriver.quit()
+                try:
+                    webdriver.quit()
+                except Exception as error:  # pylint: disable=broad-except
+                    web_runner_logger.error(f"WebdriverManager quit driver failed: {error!r}")
+                    quit_errors.append(error)
 
             self._current_webdriver_list = []
+            self.current_webdriver = None
+            # Every driver is gone, so the shared wrapper singleton must not
+            # keep serving a dead one to the next caller.
+            self.webdriver_wrapper.set_active_driver(None)
+            if quit_errors:
+                raise WebDriverException(
+                    f"WebdriverManager quit failed for {len(quit_errors)} driver(s): "
+                    f"{[repr(e) for e in quit_errors]}"
+                )
             record_action_to_list("web runner manager quit", None, None)
         except Exception as error:
             web_runner_logger.error(f"WebdriverManager quit, failed: {error!r}")
