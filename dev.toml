@@ -13,12 +13,13 @@ authors = [
 description = "WEB Automation Framework"
 requires-python = ">=3.10"
 license-files = ["LICENSE"]
+# Kept in step with pyproject.toml; see the rationale for each floor there.
 dependencies = [
     "selenium>=4.0.0",
-    "requests",
-    "python-dotenv",
-    "webdriver-manager",
-    "defusedxml",
+    "requests>=2.33.0",
+    "python-dotenv>=1.0.0",
+    "webdriver-manager>=4.0.0",
+    "defusedxml>=0.7.1",
 ]
 classifiers = [
     "Programming Language :: Python :: 3.10",
