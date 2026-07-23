@@ -14,8 +14,8 @@ from je_web_runner.utils.auth.oauth import (
 def _success_response(**overrides):
     response = MagicMock(status_code=200, text="ok")
     payload = {
-        "access_token": "abc",
-        "token_type": "Bearer",
+        "access_token": "abc",  # nosec B105 — fake token in a stubbed OAuth response
+        "token_type": "Bearer",  # nosec B105 — OAuth token *type*, not a credential
         "expires_in": 3600,
     }
     payload.update(overrides)
@@ -30,7 +30,7 @@ class TestClientCredentials(unittest.TestCase):
 
     def test_invalid_url_raises(self):
         with self.assertRaises(OAuthError):
-            client_credentials_token("ftp://example.com", "id", "secret")  # NOSONAR — fixture, asserts the validator rejects it
+            client_credentials_token("ftp://example.com", "id", "secret")  # NOSONAR — fixture
 
     def test_returns_token_response(self):
         with patch("je_web_runner.utils.auth.oauth.requests.post",

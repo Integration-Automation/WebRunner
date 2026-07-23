@@ -153,6 +153,8 @@ def _make_oauth_handler(server_state: dict[str, Any]) -> Callable:
                 server_state["issued"].append(token)
                 self._send(200, {
                     "access_token": token,
+                    # nosec B105 — OAuth token *type* constant; the token itself
+                    # above comes from secrets.token_hex.
                     "token_type": "Bearer",
                     "expires_in": 3600,
                 })

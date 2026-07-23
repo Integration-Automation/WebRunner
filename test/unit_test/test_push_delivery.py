@@ -12,7 +12,7 @@ from je_web_runner.utils.push_delivery.delivery import (
 def _good_fcm():
     return {
         "message": {
-            "token": "device-token",
+            "token": "device-token",  # nosec B105 — fake FCM device token fixture
             "notification": {"title": "T", "body": "B"},
             "android": {"ttl": "3600s"},
         },

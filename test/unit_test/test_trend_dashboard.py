@@ -60,7 +60,7 @@ class TestRender(unittest.TestCase):
     def test_render_includes_title_and_table(self):
         trend = {"daily": [
             {"label": "2026-04-25", "passed": 1, "failed": 0, "total": 1,
-             "pass_rate": 1.0, "avg_duration_seconds": 1.5},
+             "pass_rate": 1.0, "avg_duration_seconds": 1.5},  # nosec B105 — a ratio, not a secret
         ], "totals": {}}
         text = render_html(trend, title="Demo")
         self.assertIn("Demo", text)
