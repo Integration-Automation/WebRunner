@@ -89,12 +89,31 @@ class BrowserPool:
         if self._closed:
             raise BrowserPoolError("pool is closed")
         deadline = time.monotonic() + timeout
-        while True:
+        # Discarding an unhealthy session frees a ``_tracked`` slot, so
+        # ``_can_grow()`` flips straight back to True and the next iteration
+        # spawns again. A factory that always produces unhealthy instances
+        # (crash-on-launch browser, dead health-check endpoint) would
+        # otherwise loop forever, churning real browser processes. Bound the
+        # retries so the failure is fast and deterministic rather than a
+        # spin that only stops at the deadline.
+        budget = self._unhealthy_retry_budget()
+        for _ in range(budget):
             session = self._acquire_session(timeout, deadline)
-            if not self._is_healthy(session):
-                self._destroy(session)
-                continue
-            return session
+            if self._is_healthy(session):
+                return session
+            self._destroy(session)
+            if time.monotonic() >= deadline:
+                raise BrowserPoolError(
+                    f"no healthy session available within {timeout}s"
+                )
+        raise BrowserPoolError(
+            f"no healthy session after {budget} attempts; "
+            f"the factory or health_check is failing consistently"
+        )
+
+    def _unhealthy_retry_budget(self) -> int:
+        """Allow every pooled slot a couple of replacement attempts."""
+        return max(4, self._size * 3)
 
     def _acquire_session(self, timeout: float, deadline: float) -> PooledSession:
         try:
