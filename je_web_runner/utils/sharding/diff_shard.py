@@ -21,6 +21,8 @@ class DiffShardError(WebRunnerException):
 
 GitRunner = Callable[[Sequence[str]], str]
 
+_GIT_TIMEOUT_SECONDS = 30.0
+
 
 def _default_git_runner(args: Sequence[str]) -> str:
     cmd = ["git", *args]
@@ -30,8 +32,11 @@ def _default_git_runner(args: Sequence[str]) -> str:
             cmd,
             stderr=subprocess.DEVNULL,
             text=True,
+            # Bounded so a git subprocess waiting on an index lock or a
+            # credential prompt can't wedge the shard split indefinitely.
+            timeout=_GIT_TIMEOUT_SECONDS,
         )
-    except (FileNotFoundError, subprocess.CalledProcessError) as error:
+    except (OSError, subprocess.SubprocessError) as error:
         raise DiffShardError(f"git command failed: {error!r}") from error
     return out
 

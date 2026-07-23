@@ -51,6 +51,11 @@ class OrphanFinding:
 ProcessLister = Callable[[], list[OrphanFinding]]
 ProcessKiller = Callable[[int], bool]
 
+# Every external process call is bounded: a wedged ``ps`` / ``tasklist`` /
+# ``taskkill`` would otherwise block the calling thread forever, which
+# defeats the point of a supervisor meant to unstick hung runs.
+_PROCESS_CALL_TIMEOUT_SECONDS = 15.0
+
 
 def _ps_unix_lister() -> list[OrphanFinding]:
     try:
@@ -59,8 +64,9 @@ def _ps_unix_lister() -> list[OrphanFinding]:
             ["ps", "-Ao", "pid=,comm=,args="],
             text=True,
             stderr=subprocess.DEVNULL,
+            timeout=_PROCESS_CALL_TIMEOUT_SECONDS,
         )
-    except (FileNotFoundError, subprocess.CalledProcessError) as error:
+    except (OSError, subprocess.SubprocessError) as error:
         raise ProcessSupervisorError(f"ps failed: {error!r}") from error
     findings: list[OrphanFinding] = []
     for line in out.splitlines():
@@ -84,8 +90,9 @@ def _tasklist_windows_lister() -> list[OrphanFinding]:
             ["tasklist", "/FO", "CSV", "/NH"],
             text=True,
             stderr=subprocess.DEVNULL,
+            timeout=_PROCESS_CALL_TIMEOUT_SECONDS,
         )
-    except (FileNotFoundError, subprocess.CalledProcessError) as error:
+    except (OSError, subprocess.SubprocessError) as error:
         raise ProcessSupervisorError(f"tasklist failed: {error!r}") from error
     findings: list[OrphanFinding] = []
     for line in out.splitlines():
@@ -116,6 +123,7 @@ def default_killer(pid: int) -> bool:
                 ["taskkill", "/F", "/PID", str(pid)],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
+                timeout=_PROCESS_CALL_TIMEOUT_SECONDS,
             )
             return True
         # The PID list is filtered by ``KNOWN_DRIVER_NAMES`` and excludes
@@ -123,7 +131,7 @@ def default_killer(pid: int) -> bool:
         # supervisor's own webdriver children.
         os.kill(pid, 9)  # NOSONAR S4828 — pid pre-validated against driver name allow-list
         return True
-    except (OSError, subprocess.CalledProcessError) as error:
+    except (OSError, subprocess.SubprocessError) as error:
         web_runner_logger.warning(f"process_supervisor kill {pid} failed: {error!r}")
         return False
 
