@@ -207,6 +207,19 @@ class TestAssertSortedBy(unittest.TestCase):
         with self.assertRaises(PaginationAuditError):
             assert_sorted_by(findings, _boom)
 
+    def test_non_comparable_keys_raise_audit_error(self):
+        # Hashable does not imply orderable: mixing str and int makes the
+        # ``<`` comparison raise TypeError. That must surface as a
+        # PaginationAuditError, not leak a bare TypeError to the caller.
+        findings = PaginationFindings(item_keys_by_page=[[1, "two"]])
+        with self.assertRaises(PaginationAuditError):
+            assert_sorted_by(findings, lambda x: x)
+
+    def test_none_key_raises_audit_error(self):
+        findings = PaginationFindings(item_keys_by_page=[[1], [None]])
+        with self.assertRaises(PaginationAuditError):
+            assert_sorted_by(findings, lambda x: x)
+
 
 if __name__ == "__main__":
     unittest.main()

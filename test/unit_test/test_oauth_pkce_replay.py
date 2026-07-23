@@ -52,7 +52,8 @@ class TestReplay(unittest.TestCase):
     def test_accepted_outcome_is_bug(self):
         def probe(payload):
             return TokenExchangeResponse(
-                status_code=200, body={"access_token": "abc"},
+                status_code=200,
+                body={"access_token": "abc"},  # nosec B105 — fake stubbed token
             )
         result = replay(ReplayCase(name="x", payload={}), probe)
         self.assertEqual(result.outcome, ReplayOutcome.ACCEPTED)

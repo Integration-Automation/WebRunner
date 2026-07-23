@@ -80,6 +80,23 @@ class TestBrowserPool(unittest.TestCase):
         self.assertNotEqual(sess1.session_id, sess2.session_id)
         destructor.assert_called()  # destroyed at least once
 
+    def test_permanently_unhealthy_factory_times_out(self):
+        """A factory whose instances never pass the health check must make
+        checkout() give up at the deadline instead of spinning forever
+        spawning-and-destroying browser processes."""
+        spawned = MagicMock(side_effect=lambda: object())
+        pool = BrowserPool(
+            factory=spawned,
+            destructor=MagicMock(),
+            health_check=lambda _instance: False,
+            size=2,
+        )
+        with self.assertRaises(BrowserPoolError):
+            pool.checkout(timeout=30.0)
+        # Deterministic bound: size(2) * 3 attempts, no clock dependency and
+        # no unbounded churn of real browser processes.
+        self.assertEqual(spawned.call_count, 6)
+
     def test_factory_failure_raises(self):
         def failing():
             raise RuntimeError("no driver")

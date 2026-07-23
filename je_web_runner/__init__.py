@@ -24,6 +24,9 @@ from je_web_runner.utils.generate_report.generate_junit_xml_report import genera
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml_report
 from je_web_runner.utils.generate_report.generate_allure_report import generate_allure
 from je_web_runner.utils.generate_report.generate_allure_report import generate_allure_report
+from je_web_runner.utils.socket_server.web_runner_socket_server import encode_frame
+from je_web_runner.utils.socket_server.web_runner_socket_server import read_frame
+from je_web_runner.utils.socket_server.web_runner_socket_server import send_command
 from je_web_runner.utils.socket_server.web_runner_socket_server import start_web_runner_socket_server
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_class import create_test_object
@@ -387,6 +390,7 @@ __all__ = [
     "generate_junit_xml", "generate_junit_xml_report",
     "generate_allure", "generate_allure_report",
     "start_web_runner_socket_server", "get_dir_files_as_list",
+    "send_command", "read_frame", "encode_frame",
     "TestObject", "create_test_object", "get_test_object_type_list",
     "test_record_instance", "Keys", "callback_executor", "create_project_dir",
     "load_env", "get_env", "expand_in_action", "EnvConfigError",
