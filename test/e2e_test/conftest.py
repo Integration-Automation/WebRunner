@@ -5,6 +5,9 @@ Set ``WEBRUNNER_E2E_HUB`` to the Selenium Grid URL (default
 ``http://localhost:4444/wd/hub``). Tests skip cleanly when the hub is
 unreachable so the suite stays green on machines without Docker.
 
+Set ``WEBRUNNER_E2E_ORIGIN`` to an http(s) URL the *browser* can load when the
+default (the hub's own Grid console) isn't reachable from the node container.
+
 Usage:
 
     cd docker && docker compose up -d
@@ -22,6 +25,10 @@ import pytest
 
 
 _DEFAULT_HUB = "http://localhost:4444/wd/hub"
+# Reachable from *inside* the browser container, not from the test runner:
+# both docker-compose.yml and the CI workflow name the hub service
+# ``selenium-hub``, which resolves on the network the node shares with it.
+_DEFAULT_ORIGIN = "http://selenium-hub:4444/"
 
 
 def _hub_reachable(hub_url: str, timeout: float = 1.0) -> bool:
@@ -51,6 +58,31 @@ def selenium_hub_url() -> str:
 def hub_reachable(selenium_hub_url: str) -> bool:
     """Whether the Selenium hub TCP port answers connections."""
     return _hub_reachable(selenium_hub_url)
+
+
+@pytest.fixture(scope="session")
+def http_origin_url() -> str:
+    """Return a real http(s) origin for tests that touch browser storage."""
+    return os.environ.get("WEBRUNNER_E2E_ORIGIN", _DEFAULT_ORIGIN)
+
+
+@pytest.fixture
+def storage_origin(chrome_driver, http_origin_url: str) -> str:
+    """
+    Park the shared driver on an origin where web storage actually works.
+
+    ``data:`` URLs are opaque origins and Chrome answers any ``localStorage``
+    access there with "Storage is disabled inside 'data:' URLs", so storage
+    tests need a genuine http(s) origin. Skip rather than fail when the
+    browser can't reach one — that's an environment gap, not a defect.
+    """
+    from selenium.common.exceptions import WebDriverException
+    try:
+        chrome_driver.get(http_origin_url)
+        chrome_driver.execute_script("return window.localStorage.length;")
+    except WebDriverException as error:
+        pytest.skip(f"no usable storage origin at {http_origin_url!r}: {error}")
+    return http_origin_url
 
 
 @pytest.fixture(scope="session")

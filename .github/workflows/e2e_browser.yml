@@ -65,4 +65,8 @@ jobs:
       - name: Run real-browser E2E
         env:
           WEBRUNNER_E2E_HUB: http://localhost:4444/wd/hub
+          # Storage tests need a real origin. The runner reaches the hub on
+          # localhost, but Chrome runs inside the node container, where the
+          # hub answers to its service alias on the shared job network.
+          WEBRUNNER_E2E_ORIGIN: http://selenium-hub:4444/
         run: python -m pytest test/e2e_test/ -m e2e -v

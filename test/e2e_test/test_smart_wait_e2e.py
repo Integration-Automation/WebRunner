@@ -16,16 +16,23 @@ def test_install_hooks_and_fetch_idle_resolves(chrome_driver):
     wait_for_spa_route_stable(chrome_driver, quiet_for=0.05, timeout=5.0)
 
 
-def test_state_diff_round_trip(chrome_driver):
-    """capture_state -> set localStorage -> capture_state should diff to one add."""
+def test_state_diff_round_trip(chrome_driver, storage_origin):
+    """capture_state -> set localStorage -> capture_state should diff to one add.
+
+    Runs on ``storage_origin`` rather than a ``data:`` URL: the latter is an
+    opaque origin where Chrome refuses every ``localStorage`` access.
+    """
     from je_web_runner.utils.state_diff import capture_state, diff_states
-    chrome_driver.get("data:text/html,<html></html>")
     before = capture_state(chrome_driver)
     chrome_driver.execute_script("localStorage.setItem('e2e-key', 'value');")
-    after = capture_state(chrome_driver)
-    diff = diff_states(before, after)
-    assert "e2e-key" in diff.local_storage.added  # nosec B101 — pytest-style
-    assert diff.local_storage.added["e2e-key"] == "value"  # nosec B101
+    try:
+        after = capture_state(chrome_driver)
+        diff = diff_states(before, after)
+        assert "e2e-key" in diff.local_storage.added  # nosec B101 — pytest-style
+        assert diff.local_storage.added["e2e-key"] == "value"  # nosec B101
+    finally:
+        # The driver is session-scoped; don't leak the key into later tests.
+        chrome_driver.execute_script("localStorage.removeItem('e2e-key');")
 
 
 def test_memory_leak_sample_returns_int(chrome_driver):
