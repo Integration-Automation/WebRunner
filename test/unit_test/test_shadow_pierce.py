@@ -1,3 +1,4 @@
+import re
 import unittest
 from unittest.mock import MagicMock
 
@@ -51,6 +52,32 @@ class TestFindAll(unittest.TestCase):
     def test_invalid_limit_raises(self):
         with self.assertRaises(ShadowPierceError):
             find_all(MagicMock(), ".item", limit=0)
+
+
+class TestSeleniumScriptShape(unittest.TestCase):
+    """
+    The mocked driver above can't tell a working script from a broken one, so
+    guard the two ways the Selenium wrapper has silently returned ``undefined``:
+    omitting ``return`` entirely, and letting automatic semicolon insertion
+    truncate ``return`` that sits alone at the end of a line.
+    """
+
+    # ``return`` followed by the opening paren on the same line — [^\S\n] is
+    # "horizontal whitespace only", so a line break here fails the match.
+    _ASI_SAFE_RETURN = re.compile(r"\breturn[^\S\n]*\(")
+
+    def _script_sent_to_selenium(self, call_fn) -> str:
+        driver = MagicMock()
+        call_fn(driver)
+        return driver.execute_script.call_args.args[0]
+
+    def test_find_first_script_returns_its_expression(self):
+        script = self._script_sent_to_selenium(lambda d: find_first(d, "#x"))
+        self.assertRegex(script, self._ASI_SAFE_RETURN)
+
+    def test_find_all_script_returns_its_expression(self):
+        script = self._script_sent_to_selenium(lambda d: find_all(d, "#x"))
+        self.assertRegex(script, self._ASI_SAFE_RETURN)
 
 
 class TestAssertPiercedVisible(unittest.TestCase):

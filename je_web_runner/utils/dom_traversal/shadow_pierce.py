@@ -66,7 +66,12 @@ _PIERCE_ALL_JS = r"""
 def _execute_js(driver: Any, script: str, *args: Any) -> Any:
     if hasattr(driver, "execute_script"):
         # Selenium passes args via ``arguments[0]``; rewrite the body for that.
-        wrapped = "var arguments = [...arguments];\n" + script
+        # The scripts above are IIFE *expressions*, so an explicit ``return``
+        # is required or the browser hands back ``undefined``. The opening
+        # paren must stay on the ``return`` line: the scripts start with a
+        # newline, and ``return`` alone on a line is closed by automatic
+        # semicolon insertion into a bare ``return;``.
+        wrapped = "var arguments = [...arguments];\nreturn (" + script + ");"
         return driver.execute_script(wrapped, *args)
     if hasattr(driver, "evaluate"):
         # Playwright: convert the script into an arrow function over ``args``.
