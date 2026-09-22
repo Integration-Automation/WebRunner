@@ -128,8 +128,11 @@ python -m je_web_runner -d DIR [--tag/--exclude-tag] [--rerun-failed LEDGER] [--
 original CLI entry points (`-e`, `-d`, `--execute_str`) stay unchanged; README › Advanced WebDriverWrapper also keeps
 `WebDriverWrapper` and the `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` patch targets stable.
 
-**De-facto public internal paths:** `utils/executor/action_executor.py` (`executor`), `utils/logging/loggin_instance.py`,
-`webdriver/webdriver_wrapper.py`. Treat moves or renames as breaking changes.
+**Supported module paths (public, README › Public API & Deprecation Policy):**
+`utils/executor/action_executor.py` (`executor`), `utils/logging/loggin_instance.py`
+(`web_runner_logger`, also exported top-level since 0.0.90, and `WebRunnerLoggingHandler`),
+`webdriver/webdriver_wrapper.py`. Moves or renames are breaking changes and follow the deprecation
+policy; `test/unit_test/test_public_api.py` guards them.
 
 **Import-time side effects:** `utils/logging/loggin_instance.py` sets the root logger to DEBUG and attaches a
 `RotatingFileHandler` for the **relative** path `WEBRunner.log` (mode `"w"`), so the log lands in the caller's cwd.

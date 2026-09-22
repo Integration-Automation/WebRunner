@@ -32,6 +32,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
   - [Backend dispatch](#backend-dispatch)
   - [Module map](#module-map)
 - [Quick Start](#quick-start)
+- [Public API & Deprecation Policy](#public-api--deprecation-policy)
 - [Core API](#core-api)
 - [Action Executor](#action-executor)
 - [Backends](#backends)
@@ -387,6 +388,37 @@ The legacy names (`WR_get_webdriver_manager`, `WR_SaveTestObject`, `WR_quit`, `W
 ```
 
 The validator accepts length-1, length-2 (`[cmd, dict_or_list]`), and length-3 (`[cmd, [positional], {kwargs}]`) actions.
+
+## Public API & Deprecation Policy
+
+**What is public** — these are the only things other code should depend on, and the only things this
+policy protects:
+
+| Surface | What it covers |
+| --- | --- |
+| Top-level names | Everything listed in `je_web_runner.__all__` (`from je_web_runner import …`) |
+| CLI | `python -m je_web_runner` flags, including the original `-e/--execute_file`, `-d/--execute_dir` and `--execute_str` (Windows double-encoded JSON included) |
+| Action JSON | The `WR_*` command names registered in `executor.event_dict`, and the `webdriver_wrapper` / `meta` top-level keys of an action file |
+| Socket server | `start_web_runner_socket_server`, `send_command`, `read_frame`, `encode_frame` and the length-prefixed framing |
+| Supported module paths | `je_web_runner.utils.executor.action_executor` (`executor`), `je_web_runner.utils.logging.loggin_instance` (`web_runner_logger`, `WebRunnerLoggingHandler`), `je_web_runner.webdriver.webdriver_wrapper` (`WebDriverWrapper`, `webdriver_wrapper_instance`, the `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` patch targets) |
+
+The three module paths are supported because other repositories already import them: AutoControlGUI's
+WebRunner bridge takes `executor`, Jeffrey_RPA hooks `loggin_instance` by that exact (misspelled)
+name and patches the wrapper dictionaries. They are treated as public rather than asked to move.
+`test/unit_test/test_public_api.py` fails if any of them disappears.
+
+**What is not public**: every other module under `je_web_runner.utils.`, anything named with a
+leading underscore other than the patch targets above, the shape of report files, and the log
+format. They can move in any release.
+
+**Retiring something public**
+
+1. The replacement ships first, and the old name keeps working as an alias.
+2. The alias raises `DeprecationWarning` naming the replacement, and the release notes say so.
+3. The alias stays for at least two further releases before it can be removed, and only a release
+   that names the removal may drop it.
+4. A name listed in `architecture.md` §6 as a cross-project contract is different: it never changes
+   without the consuming repository changing in the same round, and §6 is updated on both sides.
 
 ## Core API
 

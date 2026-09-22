@@ -15,6 +15,7 @@ from je_web_runner.utils.generate_report.generate_html_report import generate_ht
 from je_web_runner.utils.generate_report.generate_json_report import generate_json
 from je_web_runner.utils.generate_report.generate_json_report import generate_json_report
 from je_web_runner.utils.json.json_file.json_file import read_action_json
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.json.json_validator import validate_action_file
 from je_web_runner.utils.json.json_validator import validate_action_files
 from je_web_runner.utils.json.json_validator import validate_action_json
@@ -393,6 +394,7 @@ __all__ = [
     "send_command", "read_frame", "encode_frame",
     "TestObject", "create_test_object", "get_test_object_type_list",
     "test_record_instance", "Keys", "callback_executor", "create_project_dir",
+    "web_runner_logger",
     "load_env", "get_env", "expand_in_action", "EnvConfigError",
     "load_dataset_csv", "load_dataset_json", "expand_with_row",
     "run_with_dataset", "DataDrivenError",
