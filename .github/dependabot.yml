@@ -7,9 +7,13 @@ version: 2
 updates:
   - package-ecosystem: "pip" # See documentation for possible values
     directory: "/" # Location of package manifests
+    # Updates belong on dev: main is the released branch, and merging into it
+    # publishes. A PR opened against main sat unmerged for that reason.
+    target-branch: "dev"
     schedule:
       interval: "daily"
   - package-ecosystem: "github-actions" # Keep workflow action versions current
     directory: "/"
+    target-branch: "dev"
     schedule:
       interval: "weekly"
