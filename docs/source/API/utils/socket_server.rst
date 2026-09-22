@@ -44,9 +44,7 @@ Function: start_web_runner_socket_server
         """
         Start the WebRunner TCP Socket Server in a background daemon thread.
 
-        Host and port can be overridden via sys.argv:
-        - 1 arg: host
-        - 2 args: host, port
+        Binds exactly ``host`` and ``port``; the command line is not consulted.
 
         :param host: server host (default: "localhost")
         :param port: server port (default: 9941)
