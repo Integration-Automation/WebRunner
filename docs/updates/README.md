@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20260923-03 | 2026-09-23 | dev.toml back in step with pyproject.toml | #done #packaging | [2026-09](2026-09.md) |
 | U-20260923-02 | 2026-09-23 | Write down the public API and the deprecation policy | #done #docs #api | [2026-09](2026-09.md) |
 | U-20260923-01 | 2026-09-23 | Release 0.0.89 with the UTF-8 log encoding | #done #release | [2026-09](2026-09.md) |
 | U-20260922-06 | 2026-09-22 | Regression test for the UTF-8 log encoding | #done #logging #tests | [2026-09](2026-09.md) |
@@ -71,4 +72,4 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-09.md](2026-09.md) | 2026-09 | 7 |
+| [2026-09.md](2026-09.md) | 2026-09 | 8 |

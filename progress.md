@@ -6,6 +6,5 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: S-
 
 ## Open
 
-- **#2** `dev.toml` (≈:17-23) lacks `Pillow>=12.3.0` although ≈:16 says it mirrors `pyproject.toml`.
 - **#3** [UNVERIFIED] The SonarCloud snapshot of 2026-04-26 (`issues.json`, `hotspots.json`, gitignored) listed 9 issues (6 × S3776) and 2 hotspots in TO_REVIEW; re-check against the current analysis.
 - **#4** `je_web_runner/utils/` has about 267 flat modules without a layered index, and README has five sections titled "Even More Capabilities".
