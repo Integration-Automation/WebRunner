@@ -141,8 +141,9 @@ process share one driver (`--parallel-mode process` exists for isolation).
 
 ## 7. Design constraints
 
-- Executor calls only registered commands; no `eval` / `exec` on input (unsafe builtins are filtered out of
-  `event_dict`). → CLAUDE.md › Coding Standards › Security Requirements
+- Executor calls only registered commands: the `WR_*` table plus the 22-name `SAFE_BUILTINS` allowlist
+  (`abs` … `sum`), the same list MailThunder and LoadDensity use; nothing else reaches `event_dict`
+  (workspace `progress.md` X-12). → CLAUDE.md › Coding Standards › Security Requirements
 - Validate all external input (URLs, action JSON, socket messages, CLI args); prevent path traversal; socket server binds
   localhost unless configured; escape dynamic content in HTML reports; parameterize values passed to JS. → same section
 - Credentials are never logged or stored in plaintext; use `python-dotenv`. → same section

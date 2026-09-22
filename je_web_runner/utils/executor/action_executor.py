@@ -2,19 +2,23 @@ import builtins
 import time
 import types
 from datetime import datetime
-from inspect import getmembers, isbuiltin
 from pathlib import Path
 from typing import Any, Callable
 
 # 禁止暴露於 JSON 動作執行器的內建函式，避免任意程式碼執行
-# Builtins that must never be callable from user-supplied JSON actions,
-# per CLAUDE.md: "Action executor must only call registered commands;
-# never use eval()/exec() on user input."
-_UNSAFE_BUILTINS = frozenset({
-    "eval", "exec", "compile", "__import__", "__build_class__",
-    "open", "input", "breakpoint",
-    "globals", "locals", "vars",
-    "getattr", "setattr", "delattr",
+# 只註冊允許清單，不再用黑名單：「除了危險的以外全部註冊」會讓 action JSON 拿到
+# 未來 Python 新增的任何內建函式，而且原本的黑名單仍放行 dir / hasattr / id /
+# isinstance / iter / next。這份清單與 MailThunder、LoadDensity 的相同，所以同一份
+# action list 在工作區各框架的行為一致（工作區 progress.md X-12）。
+# An allowlist, not a blocklist: "register everything except the dangerous ones"
+# hands action JSON whatever a future Python adds to builtins, and the previous
+# list still let dir / hasattr / id / isinstance / iter / next through. The names
+# match MailThunder's and LoadDensity's, so one action list behaves the same
+# across the workspace's frameworks (workspace progress.md X-12).
+SAFE_BUILTINS = frozenset({
+    "abs", "all", "any", "ascii", "bin", "callable", "chr", "divmod",
+    "format", "hash", "hex", "len", "max", "min", "oct", "ord", "pow",
+    "print", "repr", "round", "sorted", "sum",
 })
 
 # WR_* 命令會把整段 JavaScript 字串送進瀏覽器執行；當 action JSON 來源不可信時
@@ -801,13 +805,10 @@ class Executor:
             "WR_element_select_by_visible_text": web_runner.webdriver_element.select_by_visible_text,
         }
 
-        # 將安全的 Python 內建函式加入事件字典，過濾可執行任意程式碼者
-        # Register safe Python builtins only; skip those that enable arbitrary
-        # code execution or unrestricted I/O.
-        for name, function in getmembers(builtins, isbuiltin):
-            if name in _UNSAFE_BUILTINS:
-                continue
-            self.event_dict[name] = function
+        # 只把允許清單裡的內建函式加入事件字典
+        # Register only the allowlisted builtins.
+        for name in sorted(SAFE_BUILTINS):
+            self.event_dict[name] = getattr(builtins, name)
 
     def set_retry_policy(self, retries: int = 0, backoff: float = 0.0) -> None:
         """
