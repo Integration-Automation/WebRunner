@@ -1,4 +1,4 @@
-"""Five text scanners that used super-linear regexes (SonarCloud python:S8786).
+"""Text scanners that used super-linear regexes (SonarCloud python:S8786, and three email patterns).
 
 Each case pins the behaviour the old pattern had on ordinary input, then feeds an adversarial input
 that made the old pattern backtrack quadratically and checks it now finishes quickly.
@@ -9,6 +9,9 @@ import pytest
 
 from je_web_runner.utils.hydration_check.check import _normalise_html
 from je_web_runner.utils.locator_hardener.hardener import _is_deeply_nested
+from je_web_runner.utils.pii_in_screenshot.scanner import _EMAIL
+from je_web_runner.utils.pii_scanner.scanner import _EMAIL_RE
+from je_web_runner.utils.push_delivery.delivery import _PII_PATTERNS
 from je_web_runner.utils.story_to_actions.generator import _fenced_block
 from je_web_runner.utils.test_debt_dashboard.debt import _TODO_RE
 from je_web_runner.utils.test_owners_map.owners import parse_codeowners
@@ -94,3 +97,24 @@ def test_codeowners_trailing_comments():
 def test_codeowners_is_linear_on_long_whitespace():
     text = "*.py @py" + " " * _BIG + "x\n"
     assert len(_fast(lambda: parse_codeowners(text)).rules) == 1  # nosec B101
+
+
+_EMAIL_PATTERNS = pytest.mark.parametrize("pattern", [_EMAIL.pattern, _EMAIL_RE, _PII_PATTERNS[2]],
+                                          ids=["pii_in_screenshot", "pii_scanner", "push_delivery"])
+
+
+@_EMAIL_PATTERNS
+@pytest.mark.parametrize("text, found", [
+    ("mail a.b+c@mail.example.co.uk now", "a.b+c@mail.example.co.uk"),
+    ("(x_y@z.io)", "x_y@z.io"),
+    ("no address here", None),
+])
+def test_email_patterns_find_addresses(pattern, text, found):
+    match = pattern.search(text)
+    assert (match.group(0) if match else None) == found  # nosec B101
+
+
+@_EMAIL_PATTERNS
+def test_email_patterns_are_linear_without_an_at_sign(pattern):
+    # Digits, dots and dashes are all address characters; a leading  let the match restart after every one.
+    assert _fast(lambda: pattern.search("1-" * (_BIG // 2) + "x")) is None  # nosec B101

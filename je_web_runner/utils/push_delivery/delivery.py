@@ -39,7 +39,7 @@ APNS_MAX_TTL_SEC = 30 * 24 * 3600
 _PII_PATTERNS = (
     re.compile(r"\b\d{3}-?\d{2}-?\d{4}\b"),                  # SSN
     re.compile(r"\b(?:\d[ -]?){13,19}\b"),                   # Card-like
-    re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b"),
+    re.compile(r"(?<![A-Za-z0-9._%+\-])[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b"),
 )
 
 

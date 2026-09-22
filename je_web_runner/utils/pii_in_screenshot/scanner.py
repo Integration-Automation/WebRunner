@@ -54,7 +54,7 @@ def _luhn(card: str) -> bool:
 
 _EMAIL = PiiRule(
     name="email",
-    pattern=re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
+    pattern=re.compile(r"(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
     severity="medium",
 )
 _PHONE_E164 = PiiRule(
