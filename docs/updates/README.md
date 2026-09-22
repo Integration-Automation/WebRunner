@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20260922-06 | 2026-09-22 | Regression test for the UTF-8 log encoding | #done #logging #tests | [2026-09](2026-09.md) |
 | U-20260922-05 | 2026-09-22 | Open WEBRunner.log as UTF-8 | #done #logging #encoding | [2026-09](2026-09.md) |
 | U-20260922-04 | 2026-09-22 | Contract test for the legacy CLI flags | #done #tests | [2026-09](2026-09.md) |
 | U-20260922-03 | 2026-09-22 | Point project URLs at the current repository | #done #metadata | [2026-09](2026-09.md) |
