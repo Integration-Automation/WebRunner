@@ -18,8 +18,8 @@ Cookbook 範例
 測試分層
 ========
 
-* ``test/unit_test/`` — 1200 個 mock-based 單元測試，約 12 秒
-* ``test/integration_test/`` — 30 個整合測試，串接真 I/O（SQLite、HTTP
+* ``test/unit_test/`` — mock-based 單元測試
+* ``test/integration_test/`` — 整合測試，串接真 I/O（SQLite、HTTP
   server、MCP / LSP 子行程），曾揪出 Windows LSP CRLF framing bug
 * ``test/e2e_test/`` — 六個真瀏覽器 smoke，``WEBRUNNER_E2E_HUB`` 未設定
   時自動 skip。本機跑：``cd docker && docker compose up -d``。CI 走

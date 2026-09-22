@@ -301,9 +301,9 @@ python -m je_web_runner -e examples/quick_smoke.json
 
 ```
 test/
-├── unit_test/         # 1200 mock-based unit tests (~12s)
-├── integration_test/  #   30 wired-modules tests with real I/O (~6s)
-└── e2e_test/          #    6 real-browser tests; skips without Selenium Grid
+├── unit_test/         # mock-based unit tests
+├── integration_test/  # wired-modules tests with real I/O
+└── e2e_test/          # real-browser tests; skips without Selenium Grid
 ```
 
 - **Unit** (`test/unit_test/test_*.py`) — runs everywhere; pulled in by both
@@ -726,7 +726,7 @@ python -m je_web_runner.mcp_server
 The default tool list (22 tools) exposes:
 
 Live browser execution:
-- `webrunner_run_actions` — execute any `WR_*` action list. Covers the full ~280-command surface including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
+- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 444 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
 - `webrunner_run_action_files` — batch-run JSON files on disk
 - `webrunner_list_commands` — discover the full `WR_*` surface
 
