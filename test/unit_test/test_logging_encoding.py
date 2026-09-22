@@ -34,11 +34,11 @@ def handler(tmp_path):
 
 def test_default_encoding_is_utf8():
     default = inspect.signature(WebRunnerLoggingHandler).parameters["encoding"].default
-    assert _normalised(default) == "utf8"
+    assert _normalised(default) == "utf8"  # nosec B101
 
 
 def test_stream_is_utf8_not_the_platform_default(handler):
-    assert _normalised(handler.stream.encoding) == "utf8"
+    assert _normalised(handler.stream.encoding) == "utf8"  # nosec B101
 
 
 def test_non_ascii_record_is_written_as_utf8(handler, tmp_path):
@@ -54,14 +54,14 @@ def test_non_ascii_record_is_written_as_utf8(handler, tmp_path):
     finally:
         log.removeHandler(handler)
 
-    assert "--- Logging error ---" not in captured.getvalue()
+    assert "--- Logging error ---" not in captured.getvalue()  # nosec B101
     written = (tmp_path / "web_runner.log").read_bytes().decode("utf-8")
-    assert _NON_ASCII in written
+    assert _NON_ASCII in written  # nosec B101
 
 
 def test_encoding_is_still_overridable(tmp_path):
     made = WebRunnerLoggingHandler(filename=str(tmp_path / "utf16.log"), encoding="utf-16")
     try:
-        assert _normalised(made.stream.encoding) == "utf16"
+        assert _normalised(made.stream.encoding) == "utf16"  # nosec B101
     finally:
         made.close()

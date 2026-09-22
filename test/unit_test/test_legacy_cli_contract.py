@@ -29,6 +29,7 @@ def _run_cli(cwd: Path, *args: str) -> subprocess.CompletedProcess:
     env = dict(os.environ)
     env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(REPO_ROOT), env.get("PYTHONPATH")]))
     env["PYTHONIOENCODING"] = "utf-8"
+    # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
     return subprocess.run(  # nosec B603 - fixed interpreter, test-controlled arguments
         [sys.executable, "-m", PACKAGE, *args],
         cwd=cwd, env=env, capture_output=True, text=True, encoding="utf-8",
@@ -51,8 +52,8 @@ def _actions(_target: Path) -> list:
 
 
 def _assert_ran(result: subprocess.CompletedProcess, _target: Path) -> None:
-    assert result.returncode == 0, result.stderr
-    assert MARKER in result.stdout, result.stdout + result.stderr
+    assert result.returncode == 0, result.stderr  # nosec B101
+    assert MARKER in result.stdout, result.stdout + result.stderr  # nosec B101
 
 
 @pytest.mark.parametrize("flag", ["-e", "--execute_file"])
@@ -78,8 +79,8 @@ def test_execute_str_as_pybreeze_sends_it(tmp_path):
 
 
 def test_no_flag_exits_non_zero(tmp_path):
-    assert _run_cli(tmp_path).returncode != 0
+    assert _run_cli(tmp_path).returncode != 0  # nosec B101
 
 
 def test_create_project_dir_is_exported():
-    assert callable(je_web_runner.create_project_dir)
+    assert callable(je_web_runner.create_project_dir)  # nosec B101
