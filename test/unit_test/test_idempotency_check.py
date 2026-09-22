@@ -139,10 +139,9 @@ class TestAssertIdempotent(unittest.TestCase):
 class TestKeyGen(unittest.TestCase):
 
     def test_stable(self):
-        self.assertEqual(
-            generate_idempotency_key("user", 42),
-            generate_idempotency_key("user", 42),
-        )
+        first = generate_idempotency_key("user", 42)
+        second = generate_idempotency_key("user", 42)
+        self.assertEqual(first, second)
 
     def test_changes_with_parts(self):
         self.assertNotEqual(

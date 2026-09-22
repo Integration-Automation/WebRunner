@@ -1,4 +1,5 @@
 import unittest
+from unittest import mock
 
 from je_web_runner.utils.test_record.test_record_class import TestRecord, record_action_to_list, test_record_instance
 
@@ -7,11 +8,14 @@ class TestTestRecord(unittest.TestCase):
 
     def setUp(self):
         test_record_instance.clean_record()
-        self._original_init_record = test_record_instance.init_record
 
     def tearDown(self):
         test_record_instance.clean_record()
-        test_record_instance.init_record = self._original_init_record
+
+    def _set_recording(self, enabled):
+        patcher = mock.patch.object(test_record_instance, "init_record", enabled)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     def test_initial_state(self):
         record = TestRecord()
@@ -32,12 +36,12 @@ class TestTestRecord(unittest.TestCase):
         self.assertEqual(record.test_record_list, [])
 
     def test_record_action_when_disabled(self):
-        test_record_instance.init_record = False
+        self._set_recording(False)
         record_action_to_list("test_func", {"key": "value"}, None)
         self.assertEqual(len(test_record_instance.test_record_list), 0)
 
     def test_record_action_when_enabled(self):
-        test_record_instance.init_record = True
+        self._set_recording(True)
         record_action_to_list("test_func", {"key": "value"}, None)
         self.assertEqual(len(test_record_instance.test_record_list), 1)
         record = test_record_instance.test_record_list[0]
@@ -47,7 +51,7 @@ class TestTestRecord(unittest.TestCase):
         self.assertIn("time", record)
 
     def test_record_action_with_exception(self):
-        test_record_instance.init_record = True
+        self._set_recording(True)
         error = ValueError("test error")
         record_action_to_list("failing_func", {"p": 1}, error)
         self.assertEqual(len(test_record_instance.test_record_list), 1)
@@ -56,7 +60,7 @@ class TestTestRecord(unittest.TestCase):
         self.assertIn("ValueError", record["program_exception"])
 
     def test_record_action_multiple(self):
-        test_record_instance.init_record = True
+        self._set_recording(True)
         record_action_to_list("func1", None, None)
         record_action_to_list("func2", None, None)
         record_action_to_list("func3", None, RuntimeError("err"))

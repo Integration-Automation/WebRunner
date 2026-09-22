@@ -7,4 +7,4 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: S-
 ## Open
 
 - **#4** `je_web_runner/utils/` has about 267 flat modules without a layered index, and README has five sections titled "Even More Capabilities".
-- **#6** SonarCloud on `main` (2026-09-23): 475 × `python:S5778` in `test/` (exception tests with more than one call that could raise), 20 × `githubactions:S8541`/`S8544` (`pip install` in workflows without `--only-binary :all:` or locked versions, `e2e_browser.yml` and `publish_stable.yml`), 5 × `python:S8997`, `python:S3776` in `utils/pagination_audit/audit.py:199` (complexity 16), and one each of S5958, S5863, S3626, S9083. Details in `docs/updates` U-20260923-06.
+- **#6** SonarCloud on `main` (2026-09-23): 475 × `python:S5778` in `test/` (exception tests with more than one call that could raise), 20 × `githubactions:S8541`/`S8544` (`pip install` in workflows without `--only-binary :all:` or locked versions, `e2e_browser.yml` and `publish_stable.yml`). Details in `docs/updates` U-20260923-06.

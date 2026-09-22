@@ -1,6 +1,7 @@
 import os
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 from je_web_runner.utils.env_config.env_loader import (
@@ -47,8 +48,7 @@ class TestLoadEnv(unittest.TestCase):
         self.assertEqual(get_env("ABSENT_KEY_FOR_TEST", "fallback"), "fallback")
 
     def test_override_flag_replaces_existing(self):
-        os.environ["BASE_URL"] = "old"
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with mock.patch.dict(os.environ, {"BASE_URL": "old"}), tempfile.TemporaryDirectory() as tmpdir:
             self._write_env(tmpdir, ".env", "BASE_URL=new\n")
             load_env(env_dir=tmpdir, override=True)
             self.assertEqual(os.environ["BASE_URL"], "new")
