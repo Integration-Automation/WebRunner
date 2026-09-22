@@ -6,7 +6,6 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: S-
 
 ## Open
 
-- **#1** Release the UTF-8 log encoding (`je_web_runner/utils/logging/loggin_instance.py`, U-20260922-05; guarded by `test/unit_test/test_logging_encoding.py`): merge `dev` into `main` so CI publishes it. Jeffrey_RPA loads this working tree through `sys.path` and waits for the release (workspace X-2).
 - **#2** `dev.toml` (≈:17-23) lacks `Pillow>=12.3.0` although ≈:16 says it mirrors `pyproject.toml`.
 - **#3** [UNVERIFIED] The SonarCloud snapshot of 2026-04-26 (`issues.json`, `hotspots.json`, gitignored) listed 9 issues (6 × S3776) and 2 hotspots in TO_REVIEW; re-check against the current analysis.
 - **#4** `je_web_runner/utils/` has about 267 flat modules without a layered index, and README has five sections titled "Even More Capabilities".
