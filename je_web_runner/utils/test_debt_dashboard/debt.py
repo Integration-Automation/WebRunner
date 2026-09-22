@@ -15,6 +15,7 @@ mtime) and an owner (best-effort from CODEOWNERS).
 from __future__ import annotations
 
 import re
+import string
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -53,8 +54,9 @@ _XFAIL_RE = re.compile(
     r"@pytest\.mark\.xfail\s*\([^)]*?reason\s*=\s*[\"']([^\"']*)[\"']",
     re.IGNORECASE,
 )
-# NOSONAR python:S5852 — input is one source line at a time (bounded)
-_TODO_RE = re.compile(r"#\s*(TODO|FIXME)\b[:\s]*(.*)$", re.IGNORECASE)
+# The ":"/whitespace between the tag and the reason is stripped in code: "[:\s]*(.*)" let the two
+# parts trade characters and backtracked on long runs of them.
+_TODO_RE = re.compile(r"#\s*(TODO|FIXME)\b(.*)$", re.IGNORECASE)
 _TEST_DEF_RE = re.compile(r"^\s*def\s+(test_\w+)\s*\(", re.MULTILINE)
 
 
@@ -231,18 +233,17 @@ def _scan_todos(
     path: Path, text: str, age: float, owner: str | None,
 ) -> list[DebtItem]:
     out: list[DebtItem] = []
+    offset = 0  # start of the current line; summing every earlier line per match was quadratic
     for line_index, raw in enumerate(text.split("\n"), start=1):
         match = _TODO_RE.search(raw)
-        if not match:
-            continue
-        out.append(DebtItem(
-            kind=DebtKind.TODO, path=str(path), line=line_index,
-            test_name=_enclosing_test(text, sum(
-                len(line) + 1 for line in text.split("\n")[:line_index - 1]
-            )),
-            reason=match.group(2).strip(),
-            age_days=age, owner=owner,
-        ))
+        if match:
+            out.append(DebtItem(
+                kind=DebtKind.TODO, path=str(path), line=line_index,
+                test_name=_enclosing_test(text, offset),
+                reason=match.group(2).lstrip(":" + string.whitespace).strip(),
+                age_days=age, owner=owner,
+            ))
+        offset += len(raw) + 1
     return out
 
 

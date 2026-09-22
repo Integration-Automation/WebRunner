@@ -73,8 +73,6 @@ class FragileLocator:
 # ---------- heuristic pre-classifier -----------------------------------
 
 _NTH_PATTERN = re.compile(r":nth-(?:of-type|child)\(\d+\)", re.IGNORECASE)
-# NOSONAR python:S5852 — input is a CSS selector (bounded, internal), not user text
-_DEEP_DESCENDANT = re.compile(r"\s+\S+\s+\S+\s+\S+")
 _HASHED_CLASS = re.compile(r"[._][A-Za-z][\w-]*?-_?\w{4,}\b")
 _TEXT_XPATH = re.compile(r"text\s*\(\s*\)", re.IGNORECASE)
 
@@ -85,6 +83,16 @@ class FragilityScore:
 
     score: float
     reasons: list[str] = field(default_factory=list)
+
+
+def _is_deeply_nested(selector: str) -> bool:
+    """True when three or more selector parts follow whitespace (``a b c d``, `` b c d``).
+
+    Same condition as the former regex ``\\s+\\S+\\s+\\S+\\s+\\S+``, counted without backtracking.
+    """
+    parts = selector.split()
+    preceded_by_space = len(parts) - (1 if selector[:1] and not selector[:1].isspace() else 0)
+    return preceded_by_space >= 3
 
 
 def score_fragility(locator: FragileLocator) -> FragilityScore:
@@ -103,7 +111,7 @@ def score_fragility(locator: FragileLocator) -> FragilityScore:
         if _NTH_PATTERN.search(locator.value):
             score += 0.4
             reasons.append("uses :nth-of-type/child")
-        if _DEEP_DESCENDANT.search(locator.value):
+        if _is_deeply_nested(locator.value):
             score += 0.2
             reasons.append("deeply nested CSS")
         if _HASHED_CLASS.search(locator.value):

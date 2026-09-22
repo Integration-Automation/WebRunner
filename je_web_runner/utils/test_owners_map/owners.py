@@ -51,8 +51,9 @@ class OwnersFile:
         return winner
 
 
-# NOSONAR python:S5852 — input is one CODEOWNERS line at a time (bounded)
-_COMMENT_STRIP_RE = re.compile(r"\s+#.*$")
+# A "#" that follows whitespace starts a trailing comment ("@owner#1" keeps its "#"). The match
+# starts at the "#" itself, so it is linear; r"\s+#.*$" restarted inside every whitespace run.
+_TRAILING_COMMENT_RE = re.compile(r"(?<=\s)#")
 
 
 def parse_codeowners(text: str) -> OwnersFile:
@@ -64,7 +65,8 @@ def parse_codeowners(text: str) -> OwnersFile:
     rules: list[CodeownersRule] = []
     for raw in text.splitlines():
         # Strip trailing comments (but keep '#' inside owners like @owner#1)
-        line = _COMMENT_STRIP_RE.sub("", raw).strip()
+        comment = _TRAILING_COMMENT_RE.search(raw)
+        line = (raw[:comment.start()] if comment else raw).strip()
         if not line or line.startswith("#"):
             continue
         parts = line.split()

@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20260923-06 | 2026-09-23 | Six text scanners made linear; SonarCloud status re-checked | #done #performance #security | [2026-09](2026-09.md) |
 | U-20260923-05 | 2026-09-23 | Dependabot targets dev; setup-python v7 | #done #ci #deps | [2026-09](2026-09.md) |
 | U-20260923-04 | 2026-09-23 | Executor builtins become an allowlist | #done #security #executor | [2026-09](2026-09.md) |
 | U-20260923-03 | 2026-09-23 | dev.toml back in step with pyproject.toml | #done #packaging | [2026-09](2026-09.md) |
@@ -74,4 +75,4 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-09.md](2026-09.md) | 2026-09 | 10 |
+| [2026-09.md](2026-09.md) | 2026-09 | 11 |
