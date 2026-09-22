@@ -10,7 +10,7 @@ management, JSON-driven action scripts, and detailed report
 generation.
 
 * **PyPI**: https://pypi.org/project/je-web-runner/
-* **GitHub**: https://github.com/Intergration-Automation-Testing/WebRunner
+* **GitHub**: https://github.com/Integration-Automation/WebRunner
 * **License**: MIT
 
 ----

@@ -54,9 +54,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Intergration-Automation-Testing/WebRunner"
+Homepage = "https://github.com/Integration-Automation/WebRunner"
 Documentation = "https://webrunner.readthedocs.io/en/latest/"
-Code = "https://github.com/Intergration-Automation-Testing/WebRunner"
+Code = "https://github.com/Integration-Automation/WebRunner"
 
 [project.readme]
 file = "README.md"
