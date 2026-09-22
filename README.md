@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://pypi.org/project/je-web-runner/"><img src="https://img.shields.io/pypi/v/je_web_runner" alt="PyPI Version"></a>
   <a href="https://pypi.org/project/je-web-runner/"><img src="https://img.shields.io/pypi/pyversions/je_web_runner" alt="Python Version"></a>
-  <a href="https://github.com/Intergration-Automation-Testing/WebRunner/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Intergration-Automation-Testing/WebRunner" alt="License"></a>
+  <a href="https://github.com/Integration-Automation/WebRunner/blob/main/LICENSE"><img src="https://img.shields.io/github/license/Integration-Automation/WebRunner" alt="License"></a>
   <a href="https://webrunner.readthedocs.io/en/latest/"><img src="https://readthedocs.org/projects/webrunner/badge/?version=latest" alt="Documentation Status"></a>
 </p>
 
