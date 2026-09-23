@@ -86,10 +86,12 @@ class TestRecordTrace(unittest.TestCase):
             return_value=fake_listener,
         ):
             with tempfile.TemporaryDirectory() as tmpdir:
+                magic_mock = MagicMock()
+                join_value = os.path.join(tmpdir, "trace.json")
                 with self.assertRaises(TracingError):
                     record_trace(
-                        MagicMock(),
-                        os.path.join(tmpdir, "trace.json"),
+                        magic_mock,
+                        join_value,
                         completion_timeout=0.1,
                     )
 
@@ -99,8 +101,10 @@ class TestRecordTrace(unittest.TestCase):
             side_effect=CDPEventLoopError("ws-client missing"),
         ):
             with tempfile.TemporaryDirectory() as tmpdir:
+                magic_mock = MagicMock()
+                join_value = os.path.join(tmpdir, "trace.json")
                 with self.assertRaises(TracingError):
-                    record_trace(MagicMock(), os.path.join(tmpdir, "trace.json"))
+                    record_trace(magic_mock, join_value)
 
     def test_duration_sleeps_between_start_and_end(self):
         fake_listener, _ = _make_fake_listener([{"x": 1}])

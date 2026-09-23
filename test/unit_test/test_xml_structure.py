@@ -39,8 +39,9 @@ class TestXmlStructure(unittest.TestCase):
 
     def test_invalid_type_raises(self):
         bad_input: Any = "not a dict"
+        cast_value = cast(dict, bad_input)
         with self.assertRaises(TypeError):
-            dict_to_elements_tree(cast(dict, bad_input))
+            dict_to_elements_tree(cast_value)
 
     def test_multiple_root_keys_raises(self):
         with self.assertRaises(ValueError):

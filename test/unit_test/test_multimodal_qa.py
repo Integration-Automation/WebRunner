@@ -139,8 +139,9 @@ class TestAsk(unittest.TestCase):
 
     def test_client_error_wrapped(self):
         client = StubClient(RuntimeError("rate limit"))
+        qa_request = QaRequest(image_bytes=b"x", question="Q")
         with self.assertRaises(MultimodalQaError):
-            ask(QaRequest(image_bytes=b"x", question="Q"), client)
+            ask(qa_request, client)
 
 
 class TestAskPath(unittest.TestCase):
@@ -154,8 +155,9 @@ class TestAskPath(unittest.TestCase):
             self.assertTrue(response.is_pass())
 
     def test_missing_file(self):
+        stub_client = StubClient(_good_response())
         with self.assertRaises(MultimodalQaError):
-            ask_path("/no/such/file.png", "Q", StubClient(_good_response()))
+            ask_path("/no/such/file.png", "Q", stub_client)
 
 
 class TestAssertPasses(unittest.TestCase):
@@ -164,19 +166,22 @@ class TestAssertPasses(unittest.TestCase):
         assert_passes(parse_response(_good_response()))
 
     def test_fail(self):
+        parse_response_value = parse_response(_good_response(verdict="fail"))
         with self.assertRaises(MultimodalQaError):
-            assert_passes(parse_response(_good_response(verdict="fail")))
+            assert_passes(parse_response_value)
 
     def test_pass_low_confidence_fails(self):
+        parse_response_value = parse_response(_good_response(confidence=0.2))
         with self.assertRaises(MultimodalQaError):
             assert_passes(
-                parse_response(_good_response(confidence=0.2)),
+                parse_response_value,
                 min_confidence=0.5,
             )
 
     def test_bad_min_confidence(self):
+        parse_response_value = parse_response(_good_response())
         with self.assertRaises(MultimodalQaError):
-            assert_passes(parse_response(_good_response()), min_confidence=2.0)
+            assert_passes(parse_response_value, min_confidence=2.0)
 
     def test_rejects_non_response(self):
         with self.assertRaises(MultimodalQaError):

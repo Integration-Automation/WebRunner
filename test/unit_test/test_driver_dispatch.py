@@ -25,12 +25,14 @@ class TestEvaluateExpression(unittest.TestCase):
         page.evaluate.assert_called_once_with("() => 1 + 41")
 
     def test_unsupported_driver(self):
+        object_value = object()
         with self.assertRaises(DriverDispatchError):
-            evaluate_expression(object(), "x")
+            evaluate_expression(object_value, "x")
 
     def test_empty_expression_raises(self):
+        magic_mock = MagicMock()
         with self.assertRaises(DriverDispatchError):
-            evaluate_expression(MagicMock(), "")
+            evaluate_expression(magic_mock, "")
 
 
 class TestRunScript(unittest.TestCase):
@@ -57,12 +59,14 @@ class TestRunScript(unittest.TestCase):
         page.evaluate.assert_called_once_with("(args) => args", ["a", "b", "c"])
 
     def test_unsupported_driver(self):
+        object_value = object()
         with self.assertRaises(DriverDispatchError):
-            run_script(object(), "() => 1")
+            run_script(object_value, "() => 1")
 
     def test_empty_body(self):
+        magic_mock = MagicMock()
         with self.assertRaises(DriverDispatchError):
-            run_script(MagicMock(), "")
+            run_script(magic_mock, "")
 
 
 if __name__ == "__main__":

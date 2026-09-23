@@ -49,8 +49,9 @@ class TestAcquired(unittest.TestCase):
         assert_acquired(WakeLockLog(events=[WakeLockEvent(kind="acquire")]))
 
     def test_fail(self):
+        wake_lock_log = WakeLockLog()
         with self.assertRaises(WakeLockAssertError):
-            assert_acquired(WakeLockLog())
+            assert_acquired(wake_lock_log)
 
 
 class TestNoLeak(unittest.TestCase):
@@ -62,10 +63,11 @@ class TestNoLeak(unittest.TestCase):
         ]))
 
     def test_fail(self):
+        wake_lock_log = WakeLockLog(events=[
+            WakeLockEvent(kind="acquire"),
+        ])
         with self.assertRaises(WakeLockAssertError):
-            assert_no_leak(WakeLockLog(events=[
-                WakeLockEvent(kind="acquire"),
-            ]))
+            assert_no_leak(wake_lock_log)
 
 
 class TestReleasedByApp(unittest.TestCase):
@@ -76,10 +78,11 @@ class TestReleasedByApp(unittest.TestCase):
         ]))
 
     def test_fail(self):
+        wake_lock_log = WakeLockLog(events=[
+            WakeLockEvent(kind="release", by="os"),
+        ])
         with self.assertRaises(WakeLockAssertError):
-            assert_released_by_app(WakeLockLog(events=[
-                WakeLockEvent(kind="release", by="os"),
-            ]))
+            assert_released_by_app(wake_lock_log)
 
 
 class TestReAcquire(unittest.TestCase):
@@ -98,11 +101,12 @@ class TestReAcquire(unittest.TestCase):
         ]))
 
     def test_fail(self):
+        wake_lock_log = WakeLockLog(events=[
+            WakeLockEvent(kind="acquire"),
+            WakeLockEvent(kind="release", by="os"),
+        ])
         with self.assertRaises(WakeLockAssertError):
-            assert_re_acquired_after_visibility(WakeLockLog(events=[
-                WakeLockEvent(kind="acquire"),
-                WakeLockEvent(kind="release", by="os"),
-            ]))
+            assert_re_acquired_after_visibility(wake_lock_log)
 
 
 if __name__ == "__main__":

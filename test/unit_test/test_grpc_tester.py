@@ -39,8 +39,9 @@ class TestRecorder(unittest.TestCase):
         self.assertEqual(len(rec.calls(status=GrpcStatus.NOT_FOUND)), 1)
 
     def test_rejects_non_call(self):
+        grpc_call_recorder = GrpcCallRecorder()
         with self.assertRaises(GrpcTesterError):
-            GrpcCallRecorder().record("not a call")  # type: ignore[arg-type]
+            grpc_call_recorder.record("not a call")  # type: ignore[arg-type]
 
 
 class TestCallWrapper(unittest.TestCase):
@@ -154,8 +155,9 @@ class TestAssertions(unittest.TestCase):
         assert_call_ok(self._ok())
 
     def test_assert_call_ok_fail(self):
+        fail = self._fail()
         with self.assertRaises(GrpcTesterError):
-            assert_call_ok(self._fail())
+            assert_call_ok(fail)
 
     def test_assert_call_ok_rejects_non_call(self):
         with self.assertRaises(GrpcTesterError):
@@ -165,12 +167,14 @@ class TestAssertions(unittest.TestCase):
         assert_call_fails(self._fail(), status=GrpcStatus.NOT_FOUND)
 
     def test_assert_call_fails_wrong_code(self):
+        fail = self._fail()
         with self.assertRaises(GrpcTesterError):
-            assert_call_fails(self._fail(), status=GrpcStatus.PERMISSION_DENIED)
+            assert_call_fails(fail, status=GrpcStatus.PERMISSION_DENIED)
 
     def test_assert_call_fails_bad_status(self):
+        fail = self._fail()
         with self.assertRaises(GrpcTesterError):
-            assert_call_fails(self._fail(), status="weird")  # type: ignore[arg-type]
+            assert_call_fails(fail, status="weird")  # type: ignore[arg-type]
 
     def test_assert_called_pass(self):
         rec = GrpcCallRecorder()
@@ -178,8 +182,9 @@ class TestAssertions(unittest.TestCase):
         assert_called(rec, "X")
 
     def test_assert_called_fail(self):
+        grpc_call_recorder = GrpcCallRecorder()
         with self.assertRaises(GrpcTesterError):
-            assert_called(GrpcCallRecorder(), "X")
+            assert_called(grpc_call_recorder, "X")
 
 
 if __name__ == "__main__":

@@ -109,8 +109,9 @@ class TestAssert(unittest.TestCase):
         assert_two_finger([RecordedTouch(type="touchstart", touch_count=2)])
 
     def test_two_finger_fail(self):
+        recorded_touchs = [RecordedTouch(type="touchstart", touch_count=1)]
         with self.assertRaises(TouchGestureError):
-            assert_two_finger([RecordedTouch(type="touchstart", touch_count=1)])
+            assert_two_finger(recorded_touchs)
 
 
 if __name__ == "__main__":

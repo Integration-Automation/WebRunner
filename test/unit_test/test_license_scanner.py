@@ -49,14 +49,16 @@ class TestAssertAllowedLicenses(unittest.TestCase):
 
     def test_fails_when_disallowed_present(self):
         text = "GNU AFFERO GENERAL PUBLIC LICENSE Version 3"
+        scan_text_value = scan_text(text)
         with self.assertRaises(LicenseScannerError):
-            assert_allowed_licenses(scan_text(text), allow=["MIT"])
+            assert_allowed_licenses(scan_text_value, allow=["MIT"])
 
     def test_deny_overrides_allow(self):
         text = "SPDX-License-Identifier: GPL-3.0"
+        scan_text_value = scan_text(text)
         with self.assertRaises(LicenseScannerError):
             assert_allowed_licenses(
-                scan_text(text), allow=["GPL-3.0", "MIT"], deny=["GPL-3.0"],
+                scan_text_value, allow=["GPL-3.0", "MIT"], deny=["GPL-3.0"],
             )
 
 

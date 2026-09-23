@@ -36,8 +36,9 @@ class TestSuiteRun(unittest.TestCase):
                      passed=True)
 
     def test_rejects_naive_datetime(self):
+        started_at_value = datetime(2026, 1, 1)
         with self.assertRaises(SlaTrackerError):
-            SuiteRun(suite="x", started_at=datetime(2026, 1, 1),
+            SuiteRun(suite="x", started_at=started_at_value,
                      duration_seconds=0, passed=True)
 
     def test_rejects_negative_duration(self):
@@ -102,12 +103,14 @@ class TestComputeSla(unittest.TestCase):
         self.assertEqual(report.overall_runs, 1)
 
     def test_bad_bucket(self):
+        sla_target = SlaTarget(600, 95)
         with self.assertRaises(SlaTrackerError):
-            compute_sla([], SlaTarget(600, 95), bucket="hour")
+            compute_sla([], sla_target, bucket="hour")
 
     def test_rejects_non_run(self):
+        sla_target = SlaTarget(600, 95)
         with self.assertRaises(SlaTrackerError):
-            compute_sla(["nope"], SlaTarget(600, 95))  # type: ignore[list-item]
+            compute_sla(["nope"], sla_target)  # type: ignore[list-item]
 
     def test_empty_runs(self):
         report = compute_sla([], SlaTarget(600, 95))

@@ -34,19 +34,22 @@ class TestDrain(unittest.TestCase):
         self.assertEqual(out[0].topic, "t")
 
     def test_empty_topic(self):
+        fake_consumer = FakeConsumer([])
         with self.assertRaises(MqAssertError):
-            drain_topic(FakeConsumer([]), "")
+            drain_topic(fake_consumer, "")
 
     def test_bad_consumer(self):
+        object_value = object()
         with self.assertRaises(MqAssertError):
-            drain_topic(object(), "t")  # NOSONAR python:S5655 - deliberate bad input
+            drain_topic(object_value, "t")  # NOSONAR python:S5655 - deliberate bad input
 
     def test_non_seq_return(self):
         class C:
             def drain(self, topic, *, timeout=5.0):
                 return "nope"
+        c = C()
         with self.assertRaises(MqAssertError):
-            drain_topic(C(), "t")
+            drain_topic(c, "t")
 
     def test_bad_message_shape(self):
         c = FakeConsumer([42])
@@ -93,9 +96,10 @@ class TestAssertNo(unittest.TestCase):
         assert_no_message([Message(topic="other", body={})], topic="x")
 
     def test_fail(self):
+        messages = [Message(topic="t", body={"pii": True})]
         with self.assertRaises(MqAssertError):
             assert_no_message(
-                [Message(topic="t", body={"pii": True})],
+                messages,
                 topic="t", body_contains={"pii": True},
             )
 
@@ -106,11 +110,12 @@ class TestIdempotent(unittest.TestCase):
         assert_idempotent([Message(topic="t", body={}, key="a")], key="a")
 
     def test_fail(self):
+        messages = [
+            Message(topic="t", body={}, key="a"),
+            Message(topic="t", body={}, key="a"),
+        ]
         with self.assertRaises(MqAssertError):
-            assert_idempotent([
-                Message(topic="t", body={}, key="a"),
-                Message(topic="t", body={}, key="a"),
-            ], key="a")
+            assert_idempotent(messages, key="a")
 
 
 class TestOrdered(unittest.TestCase):

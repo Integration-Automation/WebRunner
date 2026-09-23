@@ -61,9 +61,10 @@ class TestTransferOut(unittest.TestCase):
             assert_transfer_out([], endpoint=1)
 
     def test_contains_missing(self):
+        outgoing_calls = [OutgoingCall(kind="transferOut", endpoint=1, data=[1])]
         with self.assertRaises(WebusbMockError):
             assert_transfer_out(
-                [OutgoingCall(kind="transferOut", endpoint=1, data=[1])],
+                outgoing_calls,
                 endpoint=1, contains=[9],
             )
 
@@ -85,9 +86,10 @@ class TestControlOut(unittest.TestCase):
         self.assertEqual(c.setup["request"], 5)
 
     def test_no_match_request(self):
+        outgoing_calls = [OutgoingCall(kind="controlOut", setup={"request": 5})]
         with self.assertRaises(WebusbMockError):
             assert_control_out(
-                [OutgoingCall(kind="controlOut", setup={"request": 5})],
+                outgoing_calls,
                 request=9,
             )
 

@@ -97,8 +97,9 @@ class TestAssertReport(unittest.TestCase):
 
     def test_assert_fail(self):
         rows = [QueryRow(sql=f"S {i}", parent_field="x") for i in range(20)]
+        detect_value = detect(rows)
         with self.assertRaises(GraphqlNPlus1Error):
-            assert_no_n_plus_1(detect(rows))
+            assert_no_n_plus_1(detect_value)
 
     def test_md_empty(self):
         self.assertIn("No N+1", report_markdown([]))

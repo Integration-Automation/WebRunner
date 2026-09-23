@@ -166,30 +166,36 @@ class TestGenerateActions(unittest.TestCase):
 
     def test_invalid_action_propagates(self):
         client = StubClient(json.dumps([{"WR_fake": []}]))
+        story_prompt = StoryPrompt(story="x")
         with self.assertRaises(StoryToActionsError):
-            generate_actions(StoryPrompt(story="x"), client)
+            generate_actions(story_prompt, client)
 
     def test_client_error_wrapped(self):
         client = StubClient(RuntimeError("network down"))
+        story_prompt = StoryPrompt(story="x")
         with self.assertRaises(StoryToActionsError):
-            generate_actions(StoryPrompt(story="x"), client)
+            generate_actions(story_prompt, client)
 
     def test_non_string_response_rejected(self):
         class WeirdClient:
             def generate(self, _p):
                 return 42
+        story_prompt = StoryPrompt(story="x")
+        weird_client = WeirdClient()
         with self.assertRaises(StoryToActionsError):
-            generate_actions(StoryPrompt(story="x"), WeirdClient())
+            generate_actions(story_prompt, weird_client)
 
     def test_bad_json_response(self):
         client = StubClient("not json at all")
+        story_prompt = StoryPrompt(story="x")
         with self.assertRaises(StoryToActionsError):
-            generate_actions(StoryPrompt(story="x"), client)
+            generate_actions(story_prompt, client)
 
     def test_non_list_response(self):
         client = StubClient(json.dumps({"WR_to_url": ["x"]}))
+        story_prompt = StoryPrompt(story="x")
         with self.assertRaises(StoryToActionsError):
-            generate_actions(StoryPrompt(story="x"), client)
+            generate_actions(story_prompt, client)
 
 
 class TestWriteActions(unittest.TestCase):
@@ -205,8 +211,9 @@ class TestWriteActions(unittest.TestCase):
 
     def test_write_validates(self):
         with tempfile.TemporaryDirectory() as tmp:
+            value = Path(tmp) / "actions.json"
             with self.assertRaises(StoryToActionsError):
-                write_actions_json([{"WR_fake": []}], Path(tmp) / "actions.json")
+                write_actions_json([{"WR_fake": []}], value)
 
 
 if __name__ == "__main__":

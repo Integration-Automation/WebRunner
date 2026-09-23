@@ -90,8 +90,9 @@ class TestAssert(unittest.TestCase):
     def test_fail(self):
         a = DupSpec(name="a", actions=[_act("x")])
         b = DupSpec(name="b", actions=[_act("x")])
+        find_duplicates_value = find_duplicates([a, b])
         with self.assertRaises(DupDryError):
-            assert_no_duplicates(find_duplicates([a, b]))
+            assert_no_duplicates(find_duplicates_value)
 
 
 if __name__ == "__main__":

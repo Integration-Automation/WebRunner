@@ -94,8 +94,9 @@ class TestAssertions(unittest.TestCase):
         assert_db_exists(self._snap())
 
     def test_db_not_exists(self):
+        from_dict_value = IdbSnapshot.from_dict({"exists": False})
         with self.assertRaises(IndexedDbExplorerError):
-            assert_db_exists(IdbSnapshot.from_dict({"exists": False}))
+            assert_db_exists(from_dict_value)
 
     def test_db_exists_rejects_non_snapshot(self):
         with self.assertRaises(IndexedDbExplorerError):
@@ -106,12 +107,14 @@ class TestAssertions(unittest.TestCase):
         self.assertIsInstance(store, StoreSnapshot)
 
     def test_store_missing(self):
+        snap = self._snap()
         with self.assertRaises(IndexedDbExplorerError):
-            assert_store_present(self._snap(), "missing")
+            assert_store_present(snap, "missing")
 
     def test_store_empty_name(self):
+        snap = self._snap()
         with self.assertRaises(IndexedDbExplorerError):
-            assert_store_present(self._snap(), "")
+            assert_store_present(snap, "")
 
     def test_record_count_in_range(self):
         self.assertEqual(
@@ -119,23 +122,28 @@ class TestAssertions(unittest.TestCase):
         )
 
     def test_record_count_out_of_range(self):
+        snap = self._snap()
         with self.assertRaises(IndexedDbExplorerError):
-            assert_record_count(self._snap(), "users", minimum=5)
+            assert_record_count(snap, "users", minimum=5)
+        snap_value = self._snap()
         with self.assertRaises(IndexedDbExplorerError):
-            assert_record_count(self._snap(), "users", maximum=1)
+            assert_record_count(snap_value, "users", maximum=1)
 
     def test_record_count_bad_bounds(self):
+        snap = self._snap()
         with self.assertRaises(IndexedDbExplorerError):
-            assert_record_count(self._snap(), "users", minimum=-1)
+            assert_record_count(snap, "users", minimum=-1)
+        snap_value = self._snap()
         with self.assertRaises(IndexedDbExplorerError):
-            assert_record_count(self._snap(), "users", minimum=5, maximum=1)
+            assert_record_count(snap_value, "users", minimum=5, maximum=1)
 
     def test_key_present(self):
         assert_key_present(self._snap(), "users", 1)
 
     def test_key_missing(self):
+        snap = self._snap()
         with self.assertRaises(IndexedDbExplorerError):
-            assert_key_present(self._snap(), "users", 999)
+            assert_key_present(snap, "users", 999)
 
     def test_record_matching_pass(self):
         record = assert_record_matching(
@@ -144,21 +152,24 @@ class TestAssertions(unittest.TestCase):
         self.assertEqual(record["id"], 2)
 
     def test_record_matching_fail(self):
+        snap = self._snap()
         with self.assertRaises(IndexedDbExplorerError):
-            assert_record_matching(self._snap(), "users", lambda r: False)
+            assert_record_matching(snap, "users", lambda r: False)
 
     def test_record_matching_predicate_error_ignored(self):
         def bad(_):
             raise RuntimeError("oops")
+        snap = self._snap()
         with self.assertRaises(IndexedDbExplorerError):
-            assert_record_matching(self._snap(), "users", bad)
+            assert_record_matching(snap, "users", bad)
 
     def test_index_present(self):
         assert_index_present(self._snap(), "users", "by_name")
 
     def test_index_missing(self):
+        snap = self._snap()
         with self.assertRaises(IndexedDbExplorerError):
-            assert_index_present(self._snap(), "users", "missing")
+            assert_index_present(snap, "users", "missing")
 
 
 class TestDiff(unittest.TestCase):

@@ -106,9 +106,10 @@ class TestCaptureStorySnapshots(unittest.TestCase):
     def test_screenshot_must_return_bytes(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             out = Path(tmpdir) / "out"
+            storys = [_story("a")]
             with self.assertRaises(StorybookSnapshotError):
                 capture_story_snapshots(
-                    [_story("a")],
+                    storys,
                     base_url="http://localhost:6006",
                     output_dir=out,
                     take_screenshot=lambda _url: b"",

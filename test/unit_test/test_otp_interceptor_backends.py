@@ -214,5 +214,6 @@ def test_webhook_sms_filters_by_since():
 ])
 def test_wait_for_otp_validates_args(kwargs):
     recipient = kwargs.pop("recipient")
+    in_memory_provider = InMemoryProvider()
     with pytest.raises(OtpInterceptError):
-        wait_for_otp(InMemoryProvider(), recipient, **kwargs)
+        wait_for_otp(in_memory_provider, recipient, **kwargs)

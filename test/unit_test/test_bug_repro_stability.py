@@ -90,8 +90,9 @@ class TestRepeat(unittest.TestCase):
             repeat("nope")  # type: ignore[arg-type]
 
     def test_bad_attempts(self):
+        always_fails = _always_fails()
         with self.assertRaises(BugReproStabilityError):
-            repeat(_always_fails(), attempts=0)
+            repeat(always_fails, attempts=0)
 
     def test_runner_exception(self):
         def boom(_i):
@@ -112,8 +113,9 @@ class TestAssertions(unittest.TestCase):
         assert_deterministic(repeat(_always_fails(), attempts=3))
 
     def test_assert_deterministic_fail(self):
+        repeat_value = repeat(_alternating(), attempts=4)
         with self.assertRaises(BugReproStabilityError):
-            assert_deterministic(repeat(_alternating(), attempts=4))
+            assert_deterministic(repeat_value)
 
     def test_assert_deterministic_rejects_non_report(self):
         with self.assertRaises(BugReproStabilityError):
@@ -123,12 +125,14 @@ class TestAssertions(unittest.TestCase):
         assert_min_repro_pct(repeat(_alternating(), attempts=4), minimum=40.0)
 
     def test_assert_min_repro_fail(self):
+        repeat_value = repeat(_alternating(), attempts=4)
         with self.assertRaises(BugReproStabilityError):
-            assert_min_repro_pct(repeat(_alternating(), attempts=4), minimum=80.0)
+            assert_min_repro_pct(repeat_value, minimum=80.0)
 
     def test_assert_min_repro_bad_threshold(self):
+        repeat_value = repeat(_always_fails())
         with self.assertRaises(BugReproStabilityError):
-            assert_min_repro_pct(repeat(_always_fails()), minimum=200.0)
+            assert_min_repro_pct(repeat_value, minimum=200.0)
 
 
 class TestMarkdown(unittest.TestCase):

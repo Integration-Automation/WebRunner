@@ -50,8 +50,9 @@ class TestEntered(unittest.TestCase):
         assert_entered(PipLog(events=[PipEvent(kind="enter", mode=Mode.VIDEO)]))
 
     def test_fail(self):
+        pip_log = PipLog()
         with self.assertRaises(PipAssertError):
-            assert_entered(PipLog())
+            assert_entered(pip_log)
 
     def test_doc(self):
         assert_entered(PipLog(events=[
@@ -68,10 +69,11 @@ class TestExited(unittest.TestCase):
         ]))
 
     def test_dangling(self):
+        pip_log = PipLog(events=[
+            PipEvent(kind="enter", mode=Mode.VIDEO),
+        ])
         with self.assertRaises(PipAssertError):
-            assert_exited_cleanly(PipLog(events=[
-                PipEvent(kind="enter", mode=Mode.VIDEO),
-            ]))
+            assert_exited_cleanly(pip_log)
 
 
 class TestSize(unittest.TestCase):
@@ -84,16 +86,18 @@ class TestSize(unittest.TestCase):
         )
 
     def test_fail(self):
+        pip_log = PipLog(events=[PipEvent(kind="enter", mode=Mode.DOCUMENT,
+                                    width=100, height=100)])
         with self.assertRaises(PipAssertError):
             assert_size_at_least(
-                PipLog(events=[PipEvent(kind="enter", mode=Mode.DOCUMENT,
-                                        width=100, height=100)]),
+                pip_log,
                 min_width=300, min_height=200,
             )
 
     def test_bad_min(self):
+        pip_log = PipLog()
         with self.assertRaises(PipAssertError):
-            assert_size_at_least(PipLog(), min_width=0, min_height=0)
+            assert_size_at_least(pip_log, min_width=0, min_height=0)
 
 
 if __name__ == "__main__":

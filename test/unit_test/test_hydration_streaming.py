@@ -63,8 +63,9 @@ class TestAssertAllArrived(unittest.TestCase):
         assert_all_arrived(parse_log(_payload({"x": {"arrived": 5}})))
 
     def test_fail(self):
+        parse_log_value = parse_log(_payload({"x": {"placeholder": 5}}))
         with self.assertRaises(HydrationStreamingError):
-            assert_all_arrived(parse_log(_payload({"x": {"placeholder": 5}})))
+            assert_all_arrived(parse_log_value)
 
 
 class TestAssertArrivalUnder(unittest.TestCase):
@@ -84,12 +85,14 @@ class TestAssertArrivalUnder(unittest.TestCase):
             assert_arrival_under(rep, id_="x", max_ms=200)
 
     def test_unknown(self):
+        streaming_report = StreamingReport()
         with self.assertRaises(HydrationStreamingError):
-            assert_arrival_under(StreamingReport(), id_="x", max_ms=200)
+            assert_arrival_under(streaming_report, id_="x", max_ms=200)
 
     def test_bad_threshold(self):
+        streaming_report = StreamingReport()
         with self.assertRaises(HydrationStreamingError):
-            assert_arrival_under(StreamingReport(), id_="x", max_ms=0)
+            assert_arrival_under(streaming_report, id_="x", max_ms=0)
 
 
 class TestAssertInteractiveUnder(unittest.TestCase):
@@ -104,19 +107,22 @@ class TestAssertInteractiveUnder(unittest.TestCase):
             assert_interactive_under(rep, id_="x", max_ms=200)
 
     def test_missing_timing(self):
+        parse_log_value = parse_log(_payload({"x": {"arrived": 100}}))
         with self.assertRaises(HydrationStreamingError):
             assert_interactive_under(
-                parse_log(_payload({"x": {"arrived": 100}})),
+                parse_log_value,
                 id_="x", max_ms=200,
             )
 
     def test_unknown_boundary(self):
+        streaming_report = StreamingReport()
         with self.assertRaises(HydrationStreamingError):
-            assert_interactive_under(StreamingReport(), id_="x", max_ms=200)
+            assert_interactive_under(streaming_report, id_="x", max_ms=200)
 
     def test_bad_threshold(self):
+        streaming_report = StreamingReport()
         with self.assertRaises(HydrationStreamingError):
-            assert_interactive_under(StreamingReport(), id_="x", max_ms=-1)
+            assert_interactive_under(streaming_report, id_="x", max_ms=-1)
 
 
 class TestAssertOrder(unittest.TestCase):
@@ -138,8 +144,9 @@ class TestAssertOrder(unittest.TestCase):
             assert_order(rep, expected_order=["a", "b"])
 
     def test_empty_expected(self):
+        streaming_report = StreamingReport()
         with self.assertRaises(HydrationStreamingError):
-            assert_order(StreamingReport(), expected_order=[])
+            assert_order(streaming_report, expected_order=[])
 
     def test_ignores_extras(self):
         rep = parse_log(_payload({

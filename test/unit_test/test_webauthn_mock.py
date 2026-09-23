@@ -61,8 +61,9 @@ class TestAssertRegistered(unittest.TestCase):
         assert_registered(CeremonyLog(created=[{"x": 1}]))
 
     def test_fail(self):
+        ceremony_log = CeremonyLog()
         with self.assertRaises(WebauthnMockError):
-            assert_registered(CeremonyLog())
+            assert_registered(ceremony_log)
 
 
 class TestAssertSignedIn(unittest.TestCase):
@@ -71,8 +72,9 @@ class TestAssertSignedIn(unittest.TestCase):
         assert_signed_in(CeremonyLog(requested=[{"x": 1}]))
 
     def test_fail(self):
+        ceremony_log = CeremonyLog()
         with self.assertRaises(WebauthnMockError):
-            assert_signed_in(CeremonyLog())
+            assert_signed_in(ceremony_log)
 
 
 class TestUserVerification(unittest.TestCase):
@@ -95,8 +97,9 @@ class TestUserVerification(unittest.TestCase):
             assert_user_verification(log, level="required")
 
     def test_bad_level(self):
+        ceremony_log = CeremonyLog()
         with self.assertRaises(WebauthnMockError):
-            assert_user_verification(CeremonyLog(), level="weird")
+            assert_user_verification(ceremony_log, level="weird")
 
     def test_empty_log_pass(self):
         assert_user_verification(CeremonyLog(), level="required")

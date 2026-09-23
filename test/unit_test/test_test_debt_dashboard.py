@@ -197,8 +197,9 @@ class TestAssertions(unittest.TestCase):
             assert_under_age_limit(report, max_days=10)
 
     def test_assert_under_age_bad(self):
+        debt_report = DebtReport()
         with self.assertRaises(TestDebtDashboardError):
-            assert_under_age_limit(DebtReport(), max_days=-1)
+            assert_under_age_limit(debt_report, max_days=-1)
 
 
 class TestMarkdown(unittest.TestCase):

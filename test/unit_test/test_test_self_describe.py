@@ -86,8 +86,9 @@ class TestDescribe(unittest.TestCase):
         self.assertFalse(text.startswith("#"))
 
     def test_bad_title(self):
+        as_value = [_a("to_url", url="/")]
         with self.assertRaises(SelfDescribeError):
-            describe([_a("to_url", url="/")], title=123)  # NOSONAR python:S5655 - deliberate bad input
+            describe(as_value, title=123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestAssertMentions(unittest.TestCase):

@@ -69,8 +69,9 @@ class TestVisualDiff(unittest.TestCase):
     def test_missing_baseline_raises(self):
         with patch("je_web_runner.utils.visual_regression.visual_diff.webdriver_wrapper_instance") as wrapper:
             wrapper.get_screenshot_as_png.return_value = _png_bytes((0, 0, 0))
+            join_value = os.path.join(self.tmpdir.name, "missing.png")
             with self.assertRaises(VisualRegressionError):
-                compare_with_baseline(os.path.join(self.tmpdir.name, "missing.png"))
+                compare_with_baseline(join_value)
 
     @patch("je_web_runner.utils.visual_regression.visual_diff.webdriver_wrapper_instance")
     def test_threshold_allows_small_difference(self, wrapper):

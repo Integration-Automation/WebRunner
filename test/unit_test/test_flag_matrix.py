@@ -74,16 +74,18 @@ class TestBuildMatrix(unittest.TestCase):
         self.assertEqual(m.pinned_count, 1)
 
     def test_pinned_validates_keys(self):
+        flag_specs = [FlagSpec("a", [1, 2])]
         with self.assertRaises(FlagMatrixError):
             build_matrix(
-                [FlagSpec("a", [1, 2])],
+                flag_specs,
                 pinned=[{"wrong_key": 1}],
             )
 
     def test_pinned_validates_value(self):
+        flag_specs = [FlagSpec("a", [1, 2])]
         with self.assertRaises(FlagMatrixError):
             build_matrix(
-                [FlagSpec("a", [1, 2])],
+                flag_specs,
                 pinned=[{"a": 99}],
             )
 
@@ -102,29 +104,33 @@ class TestBuildMatrix(unittest.TestCase):
         self.assertLessEqual(len(m), 3)
 
     def test_constraint_kills_all_raises(self):
+        flag_specs = [FlagSpec("a", [1, 2])]
         with self.assertRaises(FlagMatrixError):
             build_matrix(
-                [FlagSpec("a", [1, 2])],
+                flag_specs,
                 constraints=[lambda combo: False],
             )
 
     def test_bad_constraint_raises(self):
         def boom(_combo):
             raise RuntimeError("nope")
+        flag_specs = [FlagSpec("a", [1])]
         with self.assertRaises(FlagMatrixError):
-            build_matrix([FlagSpec("a", [1])], constraints=[boom])
+            build_matrix(flag_specs, constraints=[boom])
 
     def test_no_flags_rejected(self):
         with self.assertRaises(FlagMatrixError):
             build_matrix([])
 
     def test_duplicate_flag_names_rejected(self):
+        flag_specs = [FlagSpec("a", [1]), FlagSpec("a", [2])]
         with self.assertRaises(FlagMatrixError):
-            build_matrix([FlagSpec("a", [1]), FlagSpec("a", [2])])
+            build_matrix(flag_specs)
 
     def test_bad_sample_size(self):
+        flag_specs = [FlagSpec("a", [1])]
         with self.assertRaises(FlagMatrixError):
-            build_matrix([FlagSpec("a", [1])], sample_size=0)
+            build_matrix(flag_specs, sample_size=0)
 
 
 class TestSummarise(unittest.TestCase):

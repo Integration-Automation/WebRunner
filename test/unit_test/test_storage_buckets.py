@@ -66,19 +66,22 @@ class TestAssertions(unittest.TestCase):
         assert_supported(self._rep())
 
     def test_supported_fail(self):
+        parse_snapshot_value = parse_snapshot({"supported": False, "buckets": []})
         with self.assertRaises(StorageBucketsError):
-            assert_supported(parse_snapshot({"supported": False, "buckets": []}))
+            assert_supported(parse_snapshot_value)
 
     def test_bucket_present(self):
         assert_bucket_present(self._rep(), name="default")
 
     def test_bucket_missing(self):
+        rep = self._rep()
         with self.assertRaises(StorageBucketsError):
-            assert_bucket_present(self._rep(), name="other")
+            assert_bucket_present(rep, name="other")
 
     def test_bucket_empty_name(self):
+        rep = self._rep()
         with self.assertRaises(StorageBucketsError):
-            assert_bucket_present(self._rep(), name="")
+            assert_bucket_present(rep, name="")
 
     def test_isolated_pass(self):
         assert_idb_isolated(self._rep(), db_name="app", expected_bucket="default")
@@ -92,26 +95,30 @@ class TestAssertions(unittest.TestCase):
             assert_idb_isolated(rep, db_name="shared", expected_bucket="a")
 
     def test_isolated_missing(self):
+        rep = self._rep()
         with self.assertRaises(StorageBucketsError):
-            assert_idb_isolated(self._rep(), db_name="ghost", expected_bucket="default")
+            assert_idb_isolated(rep, db_name="ghost", expected_bucket="default")
 
     def test_durability_pass(self):
         assert_durability(self._rep(), name="default", expected="strict")
 
     def test_durability_fail(self):
+        rep = self._rep()
         with self.assertRaises(StorageBucketsError):
-            assert_durability(self._rep(), name="default", expected="relaxed")
+            assert_durability(rep, name="default", expected="relaxed")
 
     def test_durability_bad_arg(self):
+        rep = self._rep()
         with self.assertRaises(StorageBucketsError):
-            assert_durability(self._rep(), name="default", expected="weird")
+            assert_durability(rep, name="default", expected="weird")
 
     def test_no_unexpected_pass(self):
         assert_no_unexpected_buckets(self._rep(), allowed=["default", "inbox"])
 
     def test_no_unexpected_fail(self):
+        rep = self._rep()
         with self.assertRaises(StorageBucketsError):
-            assert_no_unexpected_buckets(self._rep(), allowed=["default"])
+            assert_no_unexpected_buckets(rep, allowed=["default"])
 
 
 class TestByName(unittest.TestCase):

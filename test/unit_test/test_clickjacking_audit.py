@@ -161,8 +161,9 @@ class TestAssertProtected(unittest.TestCase):
         assert_protected(audit("https://x.com", [("X-Frame-Options", "DENY")]))
 
     def test_fail(self):
+        audit_value = audit("https://x.com", [])
         with self.assertRaises(ClickjackingAuditError):
-            assert_protected(audit("https://x.com", []))
+            assert_protected(audit_value)
 
     def test_rejects_non_report(self):
         with self.assertRaises(ClickjackingAuditError):

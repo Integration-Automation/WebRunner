@@ -63,8 +63,9 @@ class TestHeuristic(unittest.TestCase):
         self.assertIn("js-error", [t.name for t in heuristic_tags(b)])
 
     def test_empty_bundle_rejected(self):
+        failure_bundle = FailureBundle()
         with self.assertRaises(FailureAutoTagError):
-            heuristic_tags(FailureBundle())
+            heuristic_tags(failure_bundle)
 
     def test_bad_type(self):
         with self.assertRaises(FailureAutoTagError):
@@ -80,18 +81,21 @@ class TestLlmTags(unittest.TestCase):
         self.assertEqual(tags[0].name, "ai-flake")
 
     def test_non_callable(self):
+        failure_bundle = FailureBundle()
         with self.assertRaises(FailureAutoTagError):
-            llm_tags(FailureBundle(), "nope")
+            llm_tags(failure_bundle, "nope")
 
     def test_bad_return(self):
+        failure_bundle = FailureBundle()
         with self.assertRaises(FailureAutoTagError):
-            llm_tags(FailureBundle(), lambda b: "nope")
+            llm_tags(failure_bundle, lambda b: "nope")
 
     def test_propagates_tagger_error(self):
         def boom(_bundle):
             raise RuntimeError("boom")
+        failure_bundle = FailureBundle()
         with self.assertRaises(FailureAutoTagError):
-            llm_tags(FailureBundle(), boom)
+            llm_tags(failure_bundle, boom)
 
     def test_skips_malformed_items(self):
         tags = llm_tags(FailureBundle(),
@@ -132,8 +136,9 @@ class TestAssert(unittest.TestCase):
         assert_tagged_with([Tag("x")], expected="x")
 
     def test_fail(self):
+        tags = [Tag("a")]
         with self.assertRaises(FailureAutoTagError):
-            assert_tagged_with([Tag("a")], expected="x")
+            assert_tagged_with(tags, expected="x")
 
 
 if __name__ == "__main__":

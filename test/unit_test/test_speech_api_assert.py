@@ -51,12 +51,14 @@ class TestAssertSpoke(unittest.TestCase):
         self.assertEqual(u.text, "Hello world")
 
     def test_fail(self):
+        utterances = [Utterance(text="x")]
         with self.assertRaises(SpeechApiAssertError):
-            assert_spoke([Utterance(text="x")], text_contains="y")
+            assert_spoke(utterances, text_contains="y")
 
     def test_empty_needle(self):
+        utterances = [Utterance(text="x")]
         with self.assertRaises(SpeechApiAssertError):
-            assert_spoke([Utterance(text="x")], text_contains="")
+            assert_spoke(utterances, text_contains="")
 
 
 class TestLang(unittest.TestCase):
@@ -66,8 +68,9 @@ class TestLang(unittest.TestCase):
                     expected_lang="ja-JP")
 
     def test_fail(self):
+        utterances = [Utterance(text="x", lang="en-US")]
         with self.assertRaises(SpeechApiAssertError):
-            assert_lang([Utterance(text="x", lang="en-US")],
+            assert_lang(utterances,
                         expected_lang="ja-JP")
 
     def test_empty_expected(self):
@@ -81,8 +84,9 @@ class TestNoSpeech(unittest.TestCase):
         assert_no_speech([])
 
     def test_fail(self):
+        utterances = [Utterance(text="surprise!")]
         with self.assertRaises(SpeechApiAssertError):
-            assert_no_speech([Utterance(text="surprise!")])
+            assert_no_speech(utterances)
 
 
 class TestVolume(unittest.TestCase):
@@ -92,8 +96,9 @@ class TestVolume(unittest.TestCase):
                              min_volume=0.4, max_volume=0.8)
 
     def test_fail(self):
+        utterances = [Utterance(text="x", volume=0.1)]
         with self.assertRaises(SpeechApiAssertError):
-            assert_within_volume([Utterance(text="x", volume=0.1)],
+            assert_within_volume(utterances,
                                  min_volume=0.4, max_volume=0.8)
 
     def test_bad_bounds(self):

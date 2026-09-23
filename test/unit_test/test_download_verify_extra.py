@@ -25,9 +25,10 @@ def test_wait_skips_subdir_and_nonmatch(tmp_path):
     (tmp_path / "sub").mkdir()                       # non-file entry
     (tmp_path / "note.txt").write_bytes(b"x")        # does not match .pdf
     clock = {"t": 0.0}
+    str_value = str(tmp_path)
     with pytest.raises(DownloadVerifyError):
         wait_for_download(
-            str(tmp_path), pattern=r"\.pdf$",
+            str_value, pattern=r"\.pdf$",
             timeout=1.0, poll_interval=0.5, stable_for=0.1,
             sleep_fn=lambda s: clock.__setitem__("t", clock["t"] + s),
             time_fn=lambda: clock["t"],
@@ -86,8 +87,9 @@ def test_assert_download_sha256(tmp_path):
     path.write_bytes(b"hello")
     digest = hashlib.sha256(b"hello").hexdigest()
     assert_download(path, DownloadAssertion(sha256=digest))
+    download_assertion = DownloadAssertion(sha256="0" * 64)
     with pytest.raises(DownloadVerifyError):
-        assert_download(path, DownloadAssertion(sha256="0" * 64))
+        assert_download(path, download_assertion)
 
 
 def test_assert_download_json_schema(tmp_path):
@@ -103,5 +105,6 @@ def test_assert_download_pdf_without_lib(tmp_path):
     except ImportError:
         path = tmp_path / "x.pdf"
         path.write_bytes(b"%PDF-fake")
+        download_assertion = DownloadAssertion(pdf_contains="anything")
         with pytest.raises(DownloadVerifyError):
-            assert_download(path, DownloadAssertion(pdf_contains="anything"))
+            assert_download(path, download_assertion)

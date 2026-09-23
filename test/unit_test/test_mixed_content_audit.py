@@ -140,21 +140,23 @@ class TestAssertions(unittest.TestCase):
         ])
 
     def test_assert_no_active_fail(self):
+        mixed_findings = [
+            MixedFinding(url="http://x", resource_type="script",  # noqa: S5332
+                         severity=Severity.ACTIVE),
+        ]
         with self.assertRaises(MixedContentAuditError):
-            assert_no_active([
-                MixedFinding(url="http://x", resource_type="script",  # noqa: S5332
-                             severity=Severity.ACTIVE),
-            ])
+            assert_no_active(mixed_findings)
 
     def test_assert_clean_pass(self):
         assert_clean([])
 
     def test_assert_clean_fail(self):
+        mixed_findings = [
+            MixedFinding(url="http://x", resource_type="image",  # noqa: S5332
+                         severity=Severity.PASSIVE),
+        ]
         with self.assertRaises(MixedContentAuditError):
-            assert_clean([
-                MixedFinding(url="http://x", resource_type="image",  # noqa: S5332
-                             severity=Severity.PASSIVE),
-            ])
+            assert_clean(mixed_findings)
 
 
 class TestSummary(unittest.TestCase):

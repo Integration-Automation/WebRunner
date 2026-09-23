@@ -7,4 +7,3 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: S-
 ## Open
 
 - **#7** [DECIDE] 189 of the 265 `je_web_runner/utils` subpackages are re-exported by no `je_web_runner.api` facade theme, so `docs/reference/utils_index.md` lists them under "Other feature subpackages". Add facade themes for them (the index picks new themes up on regeneration), or keep the facade to the current eleven.
-- **#6** SonarCloud on `main` (2026-09-23): 475 × `python:S5778` in `test/` (exception tests with more than one call that could raise; each `pytest.raises` / `assertRaises` block should hold only the call under test). Details in `docs/updates` U-20260923-06.

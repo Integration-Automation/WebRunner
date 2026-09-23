@@ -29,8 +29,9 @@ class TestInMemoryBackend(unittest.TestCase):
             b.savepoint("sp1")
 
     def test_unknown_savepoint_rejected(self):
+        in_memory_backend = InMemoryBackend()
         with self.assertRaises(DbSnapshotError):
-            InMemoryBackend().rollback_to("missing")
+            in_memory_backend.rollback_to("missing")
 
 
 class TestSnapshotScope(unittest.TestCase):
@@ -57,8 +58,9 @@ class TestSnapshotScope(unittest.TestCase):
 
     def test_rollback_without_active_rejected(self):
         scope = SnapshotScope(backend=InMemoryBackend())
+        snapshot_handle = SnapshotHandle(name="bogus")
         with self.assertRaises(DbSnapshotError):
-            scope.rollback(SnapshotHandle(name="bogus"))
+            scope.rollback(snapshot_handle)
 
     def test_backend_failure_wrapped(self):
         class BadBackend:
@@ -98,10 +100,13 @@ class TestSnapshotCtx(unittest.TestCase):
         b = InMemoryBackend()
         b.insert("u", 1, "a")
         scope = SnapshotScope(backend=b)
-        with self.assertRaises(ValueError):
+        def insert_then_fail():
             with snapshot(scope):
                 b.insert("u", 2, "b")
                 raise ValueError("boom")
+
+        with self.assertRaises(ValueError):
+            insert_then_fail()
         self.assertEqual(b.tables["u"], {1: "a"})
 
     def test_nested_contexts_unwind_in_order(self):

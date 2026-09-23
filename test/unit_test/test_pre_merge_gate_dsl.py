@@ -93,25 +93,31 @@ class TestEvaluate(unittest.TestCase):
         self.assertTrue(result.passed)
 
     def test_unknown_predicate(self):
+        rules = [Rule(when="facts.is_docs_only", require=["nonsense"])]
+        pr_facts = PrFacts(files_changed=["README.md"])
         with self.assertRaises(PreMergeGateDslError):
             evaluate(
-                [Rule(when="facts.is_docs_only", require=["nonsense"])],
-                PrFacts(files_changed=["README.md"]),
+                rules,
+                pr_facts,
             )
 
     def test_unsafe_expression_blocked(self):
+        rules = [Rule(when="__import__('os').system('rm -rf /')",
+                  require=["one_reviewer"])]
+        pr_facts = PrFacts()
         with self.assertRaises(PreMergeGateDslError):
             evaluate(
-                [Rule(when="__import__('os').system('rm -rf /')",
-                      require=["one_reviewer"])],
-                PrFacts(),
+                rules,
+                pr_facts,
             )
 
     def test_non_bool_when_blocked(self):
+        rules = [Rule(when="facts.title", require=["one_reviewer"])]
+        pr_facts = PrFacts(title="x")
         with self.assertRaises(PreMergeGateDslError):
             evaluate(
-                [Rule(when="facts.title", require=["one_reviewer"])],
-                PrFacts(title="x"),
+                rules,
+                pr_facts,
             )
 
     def test_bad_facts_type(self):
@@ -168,8 +174,9 @@ class TestAssert(unittest.TestCase):
 
     def test_fail(self):
         from je_web_runner.utils.pre_merge_gate_dsl.gate import GateResult
+        gate_result = GateResult(passed=False, failures=["x"])
         with self.assertRaises(PreMergeGateDslError):
-            assert_gate_passes(GateResult(passed=False, failures=["x"]))
+            assert_gate_passes(gate_result)
 
 
 if __name__ == "__main__":

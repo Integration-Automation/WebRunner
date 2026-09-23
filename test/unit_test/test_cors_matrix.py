@@ -97,8 +97,9 @@ class TestClassify(unittest.TestCase):
         self.assertEqual(result.outcome, CorsOutcome.ALLOWED)
 
     def test_rejects_non_response(self):
+        cors_case = CorsCase("GET", "x", False)
         with self.assertRaises(CorsMatrixError):
-            classify(CorsCase("GET", "x", False), "nope")
+            classify(cors_case, "nope")
 
 
 class TestRunMatrix(unittest.TestCase):
@@ -116,14 +117,16 @@ class TestRunMatrix(unittest.TestCase):
             run_matrix([], lambda c: CorsResponse(200, "*"))
 
     def test_non_callable(self):
+        cors_cases = [CorsCase("GET", "x", False)]
         with self.assertRaises(CorsMatrixError):
-            run_matrix([CorsCase("GET", "x", False)], "nope")
+            run_matrix(cors_cases, "nope")
 
     def test_probe_failure(self):
         def boom(_c):
             raise RuntimeError("net")
+        cors_cases = [CorsCase("GET", "x", False)]
         with self.assertRaises(CorsMatrixError):
-            run_matrix([CorsCase("GET", "x", False)], boom)
+            run_matrix(cors_cases, boom)
 
 
 class TestAssertions(unittest.TestCase):

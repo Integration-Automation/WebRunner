@@ -178,10 +178,11 @@ class TestAssertAllOk(unittest.TestCase):
         assert_all_ok([SriFinding(tag="script", url="/x", verdict=Verdict.OK)])
 
     def test_fail(self):
+        sri_findings = [
+            SriFinding(tag="script", url="/x", verdict=Verdict.MISSING),
+        ]
         with self.assertRaises(SriVerifyError):
-            assert_all_ok([
-                SriFinding(tag="script", url="/x", verdict=Verdict.MISSING),
-            ])
+            assert_all_ok(sri_findings)
 
 
 if __name__ == "__main__":

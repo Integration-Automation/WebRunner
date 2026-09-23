@@ -104,13 +104,15 @@ class TestClassify(unittest.TestCase):
         self.assertEqual(r.outcome, ProbeOutcome.ALLOWED)
 
     def test_bad_status_type(self):
+        p = self._p("x")
         with self.assertRaises(OpenRedirectError):
-            classify_response(self._p("x"), None, "302",  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
+            classify_response(p, None, "302",  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
                               legitimate_host="x.com")
 
     def test_bad_host(self):
+        p = self._p("x")
         with self.assertRaises(OpenRedirectError):
-            classify_response(self._p("x"), None, 302, legitimate_host="")
+            classify_response(p, None, 302, legitimate_host="")
 
 
 class TestProbeAll(unittest.TestCase):
@@ -141,21 +143,24 @@ class TestProbeAll(unittest.TestCase):
             probe_all([], lambda _v: ProbeResponse(200, None), legitimate_host="x.com")
 
     def test_non_callable_probe(self):
+        redirect_payloads = [RedirectPayload("x", "y")]
         with self.assertRaises(OpenRedirectError):
-            probe_all([RedirectPayload("x", "y")], "not callable",  # type: ignore[arg-type]
+            probe_all(redirect_payloads, "not callable",  # type: ignore[arg-type]
                       legitimate_host="x.com")
 
     def test_probe_exception_wrapped(self):
         def boom(_):
             raise RuntimeError("net")
+        redirect_payloads = [RedirectPayload("x", "y")]
         with self.assertRaises(OpenRedirectError):
-            probe_all([RedirectPayload("x", "y")], boom, legitimate_host="x.com")
+            probe_all(redirect_payloads, boom, legitimate_host="x.com")
 
     def test_bad_probe_return(self):
         def bad(_):
             return "not a probe response"
+        redirect_payloads = [RedirectPayload("x", "y")]
         with self.assertRaises(OpenRedirectError):
-            probe_all([RedirectPayload("x", "y")], bad, legitimate_host="x.com")
+            probe_all(redirect_payloads, bad, legitimate_host="x.com")
 
 
 class TestAssertSafe(unittest.TestCase):

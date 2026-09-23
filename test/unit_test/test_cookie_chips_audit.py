@@ -143,8 +143,9 @@ class TestAssertNoErrors(unittest.TestCase):
         har = _har(_set_cookie_entry(
             "https://adtech.com/p", "id=1; SameSite=None",
         ))
+        audit_har_value = audit_har(har, "https://news.example.com/")
         with self.assertRaises(CookieChipsAuditError):
-            assert_no_errors(audit_har(har, "https://news.example.com/"))
+            assert_no_errors(audit_har_value)
 
 
 if __name__ == "__main__":

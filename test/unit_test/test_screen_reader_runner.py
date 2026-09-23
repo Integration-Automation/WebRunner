@@ -121,20 +121,23 @@ class TestSpeechAndAssertions(unittest.TestCase):
         assert_no_violations(walk_tree(_root(_heading(1, "A"), _button("Save"))))
 
     def test_assert_no_violations_fail(self):
+        walk_tree_value = walk_tree(_root(_button("")))
         with self.assertRaises(ScreenReaderError):
-            assert_no_violations(walk_tree(_root(_button(""))))
+            assert_no_violations(walk_tree_value)
 
     def test_assert_reads_pass(self):
         u = assert_reads(walk_tree(_root(_button("Save"))), "Save")
         self.assertIsInstance(u, Utterance)
 
     def test_assert_reads_fail(self):
+        walk_tree_value = walk_tree(_root(_button("Save")))
         with self.assertRaises(ScreenReaderError):
-            assert_reads(walk_tree(_root(_button("Save"))), "Cancel")
+            assert_reads(walk_tree_value, "Cancel")
 
     def test_assert_reads_empty_phrase(self):
+        screen_reader_transcript = ScreenReaderTranscript()
         with self.assertRaises(ScreenReaderError):
-            assert_reads(ScreenReaderTranscript(), "")
+            assert_reads(screen_reader_transcript, "")
 
     def test_assert_no_violations_rejects_bad_arg(self):
         with self.assertRaises(ScreenReaderError):

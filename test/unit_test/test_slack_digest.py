@@ -116,8 +116,9 @@ class TestPayload(unittest.TestCase):
         self.assertEqual(payload["channel"], "#qa")
 
     def test_bad_channel(self):
+        full_inputs = _full_inputs()
         with self.assertRaises(SlackDigestError):
-            build_slack_payload(_full_inputs(), channel=123)  # type: ignore[arg-type]
+            build_slack_payload(full_inputs, channel=123)  # type: ignore[arg-type]
 
 
 class TestTeamsCard(unittest.TestCase):

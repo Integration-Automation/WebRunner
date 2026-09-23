@@ -63,15 +63,17 @@ class TestTTFT(unittest.TestCase):
         self.assertEqual(ttft, 200)
 
     def test_no_text(self):
+        token_deltas = [TokenDelta(text="", ts_ms=5)]
         with self.assertRaises(StreamingChatAssertError):
-            time_to_first_token([TokenDelta(text="", ts_ms=5)])
+            time_to_first_token(token_deltas)
 
     def test_pass(self):
         assert_ttft_under([TokenDelta(text="x", ts_ms=100)], max_ms=1000)
 
     def test_fail(self):
+        token_deltas = [TokenDelta(text="x", ts_ms=2000)]
         with self.assertRaises(StreamingChatAssertError):
-            assert_ttft_under([TokenDelta(text="x", ts_ms=2000)], max_ms=1000)
+            assert_ttft_under(token_deltas, max_ms=1000)
 
     def test_bad_max(self):
         with self.assertRaises(StreamingChatAssertError):
@@ -87,11 +89,12 @@ class TestGap(unittest.TestCase):
         ], max_gap_ms=1000)
 
     def test_fail(self):
+        token_deltas = [
+            TokenDelta(text="a", ts_ms=0),
+            TokenDelta(text="b", ts_ms=5000),
+        ]
         with self.assertRaises(StreamingChatAssertError):
-            assert_no_stall([
-                TokenDelta(text="a", ts_ms=0),
-                TokenDelta(text="b", ts_ms=5000),
-            ], max_gap_ms=1000)
+            assert_no_stall(token_deltas, max_gap_ms=1000)
 
     def test_max_gap_empty(self):
         self.assertEqual(max_inter_token_gap_ms([]), 0)
@@ -103,8 +106,9 @@ class TestAssembledContains(unittest.TestCase):
         assert_assembled_contains([TokenDelta(text="hello")], expected="ell")
 
     def test_fail(self):
+        token_deltas = [TokenDelta(text="hi")]
         with self.assertRaises(StreamingChatAssertError):
-            assert_assembled_contains([TokenDelta(text="hi")], expected="ello")
+            assert_assembled_contains(token_deltas, expected="ello")
 
     def test_empty_expected(self):
         with self.assertRaises(StreamingChatAssertError):
@@ -117,8 +121,9 @@ class TestUtf8(unittest.TestCase):
         assert_utf8_clean([TokenDelta(text="hello")])
 
     def test_fail(self):
+        token_deltas = [TokenDelta(text="x�y")]
         with self.assertRaises(StreamingChatAssertError):
-            assert_utf8_clean([TokenDelta(text="x�y")])
+            assert_utf8_clean(token_deltas)
 
 
 class TestNoDup(unittest.TestCase):
@@ -130,18 +135,20 @@ class TestNoDup(unittest.TestCase):
         ])
 
     def test_dup(self):
+        token_deltas = [
+            TokenDelta(text="a", seq=1),
+            TokenDelta(text="b", seq=1),
+        ]
         with self.assertRaises(StreamingChatAssertError):
-            assert_no_dup_or_oos([
-                TokenDelta(text="a", seq=1),
-                TokenDelta(text="b", seq=1),
-            ])
+            assert_no_dup_or_oos(token_deltas)
 
     def test_oos(self):
+        token_deltas = [
+            TokenDelta(text="a", seq=2),
+            TokenDelta(text="b", seq=1),
+        ]
         with self.assertRaises(StreamingChatAssertError):
-            assert_no_dup_or_oos([
-                TokenDelta(text="a", seq=2),
-                TokenDelta(text="b", seq=1),
-            ])
+            assert_no_dup_or_oos(token_deltas)
 
     def test_no_seq(self):
         assert_no_dup_or_oos([TokenDelta(text="x")])

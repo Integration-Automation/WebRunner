@@ -71,8 +71,10 @@ class TestHeaderTampering(unittest.TestCase):
         self.assertNotIn("cookie", sent)
 
     def test_attach_to_non_playwright_raises(self):
+        header_tampering_value = HeaderTampering(rules=[])
+        object_value = object()
         with self.assertRaises(HeaderTamperingError):
-            HeaderTampering(rules=[]).attach_to_page(object())
+            header_tampering_value.attach_to_page(object_value)
 
 
 if __name__ == "__main__":

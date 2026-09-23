@@ -30,18 +30,21 @@ class TestPersonaRunner(unittest.TestCase):
             PersonaRunner(personas=[], action_files=["a"], case_runner=lambda p, f: None)
 
     def test_rejects_no_files(self):
+        personas_value = _make_personas("a")
         with self.assertRaises(PersonaRunnerError):
-            PersonaRunner(personas=_make_personas("a"), action_files=[],
+            PersonaRunner(personas=personas_value, action_files=[],
                           case_runner=lambda p, f: None)
 
     def test_rejects_duplicate_personas(self):
+        personas_value = _make_personas("a", "a")
         with self.assertRaises(PersonaRunnerError):
-            PersonaRunner(personas=_make_personas("a", "a"), action_files=["x"],
+            PersonaRunner(personas=personas_value, action_files=["x"],
                           case_runner=lambda p, f: None)
 
     def test_rejects_duplicate_files(self):
+        personas_value = _make_personas("a")
         with self.assertRaises(PersonaRunnerError):
-            PersonaRunner(personas=_make_personas("a"), action_files=["x", "x"],
+            PersonaRunner(personas=personas_value, action_files=["x", "x"],
                           case_runner=lambda p, f: None)
 
     def test_runs_full_matrix(self):

@@ -49,8 +49,9 @@ class TestCodec(unittest.TestCase):
         assert_codec(parse_chunks([_chunk()]), "avc1.42E01E")
 
     def test_fail(self):
+        parse_chunks_value = parse_chunks([_chunk(codec="vp9")])
         with self.assertRaises(WebcodecsAssertError):
-            assert_codec(parse_chunks([_chunk(codec="vp9")]), "avc1.42E01E")
+            assert_codec(parse_chunks_value, "avc1.42E01E")
 
     def test_empty(self):
         with self.assertRaises(WebcodecsAssertError):
@@ -63,9 +64,10 @@ class TestResolution(unittest.TestCase):
         assert_resolution(parse_chunks([_chunk()]), width=1280, height=720)
 
     def test_fail(self):
+        parse_chunks_value = parse_chunks([_chunk(width=640, height=360)])
         with self.assertRaises(WebcodecsAssertError):
             assert_resolution(
-                parse_chunks([_chunk(width=640, height=360)]),
+                parse_chunks_value,
                 width=1280, height=720,
             )
 
@@ -83,11 +85,12 @@ class TestKeyframe(unittest.TestCase):
         ]), max_gap=3)
 
     def test_fail(self):
+        parse_chunks_value = parse_chunks([
+            _chunk("key"), _chunk("delta"), _chunk("delta"),
+            _chunk("delta"), _chunk("delta"),
+        ])
         with self.assertRaises(WebcodecsAssertError):
-            assert_keyframe_interval(parse_chunks([
-                _chunk("key"), _chunk("delta"), _chunk("delta"),
-                _chunk("delta"), _chunk("delta"),
-            ]), max_gap=2)
+            assert_keyframe_interval(parse_chunks_value, max_gap=2)
 
     def test_bad_gap(self):
         with self.assertRaises(WebcodecsAssertError):

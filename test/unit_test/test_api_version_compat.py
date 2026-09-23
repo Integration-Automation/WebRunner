@@ -85,11 +85,12 @@ class TestMatrix(unittest.TestCase):
         ])
 
     def test_assert_fail(self):
+        compat_matrix_rows = [
+            CompatMatrixRow(client_version="v1", server_version="v2",
+                            passed=False),
+        ]
         with self.assertRaises(ApiVersionCompatError):
-            assert_full_matrix_passes([
-                CompatMatrixRow(client_version="v1", server_version="v2",
-                                passed=False),
-            ])
+            assert_full_matrix_passes(compat_matrix_rows)
 
 
 if __name__ == "__main__":

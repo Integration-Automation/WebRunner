@@ -52,8 +52,9 @@ class TestSpf(unittest.TestCase):
         assert_spf_pass(parse_headers(GOOD))
 
     def test_fail(self):
+        parse_headers_value = parse_headers("Subject: x\n\nbody")
         with self.assertRaises(EmailDeliverabilityError):
-            assert_spf_pass(parse_headers("Subject: x\n\nbody"))
+            assert_spf_pass(parse_headers_value)
 
 
 class TestDkim(unittest.TestCase):
@@ -62,14 +63,16 @@ class TestDkim(unittest.TestCase):
         assert_dkim_pass(parse_headers(GOOD))
 
     def test_no_signature(self):
+        parse_headers_value = parse_headers("Subject: x\n\nbody")
         with self.assertRaises(EmailDeliverabilityError):
-            assert_dkim_pass(parse_headers("Subject: x\n\nbody"))
+            assert_dkim_pass(parse_headers_value)
 
     def test_signature_no_pass(self):
         raw = ("DKIM-Signature: v=1; d=x; b=y\n"
                "Authentication-Results: x; dkim=neutral\n\nbody")
+        parse_headers_value = parse_headers(raw)
         with self.assertRaises(EmailDeliverabilityError):
-            assert_dkim_pass(parse_headers(raw))
+            assert_dkim_pass(parse_headers_value)
 
 
 class TestDmarc(unittest.TestCase):
@@ -78,12 +81,14 @@ class TestDmarc(unittest.TestCase):
         assert_dmarc_pass(parse_headers(GOOD), expected_policy="reject")
 
     def test_no_pass(self):
+        parse_headers_value = parse_headers("Subject: x\n\nbody")
         with self.assertRaises(EmailDeliverabilityError):
-            assert_dmarc_pass(parse_headers("Subject: x\n\nbody"))
+            assert_dmarc_pass(parse_headers_value)
 
     def test_wrong_policy(self):
+        parse_headers_value = parse_headers(GOOD)
         with self.assertRaises(EmailDeliverabilityError):
-            assert_dmarc_pass(parse_headers(GOOD), expected_policy="none")
+            assert_dmarc_pass(parse_headers_value, expected_policy="none")
 
 
 class TestListUnsubscribe(unittest.TestCase):
@@ -92,13 +97,15 @@ class TestListUnsubscribe(unittest.TestCase):
         assert_list_unsubscribe(parse_headers(GOOD))
 
     def test_missing(self):
+        parse_headers_value = parse_headers("Subject: x\n\nbody")
         with self.assertRaises(EmailDeliverabilityError):
-            assert_list_unsubscribe(parse_headers("Subject: x\n\nbody"))
+            assert_list_unsubscribe(parse_headers_value)
 
     def test_missing_post(self):
         raw = "List-Unsubscribe: <https://x/u>\n\nbody"
+        parse_headers_value = parse_headers(raw)
         with self.assertRaises(EmailDeliverabilityError):
-            assert_list_unsubscribe(parse_headers(raw))
+            assert_list_unsubscribe(parse_headers_value)
 
 
 class TestBccLeak(unittest.TestCase):
@@ -107,8 +114,9 @@ class TestBccLeak(unittest.TestCase):
         assert_no_bcc_leak(parse_headers(GOOD))
 
     def test_fail(self):
+        parse_headers_value = parse_headers("Bcc: leak@x\n\nbody")
         with self.assertRaises(EmailDeliverabilityError):
-            assert_no_bcc_leak(parse_headers("Bcc: leak@x\n\nbody"))
+            assert_no_bcc_leak(parse_headers_value)
 
 
 if __name__ == "__main__":

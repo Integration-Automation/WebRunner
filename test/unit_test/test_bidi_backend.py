@@ -24,8 +24,10 @@ class TestDetect(unittest.TestCase):
         self.assertEqual(bridge.detect_backend(target), "playwright")
 
     def test_unknown_target_raises(self):
+        bidi_bridge = BidiBridge()
+        object_value = object()
         with self.assertRaises(BidiBackendError):
-            BidiBridge().detect_backend(object())
+            bidi_bridge.detect_backend(object_value)
 
 
 class TestPlaywrightSubscribe(unittest.TestCase):

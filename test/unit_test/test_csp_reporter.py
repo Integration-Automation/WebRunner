@@ -20,8 +20,10 @@ class TestCspViolationCollector(unittest.TestCase):
         driver.execute_script.assert_called_once()
 
     def test_install_unsupported_driver_raises(self):
+        csp_violation_collector = CspViolationCollector()
+        object_value = object()
         with self.assertRaises(CspReporterError):
-            CspViolationCollector().install(object())
+            csp_violation_collector.install(object_value)
 
     def test_collect_parses_payload(self):
         driver = MagicMock()

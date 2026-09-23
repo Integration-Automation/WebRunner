@@ -108,8 +108,9 @@ class TestAssertClean(unittest.TestCase):
         assert_clean([])
 
     def test_fail(self):
+        naming_findings = [NamingFinding(rule="x", test="t", message="m")]
         with self.assertRaises(NamingLintError):
-            assert_clean([NamingFinding(rule="x", test="t", message="m")])
+            assert_clean(naming_findings)
 
 
 if __name__ == "__main__":

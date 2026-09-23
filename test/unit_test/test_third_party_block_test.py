@@ -63,14 +63,16 @@ class TestRunBlockMatrix(unittest.TestCase):
             run_block_matrix([], lambda p: None, lambda: None)
 
     def test_non_callable_block(self):
+        vendors = [Vendor("x", ("*",))]
         with self.assertRaises(ThirdPartyBlockError):
-            run_block_matrix([Vendor("x", ("*",))], "nope", lambda: None)
+            run_block_matrix(vendors, "nope", lambda: None)
 
     def test_cdp_failure_wrapped(self):
         def bad(p):
             raise RuntimeError("cdp down")
+        vendors = [Vendor("x", ("*",))]
         with self.assertRaises(ThirdPartyBlockError):
-            run_block_matrix([Vendor("x", ("*",))], bad, lambda: None)
+            run_block_matrix(vendors, bad, lambda: None)
 
 
 class TestAssertResilient(unittest.TestCase):

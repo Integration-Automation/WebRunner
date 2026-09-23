@@ -167,8 +167,9 @@ class TestOwnersMap(unittest.TestCase):
         )
 
     def test_empty_test_id_rejected(self):
+        map_value = self._map()
         with self.assertRaises(TestOwnersMapError):
-            self._map().owners_for("")
+            map_value.owners_for("")
 
 
 class TestAudit(unittest.TestCase):
@@ -226,8 +227,9 @@ class TestMarkdown(unittest.TestCase):
         self.assertIn("@team/x", md)
 
     def test_bad_top_owners(self):
+        owner_audit = OwnerAudit(total_tests=0)
         with self.assertRaises(TestOwnersMapError):
-            audit_markdown(OwnerAudit(total_tests=0), top_owners=-1)
+            audit_markdown(owner_audit, top_owners=-1)
 
     def test_rejects_non_audit(self):
         with self.assertRaises(TestOwnersMapError):

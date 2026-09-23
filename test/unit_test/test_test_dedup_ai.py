@@ -140,22 +140,26 @@ class TestSemantic(unittest.TestCase):
         self.assertEqual(clusters, [])
 
     def test_bad_threshold(self):
+        files = [_file("a", _login_actions())]
         with self.assertRaises(TestDedupError):
-            semantic_clusters([_file("a", _login_actions())], lambda _: [1.0],
+            semantic_clusters(files, lambda _: [1.0],
                               similarity_threshold=0.0)
+        files_value = [_file("a", _login_actions())]
         with self.assertRaises(TestDedupError):
-            semantic_clusters([_file("a", _login_actions())], lambda _: [1.0],
+            semantic_clusters(files_value, lambda _: [1.0],
                               similarity_threshold=1.5)
 
     def test_bad_vector(self):
+        files = [_file("a", _login_actions())]
         with self.assertRaises(TestDedupError):
-            semantic_clusters([_file("a", _login_actions())], lambda _: "not vector")
+            semantic_clusters(files, lambda _: "not vector")
 
     def test_embedder_exception(self):
         def bad(_):
             raise RuntimeError("rate limit")
+        files = [_file("a", _login_actions())]
         with self.assertRaises(TestDedupError):
-            semantic_clusters([_file("a", _login_actions())], bad)
+            semantic_clusters(files, bad)
 
     def test_empty_rejected(self):
         with self.assertRaises(TestDedupError):

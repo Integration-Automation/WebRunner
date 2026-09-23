@@ -68,10 +68,11 @@ class TestAssert(unittest.TestCase):
         )
 
     def test_fail(self):
+        clusters = [Cluster(representative="x", members=["a", "b"]),
+             Cluster(representative="y", members=["c", "d"])]
         with self.assertRaises(FailureClusterDbscanError):
             assert_root_causes_at_most(
-                [Cluster(representative="x", members=["a", "b"]),
-                 Cluster(representative="y", members=["c", "d"])],
+                clusters,
                 max_clusters=1,
             )
 

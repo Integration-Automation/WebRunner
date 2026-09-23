@@ -105,12 +105,14 @@ class TestBisectFromLedger(unittest.TestCase):
             bisect_from_ledger([], ["c1"], "t1")
 
     def test_empty_order(self):
+        ledger = _ledger(_row("c1", True))
         with self.assertRaises(GitBisectFlakeError):
-            bisect_from_ledger(_ledger(_row("c1", True)), [], "t1")
+            bisect_from_ledger(ledger, [], "t1")
 
     def test_empty_test_id(self):
+        ledger = _ledger(_row("c1", True))
         with self.assertRaises(GitBisectFlakeError):
-            bisect_from_ledger(_ledger(_row("c1", True)), ["c1"], "")
+            bisect_from_ledger(ledger, ["c1"], "")
 
     def test_gaps_in_order_skipped(self):
         # ledger has c2 but order also includes unrun c1.5; skip silently

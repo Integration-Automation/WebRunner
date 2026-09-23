@@ -65,8 +65,10 @@ class TestAgeEntries(unittest.TestCase):
         self.assertEqual(age_entries(rows, now=_NOW), [])
 
     def test_naive_now_rejected(self):
+        entrys = [_entry("x", 1)]
+        now_value = datetime(2026, 5, 24)
         with self.assertRaises(QuarantineAgeReportError):
-            age_entries([_entry("x", 1)], now=datetime(2026, 5, 24))
+            age_entries(entrys, now=now_value)
 
     def test_bad_timestamp_rejected(self):
         rows = [{"test_id": "x", "reason": "", "flake_score": 0,
@@ -146,8 +148,9 @@ class TestMarkdown(unittest.TestCase):
         self.assertIn("+15 more", md)
 
     def test_bad_top_n(self):
+        age_report = AgeReport()
         with self.assertRaises(QuarantineAgeReportError):
-            report_markdown(AgeReport(), top_n=-1)
+            report_markdown(age_report, top_n=-1)
 
     def test_rejects_non_report(self):
         with self.assertRaises(QuarantineAgeReportError):

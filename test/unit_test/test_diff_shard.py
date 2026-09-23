@@ -29,8 +29,9 @@ class TestChangedPaths(unittest.TestCase):
         self.assertEqual(paths, ["a/b.json", "c/d.json"])
 
     def test_runner_failure_propagates(self):
+        git_runner_value = _runner_raising()
         with self.assertRaises(DiffShardError):
-            changed_paths(git_runner=_runner_raising())
+            changed_paths(git_runner=git_runner_value)
 
 
 class TestSelect(unittest.TestCase):

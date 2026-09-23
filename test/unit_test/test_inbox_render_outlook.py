@@ -90,9 +90,10 @@ class TestAssertNoErrors(unittest.TestCase):
                                         message="")])
 
     def test_fail(self):
+        render_findings = [RenderFinding(rule="x", severity=Severity.ERROR,
+                                        message="")]
         with self.assertRaises(InboxRenderOutlookError):
-            assert_no_errors([RenderFinding(rule="x", severity=Severity.ERROR,
-                                            message="")])
+            assert_no_errors(render_findings)
 
 
 if __name__ == "__main__":

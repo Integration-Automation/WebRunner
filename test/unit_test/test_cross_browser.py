@@ -80,15 +80,17 @@ class TestDiffRuns(unittest.TestCase):
                             and f.severity == "minor" for f in findings))
 
     def test_duplicate_browser_raises(self):
+        results = [
+            _result(browser="chromium"),
+            _result(browser="chromium"),
+        ]
         with self.assertRaises(CrossBrowserError):
-            diff_runs([
-                _result(browser="chromium"),
-                _result(browser="chromium"),
-            ])
+            diff_runs(results)
 
     def test_unknown_reference_raises(self):
+        results = [_result(browser="chromium")]
         with self.assertRaises(CrossBrowserError):
-            diff_runs([_result(browser="chromium")], reference_browser="webkit")
+            diff_runs(results, reference_browser="webkit")
 
     def test_invalid_input_type(self):
         with self.assertRaises(CrossBrowserError):

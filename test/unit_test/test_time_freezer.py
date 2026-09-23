@@ -98,8 +98,9 @@ class TestAttach(unittest.TestCase):
     def test_wraps_attach_failure(self):
         def boom(_script):
             raise RuntimeError("no cdp")
+        freeze_config = FreezeConfig(epoch_ms=1)
         with self.assertRaises(TimeFreezerError):
-            attach_to_cdp(boom, FreezeConfig(epoch_ms=1))
+            attach_to_cdp(boom, freeze_config)
 
 
 class TestConvenience(unittest.TestCase):

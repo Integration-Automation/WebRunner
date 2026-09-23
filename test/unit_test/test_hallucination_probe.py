@@ -89,9 +89,10 @@ class TestRun(unittest.TestCase):
             run_probes([], caller=lambda q: "")
 
     def test_non_callable(self):
+        probes = [Probe(name="p", prompt="?", expected_substrings=["x"])]
         with self.assertRaises(HallucinationProbeError):
             run_probes(
-                [Probe(name="p", prompt="?", expected_substrings=["x"])],
+                probes,
                 caller="nope",
             )
 
@@ -122,8 +123,9 @@ class TestAssert(unittest.TestCase):
             assert_hallucination_rate_under(report, max_rate=0)
 
     def test_bad_rate(self):
+        probe_report = ProbeReport()
         with self.assertRaises(HallucinationProbeError):
-            assert_hallucination_rate_under(ProbeReport(), max_rate=2)
+            assert_hallucination_rate_under(probe_report, max_rate=2)
 
 
 if __name__ == "__main__":

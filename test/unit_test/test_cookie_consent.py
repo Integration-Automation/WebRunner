@@ -26,8 +26,10 @@ class TestConsentDismisser(unittest.TestCase):
         self.assertIsNone(dismisser.dismiss(driver))
 
     def test_unsupported_driver_raises(self):
+        consent_dismisser = ConsentDismisser(selectors=["#x"])
+        object_value = object()
         with self.assertRaises(ConsentBannerError):
-            ConsentDismisser(selectors=["#x"]).dismiss(object())
+            consent_dismisser.dismiss(object_value)
 
     def test_default_selectors_present(self):
         defaults = common_dismiss_selectors()

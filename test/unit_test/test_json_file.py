@@ -24,8 +24,9 @@ class TestJsonFile(unittest.TestCase):
         self.assertEqual(result, data)
 
     def test_read_nonexistent_file_raises(self):
+        join_value = os.path.join(self.test_dir, "nonexistent.json")
         with self.assertRaises(WebRunnerJsonException):
-            read_action_json(os.path.join(self.test_dir, "nonexistent.json"))
+            read_action_json(join_value)
 
     def test_write_json_with_unicode(self):
         file_path = os.path.join(self.test_dir, "unicode.json")

@@ -101,8 +101,9 @@ class TestCollapse(unittest.TestCase):
         assert_collapse_intent(p)
 
     def test_fcm_missing(self):
+        good_fcm = _good_fcm()
         with self.assertRaises(PushDeliveryError):
-            assert_collapse_intent(_good_fcm())
+            assert_collapse_intent(good_fcm)
 
     def test_apns_pass(self):
         p = _good_apns()
@@ -110,8 +111,9 @@ class TestCollapse(unittest.TestCase):
         assert_collapse_intent(p)
 
     def test_apns_missing(self):
+        good_apns = _good_apns()
         with self.assertRaises(PushDeliveryError):
-            assert_collapse_intent(_good_apns())
+            assert_collapse_intent(good_apns)
 
 
 if __name__ == "__main__":

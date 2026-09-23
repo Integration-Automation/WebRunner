@@ -39,8 +39,9 @@ class TestDiffStates(unittest.TestCase):
         self.assertFalse(diff.has_changes)
 
     def test_invalid_input(self):
+        browser_state_snapshot = BrowserStateSnapshot()
         with self.assertRaises(StateDiffError):
-            diff_states("not a snapshot", BrowserStateSnapshot())  # type: ignore[arg-type]
+            diff_states("not a snapshot", browser_state_snapshot)  # type: ignore[arg-type]
 
 
 class TestCaptureState(unittest.TestCase):
@@ -69,8 +70,9 @@ class TestCaptureState(unittest.TestCase):
         self.assertEqual(snap.local_storage["a"], "1")
 
     def test_unsupported_driver(self):
+        object_value = object()
         with self.assertRaises(StateDiffError):
-            capture_state(object())
+            capture_state(object_value)
 
     def test_invalid_storage_payload(self):
         driver = MagicMock()

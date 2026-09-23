@@ -47,8 +47,9 @@ class TestShared(unittest.TestCase):
         self.assertEqual(s.title, "t")
 
     def test_fail(self):
+        share_log = ShareLog()
         with self.assertRaises(WebShareAssertError):
-            assert_shared(ShareLog())
+            assert_shared(share_log)
 
 
 class TestOrigin(unittest.TestCase):
@@ -60,15 +61,17 @@ class TestOrigin(unittest.TestCase):
         )
 
     def test_fail(self):
+        share_log = ShareLog(shares=[ShareCall(url="https://other.com/")])
         with self.assertRaises(WebShareAssertError):
             assert_url_origin(
-                ShareLog(shares=[ShareCall(url="https://other.com/")]),
+                share_log,
                 expected_origin="https://example.com",
             )
 
     def test_empty_origin(self):
+        share_log = ShareLog()
         with self.assertRaises(WebShareAssertError):
-            assert_url_origin(ShareLog(), expected_origin="")
+            assert_url_origin(share_log, expected_origin="")
 
 
 class TestHasField(unittest.TestCase):
@@ -78,12 +81,14 @@ class TestHasField(unittest.TestCase):
                          field="url")
 
     def test_fail(self):
+        share_log = ShareLog(shares=[ShareCall()])
         with self.assertRaises(WebShareAssertError):
-            assert_has_field(ShareLog(shares=[ShareCall()]), field="url")
+            assert_has_field(share_log, field="url")
 
     def test_bad_field(self):
+        share_log = ShareLog()
         with self.assertRaises(WebShareAssertError):
-            assert_has_field(ShareLog(), field="weird")
+            assert_has_field(share_log, field="weird")
 
 
 class TestFallback(unittest.TestCase):
@@ -92,8 +97,9 @@ class TestFallback(unittest.TestCase):
         assert_fallback_shown(ShareLog(fallbacks=[FallbackEvent(id="x")]))
 
     def test_fail(self):
+        share_log = ShareLog()
         with self.assertRaises(WebShareAssertError):
-            assert_fallback_shown(ShareLog())
+            assert_fallback_shown(share_log)
 
 
 if __name__ == "__main__":

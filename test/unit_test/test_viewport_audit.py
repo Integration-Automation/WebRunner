@@ -52,8 +52,9 @@ class TestWidth(unittest.TestCase):
         assert_responsive_width(parse_meta(f"<head>{GOOD_META}</head>"))
 
     def test_fail(self):
+        parse_meta_value = parse_meta(f"<head>{BAD_META}</head>")
         with self.assertRaises(ViewportAuditError):
-            assert_responsive_width(parse_meta(f"<head>{BAD_META}</head>"))
+            assert_responsive_width(parse_meta_value)
 
 
 class TestScalable(unittest.TestCase):
@@ -62,18 +63,21 @@ class TestScalable(unittest.TestCase):
         assert_user_scalable_allowed(parse_meta(f"<head>{GOOD_META}</head>"))
 
     def test_fail_no(self):
+        parse_meta_value = parse_meta(f"<head>{BAD_META}</head>")
         with self.assertRaises(ViewportAuditError):
-            assert_user_scalable_allowed(parse_meta(f"<head>{BAD_META}</head>"))
+            assert_user_scalable_allowed(parse_meta_value)
 
     def test_fail_low_max(self):
         html = '<meta name="viewport" content="width=device-width, maximum-scale=1">'
+        parse_meta_value = parse_meta(f"<head>{html}</head>")
         with self.assertRaises(ViewportAuditError):
-            assert_user_scalable_allowed(parse_meta(f"<head>{html}</head>"))
+            assert_user_scalable_allowed(parse_meta_value)
 
     def test_bad_max(self):
         html = '<meta name="viewport" content="width=device-width, maximum-scale=abc">'
+        parse_meta_value = parse_meta(f"<head>{html}</head>")
         with self.assertRaises(ViewportAuditError):
-            assert_user_scalable_allowed(parse_meta(f"<head>{html}</head>"))
+            assert_user_scalable_allowed(parse_meta_value)
 
 
 class TestNotch(unittest.TestCase):
@@ -83,8 +87,9 @@ class TestNotch(unittest.TestCase):
 
     def test_fail(self):
         html = '<meta name="viewport" content="width=device-width">'
+        parse_meta_value = parse_meta(f"<head>{html}</head>")
         with self.assertRaises(ViewportAuditError):
-            assert_notch_aware(parse_meta(f"<head>{html}</head>"))
+            assert_notch_aware(parse_meta_value)
 
 
 class TestSafeArea(unittest.TestCase):
@@ -104,8 +109,9 @@ class TestSafeArea(unittest.TestCase):
         assert_safe_area_padding(SafeAreaSnapshot(padding_top="44px"))
 
     def test_assert_fail(self):
+        safe_area_snapshot = SafeAreaSnapshot()
         with self.assertRaises(ViewportAuditError):
-            assert_safe_area_padding(SafeAreaSnapshot())
+            assert_safe_area_padding(safe_area_snapshot)
 
 
 if __name__ == "__main__":

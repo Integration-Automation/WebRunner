@@ -142,8 +142,9 @@ class TestScanHar(unittest.TestCase):
             scan_har(123)  # type: ignore[arg-type]
 
     def test_bad_har_json_shape(self):
+        dumps_value = json.dumps([1, 2])
         with self.assertRaises(TokenLeakError):
-            scan_har(json.dumps([1, 2]))
+            scan_har(dumps_value)
 
 
 class TestScanLog(unittest.TestCase):
@@ -165,8 +166,9 @@ class TestAssertions(unittest.TestCase):
         assert_no_leaks([])
 
     def test_assert_no_leaks_fail(self):
+        token_findings = [TokenFinding("jwt", "critical", "…abc123", "har")]
         with self.assertRaises(TokenLeakError):
-            assert_no_leaks([TokenFinding("jwt", "critical", "…abc123", "har")])
+            assert_no_leaks(token_findings)
 
     def test_filter_by_severity(self):
         findings = [
