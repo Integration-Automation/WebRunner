@@ -122,7 +122,6 @@ python -m je_web_runner -d DIR [--tag/--exclude-tag] [--rerun-failed LEDGER] [--
 | AutoControlGUI | Optional `utils/webrunner_bridge/bridge.py` (not a declared dependency). | Internal `je_web_runner.utils.executor.action_executor.executor` and its `event_dict` `WR_*` keys. |
 | TestPioneer | Declared dependency; `from je_web_runner import execute_action` in-process. | `execute_action`. |
 | PyBreeze | Subprocess `python -m je_web_runner --execute_str <json>` / `--execute_file <path>`, reading stdout. | Legacy CLI flags, Windows double-encoded `--execute_str`, results printed to stdout; guarded by `test/unit_test/test_legacy_cli_contract.py`. |
-| ThesisAgents | Declares `je_web_runner>=0.0.60` but drives Selenium directly. | Nothing beyond installability. |
 
 **Public promise (README):** the top-level `webdriver_wrapper_instance`, `execute_action`, `TestObject` and the
 original CLI entry points (`-e`, `-d`, `--execute_str`) stay unchanged; README › Advanced WebDriverWrapper also keeps
