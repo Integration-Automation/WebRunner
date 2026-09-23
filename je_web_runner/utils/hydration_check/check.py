@@ -70,11 +70,16 @@ def scan_console(messages: Iterable[str]) -> list[HydrationFinding]:
 # ---------- DOM diff --------------------------------------------------
 
 _WS = re.compile(r"\s+")
-# NOSONAR python:S5852 — input is a finite SSR HTML snapshot, not attacker text
-_WS_AROUND_TAGS = re.compile(r"\s*(<[^>]+>)\s*")
+# Whitespace next to a tag. Each pattern can only start at one end of a whitespace run (right
+# after ">" or at the first blank of a run that is followed by "<"), so matching stays linear;
+# r"\s*(<[^>]+>)\s*" restarted inside every long run and went quadratic.
+_WS_BEFORE_TAG = re.compile(r"(?<!\s)\s+(?=<)")
+_WS_AFTER_TAG = re.compile(r">\s+")
 _COMMENT = re.compile(r"<!--.*?-->", re.DOTALL)
+# "(?<!\s)" keeps the match starting at the first blank of a run (the leftmost match started there
+# anyway); without it the engine retried from every blank of a long run.
 _FRAMEWORK_ATTRS = re.compile(
-    r"\s+(?:data-reactroot|data-reactid|data-react-helmet|data-n-head|"
+    r"(?<!\s)\s+(?:data-reactroot|data-reactid|data-react-helmet|data-n-head|"
     r"data-v-[a-f0-9]+|data-svelte-h)\b(?:=\"[^\"]*\")?",
     re.IGNORECASE,
 )
@@ -85,7 +90,8 @@ def _normalise_html(html: str) -> str:
     text = _SCRIPT_BLOCK.sub("", html)
     text = _COMMENT.sub("", text)  # also removes React's <!--$--> / <!--/$--> markers
     text = _FRAMEWORK_ATTRS.sub("", text)
-    text = _WS_AROUND_TAGS.sub(r"\1", text)
+    text = _WS_BEFORE_TAG.sub("", text)
+    text = _WS_AFTER_TAG.sub(">", text)
     text = _WS.sub(" ", text).strip().lower()
     return text
 

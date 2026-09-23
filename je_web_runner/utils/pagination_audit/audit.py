@@ -196,6 +196,41 @@ def assert_clean(findings: PaginationFindings) -> None:
 
 # ---------- ordering check --------------------------------------------
 
+def _flatten_sort_keys(findings: PaginationFindings, items_by_page_key: KeyFn) -> list[Hashable]:
+    """Every item's sort key, pages in order; a failing key function becomes a PaginationAuditError."""
+    try:
+        return [
+            items_by_page_key(key)
+            for page_keys in findings.item_keys_by_page
+            for key in page_keys
+        ]
+    except Exception as error:
+        raise PaginationAuditError(
+            f"items_by_page_key failed: {error!r}"
+        ) from error
+
+
+def _check_order(last: Hashable, current: Hashable, reverse: bool) -> None:
+    """Raise when ``current`` breaks the ordering after ``last``."""
+    # ``items_by_page_key`` is caller-supplied and only guaranteed to
+    # return Hashable, which is not necessarily orderable. Mixed types
+    # (str vs int, None vs anything) raise TypeError here — surface that
+    # as a PaginationAuditError instead of leaking a bare TypeError.
+    try:
+        out_of_order = current > last if reverse else current < last
+    except TypeError as error:
+        raise PaginationAuditError(
+            f"items_by_page_key returned non-comparable keys "
+            f"({current!r} vs {last!r}): {error}"
+        ) from error
+    if out_of_order:
+        symbol = ">" if reverse else "<"
+        suffix = " but reverse=True" if reverse else ""
+        raise PaginationAuditError(
+            f"order violation: {current!r} {symbol} {last!r}{suffix}"
+        )
+
+
 def assert_sorted_by(
     findings: PaginationFindings,
     items_by_page_key: KeyFn,
@@ -209,35 +244,6 @@ def assert_sorted_by(
     """
     if not callable(items_by_page_key):
         raise PaginationAuditError("items_by_page_key must be callable")
-    try:
-        flattened: list[Hashable] = [
-            items_by_page_key(key)
-            for page_keys in findings.item_keys_by_page
-            for key in page_keys
-        ]
-    except Exception as error:
-        raise PaginationAuditError(
-            f"items_by_page_key failed: {error!r}"
-        ) from error
-    if not flattened:
-        return
-    last = flattened[0]
-    for current in flattened[1:]:
-        # ``items_by_page_key`` is caller-supplied and only guaranteed to
-        # return Hashable, which is not necessarily orderable. Mixed types
-        # (str vs int, None vs anything) raise TypeError here — surface that
-        # as a PaginationAuditError instead of leaking a bare TypeError.
-        try:
-            out_of_order = current > last if reverse else current < last
-        except TypeError as error:
-            raise PaginationAuditError(
-                f"items_by_page_key returned non-comparable keys "
-                f"({current!r} vs {last!r}): {error}"
-            ) from error
-        if out_of_order:
-            symbol = ">" if reverse else "<"
-            suffix = " but reverse=True" if reverse else ""
-            raise PaginationAuditError(
-                f"order violation: {current!r} {symbol} {last!r}{suffix}"
-            )
-        last = current
+    flattened = _flatten_sort_keys(findings, items_by_page_key)
+    for last, current in zip(flattened, flattened[1:]):
+        _check_order(last, current, reverse)

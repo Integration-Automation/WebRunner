@@ -32,6 +32,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
   - [Backend dispatch](#backend-dispatch)
   - [Module map](#module-map)
 - [Quick Start](#quick-start)
+- [Public API & Deprecation Policy](#public-api--deprecation-policy)
 - [Core API](#core-api)
 - [Action Executor](#action-executor)
 - [Backends](#backends)
@@ -43,6 +44,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - [Observability](#observability)
 - [Test Orchestration](#test-orchestration)
 - [Quality & Security](#quality--security)
+- [More Capabilities](#more-capabilities)
 - [Specialized Modules](#specialized-modules)
 - [Advanced WebDriverWrapper](#advanced-webdriverwrapper)
 - [Browser Internals](#browser-internals)
@@ -300,9 +302,9 @@ python -m je_web_runner -e examples/quick_smoke.json
 
 ```
 test/
-├── unit_test/         # 1200 mock-based unit tests (~12s)
-├── integration_test/  #   30 wired-modules tests with real I/O (~6s)
-└── e2e_test/          #    6 real-browser tests; skips without Selenium Grid
+├── unit_test/         # mock-based unit tests
+├── integration_test/  # wired-modules tests with real I/O
+└── e2e_test/          # real-browser tests; skips without Selenium Grid
 ```
 
 - **Unit** (`test/unit_test/test_*.py`) — runs everywhere; pulled in by both
@@ -387,6 +389,37 @@ The legacy names (`WR_get_webdriver_manager`, `WR_SaveTestObject`, `WR_quit`, `W
 ```
 
 The validator accepts length-1, length-2 (`[cmd, dict_or_list]`), and length-3 (`[cmd, [positional], {kwargs}]`) actions.
+
+## Public API & Deprecation Policy
+
+**What is public** — these are the only things other code should depend on, and the only things this
+policy protects:
+
+| Surface | What it covers |
+| --- | --- |
+| Top-level names | Everything listed in `je_web_runner.__all__` (`from je_web_runner import …`) |
+| CLI | `python -m je_web_runner` flags, including the original `-e/--execute_file`, `-d/--execute_dir` and `--execute_str` (Windows double-encoded JSON included) |
+| Action JSON | The `WR_*` command names registered in `executor.event_dict`, and the `webdriver_wrapper` / `meta` top-level keys of an action file |
+| Socket server | `start_web_runner_socket_server`, `send_command`, `read_frame`, `encode_frame` and the length-prefixed framing |
+| Supported module paths | `je_web_runner.utils.executor.action_executor` (`executor`), `je_web_runner.utils.logging.loggin_instance` (`web_runner_logger`, `WebRunnerLoggingHandler`), `je_web_runner.webdriver.webdriver_wrapper` (`WebDriverWrapper`, `webdriver_wrapper_instance`, the `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` patch targets) |
+
+The three module paths are supported because other repositories already import them: AutoControlGUI's
+WebRunner bridge takes `executor`, Jeffrey_RPA hooks `loggin_instance` by that exact (misspelled)
+name and patches the wrapper dictionaries. They are treated as public rather than asked to move.
+`test/unit_test/test_public_api.py` fails if any of them disappears.
+
+**What is not public**: every other module under `je_web_runner.utils.`, anything named with a
+leading underscore other than the patch targets above, the shape of report files, and the log
+format. They can move in any release.
+
+**Retiring something public**
+
+1. The replacement ships first, and the old name keeps working as an alias.
+2. The alias raises `DeprecationWarning` naming the replacement, and the release notes say so.
+3. The alias stays for at least two further releases before it can be removed, and only a release
+   that names the removal may drop it.
+4. A name listed in `architecture.md` §6 as a cross-project contract is different: it never changes
+   without the consuming repository changing in the same round, and §6 is updated on both sides.
 
 ## Core API
 
@@ -694,7 +727,7 @@ python -m je_web_runner.mcp_server
 The default tool list (22 tools) exposes:
 
 Live browser execution:
-- `webrunner_run_actions` — execute any `WR_*` action list. Covers the full ~280-command surface including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
+- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 444 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
 - `webrunner_run_action_files` — batch-run JSON files on disk
 - `webrunner_list_commands` — discover the full `WR_*` surface
 
@@ -748,101 +781,96 @@ python -m je_web_runner.action_lsp
 
 `textDocument/completion` returns every registered `WR_*` command; `textDocument/publishDiagnostics` runs the action linter on `didOpen` / `didChange`. Pair with VS Code's *Configure JSON Language Servers* or the JetBrains LSP plugin.
 
-## Even More Capabilities (polish wave)
+## More Capabilities
 
-CLI & orchestration polish:
+Smaller modules, grouped by what they help with. The larger areas have their own sections above and in
+[Specialized Modules](#specialized-modules).
+
+### CLI & orchestration polish
 
 - **Regex test selector** — `test_filter.name_filter.filter_paths(paths, include=["smoke.*"], exclude=["slow"])` keeps only matching candidate paths; orthogonal to the existing tag filter.
 - **Process supervisor** — `process_supervisor.ProcessSupervisor().kill_orphans()` walks the OS process table for `chromedriver` / `geckodriver` / `msedgedriver` and kills stragglers (skips `os.getpid()` automatically). `with_watchdog(callable, timeout_seconds=300)` wraps a long callable with a hard wall-clock raise.
 - **Pipeline DSL** — `pipeline.load_pipeline({"stages": [...]})` + `run_pipeline(pipeline, runner)` execute multi-stage gates: `continue_on_failure=True` makes a stage non-blocking (linters / scanners), otherwise downstream stages skip.
 
-Frontend / mobile / coverage:
+### Frontend / mobile / coverage
 
 - **Storybook visual snapshots** — `storybook.visual_snapshots.capture_story_snapshots(stories, base_url, take_screenshot, navigate, baseline_dir=...)` walks every story, persists deterministic filenames (`components-button--primary.png`), and diffs against an optional baseline. `assert_no_visual_regressions(report)` is the gate.
 - **Appium gestures** — `appium_integration.gestures` ships `swipe`, `scroll`, `long_press`, `pinch`, `double_tap` that prefer Appium's `mobile:` named-gesture extension and fall back to W3C Actions on older drivers.
 - **Coverage map** — `coverage_map.build_coverage_map("./actions")` walks every action JSON file, normalises `WR_to_url` paths (`/users/42` → `/users/:id`) and produces a route → files reverse index. `coverage.uncovered(declared_routes)` answers "which routes have no test?".
 
-## Even More Capabilities (final wave)
-
-Debugging & reproducibility:
+### Debugging & reproducibility
 
 - **CDP message tap** — `cdp_tap.CdpRecorder("cdp.ndjson").attach(driver)` wraps `execute_cdp_cmd` so every command + return value is appended to an ndjson log; `CdpReplayer(load_recording(...))` plays it back against a stub for offline debugging.
 - **Cross-browser parity** — `cross_browser.diff_runs([chromium_run, firefox_run, webkit_run])` diffs title / DOM hash / console / network status / screenshot hash, classifying each finding as `major` (5xx, title, DOM mismatch) or `minor`. `assert_parity(report, only_major=True)` is the gate.
 - **Browser state diff** — `state_diff.capture_state(driver)` snapshots cookies + localStorage + sessionStorage; `diff_states(before, after)` lists added / removed / changed keys per section so cart / auth flows stay traceable.
 
-Authoring / scaffolding:
+### Authoring / scaffolding
 
 - **Page Object codegen** — `pom_codegen.discover_elements_from_html(html)` walks every element with `data-testid` / `id` / form `name`; `render_pom_module(elements, class_name="LoginPage")` returns a Python module with one `TestObject` property per element.
 
-CI reproducibility:
+### CI reproducibility
 
 - **Workspace lock file** — `workspace_lock.build_lock(drivers=..., playwright_versions={"chromium": "127.0.0.0"})` snapshots every Python distribution + driver version + Playwright browser version; `write_lock(lock, ".webrunner/lock.json")` and `diff_locks(before, after)` complete the pipeline.
 
-Long-running observability:
+### Long-running observability
 
 - **A11y trend dashboard** — `a11y_trend.aggregate_history(history)` buckets axe runs by day and impact; `render_html(points)` produces a self-contained SVG line chart so regressions are visible at a glance.
 - **Perf drift detector** — `perf_drift.detect_drift({"lcp_ms": samples}, baseline_window=20, recent_window=5)` compares the recent P95 against a rolling baseline P95 and flags drift outside `tolerance`. `assert_no_regression(report)` is the strict path; `higher_is_better={"frame_rate"}` for inverted metrics.
 
-## Even More Capabilities (newest wave)
-
-Authoring / formatting:
+### Authoring / formatting
 
 - **Action JSON formatter** — `action_formatter.format_actions(actions)` writes a canonical multi-line array with kwargs in a stable preferred-then-alphabetical order; `format_file(path)` reformats in place and reports `(text, changed)`.
 - **Markdown → action JSON** — `md_authoring.parse_markdown(text)` understands `- open <url>`, `- click #id`, `- type "x" into <selector>`, `- wait 3s`, `- assert title "..."`, `- press Enter`, `- screenshot`, `- run template <name>`, `- quit`. Lines that don't match are preserved as `WR__note` so the round-trip is loss-less.
 
-Triage / production observability:
+### Triage / production observability
 
 - **Failure clustering** — `failure_cluster.cluster_failures(failures, top_n=5)` reduces each error message to a stable signature (strips timestamps, hex addresses, line numbers, paths, large numerics, quoted substrings) so the same root cause across runs lands in one bucket.
 - **Synthetic monitoring** — `synthetic_monitoring.SyntheticMonitor(alert_sink).register("homepage", check)` reruns checks; the sink only fires on edge transitions (`green → red` / `red → green`) with `failure_threshold` / `recovery_threshold` to silence flapping.
 - **OTLP exporter** — `observability.otlp_exporter.configure_otlp_export(provider, OtlpExportConfig(endpoint="https://otlp:4317"))` ships the existing OTel spans to Jaeger / Tempo / any OTLP backend (gRPC by default, HTTP fallback).
 
-Frontend / component:
+### Frontend / component
 
 - **Storybook integration** — `storybook.discover_stories(index_path)` reads Storybook 7+ `index.json` (or legacy `stories.json`); `plan_actions_for_stories(stories, base_url, run_a11y=True)` builds a flat action list visiting each story in iframe mode and running axe + screenshot.
 - **Shadow DOM auto-pierce** — `dom_traversal.shadow_pierce.find_first(driver, "button.primary")` recursively walks open shadow roots (Selenium `execute_script` or Playwright `evaluate`) so a single CSS selector can match across shadow boundaries.
 
-## Even More Capabilities (latest wave)
-
-Onboarding / migration:
+### Onboarding / migration
 
 - **Workspace bootstrapper** — `python -m je_web_runner --init` (or `bootstrapper.init_workspace("my-tests")`) drops `actions/sample.json`, `.webrunner/ledger.json`, pinned-driver template, JSON schema, pre-commit hook, and a starter GitHub Actions workflow.
 - **Driver pinner** — `driver_pin.install_for_browser(".webrunner/drivers.json", "firefox")` reads a JSON pin file (`name` / `version` / `url` / `archive_format` / `binary_inside`), downloads + extracts once, then serves from cache. Bypasses the GitHub API rate limit that webdriver-manager hits in CI.
 - **Selenium → Playwright translator** — `sel_to_pw.translate_python_source(text)` rewrites `driver.find_element(By.ID, "x")` → `page.locator("#x")` and similar; `translate_action_list(actions)` rewrites `WR_*` action JSON to its `WR_pw_*` equivalent (drops `WR_implicitly_wait` since Playwright auto-waits).
 
-Test authoring:
+### Test authoring
 
 - **Form auto-fill** — `form_autofill.plan_fill_actions(fields, fixture, submit_locator=...)` infers each field from `data-testid` / `id` / `name` / `placeholder` / `label` / `type` and emits a ready-to-run `WR_save_test_object` + `WR_element_input` sequence.
 
-Quality:
+### Quality
 
 - **A11y diff** — `accessibility.a11y_diff.diff_violations(baseline, current)` buckets axe-core findings into `added` / `resolved` / `persisting` keyed on `(rule_id, target)`; `assert_no_regressions(diff, allow_rules=...)` is the CI gate.
 
-Performance / orchestration:
+### Performance / orchestration
 
 - **Fan-out** — `fanout.run_fan_out([("preflight-a", task_a), task_b, ...], max_workers=4)` runs read-only callables concurrently inside one test, returning per-task duration + outcome with `raise_for_failures()` for the strict path.
 - **Event bus** — `event_bus.EventBus(".webrunner/events.log").publish("setup-done", {"shard": 1})`; subscribers `poll()` from a remembered offset or `wait_for(topic, predicate=..., timeout=30)`. File-backed ndjson — no Redis dependency.
 
-Browser internals:
+### Browser internals
 
 - **Extension test harness** — `extension_harness.parse_manifest("./ext")` reads MV2 / MV3 manifests; `apply_to_chrome_options(options, [ext_dir])` adds `--load-extension` flags; `playwright_persistent_context_args(...)` returns the kwargs needed for `launch_persistent_context`.
 
-## Even More Capabilities
-
-Reliability & dev-loop:
+### Reliability & dev-loop
 
 - **Browser pool** — `browser_pool.BrowserPool(factory, size=4, max_uses=50).warm()`; `with pool.session() as ses: …` removes browser cold-start from local dev. Health check + recycle policy built in.
 - **WebDriver BiDi bridge** — `bidi_backend.BidiBridge().subscribe(target, "console", callback)` works against either Selenium 4 BiDi (`driver.script.add_console_message_handler`) or Playwright `page.on(...)`. `register_translator` lets you wire custom event names.
 
-Determinism & offline runs:
+### Determinism & offline runs
 
 - **HAR replay server** — `har_replay.HarReplayServer(load_har("recorded.har")).start()` boots a local HTTP server that serves recorded responses; supports literal / glob / `re:` URL matching with rotation across duplicates. Drop-in for staging-API outages.
 
-Quality / privacy:
+### Quality / privacy
 
 - **PII scanner** — `pii_scanner.scan_text(text)` finds emails, E.164 phones, Luhn-validated credit cards, US SSN, ROC ID, and IPv4. `assert_no_pii(text, allow_categories=...)` for CI gates; `redact_text(text)` returns a sanitised copy.
 - **Visual diff review UI** — `visual_review.VisualReviewServer(baseline_dir, current_dir).start()` opens a local web UI showing each baseline / current pair side-by-side with an *Accept current as baseline* button (idempotent file copy with path-traversal guard).
 
-Test orchestration:
+### Test orchestration
 
 - **Test impact analysis** — `impact_analysis.build_index("./actions")` walks every action JSON file and projects locator names, URLs, template names, and `WR_*` commands into a reverse index; `affected_action_files(index, locators=["primary_cta"])` answers "which tests touch this?" so diff-aware shards can go beyond filename matching.
 

@@ -243,10 +243,8 @@ class TestFlakyQuarantineDecorator(unittest.TestCase):
             def test_q():
                 return "should not run"
 
-            with self.assertRaises(Exception) as cm:
+            with self.assertRaises(pytest.skip.Exception) as cm:
                 test_q()
-            # pytest.skip raises pytest.skip.Exception; just make sure something
-            # was raised and the reason is in the message.
             self.assertIn("flaky-quarantine", str(cm.exception))
 
     def test_skip_disabled_runs_the_test(self):

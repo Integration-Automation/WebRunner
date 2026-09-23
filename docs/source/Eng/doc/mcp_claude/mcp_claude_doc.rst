@@ -163,9 +163,9 @@ subsequent ``webrunner_run_actions`` calls reuse it until you issue
 Tool catalog
 ============
 
-The server registers ~22 tools out of the box. Use
+The server registers 22 tools out of the box. Use
 ``webrunner_list_commands`` for the *full* runtime command list (every
-``WR_*`` registered in the action executor — typically ~200 entries).
+``WR_*`` registered in the action executor, 444 of them).
 
 Authoring & lint
 ----------------

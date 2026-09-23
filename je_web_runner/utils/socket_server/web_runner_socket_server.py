@@ -2,7 +2,6 @@ import codecs
 import json
 import socketserver
 import ssl
-import sys
 import threading
 from secrets import compare_digest
 
@@ -428,15 +427,6 @@ def _build_tls_context(certfile: str, keyfile: str) -> ssl.SSLContext:
     return context
 
 
-def _resolve_argv_overrides(host: str, port: int) -> tuple[str, int]:
-    """Honour positional CLI overrides if argv looks like a host/port pair."""
-    if len(sys.argv) == 2:
-        return sys.argv[1], port
-    if len(sys.argv) == 3:
-        return sys.argv[1], int(sys.argv[2])
-    return host, port
-
-
 def start_web_runner_socket_server(
     host: str = "localhost",
     port: int = 9941,
@@ -447,6 +437,7 @@ def start_web_runner_socket_server(
     """
     啟動 WebRunner TCP Socket Server，可選 token 驗證與 TLS
     Start the WebRunner TCP Socket Server with optional token auth and TLS.
+    It binds exactly ``host`` and ``port``; the command line is not consulted.
 
     :param host: 預設為 localhost；對外暴露時請明確指定
                  Defaults to localhost; specify explicitly when exposing externally.
@@ -457,7 +448,6 @@ def start_web_runner_socket_server(
     :param keyfile: TLS 私鑰檔路徑 / TLS private key path (PEM)
     :return: TCPServer 實例 / TCPServer instance
     """
-    host, port = _resolve_argv_overrides(host, port)
     server = TCPServer((host, port), TCPServerHandler, auth_token=auth_token)
     if certfile and keyfile:
         context = _build_tls_context(certfile, keyfile)

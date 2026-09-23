@@ -122,14 +122,16 @@ python -m je_web_runner -d DIR [--tag/--exclude-tag] [--rerun-failed LEDGER] [--
 | AutoControlGUI | Optional `utils/webrunner_bridge/bridge.py` (not a declared dependency). | Internal `je_web_runner.utils.executor.action_executor.executor` and its `event_dict` `WR_*` keys. |
 | TestPioneer | Declared dependency; `from je_web_runner import execute_action` in-process. | `execute_action`. |
 | PyBreeze | Subprocess `python -m je_web_runner --execute_str <json>` / `--execute_file <path>`, reading stdout. | Legacy CLI flags, Windows double-encoded `--execute_str`, results printed to stdout; guarded by `test/unit_test/test_legacy_cli_contract.py`. |
-| ThesisAgents | Declares `je_web_runner>=0.0.60` but drives Selenium directly. | Nothing beyond installability. |
 
 **Public promise (README):** the top-level `webdriver_wrapper_instance`, `execute_action`, `TestObject` and the
 original CLI entry points (`-e`, `-d`, `--execute_str`) stay unchanged; README › Advanced WebDriverWrapper also keeps
 `WebDriverWrapper` and the `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` patch targets stable.
 
-**De-facto public internal paths:** `utils/executor/action_executor.py` (`executor`), `utils/logging/loggin_instance.py`,
-`webdriver/webdriver_wrapper.py`. Treat moves or renames as breaking changes.
+**Supported module paths (public, README › Public API & Deprecation Policy):**
+`utils/executor/action_executor.py` (`executor`), `utils/logging/loggin_instance.py`
+(`web_runner_logger`, also exported top-level since 0.0.90, and `WebRunnerLoggingHandler`),
+`webdriver/webdriver_wrapper.py`. Moves or renames are breaking changes and follow the deprecation
+policy; `test/unit_test/test_public_api.py` guards them.
 
 **Import-time side effects:** `utils/logging/loggin_instance.py` sets the root logger to DEBUG and attaches a
 `RotatingFileHandler` for the **relative** path `WEBRunner.log` (mode `"w"`), so the log lands in the caller's cwd.
@@ -138,8 +140,9 @@ process share one driver (`--parallel-mode process` exists for isolation).
 
 ## 7. Design constraints
 
-- Executor calls only registered commands; no `eval` / `exec` on input (unsafe builtins are filtered out of
-  `event_dict`). → CLAUDE.md › Coding Standards › Security Requirements
+- Executor calls only registered commands: the `WR_*` table plus the 22-name `SAFE_BUILTINS` allowlist
+  (`abs` … `sum`), the same list MailThunder and LoadDensity use; nothing else reaches `event_dict`
+  (workspace `progress.md` X-12). → CLAUDE.md › Coding Standards › Security Requirements
 - Validate all external input (URLs, action JSON, socket messages, CLI args); prevent path traversal; socket server binds
   localhost unless configured; escape dynamic content in HTML reports; parameterize values passed to JS. → same section
 - Credentials are never logged or stored in plaintext; use `python-dotenv`. → same section

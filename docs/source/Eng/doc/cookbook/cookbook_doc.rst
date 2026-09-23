@@ -22,8 +22,8 @@ end-to-end. Each found a real bug the unit suite missed:
 Test tiers
 ==========
 
-* ``test/unit_test/`` — 1200 mock-based unit tests, ~12s.
-* ``test/integration_test/`` — 30 wired-modules tests with real I/O
+* ``test/unit_test/`` — mock-based unit tests.
+* ``test/integration_test/`` — wired-modules tests with real I/O
   (in-memory SQLite, in-process HTTP servers, real subprocesses for
   the MCP / LSP). Surfaced the Windows LSP CRLF framing bug.
 * ``test/e2e_test/`` — six real-browser smoke tests; skips cleanly when

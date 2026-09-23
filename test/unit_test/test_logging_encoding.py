@@ -25,7 +25,7 @@ def _normalised(encoding: str) -> str:
     return encoding.lower().replace("-", "").replace("_", "")
 
 
-@pytest.fixture()
+@pytest.fixture
 def handler(tmp_path):
     made = WebRunnerLoggingHandler(filename=str(tmp_path / "web_runner.log"))
     yield made

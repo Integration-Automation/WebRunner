@@ -12,7 +12,6 @@ executor at runtime.
 from __future__ import annotations
 
 import json
-import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Protocol, Sequence
@@ -114,9 +113,6 @@ def build_prompt_text(prompt: StoryPrompt) -> str:
 
 # ---------- generation --------------------------------------------------
 
-# NOSONAR python:S5852 — input is a bounded LLM response (≤ context window)
-_JSON_BLOCK_RE = re.compile(r"```(?:json)?\s*(.+?)```", re.DOTALL)
-
 
 def generate_actions(
     prompt: StoryPrompt,
@@ -144,11 +140,27 @@ def generate_actions(
     return actions
 
 
+def _fenced_block(text: str) -> str:
+    """Return the body of the first ``` fence (dropping a ``json`` tag), or ``text`` if there is none.
+
+    Found with ``str.find`` rather than a lazy ``.+?`` regex, which rescanned the rest of the reply
+    from every position when a fence was never closed.
+    """
+    start = text.find("```")
+    if start == -1:
+        return text
+    end = text.find("```", start + 3)
+    if end == -1:
+        return text
+    body = text[start + 3:end]
+    if body.startswith("json"):
+        body = body[len("json"):]
+    body = body.strip()
+    return body if body else text
+
+
 def _parse_json_response(raw: str) -> list[dict[str, Any]]:
-    text = raw.strip()
-    match = _JSON_BLOCK_RE.search(text)
-    if match:
-        text = match.group(1).strip()
+    text = _fenced_block(raw.strip())
     try:
         loaded = json.loads(text)
     except ValueError as error:

@@ -25,14 +25,15 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: "3.12"
 
+      # Hash-locked, wheels-only; regenerate with
+      #   uv pip compile .github/requirements/publish.in --generate-hashes --python-version 3.12       #     --python-platform x86_64-manylinux_2_28 --only-binary :all: -o .github/requirements/publish.txt
       - name: Install build tooling
         run: |
-          python -m pip install --upgrade pip
-          pip install build twine tomlkit
+          pip install --require-hashes --only-binary :all: -r .github/requirements/publish.txt
 
       - name: Bump patch version in pyproject.toml
         id: bump

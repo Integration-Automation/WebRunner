@@ -58,6 +58,18 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20260923-06 | 2026-09-23 | Six text scanners made linear; SonarCloud status re-checked | #done #performance #security | [2026-09](2026-09.md) |
+| U-20260923-12 | 2026-09-23 | README: one themed More Capabilities section | #docs | [2026-09](2026-09.md) |
+| U-20260923-11 | 2026-09-23 | Release job installs locked tooling | #ci #security | [2026-09](2026-09.md) |
+| U-20260923-10 | 2026-09-23 | Counts quoted in the docs are checked against the code | #done #docs #tests | [2026-09](2026-09.md) |
+| U-20260923-09 | 2026-09-23 | Three email patterns made linear | #done #performance #security | [2026-09](2026-09.md) |
+| U-20260923-08 | 2026-09-23 | The socket server no longer reads sys.argv | #change #socket #security | [2026-09](2026-09.md) |
+| U-20260923-07 | 2026-09-23 | Ten small SonarCloud findings cleared | #done #quality | [2026-09](2026-09.md) |
+| U-20260923-05 | 2026-09-23 | Dependabot targets dev; setup-python v7 | #done #ci #deps | [2026-09](2026-09.md) |
+| U-20260923-04 | 2026-09-23 | Executor builtins become an allowlist | #done #security #executor | [2026-09](2026-09.md) |
+| U-20260923-03 | 2026-09-23 | dev.toml back in step with pyproject.toml | #done #packaging | [2026-09](2026-09.md) |
+| U-20260923-02 | 2026-09-23 | Write down the public API and the deprecation policy | #done #docs #api | [2026-09](2026-09.md) |
+| U-20260923-01 | 2026-09-23 | Release 0.0.89 with the UTF-8 log encoding | #done #release | [2026-09](2026-09.md) |
 | U-20260922-06 | 2026-09-22 | Regression test for the UTF-8 log encoding | #done #logging #tests | [2026-09](2026-09.md) |
 | U-20260922-05 | 2026-09-22 | Open WEBRunner.log as UTF-8 | #done #logging #encoding | [2026-09](2026-09.md) |
 | U-20260922-04 | 2026-09-22 | Contract test for the legacy CLI flags | #done #tests | [2026-09](2026-09.md) |
@@ -69,4 +81,4 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-09.md](2026-09.md) | 2026-09 | 5 |
+| [2026-09.md](2026-09.md) | 2026-09 | 17 |
