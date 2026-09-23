@@ -59,7 +59,7 @@ def test_all_has_no_duplicates():
 
 @pytest.mark.parametrize("path, attributes", sorted(SUPPORTED_MODULE_PATHS.items()))
 def test_supported_module_path_keeps_its_attributes(path, attributes):
-    module = importlib.import_module(path)
+    module = importlib.import_module(path)  # nosemgrep
     missing = [attribute for attribute in attributes if not hasattr(module, attribute)]
     assert missing == [], f"{path} lost {missing}"  # nosec B101
 

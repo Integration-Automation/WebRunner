@@ -5,8 +5,6 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-import pytest
-
 from je_web_runner.utils.flake_detector.detector import (
     FlakeDetectorError,
     QuarantineEntry,
