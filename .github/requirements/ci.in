@@ -1,0 +1,13 @@
+# Test dependencies for test_dev.yml, test_stable.yml and e2e_browser.yml; ci.txt is generated from this file:
+# uv pip compile .github/requirements/ci.in --universal --python-version 3.10 --generate-hashes --only-binary :all: -o .github/requirements/ci.txt
+# The tests import the checked-out source through PYTHONPATH, so this lists the package's runtime
+# dependencies (pyproject.toml) instead of the package itself, plus what the tests use.
+selenium>=4.0.0
+requests>=2.33.0
+python-dotenv>=1.0.0
+webdriver-manager>=4.0.0
+defusedxml>=0.7.1
+Pillow>=12.3.0
+faker
+sqlalchemy
+pytest

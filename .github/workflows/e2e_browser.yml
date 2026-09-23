@@ -13,6 +13,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # Tests import the checked-out je_web_runner; ci.txt holds only its dependencies.
+  PYTHONPATH: ${{ github.workspace }}
+
 jobs:
   e2e:
     name: E2E (Selenium Grid)
@@ -42,13 +46,11 @@ jobs:
         with:
           python-version: "3.12"
           cache: 'pip'
-          cache-dependency-path: dev_requirements.txt
+          cache-dependency-path: .github/requirements/ci.txt
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip wheel
-          pip install -r dev_requirements.txt
-          pip install pytest
+          python -m pip install --require-hashes --only-binary :all: -r .github/requirements/ci.txt
 
       - name: Wait for Grid to be ready
         run: |
