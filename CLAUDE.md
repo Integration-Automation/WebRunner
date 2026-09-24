@@ -325,6 +325,12 @@ python -m pytest test/
 
 If SonarQube or Codacy is wired into CI, fix any new issues in the same PR — do not defer them with suppressions unless a justified `# noqa: <rule>` comment explains why.
 
+## Documentation
+
+- **README parity.** This repository ships `README.md` (English) alongside the translated `README/README_zh-CN.md` and `README/README_zh-TW.md`. All three must stay current with the code.
+- When a change alters anything user-facing — features, commands, CLI flags, install/setup steps, configuration, or requirements — update `README.md` **and both translated READMEs in the same commit**, keeping their structure and content aligned.
+- Never update one language and leave the others stale. No automated README-parity guard exists, so verify this by hand before committing.
+
 ## Stage commits, `progress.md`, `docs/updates/` and `architecture.md`
 
 Workspace rule shared by every repository under `D:\Codes` (full text: `D:\Codes\CLAUDE.md`).

@@ -528,7 +528,7 @@ Existing scripts can move to Playwright incrementally; `TestObject` records are 
 ### Cloud Grid
 
 ```python
-from je_web_runner import (
+from je_web_runner.utils.cloud_grid.cloud_drivers import (
     connect_browserstack,
     build_browserstack_capabilities,
 )
@@ -553,7 +553,7 @@ connect_browserstack(
 ### Appium (mobile)
 
 ```python
-from je_web_runner import (
+from je_web_runner.utils.appium_integration.appium_driver import (
     start_appium_session,
     build_android_caps,
     build_ios_caps,
@@ -839,7 +839,7 @@ Smaller modules, grouped by what they help with. The larger areas have their own
 
 ### Onboarding / migration
 
-- **Workspace bootstrapper** — `python -m je_web_runner --init` (or `bootstrapper.init_workspace("my-tests")`) drops `actions/sample.json`, `.webrunner/ledger.json`, pinned-driver template, JSON schema, pre-commit hook, and a starter GitHub Actions workflow.
+- **Workspace bootstrapper** — `bootstrapper.init_workspace("my-tests")` drops `actions/sample.json`, `.webrunner/ledger.json`, pinned-driver template, JSON schema, pre-commit hook, and a starter GitHub Actions workflow.
 - **Driver pinner** — `driver_pin.install_for_browser(".webrunner/drivers.json", "firefox")` reads a JSON pin file (`name` / `version` / `url` / `archive_format` / `binary_inside`), downloads + extracts once, then serves from cache. Bypasses the GitHub API rate limit that webdriver-manager hits in CI.
 - **Selenium → Playwright translator** — `sel_to_pw.translate_python_source(text)` rewrites `driver.find_element(By.ID, "x")` → `page.locator("#x")` and similar; `translate_action_list(actions)` rewrites `WR_*` action JSON to its `WR_pw_*` equivalent (drops `WR_implicitly_wait` since Playwright auto-waits).
 
@@ -1492,6 +1492,8 @@ Service worker / cache control, console + network event capture and assertions, 
 from je_web_runner import (
     load_env, get_env, expand_in_action,                   # .env + ${ENV.X}
     load_dataset_csv, load_dataset_json, run_with_dataset, # data-driven + ${ROW.x}
+)
+from je_web_runner.utils.test_data.faker_integration import (
     fake_email, fake_name, fake_credit_card, fake_value,   # faker
 )
 from je_web_runner.utils.factories.factory import user_factory, order_factory
