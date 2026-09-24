@@ -55,9 +55,10 @@ class TestMockOAuthServer(unittest.TestCase):
         server = MockOAuthServer()
         url = server.start()
         try:
+            request_value = urllib.request.Request(url + "/wat", data=b"", method="POST")
             with self.assertRaises(urllib.error.HTTPError) as ctx:
                 urllib.request.urlopen(  # nosec B310
-                    urllib.request.Request(url + "/wat", data=b"", method="POST"),
+                    request_value,
                     timeout=2,
                 )
             self.assertEqual(ctx.exception.code, 404)

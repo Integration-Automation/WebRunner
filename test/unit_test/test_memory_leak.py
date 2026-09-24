@@ -16,8 +16,9 @@ class TestSampleUsedHeap(unittest.TestCase):
         self.assertEqual(sample_used_heap(driver), 12345)
 
     def test_unsupported_driver_raises(self):
+        object_value = object()
         with self.assertRaises(MemoryLeakError):
-            sample_used_heap(object())
+            sample_used_heap(object_value)
 
     def test_negative_value_raises(self):
         driver = MagicMock()
@@ -55,10 +56,12 @@ class TestDetectGrowth(unittest.TestCase):
 
     def test_budget_exceeded_raises(self):
         sizes = iter([1000, 5000, 9000, 13000, 17000])
+        driver_value = object()
+        action_value = MagicMock()
         with self.assertRaises(MemoryLeakError):
             detect_growth(
-                driver=object(),
-                action=MagicMock(),
+                driver=driver_value,
+                action=action_value,
                 iterations=5,
                 warmup=0,
                 sampler=lambda _d: next(sizes),
@@ -66,10 +69,12 @@ class TestDetectGrowth(unittest.TestCase):
             )
 
     def test_too_few_iterations_raises(self):
+        driver_value = object()
+        action_value = MagicMock()
         with self.assertRaises(MemoryLeakError):
             detect_growth(
-                driver=object(),
-                action=MagicMock(),
+                driver=driver_value,
+                action=action_value,
                 iterations=1,
                 sampler=lambda _d: 0,
             )

@@ -88,8 +88,9 @@ class TestScore(unittest.TestCase):
             flake=0, blast_radius=0, critical_path=0,
             locator_fragility=0, coverage_gap=0, migration=0, security=0,
         )
+        pr_signals = PrSignals()
         with self.assertRaises(PrRiskScoreError):
-            score_pr(PrSignals(), weights)
+            score_pr(pr_signals, weights)
 
     def test_invalid_signals_type(self):
         with self.assertRaises(PrRiskScoreError):

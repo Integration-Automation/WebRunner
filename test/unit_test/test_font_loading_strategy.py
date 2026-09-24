@@ -58,8 +58,9 @@ class TestMissing(unittest.TestCase):
         assert_no_missing_display([FontFace(family="x", display=Display.SWAP)])
 
     def test_fail(self):
+        parse_font_faces_value = parse_font_faces(CSS)
         with self.assertRaises(FontLoadingStrategyError):
-            assert_no_missing_display(parse_font_faces(CSS))
+            assert_no_missing_display(parse_font_faces_value)
 
 
 class TestStrategy(unittest.TestCase):
@@ -71,9 +72,10 @@ class TestStrategy(unittest.TestCase):
         )
 
     def test_fail(self):
+        font_faces = [FontFace(family="x", display=Display.BLOCK)]
         with self.assertRaises(FontLoadingStrategyError):
             assert_display_strategy(
-                [FontFace(family="x", display=Display.BLOCK)],
+                font_faces,
                 strategy=Display.SWAP,
             )
 

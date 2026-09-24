@@ -46,12 +46,14 @@ class TestRegistered(unittest.TestCase):
         assert_registered(SyncLog(registered=["q"]), tag="q")
 
     def test_fail(self):
+        sync_log = SyncLog()
         with self.assertRaises(BackgroundSyncAssertError):
-            assert_registered(SyncLog(), tag="q")
+            assert_registered(sync_log, tag="q")
 
     def test_empty(self):
+        sync_log = SyncLog()
         with self.assertRaises(BackgroundSyncAssertError):
-            assert_registered(SyncLog(), tag="")
+            assert_registered(sync_log, tag="")
 
 
 class TestFired(unittest.TestCase):
@@ -64,12 +66,14 @@ class TestFired(unittest.TestCase):
                     tag="q", at_least=2)
 
     def test_fail(self):
+        sync_log = SyncLog()
         with self.assertRaises(BackgroundSyncAssertError):
-            assert_fired(SyncLog(), tag="q")
+            assert_fired(sync_log, tag="q")
 
     def test_bad_at_least(self):
+        sync_log = SyncLog()
         with self.assertRaises(BackgroundSyncAssertError):
-            assert_fired(SyncLog(), tag="q", at_least=0)
+            assert_fired(sync_log, tag="q", at_least=0)
 
 
 class TestRetry(unittest.TestCase):
@@ -80,8 +84,9 @@ class TestRetry(unittest.TestCase):
         )
 
     def test_fail(self):
+        sync_log = SyncLog(fired=[SyncFire(tag="q")])
         with self.assertRaises(BackgroundSyncAssertError):
-            assert_retry_happened(SyncLog(fired=[SyncFire(tag="q")]), tag="q")
+            assert_retry_happened(sync_log, tag="q")
 
 
 class TestQuota(unittest.TestCase):
@@ -90,9 +95,10 @@ class TestQuota(unittest.TestCase):
         assert_no_quota_exhaustion(SyncLog(fired=[SyncFire(tag="q")]), tag="q")
 
     def test_fail(self):
+        sync_log = SyncLog(fired=[SyncFire(tag="q", last_chance=True)])
         with self.assertRaises(BackgroundSyncAssertError):
             assert_no_quota_exhaustion(
-                SyncLog(fired=[SyncFire(tag="q", last_chance=True)]),
+                sync_log,
                 tag="q",
             )
 

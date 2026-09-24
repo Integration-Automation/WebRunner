@@ -49,8 +49,9 @@ class TestApplyProfile(unittest.TestCase):
     def test_wraps_cdp_failure(self):
         def boom(_):
             raise RuntimeError("no cdp")
+        media_profile = MediaProfile(name="x")
         with self.assertRaises(ForcedColorsModeError):
-            apply_profile(MediaProfile(name="x"), boom)
+            apply_profile(media_profile, boom)
 
     def test_rejects_non_profile(self):
         with self.assertRaises(ForcedColorsModeError):

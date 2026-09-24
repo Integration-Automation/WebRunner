@@ -41,8 +41,9 @@ class TestOverscroll(unittest.TestCase):
         assert_overscroll_contained(PullToRefreshSnapshot(overscroll_y="contain"))
 
     def test_fail(self):
+        pull_to_refresh_snapshot = PullToRefreshSnapshot(overscroll_y="auto")
         with self.assertRaises(PullToRefreshError):
-            assert_overscroll_contained(PullToRefreshSnapshot(overscroll_y="auto"))
+            assert_overscroll_contained(pull_to_refresh_snapshot)
 
 
 class TestThreshold(unittest.TestCase):
@@ -51,21 +52,25 @@ class TestThreshold(unittest.TestCase):
         assert_threshold_sensible(PullToRefreshSnapshot(pull_threshold_px=80))
 
     def test_too_low(self):
+        pull_to_refresh_snapshot = PullToRefreshSnapshot(pull_threshold_px=10)
         with self.assertRaises(PullToRefreshError):
-            assert_threshold_sensible(PullToRefreshSnapshot(pull_threshold_px=10))
+            assert_threshold_sensible(pull_to_refresh_snapshot)
 
     def test_too_high(self):
+        pull_to_refresh_snapshot = PullToRefreshSnapshot(pull_threshold_px=500)
         with self.assertRaises(PullToRefreshError):
-            assert_threshold_sensible(PullToRefreshSnapshot(pull_threshold_px=500))
+            assert_threshold_sensible(pull_to_refresh_snapshot)
 
     def test_missing(self):
+        pull_to_refresh_snapshot = PullToRefreshSnapshot()
         with self.assertRaises(PullToRefreshError):
-            assert_threshold_sensible(PullToRefreshSnapshot())
+            assert_threshold_sensible(pull_to_refresh_snapshot)
 
     def test_bad_bounds(self):
+        pull_to_refresh_snapshot = PullToRefreshSnapshot(pull_threshold_px=10)
         with self.assertRaises(PullToRefreshError):
             assert_threshold_sensible(
-                PullToRefreshSnapshot(pull_threshold_px=10),
+                pull_to_refresh_snapshot,
                 min_px=0, max_px=10,
             )
 
@@ -77,12 +82,14 @@ class TestRefreshEvent(unittest.TestCase):
                                               network_refetched=True))
 
     def test_no_handler(self):
+        refresh_event = RefreshEvent()
         with self.assertRaises(PullToRefreshError):
-            assert_refresh_triggered(RefreshEvent())
+            assert_refresh_triggered(refresh_event)
 
     def test_no_network(self):
+        refresh_event = RefreshEvent(fired=True)
         with self.assertRaises(PullToRefreshError):
-            assert_refresh_triggered(RefreshEvent(fired=True))
+            assert_refresh_triggered(refresh_event)
 
 
 if __name__ == "__main__":

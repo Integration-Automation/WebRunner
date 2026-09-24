@@ -116,8 +116,9 @@ class TestAssertHasOwner(unittest.TestCase):
         assert_has_owner(OwnerVerdict(primary="alice"))
 
     def test_fail(self):
+        owner_verdict = OwnerVerdict(primary="")
         with self.assertRaises(BlameOwnerError):
-            assert_has_owner(OwnerVerdict(primary=""))
+            assert_has_owner(owner_verdict)
 
 
 if __name__ == "__main__":

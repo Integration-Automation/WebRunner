@@ -120,8 +120,9 @@ class TestRunPipeline(unittest.TestCase):
             run_pipeline("not a pipeline", lambda _: {})  # type: ignore[arg-type]
 
     def test_invalid_runner(self):
+        pipeline_value = Pipeline()
         with self.assertRaises(PipelineError):
-            run_pipeline(Pipeline(), "not callable")  # type: ignore[arg-type]
+            run_pipeline(pipeline_value, "not callable")  # type: ignore[arg-type]
 
 
 class TestAssertAllPassed(unittest.TestCase):

@@ -103,18 +103,20 @@ class TestAssertMinimized(unittest.TestCase):
         )
 
     def test_fail(self):
+        minimization_result = MinimizationResult(original_size=10, minimized_actions=list(range(8)),
+                               minimized_size=8)
         with self.assertRaises(ReproMinimizerError):
             assert_minimized(
-                MinimizationResult(original_size=10, minimized_actions=list(range(8)),
-                                   minimized_size=8),
+                minimization_result,
                 max_remaining=5,
             )
 
     def test_bad_max_remaining(self):
+        minimization_result = MinimizationResult(original_size=10, minimized_actions=[],
+                               minimized_size=0)
         with self.assertRaises(ReproMinimizerError):
             assert_minimized(
-                MinimizationResult(original_size=10, minimized_actions=[],
-                                   minimized_size=0),
+                minimization_result,
                 max_remaining=-1,
             )
 

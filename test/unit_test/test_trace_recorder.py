@@ -30,18 +30,21 @@ class TestTraceRecorder(unittest.TestCase):
 
     def test_stop_without_start_raises(self):
         recorder = TraceRecorder()
+        magic_mock = MagicMock()
         with self.assertRaises(TraceRecorderError):
-            recorder.stop(MagicMock())
+            recorder.stop(magic_mock)
 
     def test_unsupported_context_raises(self):
         recorder = TraceRecorder()
+        object_value = object()
         with self.assertRaises(TraceRecorderError):
-            recorder.start(object(), "x")
+            recorder.start(object_value, "x")
 
     def test_empty_name_rejected(self):
         recorder = TraceRecorder()
+        magic_mock = MagicMock()
         with self.assertRaises(TraceRecorderError):
-            recorder.start(MagicMock(), "")
+            recorder.start(magic_mock, "")
 
     def test_start_propagates_failure(self):
         recorder = TraceRecorder()

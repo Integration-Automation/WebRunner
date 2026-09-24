@@ -92,8 +92,9 @@ class TestEvaluate(unittest.TestCase):
         self.assertTrue(report.passed)
 
     def test_bad_pattern_rejected(self):
+        error_budget = ErrorBudget(ignore_patterns=["[invalid"])
         with self.assertRaises(ConsoleBudgetError):
-            evaluate([], ErrorBudget(ignore_patterns=["[invalid"]))
+            evaluate([], error_budget)
 
     def test_sampled_capped(self):
         msgs = [ConsoleMessage(severity="error", text=f"e{i}") for i in range(50)]
@@ -101,8 +102,9 @@ class TestEvaluate(unittest.TestCase):
         self.assertEqual(len(report.sampled), 5)
 
     def test_non_message_rejected(self):
+        error_budget = ErrorBudget()
         with self.assertRaises(ConsoleBudgetError):
-            evaluate(["not a message"], ErrorBudget())  # type: ignore[list-item]
+            evaluate(["not a message"], error_budget)  # type: ignore[list-item]
 
     def test_bad_budget_rejected(self):
         with self.assertRaises(ConsoleBudgetError):

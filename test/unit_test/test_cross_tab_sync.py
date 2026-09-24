@@ -269,12 +269,14 @@ class TestAssertStatePropagates(unittest.TestCase):
         self.assertIn("[0]", str(cm.exception))
 
     def test_no_source_raises(self):
+        fake_storage_pages = [FakeStoragePage()]
         with self.assertRaises(CrossTabSyncError):
-            assert_state_propagates(None, [FakeStoragePage()], key="k", value=1)
+            assert_state_propagates(None, fake_storage_pages, key="k", value=1)
 
     def test_no_listeners_raises(self):
+        fake_storage_page = FakeStoragePage()
         with self.assertRaises(CrossTabSyncError):
-            assert_state_propagates(FakeStoragePage(), [], key="k", value=1)
+            assert_state_propagates(fake_storage_page, [], key="k", value=1)
 
 
 class TestPostMessage(unittest.TestCase):

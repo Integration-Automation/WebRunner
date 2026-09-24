@@ -95,8 +95,9 @@ class TestRecorder(unittest.TestCase):
         self.assertEqual(len(rec.events(event_type="ping")), 1)
 
     def test_rejects_non_string_chunk(self):
+        sse_recorder = SseRecorder()
         with self.assertRaises(SseAssertError):
-            SseRecorder().feed(123)  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
+            sse_recorder.feed(123)  # type: ignore[arg-type]  # NOSONAR S5655 — intentional bad-input test
 
 
 class TestAssertCount(unittest.TestCase):
@@ -107,8 +108,9 @@ class TestAssertCount(unittest.TestCase):
         self.assertEqual(assert_event_count(rec, minimum=2, maximum=5), 2)
 
     def test_below_minimum(self):
+        sse_recorder = SseRecorder()
         with self.assertRaises(SseAssertError):
-            assert_event_count(SseRecorder(), minimum=1)
+            assert_event_count(sse_recorder, minimum=1)
 
     def test_above_maximum(self):
         rec = SseRecorder()
@@ -146,12 +148,14 @@ class TestAssertDataContains(unittest.TestCase):
         self.assertEqual(e.data, "hello world")
 
     def test_miss(self):
+        sse_recorder = SseRecorder()
         with self.assertRaises(SseAssertError):
-            assert_data_contains(SseRecorder(), "x")
+            assert_data_contains(sse_recorder, "x")
 
     def test_empty_needle(self):
+        sse_recorder = SseRecorder()
         with self.assertRaises(SseAssertError):
-            assert_data_contains(SseRecorder(), "")
+            assert_data_contains(sse_recorder, "")
 
 
 class TestAssertJsonShape(unittest.TestCase):
@@ -174,8 +178,9 @@ class TestAssertJsonShape(unittest.TestCase):
         assert_json_shape(rec, ["k"])
 
     def test_empty_keys_rejected(self):
+        sse_recorder = SseRecorder()
         with self.assertRaises(SseAssertError):
-            assert_json_shape(SseRecorder(), [])
+            assert_json_shape(sse_recorder, [])
 
 
 class TestStrictlyIncreasing(unittest.TestCase):

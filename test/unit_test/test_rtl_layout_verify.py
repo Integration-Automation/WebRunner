@@ -60,8 +60,9 @@ class TestDocumentDir(unittest.TestCase):
         assert_document_rtl(parse_snapshot(_snap("rtl")))
 
     def test_fail(self):
+        parse_snapshot_value = parse_snapshot(_snap("ltr"))
         with self.assertRaises(RtlLayoutVerifyError):
-            assert_document_rtl(parse_snapshot(_snap("ltr")))
+            assert_document_rtl(parse_snapshot_value)
 
 
 class TestLogicalProperties(unittest.TestCase):

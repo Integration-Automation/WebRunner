@@ -47,8 +47,9 @@ class TestCompute(unittest.TestCase):
         self.assertAlmostEqual(cost, 0.090, places=6)
 
     def test_unknown_model(self):
+        call_record = CallRecord(model="weird-model")
         with self.assertRaises(LlmTokenCostError):
-            compute_cost(CallRecord(model="weird-model"))
+            compute_cost(call_record)
 
     def test_override(self):
         cost = compute_cost(
@@ -97,12 +98,14 @@ class TestBudget(unittest.TestCase):
         assert_under_budget(Tally(cost_usd=0.5), max_usd=1.0)
 
     def test_fail(self):
+        tally_value = Tally(cost_usd=2)
         with self.assertRaises(LlmTokenCostError):
-            assert_under_budget(Tally(cost_usd=2), max_usd=1)
+            assert_under_budget(tally_value, max_usd=1)
 
     def test_bad_max(self):
+        tally_value = Tally()
         with self.assertRaises(LlmTokenCostError):
-            assert_under_budget(Tally(), max_usd=0)
+            assert_under_budget(tally_value, max_usd=0)
 
 
 class TestTopSpenders(unittest.TestCase):

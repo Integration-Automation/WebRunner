@@ -91,10 +91,11 @@ class TestAssert(unittest.TestCase):
         )])
 
     def test_fail(self):
+        cookie_scope_findings = [CookieScopeFinding(
+            severity=Severity.ERROR, rule="x", cookie="y", message="",
+        )]
         with self.assertRaises(CookieScopeAbuseError):
-            assert_no_errors([CookieScopeFinding(
-                severity=Severity.ERROR, rule="x", cookie="y", message="",
-            )])
+            assert_no_errors(cookie_scope_findings)
 
 
 if __name__ == "__main__":

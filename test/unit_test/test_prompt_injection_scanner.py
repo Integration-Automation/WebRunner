@@ -67,23 +67,27 @@ class TestScan(unittest.TestCase):
         self.assertTrue(report.findings[0].leaked)
 
     def test_client_missing_ask(self):
+        object_value = object()
         with self.assertRaises(PromptInjectionScannerError):
-            scan(object())  # no .ask method  # NOSONAR python:S5655 - deliberate bad input
+            scan(object_value)  # no .ask method  # NOSONAR python:S5655 - deliberate bad input
 
     def test_empty_payloads(self):
+        fake_client = FakeClient("x")
         with self.assertRaises(PromptInjectionScannerError):
-            scan(FakeClient("x"), payloads=[])
+            scan(fake_client, payloads=[])
 
     def test_client_raises(self):
+        fake_client = FakeClient(RuntimeError("rate limit"))
         with self.assertRaises(PromptInjectionScannerError):
-            scan(FakeClient(RuntimeError("rate limit")))
+            scan(fake_client)
 
     def test_non_string_response(self):
         class WeirdClient:
             def ask(self, prompt):
                 return 42
+        weird_client = WeirdClient()
         with self.assertRaises(PromptInjectionScannerError):
-            scan(WeirdClient())
+            scan(weird_client)
 
 
 class TestAssertNoLeaks(unittest.TestCase):

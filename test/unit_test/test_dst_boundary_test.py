@@ -57,10 +57,11 @@ class TestNonexistent(unittest.TestCase):
         self.assertFalse(is_nonexistent_local_time("America/New_York", ok))
 
     def test_rejects_tz_aware(self):
+        datetime_value = datetime(2024, 6, 1, tzinfo=ZoneInfo("UTC"))
         with self.assertRaises(DstBoundaryError):
             is_nonexistent_local_time(
                 "America/New_York",
-                datetime(2024, 6, 1, tzinfo=ZoneInfo("UTC")),
+                datetime_value,
             )
 
 
@@ -76,9 +77,10 @@ class TestAmbiguous(unittest.TestCase):
         self.assertFalse(is_ambiguous_local_time("America/New_York", ok))
 
     def test_rejects_tz_aware(self):
+        datetime_value = datetime(2024, 1, 1, tzinfo=ZoneInfo("UTC"))
         with self.assertRaises(DstBoundaryError):
             is_ambiguous_local_time(
-                "UTC", datetime(2024, 1, 1, tzinfo=ZoneInfo("UTC")),
+                "UTC", datetime_value,
             )
 
 
@@ -117,15 +119,17 @@ class TestAssertDup(unittest.TestCase):
 
     def test_fail(self):
         utc = ZoneInfo("UTC")
+        datetimes = [
+            datetime(2024, 1, 1, 12, tzinfo=utc),
+            datetime(2024, 1, 1, 12, tzinfo=utc),
+        ]
         with self.assertRaises(DstBoundaryError):
-            assert_no_duplicate_fires([
-                datetime(2024, 1, 1, 12, tzinfo=utc),
-                datetime(2024, 1, 1, 12, tzinfo=utc),
-            ])
+            assert_no_duplicate_fires(datetimes)
 
     def test_naive_rejected(self):
+        datetimes = [datetime(2024, 1, 1)]
         with self.assertRaises(DstBoundaryError):
-            assert_no_duplicate_fires([datetime(2024, 1, 1)])
+            assert_no_duplicate_fires(datetimes)
 
 
 class TestAssertFired(unittest.TestCase):
@@ -139,15 +143,18 @@ class TestAssertFired(unittest.TestCase):
 
     def test_fail(self):
         utc = ZoneInfo("UTC")
+        datetimes = [datetime(2024, 1, 1, 13, tzinfo=utc)]
+        expected_utc_value = datetime(2024, 1, 1, 12, tzinfo=utc)
         with self.assertRaises(DstBoundaryError):
             assert_fired_around(
-                [datetime(2024, 1, 1, 13, tzinfo=utc)],
-                expected_utc=datetime(2024, 1, 1, 12, tzinfo=utc),
+                datetimes,
+                expected_utc=expected_utc_value,
             )
 
     def test_rejects_naive_expected(self):
+        datetime_value = datetime(2024, 1, 1)
         with self.assertRaises(DstBoundaryError):
-            assert_fired_around([], datetime(2024, 1, 1))
+            assert_fired_around([], datetime_value)
 
 
 if __name__ == "__main__":

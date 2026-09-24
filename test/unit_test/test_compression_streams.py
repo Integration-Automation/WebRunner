@@ -69,10 +69,11 @@ class TestRoundTrip(unittest.TestCase):
         )
 
     def test_fail(self):
+        compressed_value = gzip.compress(b"different")
         with self.assertRaises(CompressionStreamsError):
             assert_round_trip(
                 original=PAYLOAD,
-                compressed=gzip.compress(b"different"),
+                compressed=compressed_value,
                 algorithm=Algorithm.GZIP,
             )
 

@@ -74,11 +74,12 @@ class TestAssertGesture(unittest.TestCase):
         )))
 
     def test_fail(self):
+        parse_log_value = parse_log(_payload(
+            requests=[{"timestamp_ms": 1, "user_gesture": False,
+                       "result": "default", "page_age_ms": 50}],
+        ))
         with self.assertRaises(NotificationsAuditError):
-            assert_no_prompt_without_gesture(parse_log(_payload(
-                requests=[{"timestamp_ms": 1, "user_gesture": False,
-                           "result": "default", "page_age_ms": 50}],
-            )))
+            assert_no_prompt_without_gesture(parse_log_value)
 
 
 class TestAssertNoPromptBefore(unittest.TestCase):
@@ -93,18 +94,20 @@ class TestAssertNoPromptBefore(unittest.TestCase):
         )
 
     def test_fail(self):
+        parse_log_value = parse_log(_payload(
+                requests=[{"timestamp_ms": 1, "user_gesture": True,
+                           "result": "default", "page_age_ms": 100}],
+            ))
         with self.assertRaises(NotificationsAuditError):
             assert_no_prompt_before(
-                parse_log(_payload(
-                    requests=[{"timestamp_ms": 1, "user_gesture": True,
-                               "result": "default", "page_age_ms": 100}],
-                )),
+                parse_log_value,
                 min_page_age_ms=1000,
             )
 
     def test_bad_threshold(self):
+        notifications_log = NotificationsLog()
         with self.assertRaises(NotificationsAuditError):
-            assert_no_prompt_before(NotificationsLog(), min_page_age_ms=-1)
+            assert_no_prompt_before(notifications_log, min_page_age_ms=-1)
 
 
 class TestAssertNoSpamAfterDeny(unittest.TestCase):
@@ -120,20 +123,22 @@ class TestAssertNoSpamAfterDeny(unittest.TestCase):
         )))
 
     def test_reprompt_after_deny_fails(self):
+        parse_log_value = parse_log(_payload(
+            requests=[
+                {"timestamp_ms": 100, "user_gesture": True, "result": "denied"},
+                {"timestamp_ms": 200, "user_gesture": True, "result": "default"},
+            ],
+        ))
         with self.assertRaises(NotificationsAuditError):
-            assert_no_spam_after_deny(parse_log(_payload(
-                requests=[
-                    {"timestamp_ms": 100, "user_gesture": True, "result": "denied"},
-                    {"timestamp_ms": 200, "user_gesture": True, "result": "default"},
-                ],
-            )))
+            assert_no_spam_after_deny(parse_log_value)
 
     def test_notification_after_deny_fails(self):
+        parse_log_value = parse_log(_payload(
+            requests=[{"timestamp_ms": 100, "user_gesture": True, "result": "denied"}],
+            notifications=[{"timestamp_ms": 200, "title": "later notif"}],
+        ))
         with self.assertRaises(NotificationsAuditError):
-            assert_no_spam_after_deny(parse_log(_payload(
-                requests=[{"timestamp_ms": 100, "user_gesture": True, "result": "denied"}],
-                notifications=[{"timestamp_ms": 200, "title": "later notif"}],
-            )))
+            assert_no_spam_after_deny(parse_log_value)
 
 
 class TestAssertShown(unittest.TestCase):
@@ -163,12 +168,14 @@ class TestAssertShown(unittest.TestCase):
         self.assertIsInstance(n, NotificationShown)
 
     def test_miss(self):
+        log = self._log()
         with self.assertRaises(NotificationsAuditError):
-            assert_notification_shown(self._log(), title_contains="missing")
+            assert_notification_shown(log, title_contains="missing")
 
     def test_no_filter(self):
+        log = self._log()
         with self.assertRaises(NotificationsAuditError):
-            assert_notification_shown(self._log())
+            assert_notification_shown(log)
 
 
 class TestUniqueTags(unittest.TestCase):

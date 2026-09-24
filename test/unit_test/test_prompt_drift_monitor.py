@@ -38,20 +38,24 @@ class TestCaptureBaseline(unittest.TestCase):
         self.assertEqual(baseline.samples[0].embedding, [1.0, 0.0])
 
     def test_empty_prompts_rejected(self):
+        fixed_embedder = _fixed_embedder([1.0])
         with self.assertRaises(PromptDriftError):
-            capture_baseline([], _fixed_embedder([1.0]), lambda _: "x")
+            capture_baseline([], fixed_embedder, lambda _: "x")
 
     def test_missing_id_or_prompt(self):
+        fixed_embedder = _fixed_embedder([1.0])
         with self.assertRaises(PromptDriftError):
-            capture_baseline([{"id": "x"}], _fixed_embedder([1.0]), lambda _: "y")
+            capture_baseline([{"id": "x"}], fixed_embedder, lambda _: "y")
+        fixed_embedder_value = _fixed_embedder([1.0])
         with self.assertRaises(PromptDriftError):
-            capture_baseline([{"prompt": "x"}], _fixed_embedder([1.0]), lambda _: "y")
+            capture_baseline([{"prompt": "x"}], fixed_embedder_value, lambda _: "y")
 
     def test_answerer_failure_wrapped(self):
         def boom(_):
             raise RuntimeError("rate limit")
+        fixed_embedder = _fixed_embedder([1.0])
         with self.assertRaises(PromptDriftError):
-            capture_baseline([{"id": "x", "prompt": "y"}], _fixed_embedder([1.0]), boom)
+            capture_baseline([{"id": "x", "prompt": "y"}], fixed_embedder, boom)
 
     def test_anchors_captured(self):
         baseline = capture_baseline(
@@ -107,8 +111,9 @@ class TestPersistence(unittest.TestCase):
 
     def test_save_rejects_non_baseline(self):
         with tempfile.TemporaryDirectory() as tmp:
+            value = Path(tmp) / "x.json"
             with self.assertRaises(PromptDriftError):
-                save_baseline("not baseline", Path(tmp) / "x.json")  # type: ignore[arg-type]
+                save_baseline("not baseline", value)  # type: ignore[arg-type]
 
 
 class TestCheckDrift(unittest.TestCase):
@@ -157,11 +162,13 @@ class TestCheckDrift(unittest.TestCase):
         self.assertIn("competitor", report.findings[0].forbidden_present)
 
     def test_bad_threshold(self):
+        baseline = Baseline()
         with self.assertRaises(PromptDriftError):
-            check_drift(Baseline(), _by_text_embedder, lambda _: "x",
+            check_drift(baseline, _by_text_embedder, lambda _: "x",
                         similarity_threshold=0.0)
+        baseline_value = Baseline()
         with self.assertRaises(PromptDriftError):
-            check_drift(Baseline(), _by_text_embedder, lambda _: "x",
+            check_drift(baseline_value, _by_text_embedder, lambda _: "x",
                         similarity_threshold=2.0)
 
     def test_answerer_failure(self):

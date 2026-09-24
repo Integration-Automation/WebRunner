@@ -29,12 +29,14 @@ class TestFindFirst(unittest.TestCase):
         page.evaluate.assert_called_once()
 
     def test_unsupported_driver_raises(self):
+        object_value = object()
         with self.assertRaises(ShadowPierceError):
-            find_first(object(), "x")
+            find_first(object_value, "x")
 
     def test_empty_selector_raises(self):
+        magic_mock = MagicMock()
         with self.assertRaises(ShadowPierceError):
-            find_first(MagicMock(), "")
+            find_first(magic_mock, "")
 
 
 class TestFindAll(unittest.TestCase):
@@ -50,8 +52,9 @@ class TestFindAll(unittest.TestCase):
         self.assertEqual(find_all(driver, ".item"), [])
 
     def test_invalid_limit_raises(self):
+        magic_mock = MagicMock()
         with self.assertRaises(ShadowPierceError):
-            find_all(MagicMock(), ".item", limit=0)
+            find_all(magic_mock, ".item", limit=0)
 
 
 class TestSeleniumScriptShape(unittest.TestCase):

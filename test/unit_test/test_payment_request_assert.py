@@ -52,21 +52,24 @@ class TestSupports(unittest.TestCase):
         )
 
     def test_fail(self):
+        payment_log = PaymentLog(constructed=[ConstructedPaymentRequest(
+                method_data=[{"supportedMethods": "basic-card"}],
+            )])
         with self.assertRaises(PaymentRequestAssertError):
             assert_supports(
-                PaymentLog(constructed=[ConstructedPaymentRequest(
-                    method_data=[{"supportedMethods": "basic-card"}],
-                )]),
+                payment_log,
                 method="https://google.com/pay",
             )
 
     def test_no_pr(self):
+        payment_log = PaymentLog()
         with self.assertRaises(PaymentRequestAssertError):
-            assert_supports(PaymentLog(), method="x")
+            assert_supports(payment_log, method="x")
 
     def test_empty_method(self):
+        payment_log = PaymentLog()
         with self.assertRaises(PaymentRequestAssertError):
-            assert_supports(PaymentLog(), method="")
+            assert_supports(payment_log, method="")
 
 
 class TestCurrency(unittest.TestCase):
@@ -80,23 +83,26 @@ class TestCurrency(unittest.TestCase):
         )
 
     def test_fail(self):
+        payment_log = PaymentLog(constructed=[ConstructedPaymentRequest(
+                details={"total": {"amount": {"currency": "EUR", "value": "10"}}},
+            )])
         with self.assertRaises(PaymentRequestAssertError):
             assert_total_currency(
-                PaymentLog(constructed=[ConstructedPaymentRequest(
-                    details={"total": {"amount": {"currency": "EUR", "value": "10"}}},
-                )]),
+                payment_log,
                 currency="USD",
             )
 
     def test_empty(self):
+        payment_log = PaymentLog()
         with self.assertRaises(PaymentRequestAssertError):
-            assert_total_currency(PaymentLog(), currency="")
+            assert_total_currency(payment_log, currency="")
 
     def test_no_pr_constructed(self):
         # No PaymentRequest built → must fail, not vacuously pass (matches
         # assert_supports / assert_completed which both guard empty logs).
+        payment_log = PaymentLog()
         with self.assertRaises(PaymentRequestAssertError):
-            assert_total_currency(PaymentLog(), currency="USD")
+            assert_total_currency(payment_log, currency="USD")
 
 
 class TestCompleted(unittest.TestCase):
@@ -105,16 +111,19 @@ class TestCompleted(unittest.TestCase):
         assert_completed(PaymentLog(completed=[CompletedPayment(status="success")]))
 
     def test_fail_status(self):
+        payment_log = PaymentLog(completed=[CompletedPayment(status="fail")])
         with self.assertRaises(PaymentRequestAssertError):
-            assert_completed(PaymentLog(completed=[CompletedPayment(status="fail")]))
+            assert_completed(payment_log)
 
     def test_never_completed(self):
+        payment_log = PaymentLog()
         with self.assertRaises(PaymentRequestAssertError):
-            assert_completed(PaymentLog())
+            assert_completed(payment_log)
 
     def test_bad_status(self):
+        payment_log = PaymentLog()
         with self.assertRaises(PaymentRequestAssertError):
-            assert_completed(PaymentLog(), status="weird")
+            assert_completed(payment_log, status="weird")
 
 
 class TestShipping(unittest.TestCase):
@@ -125,10 +134,11 @@ class TestShipping(unittest.TestCase):
         ]))
 
     def test_fail(self):
+        payment_log = PaymentLog(constructed=[
+            ConstructedPaymentRequest(options={}),
+        ])
         with self.assertRaises(PaymentRequestAssertError):
-            assert_shipping_required(PaymentLog(constructed=[
-                ConstructedPaymentRequest(options={}),
-            ]))
+            assert_shipping_required(payment_log)
 
 
 if __name__ == "__main__":

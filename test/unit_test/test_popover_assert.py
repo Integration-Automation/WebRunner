@@ -71,8 +71,9 @@ class TestAssertClosed(unittest.TestCase):
         assert_closed(parse_snapshot([_raw("d", open_=False)]), id_="d")
 
     def test_open_fails(self):
+        parse_snapshot_value = parse_snapshot([_raw("d", open_=True)])
         with self.assertRaises(PopoverAssertError):
-            assert_closed(parse_snapshot([_raw("d", open_=True)]), id_="d")
+            assert_closed(parse_snapshot_value, id_="d")
 
 
 class TestOnlyOneModal(unittest.TestCase):
@@ -116,8 +117,9 @@ class TestNoOpen(unittest.TestCase):
         assert_no_open(parse_snapshot([_raw("d", open_=False)]))
 
     def test_fails(self):
+        parse_snapshot_value = parse_snapshot([_raw("d", open_=True)])
         with self.assertRaises(PopoverAssertError):
-            assert_no_open(parse_snapshot([_raw("d", open_=True)]))
+            assert_no_open(parse_snapshot_value)
 
 
 class TestToDict(unittest.TestCase):

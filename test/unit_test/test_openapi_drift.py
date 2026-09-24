@@ -82,8 +82,9 @@ class TestAssertUndocumented(unittest.TestCase):
         assert_no_undocumented(DriftReport())
 
     def test_fail(self):
+        drift_report = DriftReport(undocumented=["GET /x"])
         with self.assertRaises(OpenapiDriftError):
-            assert_no_undocumented(DriftReport(undocumented=["GET /x"]))
+            assert_no_undocumented(drift_report)
 
 
 class TestAssertZombies(unittest.TestCase):
@@ -95,12 +96,14 @@ class TestAssertZombies(unittest.TestCase):
         assert_no_zombies(DriftReport(zombie=["x"]), max_zombies=1)
 
     def test_fail(self):
+        drift_report = DriftReport(zombie=["x", "y"])
         with self.assertRaises(OpenapiDriftError):
-            assert_no_zombies(DriftReport(zombie=["x", "y"]), max_zombies=1)
+            assert_no_zombies(drift_report, max_zombies=1)
 
     def test_bad_max(self):
+        drift_report = DriftReport()
         with self.assertRaises(OpenapiDriftError):
-            assert_no_zombies(DriftReport(), max_zombies=-1)
+            assert_no_zombies(drift_report, max_zombies=-1)
 
 
 if __name__ == "__main__":

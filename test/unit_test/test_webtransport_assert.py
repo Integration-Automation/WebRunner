@@ -90,8 +90,9 @@ class TestRecorder(unittest.TestCase):
             rec.frames(channel="x")
 
     def test_record_rejects_non_frame(self):
+        wt_frame_recorder = WtFrameRecorder()
         with self.assertRaises(WebTransportAssertError):
-            WtFrameRecorder().record("not a frame")  # type: ignore[arg-type]
+            wt_frame_recorder.record("not a frame")  # type: ignore[arg-type]
 
 
 class TestAssertDatagramCount(unittest.TestCase):
@@ -103,8 +104,9 @@ class TestAssertDatagramCount(unittest.TestCase):
         self.assertEqual(assert_datagram_count(rec, minimum=2), 2)
 
     def test_below_minimum(self):
+        wt_frame_recorder = WtFrameRecorder()
         with self.assertRaises(WebTransportAssertError):
-            assert_datagram_count(WtFrameRecorder(), minimum=1)
+            assert_datagram_count(wt_frame_recorder, minimum=1)
 
     def test_above_maximum(self):
         rec = WtFrameRecorder()
@@ -122,8 +124,9 @@ class TestAssertDatagramCount(unittest.TestCase):
         )
 
     def test_max_lt_min_rejected(self):
+        wt_frame_recorder = WtFrameRecorder()
         with self.assertRaises(WebTransportAssertError):
-            assert_datagram_count(WtFrameRecorder(), minimum=3, maximum=1)
+            assert_datagram_count(wt_frame_recorder, minimum=3, maximum=1)
 
 
 class TestAssertStreamComplete(unittest.TestCase):
@@ -135,8 +138,9 @@ class TestAssertStreamComplete(unittest.TestCase):
         self.assertEqual(assert_stream_complete(rec, 1), b"hello world")
 
     def test_missing_stream(self):
+        wt_frame_recorder = WtFrameRecorder()
         with self.assertRaises(WebTransportAssertError):
-            assert_stream_complete(WtFrameRecorder(), 1)
+            assert_stream_complete(wt_frame_recorder, 1)
 
     def test_no_fin(self):
         rec = WtFrameRecorder()
@@ -145,8 +149,9 @@ class TestAssertStreamComplete(unittest.TestCase):
             assert_stream_complete(rec, 1)
 
     def test_bad_direction(self):
+        wt_frame_recorder = WtFrameRecorder()
         with self.assertRaises(WebTransportAssertError):
-            assert_stream_complete(WtFrameRecorder(), 1, direction="weird")
+            assert_stream_complete(wt_frame_recorder, 1, direction="weird")
 
 
 class TestAssertPayloadContains(unittest.TestCase):
@@ -157,12 +162,14 @@ class TestAssertPayloadContains(unittest.TestCase):
         self.assertIsNotNone(assert_payload_contains(rec, b"world"))
 
     def test_miss(self):
+        wt_frame_recorder = WtFrameRecorder()
         with self.assertRaises(WebTransportAssertError):
-            assert_payload_contains(WtFrameRecorder(), b"x")
+            assert_payload_contains(wt_frame_recorder, b"x")
 
     def test_empty_needle(self):
+        wt_frame_recorder = WtFrameRecorder()
         with self.assertRaises(WebTransportAssertError):
-            assert_payload_contains(WtFrameRecorder(), b"")
+            assert_payload_contains(wt_frame_recorder, b"")
 
 
 class TestAssertJsonShape(unittest.TestCase):
@@ -179,8 +186,9 @@ class TestAssertJsonShape(unittest.TestCase):
             assert_json_shape(rec, ["id", "missing"])
 
     def test_empty_keys(self):
+        wt_frame_recorder = WtFrameRecorder()
         with self.assertRaises(WebTransportAssertError):
-            assert_json_shape(WtFrameRecorder(), [])
+            assert_json_shape(wt_frame_recorder, [])
 
 
 class TestToJson(unittest.TestCase):

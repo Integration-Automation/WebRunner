@@ -53,8 +53,9 @@ class TestRecorder(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "fx.json"
             path.write_text("not json", encoding="utf-8")
+            fixture_recorder = FixtureRecorder(path)
             with self.assertRaises(FixtureRecorderError):
-                FixtureRecorder(path).has("k")
+                fixture_recorder.has("k")
 
     def test_open_recorder_string_mode(self):
         with tempfile.TemporaryDirectory() as tmpdir:

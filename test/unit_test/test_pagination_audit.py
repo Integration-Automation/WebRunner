@@ -121,19 +121,22 @@ class TestAssertions(unittest.TestCase):
         assert_no_duplicates(PaginationFindings())
 
     def test_assert_no_duplicates_fail(self):
+        pagination_findings = PaginationFindings(duplicates=[1, 2])
         with self.assertRaises(PaginationAuditError):
-            assert_no_duplicates(PaginationFindings(duplicates=[1, 2]))
+            assert_no_duplicates(pagination_findings)
 
     def test_assert_no_cursor_loop_pass(self):
         assert_no_cursor_loop(PaginationFindings())
 
     def test_assert_no_cursor_loop_fail(self):
+        pagination_findings = PaginationFindings(cursor_loop=True)
         with self.assertRaises(PaginationAuditError):
-            assert_no_cursor_loop(PaginationFindings(cursor_loop=True))
+            assert_no_cursor_loop(pagination_findings)
 
     def test_assert_terminated(self):
+        pagination_findings = PaginationFindings(hit_max_pages=True)
         with self.assertRaises(PaginationAuditError):
-            assert_terminated(PaginationFindings(hit_max_pages=True))
+            assert_terminated(pagination_findings)
 
     def test_assert_expected_total_pass(self):
         assert_expected_total(
@@ -141,14 +144,16 @@ class TestAssertions(unittest.TestCase):
         )
 
     def test_assert_expected_total_fail(self):
+        pagination_findings = PaginationFindings(unique_items=4)
         with self.assertRaises(PaginationAuditError):
             assert_expected_total(
-                PaginationFindings(unique_items=4), expected_total=5,
+                pagination_findings, expected_total=5,
             )
 
     def test_assert_expected_total_bad_arg(self):
+        pagination_findings = PaginationFindings()
         with self.assertRaises(PaginationAuditError):
-            assert_expected_total(PaginationFindings(), expected_total=-1)
+            assert_expected_total(pagination_findings, expected_total=-1)
 
     def test_assert_clean_pass(self):
         assert_clean(PaginationFindings())
@@ -177,8 +182,9 @@ class TestAssertSortedBy(unittest.TestCase):
         assert_sorted_by(PaginationFindings(), lambda x: x)
 
     def test_bad_keyfn(self):
+        pagination_findings = PaginationFindings()
         with self.assertRaises(PaginationAuditError):
-            assert_sorted_by(PaginationFindings(), "nope")  # type: ignore[arg-type]
+            assert_sorted_by(pagination_findings, "nope")  # type: ignore[arg-type]
 
     def test_callback_is_applied_to_keys(self):
         # Keys are lexicographically ascending ('alice' < 'bob' < 'charlie')

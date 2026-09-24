@@ -116,13 +116,15 @@ class TestInjectPlaywright(unittest.TestCase):
         self.assertIn("traceparent", payload)
 
     def test_no_page_raises(self):
+        random_trace_context_value = random_trace_context()
         with self.assertRaises(TraceBridgeError):
-            inject_headers_playwright(None, random_trace_context())
+            inject_headers_playwright(None, random_trace_context_value)
 
     def test_page_without_setter_raises(self):
         page = MagicMock(spec=[])
+        random_trace_context_value = random_trace_context()
         with self.assertRaises(TraceBridgeError):
-            inject_headers_playwright(page, random_trace_context())
+            inject_headers_playwright(page, random_trace_context_value)
 
     def test_clear(self):
         page = MagicMock()

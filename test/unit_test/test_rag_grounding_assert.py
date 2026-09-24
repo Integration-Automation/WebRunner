@@ -34,10 +34,12 @@ class TestCitations(unittest.TestCase):
         )
 
     def test_fail(self):
+        rag_answer = RagAnswer(text="x", cited_chunk_ids=["b"])
+        retrieved_value = [Chunk("a", "x")]
         with self.assertRaises(RagGroundingError):
             assert_citations_in_retrieved(
-                RagAnswer(text="x", cited_chunk_ids=["b"]),
-                retrieved=[Chunk("a", "x")],
+                rag_answer,
+                retrieved=retrieved_value,
             )
 
     def test_min_citations_pass(self):
@@ -46,14 +48,16 @@ class TestCitations(unittest.TestCase):
         )
 
     def test_min_citations_fail(self):
+        rag_answer = RagAnswer(text="x", cited_chunk_ids=[])
         with self.assertRaises(RagGroundingError):
             assert_min_citations(
-                RagAnswer(text="x", cited_chunk_ids=[]), minimum=1,
+                rag_answer, minimum=1,
             )
 
     def test_bad_min(self):
+        rag_answer = RagAnswer(text="x")
         with self.assertRaises(RagGroundingError):
-            assert_min_citations(RagAnswer(text="x"), minimum=0)
+            assert_min_citations(rag_answer, minimum=0)
 
 
 class TestOverlap(unittest.TestCase):
@@ -85,16 +89,19 @@ class TestOverlap(unittest.TestCase):
         )
 
     def test_grounded_fail(self):
+        rag_answer = RagAnswer(text="totally unrelated")
+        chunks = [Chunk("a", "different document")]
         with self.assertRaises(RagGroundingError):
             assert_grounded(
-                RagAnswer(text="totally unrelated"),
-                [Chunk("a", "different document")],
+                rag_answer,
+                chunks,
                 min_overlap=0.8,
             )
 
     def test_bad_min(self):
+        rag_answer = RagAnswer(text="x")
         with self.assertRaises(RagGroundingError):
-            assert_grounded(RagAnswer(text="x"), [], min_overlap=2)
+            assert_grounded(rag_answer, [], min_overlap=2)
 
 
 class TestHallucination(unittest.TestCase):
@@ -122,8 +129,9 @@ class TestHallucination(unittest.TestCase):
         )
 
     def test_bad_phrase_len(self):
+        rag_answer = RagAnswer(text="x")
         with self.assertRaises(RagGroundingError):
-            find_unsupported_claims(RagAnswer(text="x"), [], min_phrase_len=1)
+            find_unsupported_claims(rag_answer, [], min_phrase_len=1)
 
     def test_no_hallucination_pass(self):
         assert_no_hallucination(
@@ -133,10 +141,12 @@ class TestHallucination(unittest.TestCase):
         )
 
     def test_no_hallucination_fail(self):
+        rag_answer = RagAnswer(text="dragons can fly to the moon and back")
+        chunks = [Chunk("a", "dogs can chase squirrels")]
         with self.assertRaises(RagGroundingError):
             assert_no_hallucination(
-                RagAnswer(text="dragons can fly to the moon and back"),
-                [Chunk("a", "dogs can chase squirrels")],
+                rag_answer,
+                chunks,
                 min_phrase_len=3,
             )
 

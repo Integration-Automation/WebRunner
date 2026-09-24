@@ -39,11 +39,12 @@ class TestRateCard(unittest.TestCase):
 class TestRateCardIndex(unittest.TestCase):
 
     def test_duplicates_rejected(self):
+        rate_cards = [
+            RateCard(runner="a", usd_per_minute=1),
+            RateCard(runner="a", usd_per_minute=2),
+        ]
         with self.assertRaises(TestCostEstimatorError):
-            rate_card_index([
-                RateCard(runner="a", usd_per_minute=1),
-                RateCard(runner="a", usd_per_minute=2),
-            ])
+            rate_card_index(rate_cards)
 
     def test_returns_dict(self):
         idx = rate_card_index([RateCard(runner="a", usd_per_minute=1)])

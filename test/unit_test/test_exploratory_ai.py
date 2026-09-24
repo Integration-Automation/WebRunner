@@ -115,10 +115,12 @@ class TestRandomPlanner(unittest.TestCase):
 class TestExplorer(unittest.TestCase):
 
     def test_max_steps_must_be_positive(self):
+        observer_value = StubObserver([_page("x")])
+        planner_value = FixedPlanner([PlannedAction(kind=ActionKind.DONE)])
         with self.assertRaises(ExploratoryAiError):
             Explorer(
-                observer=StubObserver([_page("x")]),
-                planner=FixedPlanner([PlannedAction(kind=ActionKind.DONE)]),
+                observer=observer_value,
+                planner=planner_value,
                 executor=lambda a: None,
                 max_steps=0,
             )

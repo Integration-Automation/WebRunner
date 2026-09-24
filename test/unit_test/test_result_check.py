@@ -101,8 +101,9 @@ class TestWebDriverDetailCheck(unittest.TestCase):
         check_webdriver_value("name", "chrome", _fake_webdriver())
 
     def test_check_webdriver_value_fail(self):
+        fake_webdriver = _fake_webdriver()
         with self.assertRaises(WebRunnerAssertException):
-            check_webdriver_value("name", "firefox", _fake_webdriver())
+            check_webdriver_value("name", "firefox", fake_webdriver)
 
     def test_check_webdriver_details_pass(self):
         check_webdriver_details(
@@ -111,8 +112,9 @@ class TestWebDriverDetailCheck(unittest.TestCase):
         )
 
     def test_check_webdriver_details_fail(self):
+        fake_webdriver = _fake_webdriver()
         with self.assertRaises(WebRunnerAssertException):
-            check_webdriver_details(_fake_webdriver(), {"title": "Nope"})
+            check_webdriver_details(fake_webdriver, {"title": "Nope"})
 
 
 class TestWebElementDetailCheck(unittest.TestCase):
@@ -121,8 +123,9 @@ class TestWebElementDetailCheck(unittest.TestCase):
         check_web_element_value("tag_name", "div", _fake_web_element())
 
     def test_check_web_element_value_fail(self):
+        fake_web_element = _fake_web_element()
         with self.assertRaises(WebRunnerAssertException):
-            check_web_element_value("tag_name", "span", _fake_web_element())
+            check_web_element_value("tag_name", "span", fake_web_element)
 
     def test_check_web_element_details_pass(self):
         check_web_element_details(
@@ -130,8 +133,9 @@ class TestWebElementDetailCheck(unittest.TestCase):
         )
 
     def test_check_web_element_details_fail(self):
+        fake_web_element = _fake_web_element()
         with self.assertRaises(WebRunnerAssertException):
-            check_web_element_details(_fake_web_element(), {"text": "wrong"})
+            check_web_element_details(fake_web_element, {"text": "wrong"})
 
 
 if __name__ == "__main__":

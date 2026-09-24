@@ -128,10 +128,11 @@ class TestAssert(unittest.TestCase):
         assert_no_mismatch(HydrationReport())
 
     def test_fail(self):
+        hydration_report = HydrationReport(findings=[
+            HydrationFinding(kind="dom_diff", detail="x"),
+        ])
         with self.assertRaises(HydrationCheckError):
-            assert_no_mismatch(HydrationReport(findings=[
-                HydrationFinding(kind="dom_diff", detail="x"),
-            ]))
+            assert_no_mismatch(hydration_report)
 
     def test_rejects_non_report(self):
         with self.assertRaises(HydrationCheckError):

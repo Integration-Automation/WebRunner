@@ -161,8 +161,9 @@ class TestScanResources(unittest.TestCase):
             )
 
     def test_bad_page_url(self):
+        har = _har()
         with self.assertRaises(CoopCoepAuditError):
-            scan_har_resources(_har(), page_url="", coep=CoepValue.REQUIRE_CORP)
+            scan_har_resources(har, page_url="", coep=CoepValue.REQUIRE_CORP)
 
 
 class TestAuditIsolation(unittest.TestCase):
@@ -220,8 +221,9 @@ class TestAssertIsolated(unittest.TestCase):
         assert_isolated(report)
 
     def test_fail_not_isolated(self):
+        audit_isolation_value = audit_isolation("https://main.com/", [])
         with self.assertRaises(CoopCoepAuditError):
-            assert_isolated(audit_isolation("https://main.com/", []))
+            assert_isolated(audit_isolation_value)
 
     def test_fail_resource(self):
         report = audit_isolation(

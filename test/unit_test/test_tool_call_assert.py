@@ -43,8 +43,9 @@ class TestCalled(unittest.TestCase):
         assert_called([ToolCall("a"), ToolCall("a")], name="a", times=2)
 
     def test_wrong_times(self):
+        tool_calls = [ToolCall("a")]
         with self.assertRaises(ToolCallAssertError):
-            assert_called([ToolCall("a")], name="a", times=2)
+            assert_called(tool_calls, name="a", times=2)
 
     def test_min(self):
         assert_called([ToolCall("a"), ToolCall("a")], name="a", min_times=1)
@@ -57,8 +58,9 @@ class TestCalled(unittest.TestCase):
         assert_called([ToolCall("a")], name="a", max_times=3)
 
     def test_max_fail(self):
+        tool_calls = [ToolCall("a"), ToolCall("a")]
         with self.assertRaises(ToolCallAssertError):
-            assert_called([ToolCall("a"), ToolCall("a")], name="a", max_times=1)
+            assert_called(tool_calls, name="a", max_times=1)
 
     def test_empty_name(self):
         with self.assertRaises(ToolCallAssertError):
@@ -75,8 +77,9 @@ class TestNotCalled(unittest.TestCase):
         assert_not_called([ToolCall("safe")], denylist=["delete_user"])
 
     def test_fail(self):
+        tool_calls = [ToolCall("delete_user")]
         with self.assertRaises(ToolCallAssertError):
-            assert_not_called([ToolCall("delete_user")],
+            assert_not_called(tool_calls,
                               denylist=["delete_user"])
 
     def test_empty_denylist(self):
@@ -105,39 +108,44 @@ class TestSchema(unittest.TestCase):
         )
 
     def test_missing_required(self):
+        tool_call = ToolCall(name="search", arguments={"limit": 5})
         with self.assertRaises(ToolCallAssertError):
             assert_args_match_schema(
-                ToolCall(name="search", arguments={"limit": 5}),
+                tool_call,
                 schema=self.SEARCH_SCHEMA,
             )
 
     def test_wrong_type(self):
+        tool_call = ToolCall(name="search",
+                     arguments={"query": "x", "limit": "five"})
         with self.assertRaises(ToolCallAssertError):
             assert_args_match_schema(
-                ToolCall(name="search",
-                         arguments={"query": "x", "limit": "five"}),
+                tool_call,
                 schema=self.SEARCH_SCHEMA,
             )
 
     def test_unknown_key(self):
+        tool_call = ToolCall(name="search",
+                     arguments={"query": "x", "extra": 1})
         with self.assertRaises(ToolCallAssertError):
             assert_args_match_schema(
-                ToolCall(name="search",
-                         arguments={"query": "x", "extra": 1}),
+                tool_call,
                 schema=self.SEARCH_SCHEMA,
             )
 
     def test_enum_violation(self):
+        tool_call = ToolCall(name="search",
+                     arguments={"query": "x", "lang": "fr"})
         with self.assertRaises(ToolCallAssertError):
             assert_args_match_schema(
-                ToolCall(name="search",
-                         arguments={"query": "x", "lang": "fr"}),
+                tool_call,
                 schema=self.SEARCH_SCHEMA,
             )
 
     def test_bad_schema_type(self):
+        tool_call = ToolCall(name="x")
         with self.assertRaises(ToolCallAssertError):
-            assert_args_match_schema(ToolCall(name="x"), schema="nope")
+            assert_args_match_schema(tool_call, schema="nope")
 
 
 class TestOrder(unittest.TestCase):
@@ -148,9 +156,10 @@ class TestOrder(unittest.TestCase):
         )
 
     def test_fail(self):
+        tool_calls = [ToolCall("b"), ToolCall("a")]
         with self.assertRaises(ToolCallAssertError):
             assert_call_order(
-                [ToolCall("b"), ToolCall("a")], expected=["a", "b"],
+                tool_calls, expected=["a", "b"],
             )
 
 

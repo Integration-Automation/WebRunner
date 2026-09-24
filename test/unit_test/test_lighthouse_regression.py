@@ -75,14 +75,16 @@ class TestRegression(unittest.TestCase):
         ]))
 
     def test_fail(self):
+        regression_report = RegressionReport(score_changes=[
+            ScoreDelta(category="performance", baseline=90, head=80),
+        ])
         with self.assertRaises(LighthouseRegressionError):
-            assert_no_score_regression(RegressionReport(score_changes=[
-                ScoreDelta(category="performance", baseline=90, head=80),
-            ]))
+            assert_no_score_regression(regression_report)
 
     def test_bad_threshold(self):
+        regression_report = RegressionReport()
         with self.assertRaises(LighthouseRegressionError):
-            assert_no_score_regression(RegressionReport(), threshold_points=0)
+            assert_no_score_regression(regression_report, threshold_points=0)
 
 
 class TestMetricWithin(unittest.TestCase):
@@ -94,20 +96,23 @@ class TestMetricWithin(unittest.TestCase):
         )
 
     def test_fail(self):
+        parse_report_value = parse_report(REPORT)
         with self.assertRaises(LighthouseRegressionError):
             assert_metric_within(
-                parse_report(REPORT),
+                parse_report_value,
                 metric="largest-contentful-paint", max_value=1000,
             )
 
     def test_bad_metric(self):
+        lighthouse_snapshot = LighthouseSnapshot()
         with self.assertRaises(LighthouseRegressionError):
-            assert_metric_within(LighthouseSnapshot(),
+            assert_metric_within(lighthouse_snapshot,
                                  metric="weird", max_value=1)
 
     def test_missing(self):
+        lighthouse_snapshot = LighthouseSnapshot()
         with self.assertRaises(LighthouseRegressionError):
-            assert_metric_within(LighthouseSnapshot(),
+            assert_metric_within(lighthouse_snapshot,
                                  metric="largest-contentful-paint",
                                  max_value=1)
 

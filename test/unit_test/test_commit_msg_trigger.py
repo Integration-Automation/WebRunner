@@ -73,8 +73,9 @@ class TestShouldRunJob(unittest.TestCase):
         self.assertTrue(should_run_job(TriggerPlan(), "any"))
 
     def test_empty_job(self):
+        trigger_plan = TriggerPlan()
         with self.assertRaises(CommitMsgTriggerError):
-            should_run_job(TriggerPlan(), "")
+            should_run_job(trigger_plan, "")
 
 
 class TestShard(unittest.TestCase):
@@ -88,12 +89,14 @@ class TestShard(unittest.TestCase):
         )
 
     def test_mismatch_total(self):
+        trigger_plan = TriggerPlan(shard=(3, 8))
         with self.assertRaises(CommitMsgTriggerError):
-            assigned_shard(TriggerPlan(shard=(3, 8)), total_shards=4)
+            assigned_shard(trigger_plan, total_shards=4)
 
     def test_bad_total(self):
+        trigger_plan = TriggerPlan()
         with self.assertRaises(CommitMsgTriggerError):
-            assigned_shard(TriggerPlan(), total_shards=0)
+            assigned_shard(trigger_plan, total_shards=0)
 
 
 class TestAssertNoSkip(unittest.TestCase):
@@ -102,8 +105,9 @@ class TestAssertNoSkip(unittest.TestCase):
         assert_no_skip(TriggerPlan())
 
     def test_fail(self):
+        trigger_plan = TriggerPlan(skip=True)
         with self.assertRaises(CommitMsgTriggerError):
-            assert_no_skip(TriggerPlan(skip=True))
+            assert_no_skip(trigger_plan)
 
 
 if __name__ == "__main__":

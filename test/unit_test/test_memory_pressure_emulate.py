@@ -74,14 +74,17 @@ class TestRunUnderProfile(unittest.TestCase):
     def test_cdp_failure_wrapped(self):
         def bad_cdp(method, params):
             raise RuntimeError("no cdp")
+        emulation_profile = EmulationProfile(name="x")
         with self.assertRaises(MemoryPressureError):
-            run_under_profile(EmulationProfile(name="x"), bad_cdp, lambda: None)
+            run_under_profile(emulation_profile, bad_cdp, lambda: None)
 
     def test_rejects_non_callable(self):
+        emulation_profile = EmulationProfile(name="x")
         with self.assertRaises(MemoryPressureError):
-            run_under_profile(EmulationProfile(name="x"), "not", lambda: None)
+            run_under_profile(emulation_profile, "not", lambda: None)
+        emulation_profile_value = EmulationProfile(name="x")
         with self.assertRaises(MemoryPressureError):
-            run_under_profile(EmulationProfile(name="x"), lambda m, p: None, "not")
+            run_under_profile(emulation_profile_value, lambda m, p: None, "not")
 
 
 class TestAssertPassed(unittest.TestCase):
@@ -90,10 +93,11 @@ class TestAssertPassed(unittest.TestCase):
         assert_passed_under_pressure(PressureRunOutcome(profile="x", passed=True))
 
     def test_fail(self):
+        pressure_run_outcome = PressureRunOutcome(
+            profile="x", passed=False, error="boom",
+        )
         with self.assertRaises(MemoryPressureError):
-            assert_passed_under_pressure(PressureRunOutcome(
-                profile="x", passed=False, error="boom",
-            ))
+            assert_passed_under_pressure(pressure_run_outcome)
 
     def test_rejects_non_outcome(self):
         with self.assertRaises(MemoryPressureError):

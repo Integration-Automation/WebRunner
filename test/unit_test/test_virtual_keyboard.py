@@ -40,16 +40,20 @@ class TestShrunk(unittest.TestCase):
         )
 
     def test_fail_no_change(self):
+        before_value = ViewportSnapshot(viewport_height=800)
+        after_value = ViewportSnapshot(viewport_height=799)
         with self.assertRaises(VirtualKeyboardError):
             assert_keyboard_shrunk(
-                before=ViewportSnapshot(viewport_height=800),
-                after=ViewportSnapshot(viewport_height=799),
+                before=before_value,
+                after=after_value,
             )
 
     def test_bad_delta(self):
+        before_value = ViewportSnapshot()
+        after_value = ViewportSnapshot()
         with self.assertRaises(VirtualKeyboardError):
             assert_keyboard_shrunk(
-                before=ViewportSnapshot(), after=ViewportSnapshot(),
+                before=before_value, after=after_value,
                 min_height_delta_px=0,
             )
 
@@ -60,12 +64,14 @@ class TestInset(unittest.TestCase):
         assert_keyboard_inset_set(ViewportSnapshot(keyboard_inset="300px"))
 
     def test_fail_zero(self):
+        viewport_snapshot = ViewportSnapshot(keyboard_inset="0px")
         with self.assertRaises(VirtualKeyboardError):
-            assert_keyboard_inset_set(ViewportSnapshot(keyboard_inset="0px"))
+            assert_keyboard_inset_set(viewport_snapshot)
 
     def test_fail_unset(self):
+        viewport_snapshot = ViewportSnapshot(keyboard_inset="")
         with self.assertRaises(VirtualKeyboardError):
-            assert_keyboard_inset_set(ViewportSnapshot(keyboard_inset=""))
+            assert_keyboard_inset_set(viewport_snapshot)
 
 
 class TestFocused(unittest.TestCase):
@@ -77,11 +83,13 @@ class TestFocused(unittest.TestCase):
         )
 
     def test_fail(self):
+        after_value = ViewportSnapshot(viewport_height=500)
+        focused_value = FocusedElementBox(selector="input",
+                                      top=600, bottom=660)
         with self.assertRaises(VirtualKeyboardError):
             assert_focused_visible(
-                after=ViewportSnapshot(viewport_height=500),
-                focused=FocusedElementBox(selector="input",
-                                          top=600, bottom=660),
+                after=after_value,
+                focused=focused_value,
             )
 
 

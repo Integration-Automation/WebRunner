@@ -231,23 +231,27 @@ class TestAssertDownload(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "report.csv"
             path.write_text("a\n1\n", encoding="utf-8")
+            download_assertion = DownloadAssertion(
+                filename_pattern=r"^summary-",
+            )
             with self.assertRaises(DownloadVerifyError):
-                assert_download(path, DownloadAssertion(
-                    filename_pattern=r"^summary-",
-                ))
+                assert_download(path, download_assertion)
 
     def test_size_bounds_raise(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             path = Path(tmpdir) / "x.bin"
             path.write_bytes(b"x")
+            download_assertion = DownloadAssertion(min_size_bytes=10)
             with self.assertRaises(DownloadVerifyError):
-                assert_download(path, DownloadAssertion(min_size_bytes=10))
+                assert_download(path, download_assertion)
+            download_assertion_value = DownloadAssertion(max_size_bytes=0)
             with self.assertRaises(DownloadVerifyError):
-                assert_download(path, DownloadAssertion(max_size_bytes=0))
+                assert_download(path, download_assertion_value)
 
     def test_missing_file_raises(self):
+        download_assertion = DownloadAssertion()
         with self.assertRaises(DownloadVerifyError):
-            assert_download("/no/such", DownloadAssertion())
+            assert_download("/no/such", download_assertion)
 
 
 def _write_minimal_pdf(path: Path, text: str) -> None:

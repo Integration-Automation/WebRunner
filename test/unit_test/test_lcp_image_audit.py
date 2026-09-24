@@ -47,13 +47,15 @@ class TestPreloaded(unittest.TestCase):
         )
 
     def test_fail(self):
+        lcp_candidate = LcpCandidate(url="/missing.jpg")
         with self.assertRaises(LcpImageAuditError):
-            assert_lcp_preloaded(LcpCandidate(url="/missing.jpg"),
+            assert_lcp_preloaded(lcp_candidate,
                                  '<link rel="preload" href="/hero.jpg" as="image">')
 
     def test_bad_html(self):
+        lcp_candidate = LcpCandidate(url="/x")
         with self.assertRaises(LcpImageAuditError):
-            assert_lcp_preloaded(LcpCandidate(url="/x"), html=123)  # NOSONAR python:S5655 - deliberate bad input
+            assert_lcp_preloaded(lcp_candidate, html=123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestLazy(unittest.TestCase):
@@ -63,15 +65,17 @@ class TestLazy(unittest.TestCase):
                                    '<img src="/hero.jpg">')
 
     def test_fail(self):
+        lcp_candidate = LcpCandidate(url="/hero.jpg")
         with self.assertRaises(LcpImageAuditError):
             assert_lcp_not_lazy_loaded(
-                LcpCandidate(url="/hero.jpg"),
+                lcp_candidate,
                 '<img src="/hero.jpg" loading="lazy">',
             )
 
     def test_bad_html(self):
+        lcp_candidate = LcpCandidate(url="/x")
         with self.assertRaises(LcpImageAuditError):
-            assert_lcp_not_lazy_loaded(LcpCandidate(url="/x"), html=123)  # NOSONAR python:S5655 - deliberate bad input
+            assert_lcp_not_lazy_loaded(lcp_candidate, html=123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 class TestFetchPriority(unittest.TestCase):
@@ -89,15 +93,17 @@ class TestFetchPriority(unittest.TestCase):
         )
 
     def test_fail(self):
+        lcp_candidate = LcpCandidate(url="/hero.jpg")
         with self.assertRaises(LcpImageAuditError):
             assert_fetchpriority_high(
-                LcpCandidate(url="/hero.jpg"),
+                lcp_candidate,
                 '<img src="/hero.jpg">',
             )
 
     def test_bad_html(self):
+        lcp_candidate = LcpCandidate(url="/x")
         with self.assertRaises(LcpImageAuditError):
-            assert_fetchpriority_high(LcpCandidate(url="/x"), html=123)  # NOSONAR python:S5655 - deliberate bad input
+            assert_fetchpriority_high(lcp_candidate, html=123)  # NOSONAR python:S5655 - deliberate bad input
 
 
 if __name__ == "__main__":

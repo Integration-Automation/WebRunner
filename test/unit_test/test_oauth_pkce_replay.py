@@ -67,20 +67,23 @@ class TestReplay(unittest.TestCase):
     def test_probe_exception(self):
         def boom(p):
             raise RuntimeError("net")
+        replay_case = ReplayCase(name="x", payload={})
         with self.assertRaises(OauthPkceReplayError):
-            replay(ReplayCase(name="x", payload={}), boom)
+            replay(replay_case, boom)
 
     def test_rejects_non_case(self):
         with self.assertRaises(OauthPkceReplayError):
             replay("nope", lambda p: TokenExchangeResponse(200, {}))
 
     def test_non_callable(self):
+        replay_case = ReplayCase("x", {})
         with self.assertRaises(OauthPkceReplayError):
-            replay(ReplayCase("x", {}), "nope")
+            replay(replay_case, "nope")
 
     def test_bad_probe_return(self):
+        replay_case = ReplayCase("x", {})
         with self.assertRaises(OauthPkceReplayError):
-            replay(ReplayCase("x", {}), lambda p: "nope")
+            replay(replay_case, lambda p: "nope")
 
 
 class TestRunCases(unittest.TestCase):
@@ -106,10 +109,11 @@ class TestAssertRejected(unittest.TestCase):
         )])
 
     def test_fail(self):
+        replay_results = [ReplayResult(
+            case="x", outcome=ReplayOutcome.ACCEPTED, status_code=200,
+        )]
         with self.assertRaises(OauthPkceReplayError):
-            assert_all_rejected([ReplayResult(
-                case="x", outcome=ReplayOutcome.ACCEPTED, status_code=200,
-            )])
+            assert_all_rejected(replay_results)
 
     def test_empty_results_rejected(self):
         # No results means nothing was tested — must fail, not vacuously pass.

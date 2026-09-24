@@ -55,8 +55,9 @@ class TestAssertNoTaint(unittest.TestCase):
         assert_no_taint([])
 
     def test_fail(self):
+        taint_findings = [TaintFinding(sink="innerHTML", canary="X")]
         with self.assertRaises(DomXssTaintError):
-            assert_no_taint([TaintFinding(sink="innerHTML", canary="X")])
+            assert_no_taint(taint_findings)
 
 
 class TestOnlySafeSinks(unittest.TestCase):
@@ -68,9 +69,10 @@ class TestOnlySafeSinks(unittest.TestCase):
         )
 
     def test_fail(self):
+        taint_findings = [TaintFinding(sink="eval", canary="X")]
         with self.assertRaises(DomXssTaintError):
             assert_only_safe_sinks(
-                [TaintFinding(sink="eval", canary="X")],
+                taint_findings,
                 allowed_sinks=["innerHTML"],
             )
 

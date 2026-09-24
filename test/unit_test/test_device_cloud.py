@@ -20,8 +20,9 @@ from je_web_runner.utils.device_cloud.real_device import (
 class TestNormalisation(unittest.TestCase):
 
     def test_invalid_provider_raises(self):
+        real_device_caps = RealDeviceCaps("Pixel 7", "Android", "13")
         with self.assertRaises(DeviceCloudError):
-            build_capabilities("aws", RealDeviceCaps("Pixel 7", "Android", "13"))
+            build_capabilities("aws", real_device_caps)
 
 
 class TestLoadCredentials(unittest.TestCase):

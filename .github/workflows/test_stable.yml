@@ -11,6 +11,10 @@ on:
 permissions:
   contents: read
 
+env:
+  # Tests import the checked-out je_web_runner; ci.txt holds only its dependencies.
+  PYTHONPATH: ${{ github.workspace }}
+
 jobs:
   unit-test:
     name: Unit Tests (Python ${{ matrix.python-version }})
@@ -21,20 +25,20 @@ jobs:
         python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      with:
+        persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v7
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
-        cache-dependency-path: requirements.txt
+        cache-dependency-path: .github/requirements/ci.txt
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip wheel
-        pip install -r requirements.txt
-        pip install pytest
+        python -m pip install --require-hashes --only-binary :all: -r .github/requirements/ci.txt
 
     - name: Run unit tests
       run: python -m pytest test/unit_test/test_*.py -v
@@ -59,19 +63,20 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
-    - uses: actions/checkout@v7
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      with:
+        persist-credentials: false
 
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v7
+      uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
       with:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
-        cache-dependency-path: requirements.txt
+        cache-dependency-path: .github/requirements/ci.txt
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip wheel
-        pip install -r requirements.txt
+        python -m pip install --require-hashes --only-binary :all: -r .github/requirements/ci.txt
 
     - name: Install Firefox
       run: |

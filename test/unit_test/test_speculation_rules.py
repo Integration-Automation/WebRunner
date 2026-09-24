@@ -95,15 +95,17 @@ class TestAssertActivated(unittest.TestCase):
         }))
 
     def test_fail_no_event(self):
+        parse_log_value = parse_log({"events": [], "fires": {}})
         with self.assertRaises(SpeculationRulesError):
-            assert_activated(parse_log({"events": [], "fires": {}}))
+            assert_activated(parse_log_value)
 
     def test_fail_still_prerendering(self):
+        parse_log_value = parse_log({
+            "events": [{"kind": "prerenderingchange", "prerendering": True}],
+            "fires": {},
+        })
         with self.assertRaises(SpeculationRulesError):
-            assert_activated(parse_log({
-                "events": [{"kind": "prerenderingchange", "prerendering": True}],
-                "fires": {},
-            }))
+            assert_activated(parse_log_value)
 
 
 class TestAssertNoDoubleFire(unittest.TestCase):
@@ -115,15 +117,17 @@ class TestAssertNoDoubleFire(unittest.TestCase):
         )
 
     def test_fail(self):
+        parse_log_value = parse_log({"events": [], "fires": {"a": 2}})
         with self.assertRaises(SpeculationRulesError):
             assert_no_double_fire(
-                parse_log({"events": [], "fires": {"a": 2}}),
+                parse_log_value,
                 names=["a"],
             )
 
     def test_empty_names(self):
+        prerender_log = PrerenderLog()
         with self.assertRaises(SpeculationRulesError):
-            assert_no_double_fire(PrerenderLog(), names=[])
+            assert_no_double_fire(prerender_log, names=[])
 
 
 class TestAssertFireCount(unittest.TestCase):
@@ -135,9 +139,10 @@ class TestAssertFireCount(unittest.TestCase):
         )
 
     def test_fail(self):
+        parse_log_value = parse_log({"events": [], "fires": {"a": 2}})
         with self.assertRaises(SpeculationRulesError):
             assert_fire_count(
-                parse_log({"events": [], "fires": {"a": 2}}),
+                parse_log_value,
                 name="a", expected=1,
             )
 

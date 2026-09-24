@@ -97,12 +97,14 @@ class TestAssertCount(unittest.TestCase):
             assert_frame_count(rec, maximum=1)
 
     def test_negative_minimum_rejected(self):
+        ws_frame_recorder = WsFrameRecorder()
         with self.assertRaises(WebSocketAssertError):
-            assert_frame_count(WsFrameRecorder(), minimum=-1)
+            assert_frame_count(ws_frame_recorder, minimum=-1)
 
     def test_max_lt_min_rejected(self):
+        ws_frame_recorder = WsFrameRecorder()
         with self.assertRaises(WebSocketAssertError):
-            assert_frame_count(WsFrameRecorder(), minimum=3, maximum=1)
+            assert_frame_count(ws_frame_recorder, minimum=3, maximum=1)
 
 
 class TestAssertReceived(unittest.TestCase):
@@ -141,8 +143,9 @@ class TestAssertPayloadContains(unittest.TestCase):
             assert_payload_contains(rec, "missing")
 
     def test_empty_needle_rejected(self):
+        ws_frame_recorder = WsFrameRecorder()
         with self.assertRaises(WebSocketAssertError):
-            assert_payload_contains(WsFrameRecorder(), "")
+            assert_payload_contains(ws_frame_recorder, "")
 
 
 class TestAssertJsonShape(unittest.TestCase):
@@ -165,8 +168,9 @@ class TestAssertJsonShape(unittest.TestCase):
         assert_json_shape(rec, ["k"])
 
     def test_empty_keys_rejected(self):
+        ws_frame_recorder = WsFrameRecorder()
         with self.assertRaises(WebSocketAssertError):
-            assert_json_shape(WsFrameRecorder(), [])
+            assert_json_shape(ws_frame_recorder, [])
 
 
 class TestAssertPubsub(unittest.TestCase):
@@ -195,9 +199,10 @@ class TestAssertPubsub(unittest.TestCase):
             )
 
     def test_no_pair_at_all(self):
+        ws_frame_recorder = WsFrameRecorder()
         with self.assertRaises(WebSocketAssertError):
             assert_pubsub_pattern(
-                WsFrameRecorder(),
+                ws_frame_recorder,
                 subscribe_matcher=lambda f: True,
                 publish_matcher=lambda f: True,
             )

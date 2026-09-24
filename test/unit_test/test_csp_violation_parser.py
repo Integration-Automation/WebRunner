@@ -110,8 +110,9 @@ class TestNoEnforced(unittest.TestCase):
         ])
 
     def test_fail(self):
+        parse_ones = [parse_one(LEGACY)]
         with self.assertRaises(CspViolationParserError):
-            assert_no_enforced_violations([parse_one(LEGACY)])
+            assert_no_enforced_violations(parse_ones)
 
 
 class TestRecon(unittest.TestCase):

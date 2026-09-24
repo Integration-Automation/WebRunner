@@ -67,15 +67,17 @@ class TestAssertOutcome(unittest.TestCase):
         )
 
     def test_fail(self):
+        flow_value = Flow(trans_status=TransStatus.AUTHENTICATED)
         with self.assertRaises(ThreeDSecureFlowError):
             assert_outcome(
-                Flow(trans_status=TransStatus.AUTHENTICATED),
+                flow_value,
                 expected=Outcome.FRICTIONLESS_OK,
             )
 
     def test_bad_expected(self):
+        flow_value = Flow(trans_status=TransStatus.AUTHENTICATED)
         with self.assertRaises(ThreeDSecureFlowError):
-            assert_outcome(Flow(trans_status=TransStatus.AUTHENTICATED),
+            assert_outcome(flow_value,
                            expected="ok")
 
 
@@ -87,9 +89,10 @@ class TestSilentFinalize(unittest.TestCase):
         )
 
     def test_fail(self):
+        flow_value = Flow(trans_status=TransStatus.REJECTED, order_finalized=True)
         with self.assertRaises(ThreeDSecureFlowError):
             assert_no_silent_finalize(
-                Flow(trans_status=TransStatus.REJECTED, order_finalized=True),
+                flow_value,
             )
 
 
@@ -101,16 +104,18 @@ class TestChallengeComplete(unittest.TestCase):
         )
 
     def test_iframe_missing(self):
+        flow_value = Flow(trans_status=TransStatus.CHALLENGE)
         with self.assertRaises(ThreeDSecureFlowError):
             assert_challenge_branch_complete(
-                Flow(trans_status=TransStatus.CHALLENGE),
+                flow_value,
             )
 
     def test_cres_missing(self):
+        flow_value = Flow(trans_status=TransStatus.CHALLENGE,
+                 challenge_shown=True)
         with self.assertRaises(ThreeDSecureFlowError):
             assert_challenge_branch_complete(
-                Flow(trans_status=TransStatus.CHALLENGE,
-                     challenge_shown=True),
+                flow_value,
             )
 
     def test_complete(self):
@@ -130,10 +135,11 @@ class TestUserMessage(unittest.TestCase):
         )
 
     def test_fail(self):
+        flow_value = Flow(trans_status=TransStatus.REJECTED,
+                 error_displayed="oops")
         with self.assertRaises(ThreeDSecureFlowError):
             assert_user_message_for(
-                Flow(trans_status=TransStatus.REJECTED,
-                     error_displayed="oops"),
+                flow_value,
                 contains="declined",
             )
 

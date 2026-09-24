@@ -40,20 +40,23 @@ class TestPreloadReady(unittest.TestCase):
         assert_preload_ready(parse_header(GOOD))
 
     def test_short_max_age(self):
+        parse_header_value = parse_header("max-age=86400; includeSubDomains; preload")
         with self.assertRaises(HstsPreloadAuditError):
             assert_preload_ready(
-                parse_header("max-age=86400; includeSubDomains; preload"),
+                parse_header_value,
             )
 
     def test_missing_subdomain(self):
+        parse_header_value = parse_header("max-age=63072000; preload")
         with self.assertRaises(HstsPreloadAuditError):
-            assert_preload_ready(parse_header("max-age=63072000; preload"))
+            assert_preload_ready(parse_header_value)
 
     def test_missing_preload(self):
+        parse_header_value = parse_header(
+            "max-age=63072000; includeSubDomains",
+        )
         with self.assertRaises(HstsPreloadAuditError):
-            assert_preload_ready(parse_header(
-                "max-age=63072000; includeSubDomains",
-            ))
+            assert_preload_ready(parse_header_value)
 
 
 class TestHttps(unittest.TestCase):

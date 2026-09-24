@@ -151,16 +151,18 @@ class TestEvaluate(unittest.TestCase):
             evaluate_budget([])
 
     def test_bad_biggest_n(self):
+        assets = [Asset(url="x", kind=AssetKind.SCRIPT,
+                               transfer_bytes=1, content_bytes=1)]
         with self.assertRaises(BundleBudgetError):
-            evaluate_budget([Asset(url="x", kind=AssetKind.SCRIPT,
-                                   transfer_bytes=1, content_bytes=1)],
+            evaluate_budget(assets,
                             biggest_n=-1)
 
     def test_bad_budget_entry(self):
+        assets = [Asset(url="x", kind=AssetKind.SCRIPT,
+                   transfer_bytes=1, content_bytes=1)]
         with self.assertRaises(BundleBudgetError):
             evaluate_budget(
-                [Asset(url="x", kind=AssetKind.SCRIPT,
-                       transfer_bytes=1, content_bytes=1)],
+                assets,
                 budgets=["not a budget"],  # type: ignore[list-item]
             )
 

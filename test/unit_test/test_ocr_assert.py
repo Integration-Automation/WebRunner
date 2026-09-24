@@ -83,8 +83,9 @@ class TestAssertContains(unittest.TestCase):
         self.assertFalse(result.matched)
 
     def test_rejects_empty_needle(self):
+        backend_value = _fake_backend("x")
         with self.assertRaises(OcrAssertError):
-            assert_text_contains(b"", "", backend=_fake_backend("x"))
+            assert_text_contains(b"", "", backend=backend_value)
 
 
 class TestAssertFuzzy(unittest.TestCase):
@@ -107,10 +108,12 @@ class TestAssertFuzzy(unittest.TestCase):
         self.assertFalse(result.matched)
 
     def test_rejects_bad_ratio(self):
+        backend_value = _fake_backend("x")
         with self.assertRaises(OcrAssertError):
-            assert_text_fuzzy(b"", "x", min_ratio=0.0, backend=_fake_backend("x"))
+            assert_text_fuzzy(b"", "x", min_ratio=0.0, backend=backend_value)
+        backend_arg = _fake_backend("x")
         with self.assertRaises(OcrAssertError):
-            assert_text_fuzzy(b"", "x", min_ratio=1.5, backend=_fake_backend("x"))
+            assert_text_fuzzy(b"", "x", min_ratio=1.5, backend=backend_arg)
 
 
 class TestAssertAny(unittest.TestCase):
@@ -131,8 +134,9 @@ class TestAssertAny(unittest.TestCase):
         self.assertFalse(result.matched)
 
     def test_rejects_empty(self):
+        backend_value = _fake_backend("x")
         with self.assertRaises(OcrAssertError):
-            assert_text_any(b"", [], backend=_fake_backend("x"))
+            assert_text_any(b"", [], backend=backend_value)
 
 
 class TestOcrMatchResult(unittest.TestCase):

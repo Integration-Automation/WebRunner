@@ -49,18 +49,20 @@ class TestRenderJobManifests(unittest.TestCase):
         self.assertEqual(env_list, [{"name": "FOO", "value": "bar"}])
 
     def test_invalid_name_prefix_raises(self):
+        shard_job_config = ShardJobConfig(
+            name_prefix="Bad_Prefix", image="img",
+            total_shards=1, actions_dir="/a",
+        )
         with self.assertRaises(K8sRunnerError):
-            render_job_manifests(ShardJobConfig(
-                name_prefix="Bad_Prefix", image="img",
-                total_shards=1, actions_dir="/a",
-            ))
+            render_job_manifests(shard_job_config)
 
     def test_zero_shards_raises(self):
+        shard_job_config = ShardJobConfig(
+            name_prefix="ok", image="img",
+            total_shards=0, actions_dir="/a",
+        )
         with self.assertRaises(K8sRunnerError):
-            render_job_manifests(ShardJobConfig(
-                name_prefix="ok", image="img",
-                total_shards=0, actions_dir="/a",
-            ))
+            render_job_manifests(shard_job_config)
 
 
 class TestYamlRendering(unittest.TestCase):

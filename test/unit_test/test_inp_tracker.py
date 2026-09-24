@@ -86,10 +86,12 @@ class TestInpReport(unittest.TestCase):
         self.assertEqual(report.percentile(100), 40)
 
     def test_percentile_bad_input(self):
+        inp_report = InpReport()
         with self.assertRaises(InpTrackerError):
-            InpReport().percentile(-1)
+            inp_report.percentile(-1)
+        inp_report_value = InpReport()
         with self.assertRaises(InpTrackerError):
-            InpReport().percentile(150)
+            inp_report_value.percentile(150)
 
 
 class TestAssertInpUnder(unittest.TestCase):
@@ -101,9 +103,10 @@ class TestAssertInpUnder(unittest.TestCase):
         )
 
     def test_fail(self):
+        inp_report = InpReport(events=parse_log([_raw(300)]))
         with self.assertRaises(InpTrackerError):
             assert_inp_under(
-                InpReport(events=parse_log([_raw(300)])),
+                inp_report,
                 max_ms=200,
             )
 
@@ -111,8 +114,9 @@ class TestAssertInpUnder(unittest.TestCase):
         assert_inp_under(InpReport(), max_ms=100)
 
     def test_bad_budget(self):
+        inp_report = InpReport()
         with self.assertRaises(InpTrackerError):
-            assert_inp_under(InpReport(), max_ms=0)
+            assert_inp_under(inp_report, max_ms=0)
 
     def test_rejects_non_report(self):
         with self.assertRaises(InpTrackerError):
@@ -127,9 +131,10 @@ class TestAssertNoPoor(unittest.TestCase):
         )
 
     def test_fail(self):
+        inp_report = InpReport(events=parse_log([_raw(600)]))
         with self.assertRaises(InpTrackerError):
             assert_no_poor_interactions(
-                InpReport(events=parse_log([_raw(600)])),
+                inp_report,
             )
 
     def test_rejects_non_report(self):

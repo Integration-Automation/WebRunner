@@ -74,8 +74,9 @@ class TestDiff(unittest.TestCase):
         self.assertEqual(len(diff.regressions(min_bytes=1024)), 1)
 
     def test_regressions_bad_arg(self):
+        bundle_diff = BundleDiff()
         with self.assertRaises(BundleDiffPrError):
-            BundleDiff().regressions(min_bytes=-1)
+            bundle_diff.regressions(min_bytes=-1)
 
 
 class TestAssertGrowth(unittest.TestCase):
@@ -85,14 +86,16 @@ class TestAssertGrowth(unittest.TestCase):
         assert_under_max_growth(diff, max_growth_bytes=2000)
 
     def test_fail(self):
+        bundle_diff = BundleDiff(total_delta_bytes=5000)
         with self.assertRaises(BundleDiffPrError):
             assert_under_max_growth(
-                BundleDiff(total_delta_bytes=5000), max_growth_bytes=1000,
+                bundle_diff, max_growth_bytes=1000,
             )
 
     def test_bad_threshold(self):
+        bundle_diff = BundleDiff()
         with self.assertRaises(BundleDiffPrError):
-            assert_under_max_growth(BundleDiff(), max_growth_bytes=-1)
+            assert_under_max_growth(bundle_diff, max_growth_bytes=-1)
 
 
 class TestMarkdown(unittest.TestCase):
@@ -110,8 +113,9 @@ class TestMarkdown(unittest.TestCase):
             report_markdown("nope")
 
     def test_bad_top_n(self):
+        bundle_diff = BundleDiff()
         with self.assertRaises(BundleDiffPrError):
-            report_markdown(BundleDiff(), top_n=-1)
+            report_markdown(bundle_diff, top_n=-1)
 
 
 if __name__ == "__main__":

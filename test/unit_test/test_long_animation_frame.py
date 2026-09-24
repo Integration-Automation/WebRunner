@@ -109,8 +109,9 @@ class TestAssertions(unittest.TestCase):
             assert_no_frame_over(report, max_ms=50)
 
     def test_no_frame_over_bad_threshold(self):
+        loaf_report = LoafReport()
         with self.assertRaises(LongAnimationFrameError):
-            assert_no_frame_over(LoafReport(), max_ms=0)
+            assert_no_frame_over(loaf_report, max_ms=0)
 
     def test_no_frame_over_rejects_non_report(self):
         with self.assertRaises(LongAnimationFrameError):
@@ -126,8 +127,9 @@ class TestAssertions(unittest.TestCase):
             assert_total_blocking_under(report, max_ms=100)
 
     def test_total_blocking_bad_threshold(self):
+        loaf_report = LoafReport()
         with self.assertRaises(LongAnimationFrameError):
-            assert_total_blocking_under(LoafReport(), max_ms=-1)
+            assert_total_blocking_under(loaf_report, max_ms=-1)
 
     def test_total_blocking_rejects_non_report(self):
         with self.assertRaises(LongAnimationFrameError):

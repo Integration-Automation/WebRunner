@@ -208,16 +208,18 @@ class TestHarden(unittest.TestCase):
             test_id="t", strategy=LocatorStrategy.CSS,
             value=".a:nth-of-type(2)",
         )
+        stub_client = StubClient(RuntimeError("rate limit"))
         with self.assertRaises(LocatorHardenerError):
-            harden(locator, StubClient(RuntimeError("rate limit")),
+            harden(locator, stub_client,
                    min_fragility=0.3)
 
     def test_bad_threshold(self):
         locator = FragileLocator(
             test_id="t", strategy=LocatorStrategy.CSS, value=".a",
         )
+        stub_client = StubClient(_good_response())
         with self.assertRaises(LocatorHardenerError):
-            harden(locator, StubClient(_good_response()), min_fragility=2.0)
+            harden(locator, stub_client, min_fragility=2.0)
 
 
 class TestSuggestionDict(unittest.TestCase):

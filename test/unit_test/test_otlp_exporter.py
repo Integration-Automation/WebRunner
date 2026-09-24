@@ -49,11 +49,14 @@ class TestConfigureOtlpExport(unittest.TestCase):
         fake_processor_cls.assert_called_once_with(fake_exporter)
 
     def test_invalid_provider(self):
+        object_value = object()
+        otlp_export_config = OtlpExportConfig(endpoint="x")
+        processor_factory_value = MagicMock()
         with self.assertRaises(OtlpExporterError):
             configure_otlp_export(
-                object(),
-                OtlpExportConfig(endpoint="x"),
-                processor_factory=MagicMock(),
+                object_value,
+                otlp_export_config,
+                processor_factory=processor_factory_value,
                 exporter_factory=lambda _c: MagicMock(),
             )
 
@@ -74,8 +77,9 @@ class TestBuildExporter(unittest.TestCase):
         original = otlp_exporter._import_grpc_exporter
         otlp_exporter._import_grpc_exporter = _raise_missing
         try:
+            otlp_export_config = OtlpExportConfig(endpoint="x")
             with self.assertRaises(OtlpExporterError):
-                build_exporter(OtlpExportConfig(endpoint="x"))
+                build_exporter(otlp_export_config)
         finally:
             otlp_exporter._import_grpc_exporter = original
 
@@ -88,8 +92,9 @@ class TestBuildExporter(unittest.TestCase):
         original = otlp_exporter._import_http_exporter
         otlp_exporter._import_http_exporter = _raise_missing
         try:
+            otlp_export_config = OtlpExportConfig(endpoint="x", protocol="http")
             with self.assertRaises(OtlpExporterError):
-                build_exporter(OtlpExportConfig(endpoint="x", protocol="http"))
+                build_exporter(otlp_export_config)
         finally:
             otlp_exporter._import_http_exporter = original
 

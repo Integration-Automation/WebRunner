@@ -32,8 +32,9 @@ class TestBuildSeed(unittest.TestCase):
             build_seed("nope")
 
     def test_bad_entry(self):
+        seed_credentials = [SeedCredential(id="")]
         with self.assertRaises(CredentialManagementError):
-            build_seed([SeedCredential(id="")])
+            build_seed(seed_credentials)
 
 
 class TestScript(unittest.TestCase):
@@ -71,12 +72,14 @@ class TestAssertStored(unittest.TestCase):
         self.assertEqual(s.id, "a")
 
     def test_fail(self):
+        cm_log = CmLog()
         with self.assertRaises(CredentialManagementError):
-            assert_stored(CmLog(), credential_id="a")
+            assert_stored(cm_log, credential_id="a")
 
     def test_empty_id(self):
+        cm_log = CmLog()
         with self.assertRaises(CredentialManagementError):
-            assert_stored(CmLog(), credential_id="")
+            assert_stored(cm_log, credential_id="")
 
 
 class TestNoPlaintext(unittest.TestCase):
@@ -85,9 +88,10 @@ class TestNoPlaintext(unittest.TestCase):
         assert_no_password_in_clear(CmLog(stored=[StoredCall(id="a")]))
 
     def test_fail(self):
+        cm_log = CmLog(stored=[StoredCall(id="a", password=_LEAK_SENTINEL)])
         with self.assertRaises(CredentialManagementError):
             assert_no_password_in_clear(
-                CmLog(stored=[StoredCall(id="a", password=_LEAK_SENTINEL)]),
+                cm_log,
             )
 
 
@@ -97,12 +101,14 @@ class TestPreventSilent(unittest.TestCase):
         assert_prevent_silent_access_called(CmLog(prevent_count=1))
 
     def test_fail(self):
+        cm_log = CmLog(prevent_count=0)
         with self.assertRaises(CredentialManagementError):
-            assert_prevent_silent_access_called(CmLog(prevent_count=0))
+            assert_prevent_silent_access_called(cm_log)
 
     def test_bad_min(self):
+        cm_log = CmLog()
         with self.assertRaises(CredentialManagementError):
-            assert_prevent_silent_access_called(CmLog(), at_least=0)
+            assert_prevent_silent_access_called(cm_log, at_least=0)
 
 
 class TestMediation(unittest.TestCase):
@@ -114,15 +120,17 @@ class TestMediation(unittest.TestCase):
         )
 
     def test_fail(self):
+        cm_log = CmLog(gets=[{"mediation": "silent"}])
         with self.assertRaises(CredentialManagementError):
             assert_get_requested_mediation(
-                CmLog(gets=[{"mediation": "silent"}]),
+                cm_log,
                 mediation="required",
             )
 
     def test_bad_mediation(self):
+        cm_log = CmLog()
         with self.assertRaises(CredentialManagementError):
-            assert_get_requested_mediation(CmLog(), mediation="weird")
+            assert_get_requested_mediation(cm_log, mediation="weird")
 
 
 if __name__ == "__main__":

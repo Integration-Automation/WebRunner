@@ -66,16 +66,18 @@ class TestAssertConnected(unittest.TestCase):
         assert_connected(_connected_snapshot())
 
     def test_fails_when_not_connected(self):
+        connected_snapshot = _connected_snapshot(
+            connection_state=ConnectionState.FAILED,
+        )
         with self.assertRaises(WebRtcAssertError):
-            assert_connected(_connected_snapshot(
-                connection_state=ConnectionState.FAILED,
-            ))
+            assert_connected(connected_snapshot)
 
     def test_fails_when_ice_disconnected(self):
+        connected_snapshot = _connected_snapshot(
+            ice_connection_state=IceState.DISCONNECTED,
+        )
         with self.assertRaises(WebRtcAssertError):
-            assert_connected(_connected_snapshot(
-                ice_connection_state=IceState.DISCONNECTED,
-            ))
+            assert_connected(connected_snapshot)
 
     def test_accepts_ice_completed(self):
         assert_connected(_connected_snapshot(
@@ -98,8 +100,9 @@ class TestTrackPresent(unittest.TestCase):
         self.assertEqual(track.kind, "audio")
 
     def test_missing_kind(self):
+        connected_snapshot = _connected_snapshot()
         with self.assertRaises(WebRtcAssertError):
-            assert_track_present(_connected_snapshot(), "data")
+            assert_track_present(connected_snapshot, "data")
 
     def test_ended_track_skipped(self):
         snap = _connected_snapshot(
@@ -109,8 +112,9 @@ class TestTrackPresent(unittest.TestCase):
             assert_track_present(snap, "audio")
 
     def test_invalid_side(self):
+        connected_snapshot = _connected_snapshot()
         with self.assertRaises(WebRtcAssertError):
-            assert_track_present(_connected_snapshot(), "audio", side="weird")
+            assert_track_present(connected_snapshot, "audio", side="weird")
 
 
 class TestSdpCodec(unittest.TestCase):
@@ -122,16 +126,19 @@ class TestSdpCodec(unittest.TestCase):
         assert_sdp_has_codec(_connected_snapshot(), "VP8", side="remote")
 
     def test_missing(self):
+        connected_snapshot = _connected_snapshot()
         with self.assertRaises(WebRtcAssertError):
-            assert_sdp_has_codec(_connected_snapshot(), "h264")
+            assert_sdp_has_codec(connected_snapshot, "h264")
 
     def test_empty_sdp(self):
+        connected_snapshot = _connected_snapshot(local_sdp="")
         with self.assertRaises(WebRtcAssertError):
-            assert_sdp_has_codec(_connected_snapshot(local_sdp=""), "opus")
+            assert_sdp_has_codec(connected_snapshot, "opus")
 
     def test_empty_codec_name(self):
+        connected_snapshot = _connected_snapshot()
         with self.assertRaises(WebRtcAssertError):
-            assert_sdp_has_codec(_connected_snapshot(), "")
+            assert_sdp_has_codec(connected_snapshot, "")
 
 
 class TestAggregateStats(unittest.TestCase):

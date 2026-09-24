@@ -74,16 +74,19 @@ class TestAssertPresent(unittest.TestCase):
         assert_cookie_present(self._cookies(), name="sid", value="abc")
 
     def test_value_mismatch(self):
+        cookies = self._cookies()
         with self.assertRaises(CookieStoreApiError):
-            assert_cookie_present(self._cookies(), name="sid", value="xyz")
+            assert_cookie_present(cookies, name="sid", value="xyz")
 
     def test_missing(self):
+        cookies = self._cookies()
         with self.assertRaises(CookieStoreApiError):
-            assert_cookie_present(self._cookies(), name="missing")
+            assert_cookie_present(cookies, name="missing")
 
     def test_empty_name(self):
+        cookies = self._cookies()
         with self.assertRaises(CookieStoreApiError):
-            assert_cookie_present(self._cookies(), name="")
+            assert_cookie_present(cookies, name="")
 
 
 class TestAssertAbsent(unittest.TestCase):
@@ -92,8 +95,9 @@ class TestAssertAbsent(unittest.TestCase):
         assert_cookie_absent(parse_cookies([{"name": "other"}]), name="sid")
 
     def test_fails(self):
+        parse_cookies_value = parse_cookies([{"name": "sid"}])
         with self.assertRaises(CookieStoreApiError):
-            assert_cookie_absent(parse_cookies([{"name": "sid"}]), name="sid")
+            assert_cookie_absent(parse_cookies_value, name="sid")
 
 
 class TestAssertChange(unittest.TestCase):
@@ -121,11 +125,12 @@ class TestAssertSecure(unittest.TestCase):
         assert_secure_only(parse_cookies([{"name": "a", "secure": True}]))
 
     def test_fail(self):
+        parse_cookies_value = parse_cookies([
+            {"name": "a", "secure": True},
+            {"name": "b", "secure": False},
+        ])
         with self.assertRaises(CookieStoreApiError):
-            assert_secure_only(parse_cookies([
-                {"name": "a", "secure": True},
-                {"name": "b", "secure": False},
-            ]))
+            assert_secure_only(parse_cookies_value)
 
 
 if __name__ == "__main__":

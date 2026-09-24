@@ -99,23 +99,26 @@ class TestAsserts(unittest.TestCase):
         assert_no_new_vulnerable(SbomReport())
 
     def test_no_new_vuln_fail(self):
+        sbom_report = SbomReport(new_vulnerable=["x"])
         with self.assertRaises(SbomDiffError):
-            assert_no_new_vulnerable(SbomReport(new_vulnerable=["x"]))
+            assert_no_new_vulnerable(sbom_report)
 
     def test_disallowed_pass(self):
         assert_no_disallowed_licenses(SbomReport(new_licenses=["MIT"]),
                                       disallowed=["AGPL-3.0"])
 
     def test_disallowed_fail(self):
+        sbom_report = SbomReport(new_licenses=["AGPL-3.0"])
         with self.assertRaises(SbomDiffError):
             assert_no_disallowed_licenses(
-                SbomReport(new_licenses=["AGPL-3.0"]),
+                sbom_report,
                 disallowed=["agpl-3.0"],
             )
 
     def test_empty_disallowed_rejected(self):
+        sbom_report = SbomReport()
         with self.assertRaises(SbomDiffError):
-            assert_no_disallowed_licenses(SbomReport(), disallowed=[])
+            assert_no_disallowed_licenses(sbom_report, disallowed=[])
 
 
 class TestMarkdown(unittest.TestCase):

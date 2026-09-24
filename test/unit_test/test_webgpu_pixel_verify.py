@@ -54,8 +54,9 @@ class TestParse(unittest.TestCase):
             parse_frame({"width": 1, "height": 1, "rgba_b64": 123})
 
     def test_length_mismatch(self):
+        payload = _payload(2, 2, b"x")
         with self.assertRaises(WebgpuPixelVerifyError):
-            parse_frame(_payload(2, 2, b"x"))
+            parse_frame(payload)
 
 
 class TestMean(unittest.TestCase):

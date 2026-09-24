@@ -52,19 +52,24 @@ class TestSwipe(unittest.TestCase):
         self.assertEqual(actions[0]["type"], "pointer")
 
     def test_invalid_duration(self):
+        named_only_driver = _named_only_driver()
+        point = Point(0, 0)
+        point_value = Point(0, 1)
         with self.assertRaises(AppiumGestureError):
-            swipe(_named_only_driver(), Point(0, 0), Point(0, 1), duration_ms=0)
+            swipe(named_only_driver, point, point_value, duration_ms=0)
 
 
 class TestScroll(unittest.TestCase):
 
     def test_invalid_direction(self):
+        named_only_driver = _named_only_driver()
         with self.assertRaises(AppiumGestureError):
-            scroll(_named_only_driver(), "diagonal")
+            scroll(named_only_driver, "diagonal")
 
     def test_invalid_percent(self):
+        named_only_driver = _named_only_driver()
         with self.assertRaises(AppiumGestureError):
-            scroll(_named_only_driver(), "up", percent=0)
+            scroll(named_only_driver, "up", percent=0)
 
     def test_named_extension(self):
         driver = _named_only_driver()
@@ -94,8 +99,10 @@ class TestLongPress(unittest.TestCase):
         self.assertTrue(any(a["type"] == "pause" and a["duration"] == 500 for a in sub))
 
     def test_invalid_duration(self):
+        named_only_driver = _named_only_driver()
+        point = Point(0, 0)
         with self.assertRaises(AppiumGestureError):
-            long_press(_named_only_driver(), Point(0, 0), duration_ms=0)
+            long_press(named_only_driver, point, duration_ms=0)
 
 
 class TestPinch(unittest.TestCase):
@@ -113,8 +120,9 @@ class TestPinch(unittest.TestCase):
         self.assertEqual(args[0], "mobile: pinchCloseGesture")
 
     def test_invalid_scale(self):
+        named_only_driver = _named_only_driver()
         with self.assertRaises(AppiumGestureError):
-            pinch(_named_only_driver(), rect=(0, 0, 1, 1), scale=0)
+            pinch(named_only_driver, rect=(0, 0, 1, 1), scale=0)
 
     def test_w3c_two_finger_fallback(self):
         driver = _w3c_only_driver()
@@ -143,8 +151,10 @@ class TestUnsupportedDriver(unittest.TestCase):
 
     def test_swipe_without_either_capability(self):
         driver = MagicMock(spec=[])
+        point = Point(0, 0)
+        point_value = Point(1, 1)
         with self.assertRaises(AppiumGestureError):
-            swipe(driver, Point(0, 0), Point(1, 1))
+            swipe(driver, point, point_value)
 
 
 if __name__ == "__main__":

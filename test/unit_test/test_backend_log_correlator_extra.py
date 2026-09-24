@@ -103,7 +103,7 @@ def test_fetch_loki_success(monkeypatch):
     payload = {"data": {"result": [
         {"stream": {"level": "info"}, "values": [["1", "hello"]]}]}}
     monkeypatch.setattr(requests, "get", lambda *a, **k: _FakeResponse(payload))
-    logs = fetch_loki("http://loki:3100")(_TRACE)  # NOSONAR S5332 — test fixture URL, not a real transport
+    logs = fetch_loki("http://loki:3100")(_TRACE)  # NOSONAR S5332 - test fixture URL
     assert len(logs) == 1  # nosec B101
     assert logs[0].message == "hello"  # nosec B101
 
@@ -113,14 +113,15 @@ def test_fetch_loki_request_error(monkeypatch):
         raise requests.RequestException("loki down")
 
     monkeypatch.setattr(requests, "get", boom)
+    fetch_loki_result = fetch_loki("http://loki:3100")  # NOSONAR S5332 - test fixture URL
     with pytest.raises(BackendLogCorrelatorError):
-        fetch_loki("http://loki:3100")(_TRACE)  # NOSONAR S5332 — test fixture URL, not a real transport
+        fetch_loki_result(_TRACE)
 
 
 def test_fetch_elasticsearch_success(monkeypatch):
     payload = {"hits": {"hits": [{"_source": {"message": "es-line"}}]}}
     monkeypatch.setattr(requests, "post", lambda *a, **k: _FakeResponse(payload))
-    logs = fetch_elasticsearch("http://es:9200", "logs-*")(_TRACE)  # NOSONAR S5332 — test fixture URL, not a real transport
+    logs = fetch_elasticsearch("http://es:9200", "logs-*")(_TRACE)  # NOSONAR S5332 - test fixture URL
     assert len(logs) == 1  # nosec B101
     assert logs[0].message == "es-line"  # nosec B101
 
@@ -130,5 +131,6 @@ def test_fetch_elasticsearch_request_error(monkeypatch):
         raise requests.RequestException("es down")
 
     monkeypatch.setattr(requests, "post", boom)
+    fetch_elasticsearch_result = fetch_elasticsearch("http://es:9200", "logs-*")  # NOSONAR S5332 - test fixture URL
     with pytest.raises(BackendLogCorrelatorError):
-        fetch_elasticsearch("http://es:9200", "logs-*")(_TRACE)  # NOSONAR S5332 — test fixture URL, not a real transport
+        fetch_elasticsearch_result(_TRACE)

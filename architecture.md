@@ -30,7 +30,7 @@ wired into the executor as `WR_*` commands, others are reachable only from Pytho
 | `docs/` | Sphinx sources (`docs/source/Eng`, `Zh`, `API`; longer architecture chapter in `docs/source/Eng/doc/architecture/architecture_doc.rst`), generated `docs/reference/command_reference.md` and `webrunner-action-schema.json`, IDE samples in `docs/ide/`. |
 | `examples/`, `docker/`, `web_runner_driver/` | Example scripts and action files, Selenium Grid compose file for e2e, driver build script. |
 
-**`utils/` functional areas** (examples, not exhaustive; `README.md` › Module map lists more):
+**`utils/` functional areas** (examples, not exhaustive; `docs/reference/utils_index.md` lists every subpackage by layer):
 
 | Area | Example subpackages |
 | --- | --- |

@@ -90,9 +90,10 @@ class TestAssert(unittest.TestCase):
         )
 
     def test_contains_fail(self):
+        outgoing_reports = [OutgoingReport(report_id=0, data=[1, 2, 3])]
         with self.assertRaises(WebhidMockError):
             assert_output_reports(
-                [OutgoingReport(report_id=0, data=[1, 2, 3])],
+                outgoing_reports,
                 contains=[9, 9],
             )
 

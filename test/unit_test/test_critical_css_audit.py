@@ -53,8 +53,9 @@ class TestInline(unittest.TestCase):
         assert_has_inline_critical(CssReport(inline_blocks=1))
 
     def test_fail(self):
+        css_report = CssReport()
         with self.assertRaises(CriticalCssAuditError):
-            assert_has_inline_critical(CssReport())
+            assert_has_inline_critical(css_report)
 
 
 class TestBudget(unittest.TestCase):
@@ -63,12 +64,14 @@ class TestBudget(unittest.TestCase):
         assert_inline_within_budget(CssReport(inline_bytes=1024))
 
     def test_fail(self):
+        css_report = CssReport(inline_bytes=20_000)
         with self.assertRaises(CriticalCssAuditError):
-            assert_inline_within_budget(CssReport(inline_bytes=20_000))
+            assert_inline_within_budget(css_report)
 
     def test_bad_max(self):
+        css_report = CssReport()
         with self.assertRaises(CriticalCssAuditError):
-            assert_inline_within_budget(CssReport(), max_bytes=0)
+            assert_inline_within_budget(css_report, max_bytes=0)
 
 
 class TestPreloaded(unittest.TestCase):
@@ -79,10 +82,11 @@ class TestPreloaded(unittest.TestCase):
         ))
 
     def test_fail(self):
+        css_report = CssReport(
+            external_blocking=["/a.css"], preloaded=[],
+        )
         with self.assertRaises(CriticalCssAuditError):
-            assert_external_preloaded(CssReport(
-                external_blocking=["/a.css"], preloaded=[],
-            ))
+            assert_external_preloaded(css_report)
 
 
 if __name__ == "__main__":

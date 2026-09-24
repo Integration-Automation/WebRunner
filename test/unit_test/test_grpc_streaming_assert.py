@@ -56,9 +56,10 @@ class TestStatus(unittest.TestCase):
                                    status=StatusCode.OK), StatusCode.OK)
 
     def test_fail(self):
+        stream_record = StreamRecord("m", Mode.UNARY,
+                                   status=StatusCode.INTERNAL)
         with self.assertRaises(GrpcStreamingAssertError):
-            assert_status(StreamRecord("m", Mode.UNARY,
-                                       status=StatusCode.INTERNAL),
+            assert_status(stream_record,
                           StatusCode.OK)
 
 
@@ -81,9 +82,10 @@ class TestFrameCount(unittest.TestCase):
             assert_frame_count_between(rec, min_count=1, max_count=5)
 
     def test_bad_bounds(self):
+        stream_record = StreamRecord("m", Mode.UNARY)
         with self.assertRaises(GrpcStreamingAssertError):
             assert_frame_count_between(
-                StreamRecord("m", Mode.UNARY), min_count=5, max_count=1,
+                stream_record, min_count=5, max_count=1,
             )
 
 
@@ -101,8 +103,9 @@ class TestFrameSize(unittest.TestCase):
             assert_max_frame_size(rec, max_bytes=200)
 
     def test_bad_max(self):
+        stream_record = StreamRecord("m", Mode.UNARY)
         with self.assertRaises(GrpcStreamingAssertError):
-            assert_max_frame_size(StreamRecord("m", Mode.UNARY), max_bytes=0)
+            assert_max_frame_size(stream_record, max_bytes=0)
 
 
 class TestOrder(unittest.TestCase):
@@ -131,10 +134,11 @@ class TestDeadline(unittest.TestCase):
         ))
 
     def test_fail(self):
+        stream_record = StreamRecord(
+            "m", Mode.UNARY, status=StatusCode.DEADLINE_EXCEEDED,
+        )
         with self.assertRaises(GrpcStreamingAssertError):
-            assert_no_deadline_exceeded(StreamRecord(
-                "m", Mode.UNARY, status=StatusCode.DEADLINE_EXCEEDED,
-            ))
+            assert_no_deadline_exceeded(stream_record)
 
 
 class TestHalfClose(unittest.TestCase):
@@ -153,13 +157,15 @@ class TestHalfClose(unittest.TestCase):
             assert_half_close_before_final(rec)
 
     def test_never_half_closed(self):
+        stream_record = StreamRecord("m", Mode.BIDI)
         with self.assertRaises(GrpcStreamingAssertError):
-            assert_half_close_before_final(StreamRecord("m", Mode.BIDI))
+            assert_half_close_before_final(stream_record)
 
     def test_wrong_mode(self):
+        stream_record = StreamRecord("m", Mode.UNARY,
+                                                    half_closed_ts_ms=1)
         with self.assertRaises(GrpcStreamingAssertError):
-            assert_half_close_before_final(StreamRecord("m", Mode.UNARY,
-                                                        half_closed_ts_ms=1))
+            assert_half_close_before_final(stream_record)
 
 
 if __name__ == "__main__":

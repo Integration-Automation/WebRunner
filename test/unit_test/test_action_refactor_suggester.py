@@ -98,10 +98,11 @@ class TestAssert(unittest.TestCase):
                                               message="m")])
 
     def test_fail(self):
+        suggestions = [Suggestion(rule="x",
+                                              severity=Severity.WARN,
+                                              message="m")]
         with self.assertRaises(ActionRefactorSuggesterError):
-            assert_no_warns_or_errors([Suggestion(rule="x",
-                                                  severity=Severity.WARN,
-                                                  message="m")])
+            assert_no_warns_or_errors(suggestions)
 
 
 if __name__ == "__main__":

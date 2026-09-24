@@ -47,10 +47,11 @@ class TestPreloadAs(unittest.TestCase):
         ])
 
     def test_fail(self):
+        hints_value = [
+            Hint(kind=HintKind.PRELOAD, href="/x.css"),
+        ]
         with self.assertRaises(ResourceHintsAuditError):
-            assert_preload_has_as([
-                Hint(kind=HintKind.PRELOAD, href="/x.css"),
-            ])
+            assert_preload_has_as(hints_value)
 
 
 class TestUnused(unittest.TestCase):
@@ -67,9 +68,10 @@ class TestUnused(unittest.TestCase):
         )
 
     def test_assert_fail(self):
+        hints_value = [Hint(kind=HintKind.PRELOAD, href="/x.jpg")]
         with self.assertRaises(ResourceHintsAuditError):
             assert_no_unused_hints(
-                [Hint(kind=HintKind.PRELOAD, href="/x.jpg")],
+                hints_value,
                 used_urls=["/other.jpg"],
             )
 

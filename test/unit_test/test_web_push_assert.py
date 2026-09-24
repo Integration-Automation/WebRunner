@@ -55,19 +55,22 @@ class TestVapid(unittest.TestCase):
         )
 
     def test_fail(self):
+        push_log = PushLog(subscriptions=[Subscription(application_server_key="wrong")])
         with self.assertRaises(WebPushAssertError):
             assert_subscribed_with_vapid(
-                PushLog(subscriptions=[Subscription(application_server_key="wrong")]),
+                push_log,
                 vapid_public_key=VAPID_PUB,
             )
 
     def test_no_sub(self):
+        push_log = PushLog()
         with self.assertRaises(WebPushAssertError):
-            assert_subscribed_with_vapid(PushLog(), vapid_public_key=VAPID_PUB)
+            assert_subscribed_with_vapid(push_log, vapid_public_key=VAPID_PUB)
 
     def test_empty_key(self):
+        push_log = PushLog()
         with self.assertRaises(WebPushAssertError):
-            assert_subscribed_with_vapid(PushLog(), vapid_public_key="")
+            assert_subscribed_with_vapid(push_log, vapid_public_key="")
 
 
 class TestUserVisible(unittest.TestCase):
@@ -78,10 +81,11 @@ class TestUserVisible(unittest.TestCase):
         ]))
 
     def test_fail(self):
+        push_log = PushLog(subscriptions=[
+            Subscription(user_visible_only=False),
+        ])
         with self.assertRaises(WebPushAssertError):
-            assert_user_visible_only(PushLog(subscriptions=[
-                Subscription(user_visible_only=False),
-            ]))
+            assert_user_visible_only(push_log)
 
 
 class TestEndpoint(unittest.TestCase):
@@ -97,10 +101,11 @@ class TestEndpoint(unittest.TestCase):
         ]))
 
     def test_fail_unknown(self):
+        push_log = PushLog(subscriptions=[
+            Subscription(endpoint="https://attacker.com/x"),
+        ])
         with self.assertRaises(WebPushAssertError):
-            assert_endpoint_recognised(PushLog(subscriptions=[
-                Subscription(endpoint="https://attacker.com/x"),
-            ]))
+            assert_endpoint_recognised(push_log)
 
     def test_skip_empty_endpoint(self):
         assert_endpoint_recognised(PushLog(subscriptions=[
@@ -121,14 +126,16 @@ class TestNotification(unittest.TestCase):
         self.assertIsNotNone(n)
 
     def test_no_notifications(self):
+        push_log = PushLog()
         with self.assertRaises(WebPushAssertError):
-            assert_notification_shown(PushLog())
+            assert_notification_shown(push_log)
 
     def test_no_match(self):
+        push_log = PushLog(notifications=[
+            Notification(body="x"),
+        ])
         with self.assertRaises(WebPushAssertError):
-            assert_notification_shown(PushLog(notifications=[
-                Notification(body="x"),
-            ]), body_contains="y")
+            assert_notification_shown(push_log, body_contains="y")
 
 
 if __name__ == "__main__":

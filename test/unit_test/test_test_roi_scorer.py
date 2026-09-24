@@ -52,8 +52,10 @@ class TestRoiScoreOne(unittest.TestCase):
         self.assertEqual(s.verdict, "consider-removing")
 
     def test_invalid_weights(self):
+        roi_metrics = RoiMetrics(name="x")
+        weights = Weights(0.5, 0.5, 0.5, 0.5)
         with self.assertRaises(RoiScorerError):
-            score_one(RoiMetrics(name="x"), Weights(0.5, 0.5, 0.5, 0.5))
+            score_one(roi_metrics, weights)
 
     def test_bad_metric(self):
         with self.assertRaises(RoiScorerError):

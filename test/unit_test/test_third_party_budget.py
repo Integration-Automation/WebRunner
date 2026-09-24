@@ -108,8 +108,9 @@ class TestClassify(unittest.TestCase):
             classify_har("nope", first_party_hostname="app.com")
 
     def test_bad_first_party(self):
+        har = _har()
         with self.assertRaises(ThirdPartyBudgetError):
-            classify_har(_har(), first_party_hostname="")
+            classify_har(har, first_party_hostname="")
 
 
 class TestBudget(unittest.TestCase):
@@ -190,8 +191,9 @@ class TestEvaluate(unittest.TestCase):
         self.assertEqual(report.by_vendor["ga"]["bytes"], 300)
 
     def test_rejects_non_request(self):
+        third_party_budget_value = ThirdPartyBudget()
         with self.assertRaises(ThirdPartyBudgetError):
-            evaluate(["not a request"], ThirdPartyBudget())  # type: ignore[list-item]
+            evaluate(["not a request"], third_party_budget_value)  # type: ignore[list-item]
 
     def test_rejects_non_budget(self):
         with self.assertRaises(ThirdPartyBudgetError):
@@ -204,8 +206,9 @@ class TestAssert(unittest.TestCase):
         assert_within_budget(ThirdPartyReport())
 
     def test_fail(self):
+        third_party_report = ThirdPartyReport(breaches=["x"])
         with self.assertRaises(ThirdPartyBudgetError):
-            assert_within_budget(ThirdPartyReport(breaches=["x"]))
+            assert_within_budget(third_party_report)
 
     def test_rejects_non_report(self):
         with self.assertRaises(ThirdPartyBudgetError):

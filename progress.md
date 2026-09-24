@@ -6,5 +6,4 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: S-
 
 ## Open
 
-- **#4** `je_web_runner/utils/` has about 267 flat modules without a layered index (the README groups them only by section, and `CLAUDE.md` lists them flat).
-- **#6** SonarCloud on `main` (2026-09-23): 475 × `python:S5778` in `test/` (exception tests with more than one call that could raise), `githubactions:S8541`/`S8544` in `test_dev.yml`, `test_stable.yml` and `e2e_browser.yml`, which install `dev_requirements.txt` / `requirements.txt` unpinned (`publish_stable.yml` uses a hash-locked file since U-20260923-11). Details in `docs/updates` U-20260923-06.
+- **#7** [DECIDE] 189 of the 265 `je_web_runner/utils` subpackages are re-exported by no `je_web_runner.api` facade theme, so `docs/reference/utils_index.md` lists them under "Other feature subpackages". Add facade themes for them (the index picks new themes up on regeneration), or keep the facade to the current eleven.

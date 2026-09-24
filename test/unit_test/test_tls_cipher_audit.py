@@ -32,8 +32,9 @@ class TestModernTls(unittest.TestCase):
         assert_modern_tls(TlsHandshakeReport(host="x", version="TLSv1.3"))
 
     def test_fail(self):
+        tls_handshake_report = TlsHandshakeReport(host="x", version="TLSv1.0")
         with self.assertRaises(TlsCipherAuditError):
-            assert_modern_tls(TlsHandshakeReport(host="x", version="TLSv1.0"))
+            assert_modern_tls(tls_handshake_report)
 
 
 class TestCipher(unittest.TestCase):
@@ -44,14 +45,16 @@ class TestCipher(unittest.TestCase):
         ))
 
     def test_fail(self):
+        tls_handshake_report = TlsHandshakeReport(
+            host="x", cipher_suite="TLS_RSA_WITH_RC4_128_SHA",
+        )
         with self.assertRaises(TlsCipherAuditError):
-            assert_cipher_safe(TlsHandshakeReport(
-                host="x", cipher_suite="TLS_RSA_WITH_RC4_128_SHA",
-            ))
+            assert_cipher_safe(tls_handshake_report)
 
     def test_empty(self):
+        tls_handshake_report = TlsHandshakeReport(host="x", cipher_suite="")
         with self.assertRaises(TlsCipherAuditError):
-            assert_cipher_safe(TlsHandshakeReport(host="x", cipher_suite=""))
+            assert_cipher_safe(tls_handshake_report)
 
 
 class TestSubject(unittest.TestCase):
@@ -63,15 +66,17 @@ class TestSubject(unittest.TestCase):
         )
 
     def test_fail(self):
+        tls_handshake_report = TlsHandshakeReport(host="x", cert_subject="CN=other.com")
         with self.assertRaises(TlsCipherAuditError):
             assert_subject_matches(
-                TlsHandshakeReport(host="x", cert_subject="CN=other.com"),
+                tls_handshake_report,
                 contains="example.com",
             )
 
     def test_empty(self):
+        tls_handshake_report = TlsHandshakeReport(host="x")
         with self.assertRaises(TlsCipherAuditError):
-            assert_subject_matches(TlsHandshakeReport(host="x"), contains="")
+            assert_subject_matches(tls_handshake_report, contains="")
 
 
 if __name__ == "__main__":

@@ -55,24 +55,27 @@ class TestReaction(unittest.TestCase):
         self.assertEqual(r.name, "x")
 
     def test_named(self):
+        pressure_log = PressureLog(reactions=[PressureReaction(name="other",
+                                                    level=PressureLevel.CRITICAL)])
         with self.assertRaises(ComputePressureError):
             assert_reaction_to(
-                PressureLog(reactions=[PressureReaction(name="other",
-                                                        level=PressureLevel.CRITICAL)]),
+                pressure_log,
                 level=PressureLevel.SERIOUS, name="expected",
             )
 
     def test_fail(self):
+        pressure_log = PressureLog(reactions=[PressureReaction(name="x",
+                                                    level=PressureLevel.FAIR)])
         with self.assertRaises(ComputePressureError):
             assert_reaction_to(
-                PressureLog(reactions=[PressureReaction(name="x",
-                                                        level=PressureLevel.FAIR)]),
+                pressure_log,
                 level=PressureLevel.CRITICAL,
             )
 
     def test_bad_level(self):
+        pressure_log = PressureLog()
         with self.assertRaises(ComputePressureError):
-            assert_reaction_to(PressureLog(), level="critical")
+            assert_reaction_to(pressure_log, level="critical")
 
 
 class TestThrottled(unittest.TestCase):
@@ -93,11 +96,12 @@ class TestThrottled(unittest.TestCase):
         )
 
     def test_fail(self):
+        pressure_log = PressureLog(fires=[PressureLevel.CRITICAL],
+                        reactions=[PressureReaction(name="x",
+                                                    level=PressureLevel.FAIR)])
         with self.assertRaises(ComputePressureError):
             assert_throttled_at_or_above(
-                PressureLog(fires=[PressureLevel.CRITICAL],
-                            reactions=[PressureReaction(name="x",
-                                                        level=PressureLevel.FAIR)]),
+                pressure_log,
                 level=PressureLevel.SERIOUS,
             )
 
@@ -108,8 +112,9 @@ class TestDisconnect(unittest.TestCase):
         assert_observer_disconnected(PressureLog(disconnect_count=1))
 
     def test_fail(self):
+        pressure_log = PressureLog()
         with self.assertRaises(ComputePressureError):
-            assert_observer_disconnected(PressureLog())
+            assert_observer_disconnected(pressure_log)
 
 
 if __name__ == "__main__":

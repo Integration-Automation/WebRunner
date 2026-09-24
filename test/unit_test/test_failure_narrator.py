@@ -144,19 +144,22 @@ class TestParseResponse(unittest.TestCase):
             parse_response("{not really json}")
 
     def test_non_dict(self):
+        dumps_value = json.dumps([1, 2, 3])
         with self.assertRaises(FailureNarratorError):
-            parse_response(json.dumps([1, 2, 3]))
+            parse_response(dumps_value)
 
     def test_missing_field(self):
+        dumps_value = json.dumps({
+            "summary": "x", "likely_cause": "y", "next_step": "z",
+            # confidence missing
+        })
         with self.assertRaises(FailureNarratorError):
-            parse_response(json.dumps({
-                "summary": "x", "likely_cause": "y", "next_step": "z",
-                # confidence missing
-            }))
+            parse_response(dumps_value)
 
     def test_bad_confidence(self):
+        good_response = _good_response(confidence="maybe")
         with self.assertRaises(FailureNarratorError):
-            parse_response(_good_response(confidence="maybe"))
+            parse_response(good_response)
 
 
 class TestNarrate(unittest.TestCase):
@@ -168,8 +171,10 @@ class TestNarrate(unittest.TestCase):
         self.assertIn("t1", client.last_prompt)
 
     def test_client_error_wrapped(self):
+        failure_bundle = FailureBundle(test_id="t1")
+        stub_client = StubClient(RuntimeError("rate"))
         with self.assertRaises(FailureNarratorError):
-            narrate(FailureBundle(test_id="t1"), StubClient(RuntimeError("rate")))
+            narrate(failure_bundle, stub_client)
 
 
 class TestNarrationReport(unittest.TestCase):

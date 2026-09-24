@@ -45,8 +45,9 @@ class TestRecorderInjection(unittest.TestCase):
     def test_pull_events_rejects_unexpected_payload(self):
         driver = MagicMock()
         driver.execute_script.return_value = "not a list"
+        fake_wrapper = _FakeWrapper(driver)
         with self.assertRaises(RecorderError):
-            pull_events(_FakeWrapper(driver))
+            pull_events(fake_wrapper)
 
     def test_stop_recording_clears_flag(self):
         driver = MagicMock()
@@ -55,8 +56,9 @@ class TestRecorderInjection(unittest.TestCase):
         self.assertIn("__wr_recorder_installed = false", script)
 
     def test_resolve_driver_rejects_unsupported_object(self):
+        object_value = object()
         with self.assertRaises(RecorderError):
-            start_recording(object())
+            start_recording(object_value)
 
 
 class TestEventTranslation(unittest.TestCase):

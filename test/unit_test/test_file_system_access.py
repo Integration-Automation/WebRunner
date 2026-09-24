@@ -77,8 +77,9 @@ class TestAssertNoWrites(unittest.TestCase):
         assert_no_writes([])
 
     def test_fail(self):
+        write_events = [WriteEvent(file_name="a", sequence=1, data="x")]
         with self.assertRaises(FileSystemAccessError):
-            assert_no_writes([WriteEvent(file_name="a", sequence=1, data="x")])
+            assert_no_writes(write_events)
 
 
 class TestAssertWrote(unittest.TestCase):
@@ -103,12 +104,14 @@ class TestAssertWrote(unittest.TestCase):
         self.assertEqual(w.sequence, 2)
 
     def test_miss(self):
+        writes = self._writes()
         with self.assertRaises(FileSystemAccessError):
-            assert_wrote(self._writes(), file_name="missing.txt")
+            assert_wrote(writes, file_name="missing.txt")
 
     def test_no_filter(self):
+        writes = self._writes()
         with self.assertRaises(FileSystemAccessError):
-            assert_wrote(self._writes())
+            assert_wrote(writes)
 
 
 class TestCombinedPayload(unittest.TestCase):
