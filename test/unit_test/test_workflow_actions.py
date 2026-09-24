@@ -32,7 +32,7 @@ def _uses(path: Path) -> list[tuple[int, str, str]]:
 
 
 def test_workflows_exist():
-    assert _WORKFLOWS
+    assert _WORKFLOWS  # nosec B101 — assert is the test assertion
 
 
 @pytest.mark.parametrize("workflow", _WORKFLOWS, ids=lambda p: p.name)
@@ -40,7 +40,7 @@ def test_every_action_is_pinned_to_a_commit_with_its_version(workflow):
     bad = [f"{workflow.name}:{number} {ref}{rest}"
            for number, ref, rest in _uses(workflow)
            if not (_PINNED.match(ref) and _VERSION_COMMENT.match(rest))]
-    assert bad == []
+    assert bad == []  # nosec B101 — assert is the test assertion
 
 
 def test_one_version_per_action():
@@ -50,7 +50,7 @@ def test_one_version_per_action():
         for _number, ref, _rest in _uses(workflow):
             action, _, sha = ref.partition("@")
             seen.setdefault(action, set()).add(sha)
-    assert {action: shas for action, shas in seen.items() if len(shas) > 1} == {}
+    assert {action: shas for action, shas in seen.items() if len(shas) > 1} == {}  # nosec B101 — assert is the test assertion
 
 
 def test_dependabot_keeps_pins_current_on_dev():
@@ -60,8 +60,8 @@ def test_dependabot_keeps_pins_current_on_dev():
     text = (_ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
     blocks = re.split(r"^\s*-\s*package-ecosystem:", text, flags=re.MULTILINE)[1:]
     ecosystems = {block.split()[0].strip("\"'") for block in blocks}
-    assert {"pip", "github-actions"} <= ecosystems
-    assert all(re.search(r"^\s*target-branch:\s*\"dev\"", block, re.MULTILINE)
+    assert {"pip", "github-actions"} <= ecosystems  # nosec B101 — assert is the test assertion
+    assert all(re.search(r"^\s*target-branch:\s*\"dev\"", block, re.MULTILINE)  # nosec B101 — assert is the test assertion
                for block in blocks)
 
 
@@ -90,4 +90,4 @@ def test_every_checkout_decides_on_persisted_credentials(workflow):
     # Only jobs that push keep it, and they say so.
     bad = [f"{workflow.name}:{number}" for number, step in _checkout_steps(workflow)
            if not re.search(r"^\s*persist-credentials:\s*(true|false)\b", step, re.MULTILINE)]
-    assert bad == []
+    assert bad == []  # nosec B101 — assert is the test assertion
