@@ -318,8 +318,8 @@ test/
   the MCP / LSP. Same workflows as unit, second step.
 - **E2E** (`test/e2e_test/`) — talks to a Selenium Grid via
   `WEBRUNNER_E2E_HUB`. Locally: `cd docker && docker compose up -d`.
-  CI: `.github/workflows/e2e_browser.yml` boots `selenium/hub:4.20.0`
-  + `selenium/node-chrome` daily / on demand.
+  CI: `.github/workflows/e2e_browser.yml` boots `selenium/hub:4.20.0` +
+  `selenium/node-chrome` daily / on demand.
 
 ## Thematic API Façade
 
@@ -914,8 +914,8 @@ only what you use).
 
 - **`mixed_content_audit`** — HAR + console-message scan for HTTP
   resources on HTTPS pages (active vs passive vs HSTS-upgrade).
-- **`clickjacking_audit`** — X-Frame-Options + `frame-ancestors` parser
-  + iframe-probe page generator; STRICT / SAMEORIGIN / ALLOWED / MISSING
+- **`clickjacking_audit`** — X-Frame-Options + `frame-ancestors` parser +
+  iframe-probe page generator; STRICT / SAMEORIGIN / ALLOWED / MISSING
   verdict.
 - **`open_redirect_detector`** — Eight-payload probe set (`//evil`,
   `@userinfo`, `javascript:`, `data:`, mixed-case bypass…) +
@@ -930,8 +930,8 @@ only what you use).
   leaked JWTs (with header validation), AWS / GitHub / Slack / Stripe /
   Google / generic-bearer tokens. Deduped by token suffix.
 - **`consent_audit`** — Cookie catalogue (GA / FB pixel / Hotjar /
-  LinkedIn / Mixpanel / Stripe / Intercom / CSRF / session) + pre-consent
-  + post-reject reintroduction detector.
+  LinkedIn / Mixpanel / Stripe / Intercom / CSRF / session) + pre-consent +
+  post-reject reintroduction detector.
 - **`pii_in_screenshot`** — OCR + PII regex (Luhn-validated card, SSN,
   ROC ID, IBAN, IPv4, phone, email) over screenshots; reuses
   `ocr_assert` for the OCR layer.
@@ -986,16 +986,16 @@ only what you use).
 - **`test_categorizer`** — Regex rules over action-name patterns → auto
   tag: smoke / regression / perf / a11y / security / payment /
   data_driven / visual / api.
-- **`exploratory_ai`** — Agentic exploratory tester with `PageObserver`
-  + `ActionPlanner` protocols; ships a deterministic `RandomPlanner` as
+- **`exploratory_ai`** — Agentic exploratory tester with `PageObserver` +
+  `ActionPlanner` protocols; ships a deterministic `RandomPlanner` as
   fuzz fallback, collects `BugSignal`s from observed errors.
 - **`story_to_actions`** — LLM-driven translation of a user story +
   optional Figma frame hints into validated WR action JSON; validator
   rejects unsafe action names and bad locator strategies.
 - **`session_to_test`** — rrweb / generic-event-stream → WR action JSON;
   auto-detects input format.
-- **`test_auto_repair`** — LLM-driven test rewrite from a failure bundle
-  + git diff context.
+- **`test_auto_repair`** — LLM-driven test rewrite from a failure bundle +
+  git diff context.
 - **`edge_case_generator`** — LLM edge-case variant generator
   (complement to `mutation_testing`).
 - **`multimodal_qa`** — Send screenshot + question to a vision LLM,
@@ -1160,8 +1160,8 @@ through plain WebDriver:
   per-model rate card + budget assertion.
 - **`streaming_chat_assert`** — TTFT / inter-token gap / UTF-8
   cleanliness / duplicate-or-OOS chunk assertions for streaming chat.
-- **`tool_call_assert`** — LLM tool / function-call name + ordering
-  + JSON Schema argument validation.
+- **`tool_call_assert`** — LLM tool / function-call name + ordering +
+  JSON Schema argument validation.
 - **`hallucination_probe`** — Ground-truth probe runner + refusal
   detection + hallucination-rate budget.
 
@@ -1171,8 +1171,8 @@ through plain WebDriver:
   `List-Unsubscribe` (Gmail/Yahoo bulk rules) + BCC-leak audit.
 - **`inbox_render_outlook`** — Outlook (Word renderer) / Gmail /
   Apple Mail render-compatibility pre-flight findings.
-- **`push_delivery`** — FCM / APNs payload size + required fields
-  + PII scan + collapse key + TTL validation.
+- **`push_delivery`** — FCM / APNs payload size + required fields +
+  PII scan + collapse key + TTL validation.
 
 ### Performance budgets (cont.)
 
@@ -1182,10 +1182,10 @@ through plain WebDriver:
   matrix (no-vendor / blocked / passed).
 - **`bundle_diff_pr`** — PR bundle delta (added / removed / grew) +
   growth-gate + markdown report.
-- **`lcp_image_audit`** — LCP image preloaded + no `loading="lazy"`
-  + `fetchpriority="high"` assertions.
-- **`font_loading_strategy`** — `@font-face` `font-display` strategy
-  + `size-adjust` fallback for FOUT / FOIT / FOFT verification.
+- **`lcp_image_audit`** — LCP image preloaded + no `loading="lazy"` +
+  `fetchpriority="high"` assertions.
+- **`font_loading_strategy`** — `@font-face` `font-display` strategy +
+  `size-adjust` fallback for FOUT / FOIT / FOFT verification.
 - **`resource_hints_audit`** — `preload` / `prefetch` / `preconnect`
   used vs declared + `preload as=` validation.
 - **`critical_css_audit`** — Inline-CSS-in-`<head>` budget + render-
