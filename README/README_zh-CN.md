@@ -316,8 +316,8 @@ test/
   与单元测试相同的工作流，第二步执行。
 - **端到端测试**（`test/e2e_test/`）—— 通过 `WEBRUNNER_E2E_HUB`
   与 Selenium Grid 通信。本地：`cd docker && docker compose up -d`。
-  CI：`.github/workflows/e2e_browser.yml` 每日 / 按需启动
-  `selenium/hub:4.20.0` + `selenium/node-chrome`。
+  CI：`.github/workflows/e2e_browser.yml` 每日 / 按需启动 `selenium/hub:4.20.0` +
+  `selenium/node-chrome`。
 
 ## 主题化 API 门面
 
@@ -905,8 +905,8 @@ python -m je_web_runner.action_lsp
 
 - **`mixed_content_audit`** —— HAR + 控制台消息扫描，查找 HTTPS 页面上的
   HTTP 资源（active vs passive vs HSTS-upgrade）。
-- **`clickjacking_audit`** —— X-Frame-Options + `frame-ancestors` 解析器
-  + iframe 探测页生成器；STRICT / SAMEORIGIN / ALLOWED / MISSING
+- **`clickjacking_audit`** —— X-Frame-Options + `frame-ancestors` 解析器 +
+  iframe 探测页生成器；STRICT / SAMEORIGIN / ALLOWED / MISSING
   裁定。
 - **`open_redirect_detector`** —— 八载荷探测集（`//evil`、
   `@userinfo`、`javascript:`、`data:`、大小写混合绕过……）+
@@ -921,8 +921,8 @@ python -m je_web_runner.action_lsp
   泄漏的 JWT（含头部校验）、AWS / GitHub / Slack / Stripe /
   Google / 通用 bearer 令牌。按令牌后缀去重。
 - **`consent_audit`** —— Cookie 目录（GA / FB pixel / Hotjar /
-  LinkedIn / Mixpanel / Stripe / Intercom / CSRF / session）+ 同意前
-  + 拒绝后重新引入检测器。
+  LinkedIn / Mixpanel / Stripe / Intercom / CSRF / session）+ 同意前 +
+  拒绝后重新引入检测器。
 - **`pii_in_screenshot`** —— 对截图做 OCR + PII 正则（Luhn 校验的卡号、SSN、
   中华民国身份证号、IBAN、IPv4、电话、邮箱）；OCR 层复用
   `ocr_assert`。
@@ -977,12 +977,28 @@ python -m je_web_runner.action_lsp
 - **`test_categorizer`** —— 对动作名模式的正则规则 → 自动
   打标签：smoke / regression / perf / a11y / security / payment /
   data_driven / visual / api。
-- **`exploratory_ai`** —— 带 `PageObserver` + `ActionPlanner` 协议的
-  智能体探索式测试器；提供一个确定性的 `RandomPlanner` 作为
-  fuzz 回退，从观测到的错误收集 `BugSignal`。
+- **`exploratory_ai`** —— 带 `PageObserver` +
+  `ActionPlanner` 协议的智能体探索式测试器；提供一个确定性的
+  `RandomPlanner` 作为 fuzz 回退，从观测到的错误收集 `BugSignal`。
 - **`story_to_actions`** —— 将用户故事 + 可选 Figma 帧提示 LLM 驱动地
   翻译为经校验的 WR 动作 JSON；校验器拒绝不安全的动作名
   和糟糕的定位器策略。
+- **`session_to_test`** —— rrweb / 通用事件流 → WR 动作 JSON；
+  自动检测输入格式。
+- **`test_auto_repair`** —— 根据失败包 +
+  git diff 上下文，由 LLM 驱动改写测试。
+- **`edge_case_generator`** —— LLM 边界用例变体生成器
+  （与 `mutation_testing` 互补）。
+- **`multimodal_qa`** —— 将截图 + 问题发送给视觉 LLM，
+  解析带置信度下限的 pass / fail / uncertain 判定；适用于像素差异之外的
+  UI“这样对吗？”检查。
+- **`prompt_drift_monitor`** —— 通过基线嵌入 + must_include / must_exclude
+  词汇锚点，追踪应用内部 LLM 功能的输出漂移。
+- **`test_dedup_ai`** —— 结构化（规范指纹）+ 语义
+  （可插拔嵌入器的余弦聚类）方式对动作 JSON
+  文件去重。
+- **`walkthrough_docs`** —— 从录制的运行生成分步 SOP / Confluence 风格
+  文档。
 
 ### a11y / i18n / 视觉
 
@@ -996,8 +1012,8 @@ python -m je_web_runner.action_lsp
   （`__éxámplé strîng__`）+ 扫描渲染页面查找硬编码文本
   泄漏。保留 `{name}` / `%d` / `<tag>` 占位符。
 - **`forced_colors_mode`** —— 四个 CSS 媒体查询（color-scheme /
-  reduced-motion / forced-colors / contrast）的 CDP-features 构建器
-  + 带“变为不可见”检测的计算样式差异。
+  reduced-motion / forced-colors / contrast）的 CDP-features
+  构建器 + 带“变为不可见”检测的计算样式差异。
 - **`visual_ai`** —— aHash / dHash / pHash + SSIM 代理，用于 canvas /
   图表视觉差异。
 
@@ -1133,8 +1149,8 @@ python -m je_web_runner.action_lsp
   按模型价目表 + 预算断言。
 - **`streaming_chat_assert`** —— 面向流式聊天的 TTFT / inter-token gap /
   UTF-8 洁净度 / duplicate-or-OOS 分块断言。
-- **`tool_call_assert`** —— LLM tool / function-call 名称 + 排序
-  + JSON Schema 参数校验。
+- **`tool_call_assert`** —— LLM tool / function-call 名称 + 排序 +
+  JSON Schema 参数校验。
 - **`hallucination_probe`** —— Ground-truth 探测运行器 + 拒绝
   检测 + 幻觉率预算。
 
@@ -1144,8 +1160,8 @@ python -m je_web_runner.action_lsp
   `List-Unsubscribe`（Gmail/Yahoo 批量规则）+ BCC-leak 审计。
 - **`inbox_render_outlook`** —— Outlook（Word 渲染器）/ Gmail /
   Apple Mail 渲染兼容性预检发现。
-- **`push_delivery`** —— FCM / APNs 载荷大小 + 必填字段
-  + PII 扫描 + collapse key + TTL 校验。
+- **`push_delivery`** —— FCM / APNs 载荷大小 + 必填字段 +
+  PII 扫描 + collapse key + TTL 校验。
 
 ### 性能预算（续）
 
@@ -1155,10 +1171,10 @@ python -m je_web_runner.action_lsp
   矩阵（no-vendor / blocked / passed）。
 - **`bundle_diff_pr`** —— PR bundle 增量（added / removed / grew）+
   growth-gate + markdown 报告。
-- **`lcp_image_audit`** —— LCP 图像已预加载 + 无 `loading="lazy"`
-  + `fetchpriority="high"` 断言。
-- **`font_loading_strategy`** —— `@font-face` `font-display` 策略
-  + `size-adjust` 回退，用于 FOUT / FOIT / FOFT 验证。
+- **`lcp_image_audit`** —— LCP 图像已预加载 + 无 `loading="lazy"` +
+  `fetchpriority="high"` 断言。
+- **`font_loading_strategy`** —— `@font-face` `font-display` 策略 +
+  `size-adjust` 回退，用于 FOUT / FOIT / FOFT 验证。
 - **`resource_hints_audit`** —— `preload` / `prefetch` / `preconnect`
   使用 vs 声明 + `preload as=` 校验。
 - **`critical_css_audit`** —— `<head>` 中内联 CSS 预算 + render-
