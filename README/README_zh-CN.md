@@ -316,8 +316,8 @@ test/
   与单元测试相同的工作流，第二步执行。
 - **端到端测试**（`test/e2e_test/`）—— 通过 `WEBRUNNER_E2E_HUB`
   与 Selenium Grid 通信。本地：`cd docker && docker compose up -d`。
-  CI：`.github/workflows/e2e_browser.yml` 每日 / 按需启动
-  `selenium/hub:4.20.0` + `selenium/node-chrome`。
+  CI：`.github/workflows/e2e_browser.yml` 每日 / 按需启动 `selenium/hub:4.20.0`
+  + `selenium/node-chrome`。
 
 ## 主题化 API 门面
 
@@ -977,12 +977,28 @@ python -m je_web_runner.action_lsp
 - **`test_categorizer`** —— 对动作名模式的正则规则 → 自动
   打标签：smoke / regression / perf / a11y / security / payment /
   data_driven / visual / api。
-- **`exploratory_ai`** —— 带 `PageObserver` + `ActionPlanner` 协议的
-  智能体探索式测试器；提供一个确定性的 `RandomPlanner` 作为
-  fuzz 回退，从观测到的错误收集 `BugSignal`。
+- **`exploratory_ai`** —— 带 `PageObserver`
+  + `ActionPlanner` 协议的智能体探索式测试器；提供一个确定性的
+  `RandomPlanner` 作为 fuzz 回退，从观测到的错误收集 `BugSignal`。
 - **`story_to_actions`** —— 将用户故事 + 可选 Figma 帧提示 LLM 驱动地
   翻译为经校验的 WR 动作 JSON；校验器拒绝不安全的动作名
   和糟糕的定位器策略。
+- **`session_to_test`** —— rrweb / 通用事件流 → WR 动作 JSON；
+  自动检测输入格式。
+- **`test_auto_repair`** —— 根据失败包
+  + git diff 上下文，由 LLM 驱动改写测试。
+- **`edge_case_generator`** —— LLM 边界用例变体生成器
+  （与 `mutation_testing` 互补）。
+- **`multimodal_qa`** —— 将截图 + 问题发送给视觉 LLM，
+  解析带置信度下限的 pass / fail / uncertain 判定；适用于像素差异之外的
+  UI“这样对吗？”检查。
+- **`prompt_drift_monitor`** —— 通过基线嵌入 + must_include / must_exclude
+  词汇锚点，追踪应用内部 LLM 功能的输出漂移。
+- **`test_dedup_ai`** —— 结构化（规范指纹）+ 语义
+  （可插拔嵌入器的余弦聚类）方式对动作 JSON
+  文件去重。
+- **`walkthrough_docs`** —— 从录制的运行生成分步 SOP / Confluence 风格
+  文档。
 
 ### a11y / i18n / 视觉
 
@@ -996,8 +1012,8 @@ python -m je_web_runner.action_lsp
   （`__éxámplé strîng__`）+ 扫描渲染页面查找硬编码文本
   泄漏。保留 `{name}` / `%d` / `<tag>` 占位符。
 - **`forced_colors_mode`** —— 四个 CSS 媒体查询（color-scheme /
-  reduced-motion / forced-colors / contrast）的 CDP-features 构建器
-  + 带“变为不可见”检测的计算样式差异。
+  reduced-motion / forced-colors / contrast）的 CDP-features
+  构建器 + 带“变为不可见”检测的计算样式差异。
 - **`visual_ai`** —— aHash / dHash / pHash + SSIM 代理，用于 canvas /
   图表视觉差异。
 
