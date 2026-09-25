@@ -20,7 +20,7 @@
 
 WebRunner（`je_web_runner`）最初只是一個 Selenium 封裝，如今已成長為一個完整的自動化平台：一個 Selenium 後端與一個 Playwright 後端，統一由一個 JSON 驅動的動作執行器排程，再加上用於報告、可觀測性、編排、安全與 AI 輔助的各類模組。每個執行器命令都有一個確定性的名稱（`WR_*`）和單一的分發點，因此一份動作 JSON 可以在同一個腳本裡混合瀏覽器、HTTP、資料庫與 webhook 呼叫。
 
-> **自動產生的參考文件** —— 每個已註冊的 `WR_*` 命令（簽章 + 摘要）都匯出在 [`docs/reference/command_reference.md`](docs/reference/command_reference.md)，動作 JSON 檔案的 JSON Schema 則位於 [`docs/reference/webrunner-action-schema.json`](docs/reference/webrunner-action-schema.json)。
+> **自動產生的參考文件** —— 每個已註冊的 `WR_*` 命令（簽章 + 摘要）都匯出在 [`docs/reference/command_reference.md`](../docs/reference/command_reference.md)，動作 JSON 檔案的 JSON Schema 則位於 [`docs/reference/webrunner-action-schema.json`](../docs/reference/webrunner-action-schema.json)。
 
 ## 目錄
 
@@ -196,7 +196,7 @@ flowchart TB
 
 ### 模組地圖
 
-每個 `utils/` 子套件都附有一行摘要，並按核心引擎、`je_web_runner.api` 門面主題及其餘部分分組：[`docs/reference/utils_index.md`](docs/reference/utils_index.md)
+每個 `utils/` 子套件都附有一行摘要，並按核心引擎、`je_web_runner.api` 門面主題及其餘部分分組：[`docs/reference/utils_index.md`](../docs/reference/utils_index.md)
 （由 `scripts/gen_utils_index.py` 產生）。
 
 ```
@@ -1278,8 +1278,8 @@ python -m je_web_runner.action_lsp
 - **`speech_api_assert`** —— `SpeechSynthesis` / `SpeechRecognition`
   模擬 + utterance / language / volume 斷言。
 
-關於逐模組的參考，另見 [`CLAUDE.md`](CLAUDE.md)、
-自動產生的 [`docs/reference/command_reference.md`](docs/reference/command_reference.md)，
+關於逐模組的參考，另見 [`CLAUDE.md`](../CLAUDE.md)、
+自動產生的 [`docs/reference/command_reference.md`](../docs/reference/command_reference.md)，
 以及 `docs/source/Eng/doc/specialized_modules/` 下的
 Sphinx 章節。
 
@@ -1569,7 +1569,7 @@ from je_web_runner.utils.ci_annotations.github_annotations import (
 
 `docker/docker-compose.yml` 提供一個 Selenium Grid 4 堆疊（hub + Chrome + Firefox 節點）；`docker/.env.example` 公開版本固定和並行設定。
 
-[`docs/ide/`](docs/ide/) 下的 IDE 設定範例將 VS Code 和 JetBrains 接線到由 `WR_export_action_schema` 產出的動作 JSON schema。
+[`docs/ide/`](../docs/ide/) 下的 IDE 設定範例將 VS Code 和 JetBrains 接線到由 `WR_export_action_schema` 產出的動作 JSON schema。
 
 ## AI 輔助
 
@@ -1688,4 +1688,4 @@ WebRunner 使用一個輪替檔案處理器：
 
 ## 授權
 
-本專案基於 [MIT 授權](LICENSE)授權。
+本專案基於 [MIT 授權](../LICENSE)授權。

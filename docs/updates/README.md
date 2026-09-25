@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20260925-02 | 2026-09-25 | Translated READMEs link back to the repository root | #docs #tests | [2026-09](2026-09.md) |
 | U-20260925-01 | 2026-09-25 | Dependabot waits 7 days before proposing a new release | #ci #security #deps | [2026-09](2026-09.md) |
 | U-20260924-01 | 2026-09-24 | Pin workflow actions by commit; keep checkout credentials only where a job pushes | #ci #security | [2026-09](2026-09.md) |
 | U-20260923-20 | 2026-09-23 | One possibly-raising call per exception-test block (S5778) | #done #tests #sonar | [2026-09](2026-09.md) |
@@ -87,4 +88,4 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-09.md](2026-09.md) | 2026-09 | 24 |
+| [2026-09.md](2026-09.md) | 2026-09 | 25 |

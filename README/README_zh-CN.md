@@ -20,7 +20,7 @@
 
 WebRunner（`je_web_runner`）最初只是一个 Selenium 封装，如今已成长为一个完整的自动化平台：一个 Selenium 后端与一个 Playwright 后端，统一由一个 JSON 驱动的动作执行器调度，再加上用于报告、可观测性、编排、安全与 AI 辅助的各类模块。每个执行器命令都有一个确定性的名称（`WR_*`）和单一的分发点，因此一份动作 JSON 可以在同一个脚本里混合浏览器、HTTP、数据库与 webhook 调用。
 
-> **自动生成的参考文档** —— 每个已注册的 `WR_*` 命令（签名 + 摘要）都导出在 [`docs/reference/command_reference.md`](docs/reference/command_reference.md)，动作 JSON 文件的 JSON Schema 则位于 [`docs/reference/webrunner-action-schema.json`](docs/reference/webrunner-action-schema.json)。
+> **自动生成的参考文档** —— 每个已注册的 `WR_*` 命令（签名 + 摘要）都导出在 [`docs/reference/command_reference.md`](../docs/reference/command_reference.md)，动作 JSON 文件的 JSON Schema 则位于 [`docs/reference/webrunner-action-schema.json`](../docs/reference/webrunner-action-schema.json)。
 
 ## 目录
 
@@ -196,7 +196,7 @@ flowchart TB
 
 ### 模块地图
 
-每个 `utils/` 子包都附有一行摘要，并按核心引擎、`je_web_runner.api` 门面主题及其余部分分组：[`docs/reference/utils_index.md`](docs/reference/utils_index.md)
+每个 `utils/` 子包都附有一行摘要，并按核心引擎、`je_web_runner.api` 门面主题及其余部分分组：[`docs/reference/utils_index.md`](../docs/reference/utils_index.md)
 （由 `scripts/gen_utils_index.py` 生成）。
 
 ```
@@ -1278,8 +1278,8 @@ python -m je_web_runner.action_lsp
 - **`speech_api_assert`** —— `SpeechSynthesis` / `SpeechRecognition`
   模拟 + utterance / language / volume 断言。
 
-关于逐模块的参考，另见 [`CLAUDE.md`](CLAUDE.md)、
-自动生成的 [`docs/reference/command_reference.md`](docs/reference/command_reference.md)，
+关于逐模块的参考，另见 [`CLAUDE.md`](../CLAUDE.md)、
+自动生成的 [`docs/reference/command_reference.md`](../docs/reference/command_reference.md)，
 以及 `docs/source/Eng/doc/specialized_modules/` 下的
 Sphinx 章节。
 
@@ -1569,7 +1569,7 @@ from je_web_runner.utils.ci_annotations.github_annotations import (
 
 `docker/docker-compose.yml` 提供一个 Selenium Grid 4 栈（hub + Chrome + Firefox 节点）；`docker/.env.example` 暴露版本固定和并发设置。
 
-[`docs/ide/`](docs/ide/) 下的 IDE 配置示例将 VS Code 和 JetBrains 接线到由 `WR_export_action_schema` 产出的动作 JSON schema。
+[`docs/ide/`](../docs/ide/) 下的 IDE 配置示例将 VS Code 和 JetBrains 接线到由 `WR_export_action_schema` 产出的动作 JSON schema。
 
 ## AI 辅助
 
@@ -1688,4 +1688,4 @@ WebRunner 使用一个轮转文件处理器：
 
 ## 许可证
 
-本项目基于 [MIT 许可证](LICENSE)授权。
+本项目基于 [MIT 许可证](../LICENSE)授权。
