@@ -183,6 +183,24 @@ class Executor:
         """
         self.allow_arbitrary_script = bool(enabled)
 
+    @staticmethod
+    def set_allow_arbitrary_packages(enabled: bool) -> None:
+        """
+        允許或拒絕載入允許清單以外的套件（``WR_add_package_to_executor``）
+        Allow (True) or refuse (False) ``WR_add_package_to_executor`` for packages outside
+        the allowlist. Python only, never an action command, so an action file cannot open
+        its own gate. Until it is called, any package loads with a ``DeprecationWarning``.
+        """
+        package_manager.set_allow_arbitrary_packages(enabled)
+
+    @staticmethod
+    def allow_packages(*packages: str) -> None:
+        """
+        把套件（連同子模組）加入 ``WR_add_package_to_executor`` 的允許清單
+        Add packages, and their submodules, to the allowlist of ``WR_add_package_to_executor``.
+        """
+        package_manager.allow_packages(*packages)
+
     def _execute_event(self, action: list):
         """
         執行事件字典中的函式

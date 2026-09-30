@@ -24,6 +24,26 @@
 
     execute_action(actions)
 
+套件閘門
+--------
+
+載入套件會把它的函式註冊成命令，所以能寫出 ``os`` 或 ``subprocess`` 的
+action 檔就能執行任何東西。由主程式決定 action 檔可以載入哪些套件：
+
+.. code-block:: python
+
+    from je_web_runner.utils.executor.action_executor import executor
+
+    executor.allow_packages("my_helpers")          # 這些套件與其子模組
+    executor.set_allow_arbitrary_packages(False)   # 拒絕其他所有套件
+
+被拒絕的套件在匯入前就丟出 ``WebRunnerExecuteException``，並記在該動作的
+結果裡。``set_allow_arbitrary_packages(True)`` 則載入任何套件、不發警告。
+兩個開關都不是 action 命令，所以 action 檔無法自行打開閘門。
+
+主程式呼叫其中之一以前，任何套件仍會載入，但每個不在清單上的套件都會發出
+``DeprecationWarning``：未來的版本會預設拒絕不在清單上的套件。
+
 直接 API 使用
 --------------
 

@@ -499,6 +499,8 @@ from je_web_runner.utils.executor.action_executor import executor
 executor.set_retry_policy(retries=2, backoff=0.5)             # global retry
 executor.set_failure_screenshot_dir("./failures")              # auto PNG on raise
 executor.set_allow_arbitrary_script(False)                     # gate WR_execute_script / WR_pw_evaluate / WR_cdp
+executor.allow_packages("my_helpers")                         # WR_add_package_to_executor may load these
+executor.set_allow_arbitrary_packages(False)                   # and refuses every other package
 ```
 
 ## 後端
@@ -658,6 +660,7 @@ python -m je_web_runner --execute_dir ./actions --shard 4/4
 - **網路限速** —— `WR_throttle("slow_3g")` / `WR_pw_throttle("offline")`；預設涵蓋 Slow 3G、Fast 3G、Regular 4G、Wi-Fi、Offline、no-throttling。
 - **HAR 差異** —— `WR_diff_har` / `WR_diff_har_files` 顯示兩次執行之間新增 / 移除 / 狀態變化的請求。
 - **任意腳本閘門** —— `executor.set_allow_arbitrary_script(False)` 為不可信的動作 JSON 阻擋 `WR_execute_script` / `WR_execute_async_script` / `WR_pw_evaluate` / `WR_cdp` / `WR_pw_cdp`。
+- **套件閘門** —— `WR_add_package_to_executor` 會匯入 Python 套件並把其函式註冊成命令，所以能寫出 `os` 或 `subprocess` 的動作檔就能執行任何東西。`executor.allow_packages("name", …)` 列出允許載入的套件（含子模組），`executor.set_allow_arbitrary_packages(False)` 在匯入前拒絕其餘套件；兩者都不是動作命令，所以動作檔無法自行打開閘門。主程式設定閘門之前，任何套件仍會載入，但會發出 `DeprecationWarning`：未來的版本會預設拒絕不在清單上的套件。
 
 ## 擴充能力
 

@@ -146,6 +146,10 @@ process share one driver (`--parallel-mode process` exists for isolation).
 - Executor calls only registered commands: the `WR_*` table plus the 22-name `SAFE_BUILTINS` allowlist
   (`abs` … `sum`), the same list MailThunder and LoadDensity use; nothing else reaches `event_dict`
   (workspace `progress.md` X-12). → CLAUDE.md › Coding Standards › Security Requirements
+- `WR_add_package_to_executor` / `WR_add_package_to_callback_executor` pass the package gate in
+  `utils/package_manager/package_manager_class.py` before importing: `executor.allow_packages(...)` and
+  `executor.set_allow_arbitrary_packages(...)` are Python-only, never `WR_*` commands, so an action file cannot open
+  its own gate. Unconfigured, any package loads with a `DeprecationWarning` (progress #22 flips the default).
 - Validate all external input (URLs, action JSON, socket messages, CLI args); prevent path traversal; socket server binds
   localhost unless configured; escape dynamic content in HTML reports; parameterize values passed to JS. → same section
 - Credentials are never logged or stored in plaintext; use `python-dotenv`. → same section

@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-10 | 2026-10-01 | Package gate in front of WR_add_package_to_executor | #done #security #executor | [2026-10](2026-10.md) |
 | U-20261001-09 | 2026-10-01 | MCP tools: titles, annotations, described closed schemas, argument checks, structuredContent | #change #mcp | [2026-10](2026-10.md) |
 | U-20261001-08 | 2026-10-01 | Split the MCP server module; export Tool from the package | #refactor #mcp | [2026-10](2026-10.md) |
 | U-20261001-07 | 2026-10-01 | MCP server negotiates 2024-11-05 to 2025-11-25; real version and instructions | #change #mcp | [2026-10](2026-10.md) |
@@ -97,5 +98,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 9 |
+| [2026-10.md](2026-10.md) | 2026-10 | 10 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
