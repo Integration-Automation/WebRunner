@@ -779,6 +779,7 @@ serve_stdio(server=server)
 - stdio 一律是 UTF-8、行尾 `\n`，与控制台代码页无关。进程写到 stdout 的其他内容（`print`、子进程）都改走 stderr，所以客户端只会收到协议消息。
 - 工具执行失败时回传 `isError: true` 与错误信息，让客户端能修正调用。`webrunner_run_actions` 与 `webrunner_run_action_files` 在有动作失败时也会设 `isError`，并把失败的记录键列在 `failed`。
 - 未知的工具或不是对象的 `arguments` 回 JSON-RPC `-32602` 错误。通知（notification）一律不回应，批量请求以 `-32600` 拒绝。
+- 执行工具会拒绝 `WR_add_package_to_executor`、`WR_add_package_to_callback_executor` 与 `WR_set_allow_arbitrary_script`，嵌套的动作列表也一样：模型不应能加载 `os`，也不应能重新打开操作者关掉的脚本闸门。设 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` 可解除。设了 `WEBRUNNER_MCP_ROOT` 时，`webrunner_run_action_files` 与 `webrunner_compute_trend` 只读取该目录内的文件。
 - 每个工具都有 `title` 与 `annotations`：离线工具与 `webrunner_list_commands` 是 `readOnlyHint: true`，两个执行工具是 `destructiveHint: true`、`openWorldHint: true`。输入 schema 说明每个参数并拒绝未知参数；参数不符时回传 `isError` 结果并指出问题。结果是 JSON 对象时也会以 `structuredContent` 送出，两个执行工具另外声明 `outputSchema`。
 
 ## 动作 JSON LSP

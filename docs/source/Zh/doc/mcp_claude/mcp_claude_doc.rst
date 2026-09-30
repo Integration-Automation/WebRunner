@@ -264,6 +264,29 @@ Sharding 與 infra
 
 ----
 
+安全
+====
+
+MCP 客戶端是依讀到的文字行動的模型,所以執行工具會拒絕能擴大其權限的命令,
+巢狀的動作清單(``WR_execute_action``、``WR_execute_files``)裡也一樣:
+
+* ``WR_add_package_to_executor`` 與 ``WR_add_package_to_callback_executor``:
+  會匯入任何 Python 套件並開放其函式(``os``、``subprocess`` …);
+* ``WR_set_allow_arbitrary_script``:會重新打開操作者關掉的腳本閘門。
+
+被拒絕的命令和其他失敗的動作一樣回報:結果的 ``isError`` 為 true,命令列在
+``failed``。
+
+兩個環境變數,設在客戶端的 server 條目(``env``)裡:
+
+* ``WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1``:解除上述拒絕,給需要載入自家
+  helper 套件的可信客戶端用。
+* ``WEBRUNNER_MCP_ROOT=<dir>``:``webrunner_run_action_files`` 與
+  ``webrunner_compute_trend`` 只能讀 ``<dir>`` 內的檔案(先解析 ``..`` 與
+  symlink)。未設定時可讀行程能讀的任何路徑。
+
+----
+
 疑難排解
 ========
 

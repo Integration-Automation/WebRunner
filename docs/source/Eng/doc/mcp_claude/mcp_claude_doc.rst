@@ -292,6 +292,32 @@ without raising.
 
 ----
 
+Security
+========
+
+An MCP client is a model acting on text it has read, so the run tools refuse
+the commands that would widen its powers, including inside nested action
+lists (``WR_execute_action``, ``WR_execute_files``):
+
+* ``WR_add_package_to_executor`` and ``WR_add_package_to_callback_executor``,
+  which import any Python package and expose its functions (``os``,
+  ``subprocess`` …);
+* ``WR_set_allow_arbitrary_script``, which would re-open a script gate the
+  operator closed.
+
+A refused command is reported like any failed action: the result has
+``isError: true`` and the command under ``failed``.
+
+Two environment variables, set in the client's server entry (``env``):
+
+* ``WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`` lifts the refusal, for a trusted
+  client that needs to load its own helper package.
+* ``WEBRUNNER_MCP_ROOT=<dir>`` limits ``webrunner_run_action_files`` and
+  ``webrunner_compute_trend`` to files inside ``<dir>`` (``..`` and symlinks
+  are resolved first). Unset, they read any path the process can.
+
+----
+
 Troubleshooting
 ===============
 

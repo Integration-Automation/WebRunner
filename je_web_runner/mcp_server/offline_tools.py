@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from je_web_runner.mcp_server._policy import checked_path
 from je_web_runner.mcp_server._types import READ_ONLY, McpServerError, Tool
 
 # Reused error messages — extracted so SonarCloud S1192 stays quiet and
@@ -50,7 +51,7 @@ def _tool_render_template(arguments: dict[str, Any]) -> Any:
 
 def _tool_compute_trend(arguments: dict[str, Any]) -> Any:
     from je_web_runner.utils.trend_dashboard.trend import compute_trend
-    return compute_trend(str(arguments.get("ledger_path", "")))
+    return compute_trend(checked_path(str(arguments.get("ledger_path", ""))))
 
 
 def _tool_validate_response(arguments: dict[str, Any]) -> Any:

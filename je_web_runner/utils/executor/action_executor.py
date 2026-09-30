@@ -1,9 +1,10 @@
 import builtins
+import contextlib
 import time
 import types
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterable, Iterator
 
 from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
 from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
@@ -84,6 +85,8 @@ class Executor:
         # observability stack (OpenTelemetry, custom logging, …) can wrap
         # each call without the executor depending on the SDK directly.
         self._action_span_factory: Callable[[str], Any] | None = None
+        # 暫時拒絕的命令（見 restricted()）/ Commands refused for now; see restricted().
+        self._denied_commands: frozenset[str] = frozenset()
         # 事件字典：將字串名稱對應到實際可執行的函式
         # Event dictionary: map string keys to actual callable functions
         self.event_dict = build_event_dict(self)
@@ -201,6 +204,22 @@ class Executor:
         """
         package_manager.allow_packages(*packages)
 
+    @contextlib.contextmanager
+    def restricted(self, denied_commands: Iterable[str]) -> Iterator[None]:
+        """
+        在區塊內拒絕指定命令（包含巢狀的動作清單）
+        Refuse ``denied_commands`` for the duration of the ``with`` block, including in
+        action lists run from inside it (``WR_execute_action``, ``WR_execute_files`` …),
+        because every action passes :meth:`_execute_event`. Blocks nest; each adds to the
+        commands already refused.
+        """
+        previous = self._denied_commands
+        self._denied_commands = previous | frozenset(denied_commands)
+        try:
+            yield
+        finally:
+            self._denied_commands = previous
+
     def _execute_event(self, action: list):
         """
         執行事件字典中的函式
@@ -210,6 +229,8 @@ class Executor:
                        Action list, e.g., ["function_name", {params}] or ["function_name"]
         :return: 執行結果 / return value of the executed function
         """
+        if action[0] in self._denied_commands:
+            raise WebRunnerExecuteException(f"command {action[0]!r} is not allowed here")
         if action[0] in _ARBITRARY_SCRIPT_COMMANDS and not self.allow_arbitrary_script:
             raise WebRunnerExecuteException(
                 f"arbitrary-script command {action[0]!r} is disabled; "

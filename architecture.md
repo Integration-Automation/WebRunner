@@ -24,7 +24,7 @@ wired into the executor as `WR_*` commands, others are reachable only from Pytho
 | `je_web_runner/element/` | `web_element_wrapper.py`: operations on the currently selected Selenium element. |
 | `je_web_runner/manager/` | `webrunner_manager.py`: `WebdriverManager` (singleton `web_runner`) for multiple live drivers. |
 | `je_web_runner/utils/executor/` | `action_executor.py`: `Executor` (dispatch, command gate, retry, failure screenshots) and the `executor` singleton; its `event_dict` is built by `_event_table.build_event_dict()` from `COMMANDS` plus `_playwright_commands.PLAYWRIGHT_COMMANDS`. |
-| `je_web_runner/mcp_server/` | MCP stdio server: protocol and `McpServer` (`server.py`), `Tool` / `ToolResult` / errors (`_types.py`), offline tools (`offline_tools.py`, `build_default_tools()`) and live-browser tools (`browser_tools.py`). |
+| `je_web_runner/mcp_server/` | MCP stdio server: protocol and `McpServer` (`server.py`), `Tool` / `ToolResult` / errors (`_types.py`), offline tools (`offline_tools.py`, `build_default_tools()`), live-browser tools (`browser_tools.py`) and the caller policy (`_policy.py`). |
 | `je_web_runner/action_lsp/` | Language server for action JSON files. |
 | `je_web_runner/utils/` | One flat level of subpackages; functional areas below. |
 | `test/` | `unit_test/` (mock-based), `integration_test/` (real I/O, MCP / LSP / CLI subprocesses), `e2e_test/` (Selenium Grid). |
@@ -150,6 +150,9 @@ process share one driver (`--parallel-mode process` exists for isolation).
   `utils/package_manager/package_manager_class.py` before importing: `executor.allow_packages(...)` and
   `executor.set_allow_arbitrary_packages(...)` are Python-only, never `WR_*` commands, so an action file cannot open
   its own gate. Unconfigured, any package loads with a `DeprecationWarning` (progress #22 flips the default).
+- MCP calls run inside `executor.restricted(...)`, which refuses the package-loading commands and
+  `WR_set_allow_arbitrary_script` in nested action lists too (`mcp_server/_policy.py`;
+  `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` lifts it, `WEBRUNNER_MCP_ROOT` fences the file tools).
 - Validate all external input (URLs, action JSON, socket messages, CLI args); prevent path traversal; socket server binds
   localhost unless configured; escape dynamic content in HTML reports; parameterize values passed to JS. → same section
 - Credentials are never logged or stored in plaintext; use `python-dotenv`. → same section
