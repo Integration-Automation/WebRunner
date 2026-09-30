@@ -12,14 +12,79 @@ from je_web_runner.webdriver._playwright_mixins._common import (
     PlaywrightBackendError,
 )
 
+_HAR_KEYS = ("record_har_path", "record_har_content")
+
 
 class _ContextMixin:
     """裝置模擬、地理位置、權限、時區、時鐘、語系、HAR 錄製。
 
-    Device emulation, geolocation, permissions, timezone, clock, locale and HAR
-    recording. Several of these rebuild the context (Playwright fixes them at
-    context creation).
+    Playwright fixes most of these when a context is created, so the wrapper keeps
+    one merged set of context options (``_context_options``): each setting changes
+    only its own keys and then rebuilds the context. A rebuild carries the cookies
+    and localStorage over (``storage_state``) and reopens the page's URL, so a test
+    can change the timezone mid-flow without losing its session. Geolocation,
+    permissions, extra headers and the clock apply to the live context instead.
     """
+
+    # ----- the merged options ------------------------------------------
+
+    def _rebuild_context(self) -> None:
+        """Close the context and open one with the current options, keeping cookies, storage and the URL."""
+        if self._browser is None:
+            raise PlaywrightBackendError(BROWSER_NOT_LAUNCHED)
+        state, url = None, None
+        if self._context is not None:
+            state, url = self._context.storage_state(), self._current_page_url()
+            self._context.close()
+        self._context = self._open_context(storage_state=state)
+        page = self._context.new_page()
+        self._pages = [page]
+        self._page_index = 0
+        if isinstance(url, str) and url.startswith(("http://", "https://")):
+            try:
+                page.goto(url)
+            except Exception as error:  # the new context stands; the reload is a convenience
+                web_runner_logger.warning(f"playwright could not reopen {url!r} after a context rebuild: {error!r}")
+
+    def _current_page_url(self) -> Any:
+        if not self._pages or self._page_index < 0:
+            return None
+        return self._pages[self._page_index].url
+
+    @recorded()
+    def set_context_options(self, **options: Any) -> None:
+        """
+        合併任意 ``browser.new_context`` 選項並重建 context
+        Merge any ``browser.new_context`` options (``color_scheme``, ``viewport``,
+        ``ignore_https_errors``, ``storage_state`` …) and rebuild the context.
+        """
+        web_runner_logger.info(f"playwright set_context_options: {sorted(options)}")
+        self._context_options.update(options)
+        self._rebuild_context()
+
+    @recorded()
+    def set_user_agent(self, user_agent: str) -> None:
+        """Rebuild the context with ``user_agent``."""
+        self._context_options["user_agent"] = user_agent
+        self._rebuild_context()
+
+    @recorded(hidden=("headers",))
+    def set_extra_http_headers(self, headers: dict[str, str]) -> None:
+        """
+        合併額外的 HTTP header，立即套用於目前的 context
+        Merge ``headers`` into the extra HTTP headers sent with every request; they
+        apply to the live context at once and to every rebuilt one.
+        """
+        merged = {**(self._context_options.get("extra_http_headers") or {}), **headers}
+        self._context_options["extra_http_headers"] = merged
+        self.context.set_extra_http_headers(merged)
+
+    def save_storage_state(self, path: str) -> str:
+        """Write the context's cookies and localStorage to ``path`` (load it with ``storage_state``)."""
+        self.context.storage_state(path=path)
+        return path
+
+    # ----- emulation ---------------------------------------------------
 
     def _device_options(self, device_name: str) -> dict:
         """Look up Playwright's built-in device descriptor by name."""
@@ -36,34 +101,34 @@ class _ContextMixin:
     @recorded()
     def start_emulation(self, device_name: str) -> None:
         """
-        套用 Playwright 內建裝置設定（重建 context 與 page）
-        Apply a Playwright device descriptor by name; the current context is
-        closed and replaced with one configured for the requested device.
+        套用 Playwright 內建裝置設定（重建 context）
+        Apply a Playwright device descriptor by name on top of the other options.
         """
         web_runner_logger.info(f"playwright start_emulation: {device_name}")
-        if self._browser is None:
-            raise PlaywrightBackendError(BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(extra_options=self._device_options(device_name))
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
+        device = self._device_options(device_name)
+        for key in self._emulation_keys:
+            self._context_options.pop(key, None)
+        self._context_options.update(device)
+        self._emulation_keys = set(device)
+        self._rebuild_context()
 
     @recorded()
     def stop_emulation(self) -> None:
-        """Replace the device-emulating context with a plain one."""
+        """Drop the device descriptor's options (the other options stay) and rebuild."""
         web_runner_logger.info("playwright stop_emulation")
-        if self._browser is None:
-            raise PlaywrightBackendError(BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context()
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
+        for key in self._emulation_keys:
+            self._context_options.pop(key, None)
+        self._emulation_keys = set()
+        self._rebuild_context()
 
-    # ----- geolocation / permissions / timezone / clock --------------
+    def list_device_names(self) -> list[str]:
+        """Return all device names known to the active Playwright runtime."""
+        if self._playwright is None:
+            raise PlaywrightBackendError(RUNTIME_NOT_STARTED)
+        devices = getattr(self._playwright, "devices", None) or {}
+        return sorted(devices.keys())
+
+    # ----- geolocation / permissions / timezone / locale / clock --------
 
     @recorded()
     def set_geolocation(
@@ -98,43 +163,12 @@ class _ContextMixin:
     @recorded()
     def set_timezone(self, timezone_id: str) -> None:
         """
-        重建 context 並指定時區（Playwright 不支援直接修改既有 context 的時區）
-        Recreate the context with ``timezoneId``; the existing page is closed.
+        指定時區並重建 context（Playwright 不能修改既有 context 的時區）
+        Rebuild the context with ``timezone_id``.
         """
         web_runner_logger.info(f"playwright set_timezone: {timezone_id}")
-        if self._browser is None:
-            raise PlaywrightBackendError(BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(extra_options={"timezone_id": timezone_id})
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
-    @recorded()
-    def clock_install(self, fake_now_ms: float | None = None) -> None:
-        """Install Playwright's clock (requires Playwright 1.45+)."""
-        clock = getattr(self.context, "clock", None)
-        if clock is None:
-            raise PlaywrightBackendError(CLOCK_API_UNAVAILABLE)
-        if fake_now_ms is None:
-            clock.install()
-        else:
-            clock.install(time=fake_now_ms)
-
-    @recorded()
-    def clock_set_time(self, time_ms: float) -> None:
-        clock = getattr(self.context, "clock", None)
-        if clock is None:
-            raise PlaywrightBackendError(CLOCK_API_UNAVAILABLE)
-        clock.set_fixed_time(time_ms)
-
-    @recorded()
-    def clock_run_for(self, duration_ms: float) -> None:
-        clock = getattr(self.context, "clock", None)
-        if clock is None:
-            raise PlaywrightBackendError(CLOCK_API_UNAVAILABLE)
-        clock.run_for(duration_ms)
+        self._context_options["timezone_id"] = timezone_id
+        self._rebuild_context()
 
     @recorded()
     def set_locale(
@@ -144,59 +178,59 @@ class _ContextMixin:
     ) -> None:
         """
         切換 ``locale`` 與 ``Accept-Language``（重建 context）
-        Recreate the context with the given ``locale`` (and optional
-        Accept-Language override). The current page is closed.
+        Rebuild the context with ``locale``; ``accept_language`` is merged into the
+        extra HTTP headers.
         """
         web_runner_logger.info(f"playwright set_locale: {locale}")
-        if self._browser is None:
-            raise PlaywrightBackendError(BROWSER_NOT_LAUNCHED)
-        options: dict[str, Any] = {"locale": locale}
+        self._context_options["locale"] = locale
         if accept_language:
-            options["extra_http_headers"] = {"Accept-Language": accept_language}
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(extra_options=options)
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
+            headers = dict(self._context_options.get("extra_http_headers") or {})
+            headers["Accept-Language"] = accept_language
+            self._context_options["extra_http_headers"] = headers
+        self._rebuild_context()
 
-    def list_device_names(self) -> list[str]:
-        """Return all device names known to the active Playwright runtime."""
-        if self._playwright is None:
-            raise PlaywrightBackendError(RUNTIME_NOT_STARTED)
-        devices = getattr(self._playwright, "devices", None) or {}
-        return sorted(devices.keys())
+    def _clock(self) -> Any:
+        clock = getattr(self.context, "clock", None)
+        if clock is None:
+            raise PlaywrightBackendError(CLOCK_API_UNAVAILABLE)
+        return clock
+
+    @recorded()
+    def clock_install(self, fake_now_ms: float | None = None) -> None:
+        """Install Playwright's clock (requires Playwright 1.45+)."""
+        if fake_now_ms is None:
+            self._clock().install()
+        else:
+            self._clock().install(time=fake_now_ms)
+
+    @recorded()
+    def clock_set_time(self, time_ms: float) -> None:
+        self._clock().set_fixed_time(time_ms)
+
+    @recorded()
+    def clock_run_for(self, duration_ms: float) -> None:
+        self._clock().run_for(duration_ms)
+
+    # ----- HAR ---------------------------------------------------------
 
     @recorded()
     def start_har_recording(self, har_path: str, content: str = "omit") -> None:
         """
-        於現有 browser 內重建 context 並開啟 HAR 錄製
-        Recreate the context with HAR recording enabled. Existing pages are
-        closed; a fresh page is opened on the new context.
+        開啟 HAR 錄製（重建 context）
+        Rebuild the context with HAR recording to ``har_path``; the other options stay.
         """
         web_runner_logger.info(f"playwright start_har_recording: {har_path}")
-        if self._browser is None:
-            raise PlaywrightBackendError(BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(har_path, content)
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
+        self._context_options.update({"record_har_path": har_path, "record_har_content": content})
+        self._rebuild_context()
 
     @recorded()
     def stop_har_recording(self) -> None:
         """
-        關閉並寫出當前 HAR，重建一個未錄製的 context
-        Close the recording context (which flushes the HAR file) and replace
-        it with a fresh non-recording context.
+        寫出 HAR 並停止錄製
+        Close the recording context, which writes the HAR file, and continue in one
+        without recording.
         """
         web_runner_logger.info("playwright stop_har_recording")
-        if self._browser is None:
-            raise PlaywrightBackendError(BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context()
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
+        for key in _HAR_KEYS:
+            self._context_options.pop(key, None)
+        self._rebuild_context()

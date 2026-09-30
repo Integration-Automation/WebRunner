@@ -99,9 +99,10 @@ Equivalent commands
        ``WR_delete_cookie``, ``WR_delete_all_cookies``, ``WR_save_cookies``,
        ``WR_load_cookies``
      - ``WR_pw_get_cookies``, ``WR_pw_add_cookies`` (a list),
-       ``WR_pw_clear_cookies``
-     - Playwright has no per-name get or delete and no save to or load from
-       a file.
+       ``WR_pw_clear_cookies``, ``WR_pw_save_storage_state`` (load it back
+       with the ``storage_state`` context option)
+     - Playwright has no per-name get or delete; its saved state holds
+       cookies and localStorage together.
    * - Tabs
      - ``WR_new_window``, ``WR_switch``, ``WR_switch_to_window_by_url``,
        ``WR_switch_to_window_by_title``, ``WR_close_window``
@@ -123,8 +124,16 @@ Equivalent commands
      - ``WR_pw_set_geolocation``, ``WR_pw_set_timezone``,
        ``WR_pw_set_locale``
      - Selenium's are Chromium-only (CDP). ``WR_pw_set_timezone`` and
-       ``WR_pw_set_locale`` rebuild the Playwright context, which closes its
-       pages and drops its cookies.
+       ``WR_pw_set_locale`` rebuild the Playwright context: cookies,
+       localStorage and the current page's URL carry over, other open pages
+       close.
+   * - User agent, extra headers, other context options
+     - ``WR_set_user_agent``, ``WR_set_extra_http_headers`` (CDP)
+     - ``WR_pw_set_user_agent``, ``WR_pw_set_extra_http_headers``,
+       ``WR_pw_set_context_options`` (any ``browser.new_context`` option),
+       ``WR_pw_launch`` with ``context_options``
+     - Selenium's are Chromium-only. Playwright keeps one merged set of
+       context options, so each setting leaves the others in place.
    * - Throttling, raw CDP
      - ``WR_throttle``, ``WR_set_network_conditions``,
        ``WR_execute_cdp_cmd``, ``WR_cdp``
@@ -160,8 +169,7 @@ Not on Playwright yet (the Playwright API supports them):
 * ``WR_add_script_to_evaluate_on_new_document``, ``WR_block_urls`` /
   ``WR_unblock_urls``, ``WR_set_cache_disabled``,
   ``WR_clear_geolocation_override``, ``WR_bring_to_front``,
-  ``WR_print_page``, ``WR_set_user_agent``, ``WR_set_extra_http_headers``,
-  ``WR_set_download_directory`` / ``WR_wait_for_download``,
+  ``WR_print_page``, ``WR_set_download_directory`` / ``WR_wait_for_download``,
   ``WR_attach_to_existing_browser``;
 * several drivers at once (``WR_new_driver`` more than once,
   ``WR_change_index_of_webdriver``);

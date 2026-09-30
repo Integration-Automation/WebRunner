@@ -96,8 +96,10 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
        ``WR_delete_cookie``、``WR_delete_all_cookies``、``WR_save_cookies``、
        ``WR_load_cookies``
      - ``WR_pw_get_cookies``、``WR_pw_add_cookies``（清單）、
-       ``WR_pw_clear_cookies``
-     - Playwright 不能依名稱取得或刪除，也不能存成檔案或從檔案載入。
+       ``WR_pw_clear_cookies``、``WR_pw_save_storage_state``（用 context 選項
+       ``storage_state`` 載回）
+     - Playwright 不能依名稱取得或刪除；存下的狀態同時包含 cookie 與
+       localStorage。
    * - 分頁
      - ``WR_new_window``、``WR_switch``、``WR_switch_to_window_by_url``、
        ``WR_switch_to_window_by_title``、``WR_close_window``
@@ -119,8 +121,15 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
      - ``WR_pw_set_geolocation``、``WR_pw_set_timezone``、
        ``WR_pw_set_locale``
      - Selenium 的只支援 Chromium（CDP）。``WR_pw_set_timezone`` 與
-       ``WR_pw_set_locale`` 會重建 Playwright context，關掉它的分頁並清掉
-       cookie。
+       ``WR_pw_set_locale`` 會重建 Playwright context：cookie、localStorage
+       與目前分頁的網址會帶過去，其他開著的分頁會關閉。
+   * - User agent、額外 header、其他 context 選項
+     - ``WR_set_user_agent``、``WR_set_extra_http_headers``（CDP）
+     - ``WR_pw_set_user_agent``、``WR_pw_set_extra_http_headers``、
+       ``WR_pw_set_context_options``（任何 ``browser.new_context`` 選項）、
+       帶 ``context_options`` 的 ``WR_pw_launch``
+     - Selenium 的只支援 Chromium。Playwright 維持一份合併後的 context
+       選項，所以每個設定都不會蓋掉其他設定。
    * - 網路節流、原始 CDP
      - ``WR_throttle``、``WR_set_network_conditions``、
        ``WR_execute_cdp_cmd``、``WR_cdp``
@@ -154,8 +163,7 @@ Playwright 還沒有（Playwright API 本身支援）：
 * ``WR_add_script_to_evaluate_on_new_document``、``WR_block_urls`` /
   ``WR_unblock_urls``、``WR_set_cache_disabled``、
   ``WR_clear_geolocation_override``、``WR_bring_to_front``、
-  ``WR_print_page``、``WR_set_user_agent``、``WR_set_extra_http_headers``、
-  ``WR_set_download_directory`` / ``WR_wait_for_download``、
+  ``WR_print_page``、``WR_set_download_directory`` / ``WR_wait_for_download``、
   ``WR_attach_to_existing_browser``；
 * 同時開多個 driver（多次 ``WR_new_driver``、
   ``WR_change_index_of_webdriver``）；

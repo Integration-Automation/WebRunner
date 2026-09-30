@@ -73,6 +73,10 @@ class PlaywrightWrapper(
         self._context = None
         self._pages: list[Any] = []
         self._page_index: int = -1
+        # The merged options every new context gets (see _ContextMixin), and which
+        # of them came from the current device descriptor.
+        self._context_options: dict[str, Any] = {}
+        self._emulation_keys: set[str] = set()
         self.element_wrapper = element_wrapper or playwright_element_wrapper
 
     # ----- lifecycle ---------------------------------------------------
@@ -101,13 +105,16 @@ class PlaywrightWrapper(
         headless: bool = True,
         record_har_path: str | None = None,
         record_har_content: str = "omit",
+        context_options: dict[str, Any] | None = None,
         **launch_options: Any,
     ) -> None:
         """
         啟動指定瀏覽器；可選擇於 context 開啟 HAR 錄製
-        Launch the requested browser; optionally enable HAR recording on the
-        context. ``record_har_content`` accepts ``"omit"`` / ``"embed"`` /
-        ``"attach"`` (Playwright defaults).
+        Launch the requested browser. ``context_options`` go to every context this
+        wrapper creates (``user_agent``, ``viewport``, ``locale``, ``storage_state``,
+        ``record_video_dir`` …); ``record_har_path`` starts HAR recording, with
+        ``record_har_content`` ``"omit"`` / ``"embed"`` / ``"attach"``. Other keyword
+        arguments go to ``browser_type.launch``.
         """
         web_runner_logger.info(f"playwright launch: browser={browser}, headless={headless}")
         if browser not in _SUPPORTED_BROWSERS:
@@ -119,23 +126,21 @@ class PlaywrightWrapper(
         self._playwright = sync_playwright().start()
         browser_type = getattr(self._playwright, browser)
         self._browser = browser_type.launch(headless=headless, **launch_options)
-        self._context = self._build_context(record_har_path, record_har_content)
+        self._context_options = dict(context_options or {})
+        self._emulation_keys = set()
+        if record_har_path:
+            self._context_options.update({"record_har_path": record_har_path, "record_har_content": record_har_content})
+        self._context = self._open_context()
         page = self._context.new_page()
         self._pages = [page]
         self._page_index = 0
 
-    def _build_context(
-        self,
-        record_har_path: str | None = None,
-        record_har_content: str = "omit",
-        extra_options: dict | None = None,
-    ):
-        """Create a context, optionally configured with HAR recording / extras."""
-        kwargs = dict(extra_options or {})
-        if record_har_path:
-            kwargs["record_har_path"] = record_har_path
-            kwargs["record_har_content"] = record_har_content
-        context = self._browser.new_context(**kwargs) if kwargs else self._browser.new_context()
+    def _open_context(self, storage_state: Any = None):
+        """Create a context with the merged options (plus ``storage_state`` carried from the last one)."""
+        kwargs = dict(self._context_options)
+        if storage_state is not None:
+            kwargs["storage_state"] = storage_state
+        context = self._browser.new_context(**kwargs)
         context.on("page", self._track_page)
         return context
 
@@ -150,6 +155,8 @@ class PlaywrightWrapper(
             self._page_index = -1
             self._context = None
             self._browser = None
+            self._context_options = {}
+            self._emulation_keys = set()
             if self._playwright is not None:
                 self._playwright.stop()
             self._playwright = None
@@ -230,6 +237,22 @@ def pw_clock_run_for(duration_ms: float) -> None:
 
 def pw_set_locale(locale: str, accept_language: str | None = None) -> None:
     playwright_wrapper_instance.set_locale(locale, accept_language=accept_language)
+
+
+def pw_set_context_options(**options: Any) -> None:
+    playwright_wrapper_instance.set_context_options(**options)
+
+
+def pw_set_user_agent(user_agent: str) -> None:
+    playwright_wrapper_instance.set_user_agent(user_agent)
+
+
+def pw_set_extra_http_headers(headers: dict[str, str]) -> None:
+    playwright_wrapper_instance.set_extra_http_headers(headers)
+
+
+def pw_save_storage_state(path: str) -> str:
+    return playwright_wrapper_instance.save_storage_state(path)
 
 
 def pw_quit() -> None:
