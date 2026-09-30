@@ -771,7 +771,7 @@ python -m je_web_runner.mcp_server
 The default tool list (22 tools) exposes:
 
 Live browser execution:
-- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 533 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
+- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 534 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
 - `webrunner_run_action_files` — batch-run JSON files on disk
 - `webrunner_list_commands` — discover the full `WR_*` surface
 
@@ -1643,10 +1643,13 @@ The IDE config examples under [`docs/ide/`](docs/ide/) wire VS Code and JetBrain
 | `WR_ac_run_actions` | Run a list of AutoControl actions in order and return their values; the first failure stops it |
 | `WR_ac_fill_native_file_dialog` | Type a path (made absolute) into the operating system's open or save dialog, then press Enter (`submit=false` skips it); waits `wait_seconds` (1) for the dialog first |
 | `WR_ac_assert_image_on_screen` | Fail unless a template image is on the screen; returns its centre `[x, y]` (`detect_threshold` is AutoControl's match threshold) |
+| `WR_ac_click_element_native` | Click an element with the real mouse (a trusted click, not WebDriver's): the element `selector` / `by` finds, else the current element; `mouse_button`, and `scale` for the monitor's display scale; returns the clicked `[x, y]` |
 
 A failed AutoControl action fails its `WR_ac_*` action with `AutoControlBridgeError`. The bridge refuses the AutoControl commands that reach beyond the desktop: shell commands and programs (`AC_shell_command`, `AC_execute_process`), package loading (`AC_add_package_*`), action lists and files (`AC_execute_action`, `AC_execute_files`), `AC_run_agent`, and calls back into WebRunner (`AC_web_*`). They are refused anywhere in the action, including loop bodies and bodies passed as JSON strings. The MCP server refuses every `WR_ac_*` command but `WR_ac_available` and `WR_ac_list_commands` unless `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`.
 
-The two native commands refuse a Selenium driver whose window is not on this machine's screen: a headless browser, or a remote one (a grid or a device cloud). A Playwright browser is not checked, because Playwright does not report whether it was launched headless: launch it with `headless=False`.
+`WR_ac_click_element_native` scrolls the element to the middle of the viewport and maps its centre from the page to the screen with the window's `screenX/Y`, its outer and inner size and `devicePixelRatio`. Without `scale` it takes `devicePixelRatio` as the display scale, which is right at 100 % page zoom; on a zoomed page pass the monitor's scale (`1.25` for 125 %). The window must not be covered.
+
+The native commands refuse a Selenium driver whose window is not on this machine's screen: a headless browser, or a remote one (a grid or a device cloud). A Playwright browser is not checked, because Playwright does not report whether it was launched headless: launch it with `headless=False`.
 
 The other direction, AutoControl's `AC_web_*` commands running `WR_*` commands, is part of AutoControl.
 

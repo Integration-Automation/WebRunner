@@ -43,9 +43,17 @@ WebRunner imports it only when one of these commands runs:
   type the path (made absolute) into the operating system's open or save
   dialog, then press Enter unless ``submit`` is false;
 * ``WR_ac_assert_image_on_screen(image_path, detect_threshold=None)``: fail
-  unless the template image is on the screen; returns its centre ``[x, y]``.
+  unless the template image is on the screen; returns its centre ``[x, y]``;
+* ``WR_ac_click_element_native(selector=None, by="css selector",
+  mouse_button="mouse_left", scale=None)``: click the element (the current
+  one without ``selector``) with the real mouse, a trusted click rather than
+  WebDriver's. The element is scrolled to the middle of the viewport and its
+  centre mapped to the screen from the window's ``screenX/Y``, outer and
+  inner size and ``devicePixelRatio``; without ``scale`` the display scale is
+  ``devicePixelRatio``, right at 100 % page zoom. The window must not be
+  covered.
 
-The two native commands refuse a Selenium driver whose window is not on
+The native commands refuse a Selenium driver whose window is not on
 this machine's screen: a headless browser, or a remote one (a grid or a
 device cloud). A Playwright browser is not checked, because Playwright does
 not report whether it was launched headless: launch it with

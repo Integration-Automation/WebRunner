@@ -30,6 +30,7 @@ UNSAFE_COMMANDS = frozenset({
     "WR_ac_run_actions",
     "WR_ac_fill_native_file_dialog",
     "WR_ac_assert_image_on_screen",
+    "WR_ac_click_element_native",
 })
 ALLOW_UNSAFE_ENV = "WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS"
 ROOT_ENV = "WEBRUNNER_MCP_ROOT"

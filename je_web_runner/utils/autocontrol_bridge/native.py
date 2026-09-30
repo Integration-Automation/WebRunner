@@ -1,8 +1,8 @@
 """
 原生視窗操作 / Steps outside the page that a browser driver cannot reach, through AutoControl.
 
-The operating system's file picker and pixels on the screen are outside the page, so
-neither WebDriver nor Playwright can touch them. These commands type and look through
+The operating system's file picker, pixels on the screen and a real (trusted) mouse click
+are outside what WebDriver and Playwright can do. These commands type and look through
 AutoControl instead, on this machine's real screen. They therefore refuse a Selenium
 driver whose window is not on that screen: a headless browser, or a remote one (a grid or
 a device cloud). A Playwright browser is not checked, because Playwright does not report
@@ -14,8 +14,11 @@ import os
 import time
 from typing import Any
 
+from je_web_runner.element.web_element_wrapper import web_element_wrapper
 from je_web_runner.utils.autocontrol_bridge.bridge import AutoControlBridgeError, ac_run, ac_run_actions
+from je_web_runner.utils.autocontrol_bridge.screen_mapping import METRICS_SCRIPT, element_center_on_screen
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+from je_web_runner.webdriver._wrapper_mixins._parity_mixin import resolve_by
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 
@@ -98,3 +101,28 @@ def assert_image_on_screen(image_path: str, detect_threshold: float | None = Non
         params["detect_threshold"] = float(detect_threshold)
     center = ac_run(["AC_locate_image_center", params])
     return [int(center[0]), int(center[1])]
+
+
+def click_element_native(selector: str | None = None, by: str = "css selector",
+                         mouse_button: str = "mouse_left", scale: float | None = None) -> list[int]:
+    """
+    用真正的滑鼠點擊元素（不是 WebDriver 的合成點擊）
+    Click an element with the real mouse through AutoControl: the element found by
+    ``selector`` (``by`` as in ``WR_find_element_by``), else the current element. It is
+    scrolled to the middle of the viewport, its centre is mapped to screen coordinates
+    (:func:`~je_web_runner.utils.autocontrol_bridge.screen_mapping.element_center_on_screen`;
+    ``scale`` is the monitor's display scale, taken from ``devicePixelRatio`` when None,
+    which is right at 100 % page zoom), and ``mouse_button`` is clicked there. The window
+    must be on screen and not covered. Returns the clicked ``[x, y]``.
+    """
+    driver = webdriver_wrapper_instance.current_webdriver
+    if driver is None:
+        raise AutoControlBridgeError("no Selenium driver is running")
+    require_visible_browser()
+    element = driver.find_element(resolve_by(by), selector) if selector else web_element_wrapper.current_web_element
+    if element is None:
+        raise AutoControlBridgeError("pass a selector or find an element first")
+    x, y = element_center_on_screen(driver.execute_script(METRICS_SCRIPT, element), scale)
+    web_runner_logger.info(f"click_element_native: {mouse_button} at ({x}, {y})")
+    ac_run(["AC_click_mouse", {"mouse_keycode": mouse_button, "x": x, "y": y}])
+    return [x, y]

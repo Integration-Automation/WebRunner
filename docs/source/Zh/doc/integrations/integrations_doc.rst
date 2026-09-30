@@ -34,9 +34,15 @@ CI 與整合
   在作業系統的開啟或儲存對話框輸入路徑（轉成絕對路徑），``submit`` 不為
   false 時再按 Enter；
 * ``WR_ac_assert_image_on_screen(image_path, detect_threshold=None)``：螢幕上
-  找不到範本圖片就失敗；回傳其中心 ``[x, y]``。
+  找不到範本圖片就失敗；回傳其中心 ``[x, y]``；
+* ``WR_ac_click_element_native(selector=None, by="css selector",
+  mouse_button="mouse_left", scale=None)``：用真正的滑鼠點擊元素（沒給
+  ``selector`` 就是目前元素），是受信任的點擊而不是 WebDriver 的。元素先捲到
+  viewport 中央，再用視窗的 ``screenX/Y``、外框與內部尺寸以及
+  ``devicePixelRatio`` 把中心換算到螢幕；沒給 ``scale`` 時顯示縮放取
+  ``devicePixelRatio``，頁面縮放 100 % 時正確。視窗不能被遮住。
 
-這兩個原生命令會拒絕視窗不在這台機器螢幕上的 Selenium driver：headless
+原生命令會拒絕視窗不在這台機器螢幕上的 Selenium driver：headless
 瀏覽器，或遠端的（grid 或裝置雲）。Playwright 瀏覽器不會被檢查，因為
 Playwright 不回報它是否以 headless 啟動：請以 ``headless=False`` 啟動。
 

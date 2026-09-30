@@ -133,7 +133,9 @@ process DPI-aware on Windows and takes about a second, and Jeffrey_RPA imports t
 `execute_action(actions, raise_on_error=True)` (a record dict, one unique key per action, in order) and
 `known_commands()`, and on the `AC_*` commands the native ones send: `AC_write` (`write_string`),
 `AC_type_keyboard` (`keycode`), `AC_get_keyboard_keys_table` (its `enter` or `return` key) and
-`AC_locate_image_center` (`image`, `detect_threshold`; returns the centre, raises when not found). It refuses
+`AC_locate_image_center` (`image`, `detect_threshold`; returns the centre, raises when not found) and
+`AC_click_mouse` (`mouse_keycode`, `x`, `y` in the coordinates of a DPI-aware process; `screen_mapping.py` maps a
+page point to them). It refuses
 `AC_shell_command`,
 `AC_execute_process`, `AC_add_package_*`, `AC_execute_action`, `AC_execute_files`, `AC_run_agent` and `AC_web_*`
 anywhere in an action. `test/integration_test/test_autocontrol_bridge_real.py` checks these against the installed
