@@ -30,6 +30,7 @@ from je_web_runner.webdriver._playwright_mixins import (
     _PageMixin,
     _RecordingMixin,
     _ScopeMixin,
+    _SessionsMixin,
     _StateMixin,
 )
 from je_web_runner.webdriver._playwright_mixins._common import (
@@ -66,6 +67,7 @@ class PlaywrightWrapper(
     _RecordingMixin,
     _ScopeMixin,
     _ConnectMixin,
+    _SessionsMixin,
 ):
     """
     Playwright 同步 API 的完整 backend 包裝
@@ -75,6 +77,9 @@ class PlaywrightWrapper(
 
     def __init__(self, element_wrapper: PlaywrightElementWrapper | None = None) -> None:
         self._playwright = None
+        # One entry per open browser (see _SessionsMixin); the active one is None.
+        self._sessions: list[dict[str, Any] | None] = []
+        self._session_index = -1
         self._reset_state()
         self.element_wrapper = element_wrapper or playwright_element_wrapper
 
@@ -147,17 +152,30 @@ class PlaywrightWrapper(
             self._context_options.update({"record_har_path": record_har_path, "record_har_content": record_har_content})
         self._context = self._open_context()
         self._reset_pages(self._context.new_page())
+        self._register_session()
+
+    def _register_session(self) -> None:
+        """Count the first browser as session 0 (``new_browser`` adds the next ones)."""
+        if not self._sessions:
+            self._sessions = [None]
+            self._session_index = 0
 
     def _browser_type(self, browser: str) -> Any:
-        """Start the Playwright runtime and return its ``chromium`` / ``firefox`` / ``webkit``."""
+        """Return the runtime's ``chromium`` / ``firefox`` / ``webkit``, starting the runtime once."""
         if browser not in _SUPPORTED_BROWSERS:
             raise PlaywrightBackendError(
                 f"unsupported playwright browser: {browser!r}; "
                 f"choose one of {sorted(_SUPPORTED_BROWSERS)}"
             )
-        sync_playwright = _require_playwright()
-        self._playwright = sync_playwright().start()
+        if self._playwright is None:
+            sync_playwright = _require_playwright()
+            self._playwright = sync_playwright().start()
         return getattr(self._playwright, browser)
+
+    def _stop_runtime(self) -> None:
+        if self._playwright is not None:
+            self._playwright.stop()
+        self._playwright = None
 
     def _open_context(self, storage_state: Any = None):
         """Create a context with the merged options (plus ``storage_state`` carried from the last one)."""
@@ -172,21 +190,23 @@ class PlaywrightWrapper(
 
     def quit(self) -> None:
         """
-        關閉並停止 Playwright
-        Close the browser (for ``connect_over_cdp``: disconnect, leaving it running), or
-        the persistent context when there is no browser object, then stop the runtime.
+        關閉所有瀏覽器並停止 Playwright
+        Close every browser this wrapper opened (for ``connect_over_cdp``: disconnect,
+        leaving it running; for a persistent profile: close its context), then stop
+        the runtime.
         """
         web_runner_logger.info("playwright quit")
         try:
-            if self._browser is not None:
-                self._browser.close()
-            elif self._context is not None:
-                self._context.close()
+            self._close_current()
+            for state in self._sessions:
+                if state is not None:
+                    self._restore(state)
+                    self._close_current()
         finally:
+            self._sessions = []
+            self._session_index = -1
             self._reset_state()
-            if self._playwright is not None:
-                self._playwright.stop()
-            self._playwright = None
+            self._stop_runtime()
 
 
 playwright_wrapper_instance = PlaywrightWrapper()
@@ -410,6 +430,22 @@ def pw_download(selector: str, save_to: str) -> str:
 
 def pw_set_cache_disabled(disabled: bool = True) -> None:
     playwright_wrapper_instance.set_cache_disabled(disabled)
+
+
+def pw_new_browser(browser: str = "chromium", headless: bool = True, **launch_kwargs: Any) -> int:
+    return playwright_wrapper_instance.new_browser(browser=browser, headless=headless, **launch_kwargs)
+
+
+def pw_switch_browser(index: int) -> None:
+    playwright_wrapper_instance.switch_browser(index)
+
+
+def pw_close_browser() -> None:
+    playwright_wrapper_instance.close_browser()
+
+
+def pw_browser_count() -> int:
+    return playwright_wrapper_instance.browser_count()
 
 
 def pw_quit() -> None:

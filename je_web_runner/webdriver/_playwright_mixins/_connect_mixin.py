@@ -29,6 +29,7 @@ class _ConnectMixin:
         self._context_options = dict(context_options or {})
         self._context = self._open_context()
         self._reset_pages(self._context.new_page())
+        self._register_session()
 
     def connect_over_cdp(self, endpoint_url: str, **connect_options: Any) -> None:
         """
@@ -41,9 +42,10 @@ class _ConnectMixin:
         contexts = list(self._browser.contexts)
         if contexts:
             self._adopt_context(contexts[0])
-            return
-        self._context = self._open_context()
-        self._reset_pages(self._context.new_page())
+        else:
+            self._context = self._open_context()
+            self._reset_pages(self._context.new_page())
+        self._register_session()
 
     def launch_persistent(
         self,
@@ -71,6 +73,7 @@ class _ConnectMixin:
         )
         self._browser = context.browser
         self._adopt_context(context)
+        self._register_session()
 
     def _adopt_context(self, context: Any) -> None:
         """Use a context this wrapper did not create; its options can no longer change."""

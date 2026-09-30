@@ -42,8 +42,14 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
    * - 啟動 / 結束
      - ``WR_get_webdriver_manager``（``WR_new_driver``）、``WR_quit``
      - ``WR_pw_launch``、``WR_pw_quit``
-     - Playwright 跑 Chromium、Firefox 或 WebKit，同一時間一個瀏覽器、一個
-       context。
+     - Playwright 跑 Chromium、Firefox 或 WebKit，每個瀏覽器一個 context。
+   * - 多個瀏覽器
+     - 多次 ``WR_new_driver``、``WR_change_index_of_webdriver``、
+       ``WR_quit_current``
+     - ``WR_pw_new_browser``、``WR_pw_switch_browser``、
+       ``WR_pw_close_browser``、``WR_pw_browser_count``
+     - 每個 Playwright 瀏覽器保有自己的分頁與設定；共用一個 Playwright
+       runtime，``WR_pw_quit`` 會全部關閉。
    * - 附加、設定檔、遠端
      - ``WR_attach_to_existing_browser``、``WR_chrome_options_with_extension``、
        ``WR_start_remote_driver``
@@ -217,11 +223,6 @@ Playwright 做不到：
   ``WR_fullscreen_window``、``WR_set_window_position``、
   ``WR_set_window_rect``）：Playwright 控制的是 viewport，不是作業系統的
   視窗。最接近的是 ``WR_pw_set_viewport_size``。
-
-Playwright 還沒有（Playwright API 本身支援）：
-
-* 同時開多個 driver（多次 ``WR_new_driver``、
-  ``WR_change_index_of_webdriver``）。
 
 只有 Playwright 有
 ------------------

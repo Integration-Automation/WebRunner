@@ -150,6 +150,28 @@ class TestRealBrowser(unittest.TestCase):
         self.assertTrue(values[5]["match"])
 
 
+class TestSeveralBrowsers(unittest.TestCase):
+
+    def test_two_browsers_share_one_runtime(self):
+        from je_web_runner.webdriver.playwright_wrapper import PlaywrightWrapper
+        wrapper = PlaywrightWrapper()
+        try:
+            wrapper.launch(browser="chromium", headless=True)
+        except Exception as error:  # the browser build is not installed here
+            raise unittest.SkipTest(f"Chromium for Playwright is not available: {error!r}")
+        try:
+            wrapper.to_url(_data_url("<title>first</title>"))
+            self.assertEqual(wrapper.new_browser(browser="chromium", headless=True), 1)
+            wrapper.to_url(_data_url("<title>second</title>"))
+            wrapper.switch_browser(0)
+            self.assertEqual(wrapper.title(), "first")
+            wrapper.switch_browser(1)
+            wrapper.close_browser()
+            self.assertEqual((wrapper.browser_count(), wrapper.title()), (1, "first"))
+        finally:
+            wrapper.quit()
+
+
 class TestPersistentProfile(unittest.TestCase):
 
     def test_launch_persistent_and_fixed_options(self):

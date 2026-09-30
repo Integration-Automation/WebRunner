@@ -43,8 +43,16 @@ Equivalent commands
    * - Start / stop
      - ``WR_get_webdriver_manager`` (``WR_new_driver``), ``WR_quit``
      - ``WR_pw_launch``, ``WR_pw_quit``
-     - Playwright runs Chromium, Firefox or WebKit, one browser and one
-       context at a time.
+     - Playwright runs Chromium, Firefox or WebKit, with one context per
+       browser.
+   * - Several browsers
+     - ``WR_new_driver`` more than once, ``WR_change_index_of_webdriver``,
+       ``WR_quit_current``
+     - ``WR_pw_new_browser``, ``WR_pw_switch_browser``,
+       ``WR_pw_close_browser``, ``WR_pw_browser_count``
+     - Each Playwright browser keeps its own pages and settings; one
+       Playwright runtime serves them all, and ``WR_pw_quit`` closes every
+       one.
    * - Attach, profile, remote
      - ``WR_attach_to_existing_browser``, ``WR_chrome_options_with_extension``,
        ``WR_start_remote_driver``
@@ -229,11 +237,6 @@ Not possible on Playwright:
   ``WR_fullscreen_window``, ``WR_set_window_position``,
   ``WR_set_window_rect``): Playwright controls the viewport, not the OS
   window. ``WR_pw_set_viewport_size`` is the nearest equivalent.
-
-Not on Playwright yet (the Playwright API supports them):
-
-* several drivers at once (``WR_new_driver`` more than once,
-  ``WR_change_index_of_webdriver``).
 
 Only on Playwright
 ------------------

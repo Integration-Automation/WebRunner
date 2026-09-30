@@ -528,6 +528,7 @@ Playwright 后端在 `WR_pw_*` 下涵盖 Selenium 封装的大部分日常操作
 - **Frame、面向用户的查找、对话框** —— `WR_pw_switch_to_frame`（嵌套时给列表）/ `_to_parent_frame` / `_to_main_frame`：selector 命令会作用在选定的 iframe，直到切回或导航。`WR_pw_find_by(by, value)` 以 `role`（配 `name`）、`text`、`label`、`placeholder`、`alt_text`、`title` 或 `test_id` 查找，并把第一个匹配设为当前元素。`WR_pw_set_dialog_policy("accept" | "dismiss", prompt_text)` 在每个页面回应 alert、confirm 与 prompt；`WR_pw_last_dialog` 返回最后一个。
 - **附加、配置文件、下载、缓存** —— `WR_pw_connect_over_cdp(endpoint_url)` 附加到以调试端口启动的 Chromium（结束时只断开连接）；`WR_pw_connect(ws_endpoint)` 连到 Playwright browser server；`WR_pw_launch_persistent(user_data_dir, extension_paths=[...])` 打开配置文件并加载未打包的扩展。`WR_pw_download(selector, save_to)` 点击并保存下载（存成该文件，或以网站建议的名称存进该目录）。`WR_pw_set_cache_disabled` 在每种浏览器开关 HTTP 缓存。
 - **视觉回归、录制器、callback** —— `WR_pw_visual_capture_baseline` / `WR_pw_visual_compare` 与 `WR_pw_recorder_start` / `_stop` / `_pull_events` / `_save` 在 Playwright 页面上做对应 `WR_*` 命令在 Selenium 上做的事，每个 `WR_pw_*` 命令也都能触发 callback。
+- **多个浏览器** —— `WR_pw_new_browser(browser, ...)` 再打开一个浏览器并切换过去（返回其索引）、`WR_pw_switch_browser(index)`、`WR_pw_close_browser`、`WR_pw_browser_count`；每个浏览器保有自己的页面与设置，`WR_pw_quit` 会全部关闭。
 
 现有脚本可以逐步迁移到 Playwright；`TestObject` 记录会自动翻译为 Playwright 选择器（`CSS_SELECTOR` → 原样，`XPATH` → `xpath=…`，`ID` → `#…`，`NAME` → `[name="…"]`，`LINK_TEXT` → `text=…`，`PARTIAL_LINK_TEXT` → `:has-text("…")`）。
 
@@ -759,7 +760,7 @@ python -m je_web_runner.mcp_server
 默认工具列表（22 个工具）暴露：
 
 实时浏览器执行：
-- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 489 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 493 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批量运行磁盘上的 JSON 文件
 - `webrunner_list_commands` —— 发现完整的 `WR_*` 接口面
 

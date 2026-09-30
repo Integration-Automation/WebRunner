@@ -84,6 +84,11 @@ PLAYWRIGHT_COMMANDS: dict[str, Any] = {
     "WR_pw_launch_persistent": _pw.pw_launch_persistent,
     "WR_pw_download": _pw.pw_download,
     "WR_pw_set_cache_disabled": _pw.pw_set_cache_disabled,
+    # several browsers at once
+    "WR_pw_new_browser": _pw.pw_new_browser,
+    "WR_pw_switch_browser": _pw.pw_switch_browser,
+    "WR_pw_close_browser": _pw.pw_close_browser,
+    "WR_pw_browser_count": _pw.pw_browser_count,
     # visual regression and the browser recorder on the Playwright page
     "WR_pw_visual_capture_baseline": _pw_visual_baseline,
     "WR_pw_visual_compare": _pw_visual_compare,

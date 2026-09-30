@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (489 commands).
+Auto-generated from the executor's event_dict (493 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -237,6 +237,7 @@ Auto-generated from the executor's event_dict (489 commands).
 | `WR_pw_back` | `() -> 'None'` |  |
 | `WR_pw_block_urls` | `(patterns: 'list[str]') -> 'None'` |  |
 | `WR_pw_bring_to_front` | `() -> 'None'` |  |
+| `WR_pw_browser_count` | `() -> 'int'` |  |
 | `WR_pw_cdp` | `(method: 'str', params: 'dict[str, Any] | None' = None) -> 'Any'` | 在當前 Playwright page 執行 CDP 命令 |
 | `WR_pw_cdp_reset_sessions` | `() -> 'None'` | Drop cached Playwright CDP sessions (e.g. after browser restart). |
 | `WR_pw_check` | `(selector: 'str', **options: 'Any') -> 'None'` |  |
@@ -248,6 +249,7 @@ Auto-generated from the executor's event_dict (489 commands).
 | `WR_pw_clock_install` | `(fake_now_ms: 'float | None' = None) -> 'None'` |  |
 | `WR_pw_clock_run_for` | `(duration_ms: 'float') -> 'None'` |  |
 | `WR_pw_clock_set_time` | `(time_ms: 'float') -> 'None'` |  |
+| `WR_pw_close_browser` | `() -> 'None'` |  |
 | `WR_pw_close_page` | `(index: 'int | None' = None) -> 'None'` |  |
 | `WR_pw_connect` | `(ws_endpoint: 'str', browser: 'str' = 'chromium', context_options: 'dict | None' = None) -> 'None'` |  |
 | `WR_pw_connect_over_cdp` | `(endpoint_url: 'str') -> 'None'` |  |
@@ -319,6 +321,7 @@ Auto-generated from the executor's event_dict (489 commands).
 | `WR_pw_mouse_move` | `(x: 'float', y: 'float', steps: 'int' = 1) -> 'None'` |  |
 | `WR_pw_mouse_up` | `(button: 'str' = 'left', click_count: 'int' = 1) -> 'None'` |  |
 | `WR_pw_network_responses` | `() -> 'list[dict[str, Any]]'` |  |
+| `WR_pw_new_browser` | `(browser: 'str' = 'chromium', headless: 'bool' = True, **launch_kwargs: 'Any') -> 'int'` |  |
 | `WR_pw_new_page` | `() -> 'int'` |  |
 | `WR_pw_page_count` | `() -> 'int'` |  |
 | `WR_pw_perf_collect` | `(observe_ms: 'int' = 1000) -> 'dict[str, Any]'` | 透過 ``page.evaluate`` 抓取效能指標 |
@@ -365,6 +368,7 @@ Auto-generated from the executor's event_dict (489 commands).
 | `WR_pw_sw_bypass` | `(bypass: 'bool' = True) -> 'None'` | Bypass the service worker via CDP on the active Playwright page. |
 | `WR_pw_sw_clear_caches` | `() -> 'list[str]'` |  |
 | `WR_pw_sw_unregister` | `() -> 'list[bool]'` |  |
+| `WR_pw_switch_browser` | `(index: 'int') -> 'None'` |  |
 | `WR_pw_switch_to_frame` | `(selectors: 'str | list[str]') -> 'None'` |  |
 | `WR_pw_switch_to_main_frame` | `() -> 'None'` |  |
 | `WR_pw_switch_to_page` | `(index: 'int') -> 'None'` |  |
@@ -489,7 +493,7 @@ Auto-generated from the executor's event_dict (489 commands).
 | `WR_user_factory` | `(prefix: 'str' = 'user') -> 'Factory'` | Default user shape: id / name / email / password. |
 | `WR_validate_action_file` | `(json_file_path: 'str') -> 'bool'` | 讀取並驗證動作 JSON 檔案 |
 | `WR_validate_action_json` | `(data: 'list | dict') -> 'bool'` | 驗證動作 JSON 是否符合執行器格式 |
-| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000024A52CF04A0>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
-| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000024A52CF04A0>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
+| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x00000143258F8F40>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
+| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x00000143258F8F40>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
 | `WR_wait_for_download` | `(directory: 'str', timeout: 'float' = 60.0, suffix: 'str | None' = None, poll_seconds: 'float' = 0.5) -> 'str'` | 等待 ``directory`` 內出現新檔案（會跳過 ``.crdownload`` / ``.part``） |
 | `WR_write_pom_to_file` | `(source: 'str', output_path: 'str') -> 'str'` | Write generated source to ``output_path``; returns the path written. |

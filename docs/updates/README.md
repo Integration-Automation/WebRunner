@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-23 | 2026-10-01 | Several Playwright browsers at once; one runtime for all launches | #change #playwright | [2026-10](2026-10.md) |
 | U-20261001-22 | 2026-10-01 | Playwright callbacks, visual regression and recorder | #change #playwright | [2026-10](2026-10.md) |
 | U-20261001-21 | 2026-10-01 | Playwright connect over CDP, browser server, persistent profile, downloads, cache switch | #change #playwright | [2026-10](2026-10.md) |
 | U-20261001-20 | 2026-10-01 | Playwright frame scope, role/text lookup and dialog policy; real-browser check | #change #playwright | [2026-10](2026-10.md) |
@@ -110,5 +111,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 22 |
+| [2026-10.md](2026-10.md) | 2026-10 | 23 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
