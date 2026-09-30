@@ -24,7 +24,7 @@ wired into the executor as `WR_*` commands, others are reachable only from Pytho
 | `je_web_runner/element/` | `web_element_wrapper.py`: operations on the currently selected Selenium element. |
 | `je_web_runner/manager/` | `webrunner_manager.py`: `WebdriverManager` (singleton `web_runner`) for multiple live drivers. |
 | `je_web_runner/utils/executor/` | `action_executor.py`: `Executor` (dispatch, command gate, retry, failure screenshots) and the `executor` singleton; its `event_dict` is built by `_event_table.build_event_dict()` from `COMMANDS` plus `_playwright_commands.PLAYWRIGHT_COMMANDS`. |
-| `je_web_runner/mcp_server/` | MCP stdio server (`server.py`) and live-browser tools (`browser_tools.py`). |
+| `je_web_runner/mcp_server/` | MCP stdio server: protocol and `McpServer` (`server.py`), `Tool` / `ToolResult` / errors (`_types.py`), offline tools (`offline_tools.py`, `build_default_tools()`) and live-browser tools (`browser_tools.py`). |
 | `je_web_runner/action_lsp/` | Language server for action JSON files. |
 | `je_web_runner/utils/` | One flat level of subpackages; functional areas below. |
 | `test/` | `unit_test/` (mock-based), `integration_test/` (real I/O, MCP / LSP / CLI subprocesses), `e2e_test/` (Selenium Grid). |

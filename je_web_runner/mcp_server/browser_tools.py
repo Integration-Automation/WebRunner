@@ -24,7 +24,7 @@ import io
 from contextlib import redirect_stdout
 from typing import Any
 
-from je_web_runner.mcp_server.server import McpServerError, Tool, ToolResult
+from je_web_runner.mcp_server._types import McpServerError, Tool, ToolResult
 
 
 def _serialize_value(value: Any) -> Any:

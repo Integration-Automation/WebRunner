@@ -165,6 +165,16 @@ class TestStdioLoop(unittest.TestCase):
         self.assertEqual(lines[0]["error"]["code"], -32600)
 
 
+class TestPackageExports(unittest.TestCase):
+
+    def test_package_exports_what_the_readme_imports(self):
+        # README › MCP Server: from je_web_runner.mcp_server import McpServer, Tool, ...
+        import je_web_runner.mcp_server as package
+        for name in ("McpServer", "Tool", "ToolResult", "build_default_tools", "serve_stdio"):
+            self.assertIn(name, package.__all__)
+            self.assertTrue(hasattr(package, name))
+
+
 class TestDefaultTools(unittest.TestCase):
 
     def test_default_tools_registered(self):
