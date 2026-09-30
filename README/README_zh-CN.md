@@ -771,6 +771,10 @@ serve_stdio(server=server)
 
 该服务器讲的是 MCP `2024-11-05`：`initialize`、`tools/list`、`tools/call`、`resources/list`、`ping`、`shutdown`。
 
+- stdio 一律是 UTF-8、行尾 `\n`，与控制台代码页无关。进程写到 stdout 的其他内容（`print`、子进程）都改走 stderr，所以客户端只会收到协议消息。
+- 工具执行失败时回传 `isError: true` 与错误信息，让客户端能修正调用。`webrunner_run_actions` 与 `webrunner_run_action_files` 在有动作失败时也会设 `isError`，并把失败的记录键列在 `failed`。
+- 未知的工具或不是对象的 `arguments` 回 JSON-RPC `-32602` 错误。通知（notification）一律不回应，批量请求以 `-32600` 拒绝。
+
 ## 动作 JSON LSP
 
 一个用于动作 JSON 文件的标准 Language Server Protocol 实现：

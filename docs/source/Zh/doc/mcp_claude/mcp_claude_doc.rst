@@ -137,7 +137,7 @@ Claude Code(終端機客戶端)以專案為單位,從 repo 根目錄的
 
 * **驅動瀏覽器。** *「用 ``webrunner_run_actions`` 開啟 example.com,
   在搜尋欄輸入文字。」* Claude 會組好 ``[command, params]`` payload,
-  executor 在真實瀏覽器執行,Claude 再讀回 ``{stdout, record}``。
+  executor 在真實瀏覽器執行,Claude 再讀回 ``{stdout, record, failed}``。
 
 * **產生 Page Object。** *「用 ``webrunner_pom_from_html`` 把附上的
   登入頁 HTML 轉成 ``LoginPage`` Python 模組。」*
@@ -209,8 +209,10 @@ Sharding 與 infra
 ----------
 
 * ``webrunner_run_actions`` — 對真實瀏覽器執行 action list,回傳
-  ``{stdout, record}``。
-* ``webrunner_run_action_files`` — 讀檔並依序執行 action JSON 檔。
+  ``{stdout, record, failed}``;``failed`` 列出丟出例外的動作的紀錄鍵,
+  只要有一個,結果的 ``isError`` 就是 true。
+* ``webrunner_run_action_files`` — 讀檔並依序執行 action JSON 檔,回傳
+  ``{stdout, records, failed}``,每個檔案一份 ``failed`` 清單。
 * ``webrunner_list_commands`` — 列出 executor 目前註冊的所有
   ``WR_*`` 指令。
 
@@ -258,10 +260,12 @@ Sharding 與 infra
 * **Claude 顯示「沒有可用的工具」** — 先手動執行
   ``python -m je_web_runner.mcp_server`` 確認 server 沒立刻退出,
   並檢查設定中的 ``command`` / ``args`` 在客戶端的 ``PATH`` 下解析得到。
-* **Browser tools 卡住不動** — Browser tools 透過 executor 執行,
-  executor 會 print 到 stdout。Server 已經把 stdout 重新導向到 buffer
-  並放在回傳的 ``stdout`` 欄位;但若 callback 直接寫
-  ``sys.__stdout__`` 仍會破壞 wire,務必避免在 callback 中 raw print。
+* **多餘的輸出** — Server 把真正的 stdout 只留給協定訊息(UTF-8、行尾
+  ``\n``),行程其餘寫到 stdout 的內容(包括子行程)都導向 stderr。
+  browser tool 執行期間的 print 會被收集,放在回傳的 ``stdout`` 欄位。
+* **工具呼叫失敗** — 失敗以一般結果回傳,``isError: true`` 加上錯誤訊息,
+  不是 JSON-RPC 錯誤。只有未知的工具名稱或不是物件的 ``arguments``
+  才是協定錯誤(``-32602``)。
 * **JSON 無法序列化** — Browser tools 透過 ``_serialize_value`` 把
   ``WebDriver`` / ``WebElement`` 轉成 ``repr()`` 字串。自訂回傳值若不是
   JSON-friendly,需要在該 helper 下能 reduce。

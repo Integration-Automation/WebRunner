@@ -957,49 +957,7 @@ class Executor:
         :return: 執行紀錄字典 {動作描述: 回傳值}
                  Execution record dict {action: response}
         """
-        web_runner_logger.info(f"execute_action, action_list: {action_list}")
-
-        # 如果傳入的是 dict，則嘗試取出 "webdriver_wrapper" 的動作清單
-        # If input is dict, extract "webdriver_wrapper" action list
-        if type(action_list) is dict:
-            action_list = action_list.get("webdriver_wrapper", None)
-            if action_list is None:
-                web_runner_logger.error(
-                    f"execute_action, action_list: {action_list}, "
-                    f"failed: {WebRunnerExecuteException(executor_list_error)}")
-                raise WebRunnerExecuteException(executor_list_error)
-
-        execute_record_dict = {}
-
-        # action_list 必須是 list（空 list 會自然回傳空結果，迴圈不執行）。
-        # 先前這裡的 raise 被同層 except 立即吞掉，等同沒驗證，導致非 list
-        # (例如字串) 會被逐字元迭代。改為直接拒絕非 list。
-        # action_list must be a list; an empty list yields an empty result.
-        if not isinstance(action_list, list):
-            web_runner_logger.error(
-                f"execute_action, action_list: {action_list}, "
-                f"failed: {WebRunnerExecuteException(executor_list_error)}")
-            raise WebRunnerExecuteException(executor_list_error)
-
-        # 逐一執行動作
-        # Execute each action in the list
-        for action in action_list:
-            try:
-                event_response = self._execute_with_retry(action)
-                execute_record = "execute: " + str(action)
-                execute_record_dict.update({execute_record: event_response})
-            except Exception as error:
-                web_runner_logger.error(
-                    f"execute_action, action_list: {action_list}, "
-                    f"action: {action}, failed: {error!r}")
-                execute_record = "execute: " + str(action)
-                screenshot_path = self._capture_failure_screenshot(action)
-                if screenshot_path:
-                    execute_record_dict.update({
-                        execute_record: f"{error!r} (failure screenshot: {screenshot_path})"
-                    })
-                else:
-                    execute_record_dict.update({execute_record: repr(error)})
+        execute_record_dict, _failed = self.collect_action_results(action_list)
 
         # 輸出執行結果
         # Print execution results
@@ -1008,6 +966,52 @@ class Executor:
             print(value)
 
         return execute_record_dict
+
+    def collect_action_results(self, action_list: list | dict) -> tuple[dict, list[str]]:
+        """
+        執行動作清單但不印出；另外回傳失敗動作的紀錄鍵
+        Run ``action_list`` exactly like :meth:`execute_action` but print nothing.
+
+        :return: ``(record, failed)``: the record dict ``execute_action`` returns, and the record
+                 keys of the actions that raised (their record value is the error's ``repr``).
+        :raises WebRunnerExecuteException: when ``action_list`` is not a list, or a dict
+                 without a ``webdriver_wrapper`` list.
+        """
+        web_runner_logger.info(f"execute_action, action_list: {action_list}")
+        action_list = self._action_list_of(action_list)
+        execute_record_dict = {}
+        failed = []
+        for action in action_list:
+            execute_record = "execute: " + str(action)
+            try:
+                execute_record_dict.update({execute_record: self._execute_with_retry(action)})
+            except Exception as error:  # every command's own failure is recorded, not raised
+                web_runner_logger.error(
+                    f"execute_action, action_list: {action_list}, "
+                    f"action: {action}, failed: {error!r}")
+                execute_record_dict.update({execute_record: self._failure_text(action, error)})
+                failed.append(execute_record)
+        return execute_record_dict, failed
+
+    @staticmethod
+    def _action_list_of(action_list: list | dict) -> list:
+        # 如果傳入的是 dict，則嘗試取出 "webdriver_wrapper" 的動作清單；結果必須是 list
+        # A dict must carry its actions under "webdriver_wrapper"; the result must be a list
+        # (a string would otherwise be iterated character by character).
+        if type(action_list) is dict:
+            action_list = action_list.get("webdriver_wrapper", None)
+        if not isinstance(action_list, list):
+            web_runner_logger.error(
+                f"execute_action, action_list: {action_list}, "
+                f"failed: {WebRunnerExecuteException(executor_list_error)}")
+            raise WebRunnerExecuteException(executor_list_error)
+        return action_list
+
+    def _failure_text(self, action, error: Exception) -> str:
+        screenshot_path = self._capture_failure_screenshot(action)
+        if screenshot_path:
+            return f"{error!r} (failure screenshot: {screenshot_path})"
+        return repr(error)
 
     def execute_files(self, execute_files_list: list) -> list:
         """

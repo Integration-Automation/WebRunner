@@ -148,7 +148,7 @@ built-in tools. Practical examples:
   example.com in a Playwright session and fill the search box."*
   Claude composes the ``[command, params]`` payload, the executor
   runs against a real browser, and Claude reads back ``{stdout,
-  record}``.
+  record, failed}``.
 
 * **Extract a Page Object.** *"Run ``webrunner_pom_from_html`` on the
   attached login page HTML and produce a ``LoginPage`` Python module."*
@@ -233,9 +233,12 @@ Browser execution
 -----------------
 
 * ``webrunner_run_actions`` — Execute an action list against a real
-  browser. Returns ``{stdout, record}``.
+  browser. Returns ``{stdout, record, failed}``; ``failed`` lists the
+  record keys of the actions that raised, and the result's ``isError``
+  is true when there is any.
 * ``webrunner_run_action_files`` — Read JSON action files from disk
-  and run them sequentially.
+  and run them sequentially. Returns ``{stdout, records, failed}`` with
+  one ``failed`` list per file.
 * ``webrunner_list_commands`` — Discover every ``WR_*`` command
   currently registered in the executor.
 
@@ -284,11 +287,14 @@ Troubleshooting
   manually (``python -m je_web_runner.mcp_server`` should not exit
   immediately) and check the configured ``command`` / ``args`` resolve
   on the client's ``PATH``.
-* **Browser tools hang** — the browser tools use the WebRunner
-  executor, which prints to stdout. The server captures stdout and
-  surfaces it in the ``stdout`` field; if a callback writes directly
-  to ``sys.__stdout__`` it can corrupt the wire. Avoid raw prints in
-  callbacks.
+* **Stray output** — the server keeps the real stdout for protocol
+  messages only (UTF-8, ``\n`` line ends) and points the process's
+  stdout, including child processes, at stderr. Prints made during a
+  browser tool call are captured and returned in the ``stdout`` field.
+* **A tool call fails** — failures come back as a normal result with
+  ``isError: true`` and the error text, not as a JSON-RPC error. Only
+  an unknown tool name or non-object ``arguments`` is a protocol error
+  (``-32602``).
 * **JSON not serialisable** — browser tools convert
   ``WebDriver`` / ``WebElement`` instances to ``repr()`` strings via
   ``_serialize_value``. Custom return types must be JSON-friendly or

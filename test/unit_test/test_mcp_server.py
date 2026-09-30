@@ -68,6 +68,37 @@ class TestMcpServer(unittest.TestCase):
         result = server.handle({"id": 9, "method": 42})
         self.assertEqual(result["error"]["code"], -32600)
 
+    def test_unknown_notification_gets_no_reply(self):
+        # JSON-RPC: a message without "id" is a notification and must never be answered.
+        server = McpServer()
+        self.assertIsNone(server.handle({"jsonrpc": "2.0", "method": "notifications/cancelled",
+                                         "params": {"requestId": 1}}))
+        self.assertIsNone(server.handle({"jsonrpc": "2.0", "method": 42}))
+
+    def test_unknown_tool_is_invalid_params(self):
+        server = McpServer()
+        result = server.handle({"id": 4, "method": "tools/call",
+                                "params": {"name": "ghost", "arguments": {}}})
+        self.assertEqual(result["error"]["code"], -32602)
+
+    def test_non_object_arguments_are_invalid_params(self):
+        server = McpServer()
+        server.register(_tool())
+        result = server.handle({"id": 4, "method": "tools/call",
+                                "params": {"name": "echo", "arguments": [1]}})
+        self.assertEqual(result["error"]["code"], -32602)
+
+    def test_handler_failure_is_a_tool_error_not_a_protocol_error(self):
+        def boom(_args):
+            raise ValueError("index must be an integer")
+        server = McpServer()
+        server.register(_tool(handler=boom))
+        result = server.handle({"id": 5, "method": "tools/call",
+                                "params": {"name": "echo", "arguments": {}}})
+        self.assertNotIn("error", result)
+        self.assertTrue(result["result"]["isError"])
+        self.assertIn("index must be an integer", result["result"]["content"][0]["text"])
+
 
 class TestStdioLoop(unittest.TestCase):
 
@@ -85,6 +116,21 @@ class TestStdioLoop(unittest.TestCase):
         self.assertEqual(len(lines), 2)
         self.assertEqual(lines[0]["id"], 1)
         self.assertEqual(lines[1]["id"], 2)
+
+    def test_batch_is_rejected_with_one_error(self):
+        # JSON-RPC batching was removed from MCP in 2025-06-18.
+        server = McpServer()
+        server.register(_tool())
+        stdin = io.StringIO(json.dumps([
+            {"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+        ]) + "\n")
+        stdout = io.StringIO()
+        serve_stdio(stdin=stdin, stdout=stdout, server=server)
+        lines = [json.loads(line) for line in stdout.getvalue().splitlines() if line]
+        self.assertEqual(len(lines), 1)
+        self.assertIsNone(lines[0]["id"])
+        self.assertEqual(lines[0]["error"]["code"], -32600)
 
 
 class TestDefaultTools(unittest.TestCase):
@@ -281,6 +327,14 @@ class TestBrowserTools(unittest.TestCase):
         self.assertIn('"stdout"', body)
         self.assertIn('"record"', body)
         self.assertIn("WR_sleep", body)
+
+    def test_run_actions_reports_a_failed_action_as_tool_error(self):
+        result = self._call("webrunner_run_actions",
+                            {"actions": [["WR_sleep", {"seconds": 0}], ["WR_no_such_command"]]})
+        self.assertTrue(result["result"]["isError"])
+        payload = json.loads(result["result"]["content"][0]["text"])
+        self.assertEqual(payload["failed"], ["execute: ['WR_no_such_command']"])
+        self.assertEqual(len(payload["record"]), 2)
 
 
 if __name__ == "__main__":

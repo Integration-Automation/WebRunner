@@ -775,6 +775,10 @@ serve_stdio(server=server)
 
 The server speaks MCP `2024-11-05`: `initialize`, `tools/list`, `tools/call`, `resources/list`, `ping`, `shutdown`.
 
+- stdio is UTF-8 with `\n` line ends whatever the console code page. Anything else the process writes to stdout (`print`, child processes) goes to stderr, so only protocol messages reach the client.
+- A tool that fails returns a result with `isError: true` and the error text, so the client can correct its call. `webrunner_run_actions` and `webrunner_run_action_files` also set `isError` when an action failed, and list the failed record keys under `failed`.
+- An unknown tool or non-object `arguments` is a JSON-RPC `-32602` error. Notifications are never answered, and batch requests are rejected with `-32600`.
+
 ## Action JSON LSP
 
 A standard Language Server Protocol implementation for action JSON files:
