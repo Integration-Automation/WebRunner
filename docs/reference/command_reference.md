@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (466 commands).
+Auto-generated from the executor's event_dict (472 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -240,6 +240,7 @@ Auto-generated from the executor's event_dict (466 commands).
 | `WR_pw_cdp` | `(method: 'str', params: 'dict[str, Any] | None' = None) -> 'Any'` | 在當前 Playwright page 執行 CDP 命令 |
 | `WR_pw_cdp_reset_sessions` | `() -> 'None'` | Drop cached Playwright CDP sessions (e.g. after browser restart). |
 | `WR_pw_check` | `(selector: 'str', **options: 'Any') -> 'None'` |  |
+| `WR_pw_check_current_page` | `(check_dict: 'dict') -> 'None'` |  |
 | `WR_pw_clear_cookies` | `() -> 'None'` |  |
 | `WR_pw_clear_geolocation` | `() -> 'None'` |  |
 | `WR_pw_clear_permissions` | `() -> 'None'` |  |
@@ -251,8 +252,10 @@ Auto-generated from the executor's event_dict (466 commands).
 | `WR_pw_console_messages` | `() -> 'list[dict[str, Any]]'` |  |
 | `WR_pw_content` | `() -> 'str'` |  |
 | `WR_pw_dblclick` | `(selector: 'str', **options: 'Any') -> 'None'` |  |
+| `WR_pw_delete_cookie` | `(name: 'str') -> 'None'` |  |
 | `WR_pw_drag_and_drop` | `(source_selector: 'str', target_selector: 'str', **options: 'Any') -> 'None'` |  |
 | `WR_pw_drag_and_drop_offset` | `(selector: 'str', target_x: 'float', target_y: 'float') -> 'None'` |  |
+| `WR_pw_element_assert` | `(check_dict: 'dict') -> 'None'` | 斷言目前元素的欄位；不符時拋出例外 |
 | `WR_pw_element_change` | `(element_index: 'int') -> 'None'` | Switch ``current_element`` to ``current_element_list[element_index]``. |
 | `WR_pw_element_check` | `() -> 'None'` |  |
 | `WR_pw_element_clear` | `() -> 'None'` | Clear the value (Playwright equivalent of fill('')) . |
@@ -271,8 +274,10 @@ Auto-generated from the executor's event_dict (466 commands).
 | `WR_pw_element_screenshot` | `(filename: 'str') -> 'str | None'` |  |
 | `WR_pw_element_scroll_into_view` | `() -> 'None'` |  |
 | `WR_pw_element_select_option` | `(value: 'str | list | dict') -> 'list[str]'` |  |
+| `WR_pw_element_submit` | `() -> 'None'` | 送出目前元素所在的表單（元素本身是表單時送出它） |
 | `WR_pw_element_type_text` | `(input_value: 'str', delay: 'float' = 0) -> 'None'` | Type text key-by-key (analogue of Selenium ``send_keys``). |
 | `WR_pw_element_uncheck` | `() -> 'None'` |  |
+| `WR_pw_element_value_of_css_property` | `(property_name: 'str') -> 'str | None'` | The computed value of CSS ``property_name`` on the current element. |
 | `WR_pw_emulate` | `(device_name: 'str') -> 'None'` |  |
 | `WR_pw_evaluate` | `(expression: 'str', arg: 'Any' = None)` |  |
 | `WR_pw_event_capture_clear` | `() -> 'None'` |  |
@@ -287,6 +292,7 @@ Auto-generated from the executor's event_dict (466 commands).
 | `WR_pw_find_with_healing` | `(name: 'str')` | Playwright 版自我修復定位 |
 | `WR_pw_forward` | `() -> 'None'` |  |
 | `WR_pw_frame_locator_chain` | `(selectors: 'Sequence[str]') -> 'Any'` | 依序連結 ``page.frame_locator(selector)`` 形成深層 frame locator |
+| `WR_pw_get_cookie` | `(name: 'str') -> 'dict | None'` |  |
 | `WR_pw_get_cookies` | `() -> 'list[dict]'` |  |
 | `WR_pw_grant_permissions` | `(permissions: 'list[str]', origin: 'str | None' = None) -> 'None'` |  |
 | `WR_pw_hover` | `(selector: 'str', **options: 'Any') -> 'None'` |  |

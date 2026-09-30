@@ -100,11 +100,26 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
      - ``WR_get_cookies``、``WR_get_cookie``、``WR_add_cookie``、
        ``WR_delete_cookie``、``WR_delete_all_cookies``、``WR_save_cookies``、
        ``WR_load_cookies``
-     - ``WR_pw_get_cookies``、``WR_pw_add_cookies``（清單）、
-       ``WR_pw_clear_cookies``、``WR_pw_save_storage_state``（用 context 選項
-       ``storage_state`` 載回）
-     - Playwright 不能依名稱取得或刪除；存下的狀態同時包含 cookie 與
-       localStorage。
+     - ``WR_pw_get_cookies``、``WR_pw_get_cookie``、``WR_pw_add_cookies``
+       （清單）、``WR_pw_delete_cookie``、``WR_pw_clear_cookies``、
+       ``WR_pw_save_storage_state``（用 context 選項 ``storage_state`` 載回）
+     - Playwright 存下的狀態同時包含 cookie 與 localStorage。
+   * - Submit、CSS 值、DOM 屬性
+     - ``WR_element_submit``、``WR_element_value_of_css_property``、
+       ``WR_element_get_dom_attribute``
+     - ``WR_pw_element_submit``、``WR_pw_element_value_of_css_property``、
+       ``WR_pw_element_get_attribute``
+     - Playwright 的 ``get_attribute`` 本來就讀 DOM 屬性。
+       ``WR_pw_element_submit`` 用表單的 ``requestSubmit``，所以會觸發 submit
+       事件與驗證。
+   * - 斷言
+     - ``WR_check_current_webdriver``、``WR_element_assert``
+     - ``WR_pw_check_current_page``\ （``title``、``url`` / ``current_url``、
+       ``viewport_size``、``page_count``）、``WR_pw_element_assert``\ （``tag_name``、
+       ``text``、``value``、``visible``、``enabled``、``checked``、``size``、
+       ``location``）
+     - Playwright 的斷言會拋出例外，不符時該動作就失敗。Selenium 的斷言只把
+       不符記進測試紀錄，動作仍算成功。
    * - 分頁
      - ``WR_new_window``、``WR_switch``、``WR_switch_to_window_by_url``、
        ``WR_switch_to_window_by_title``、``WR_close_window``
@@ -185,9 +200,6 @@ Playwright 還沒有（Playwright API 本身支援）：
   ``WR_wait_for_download``、``WR_attach_to_existing_browser``；
 * 同時開多個 driver（多次 ``WR_new_driver``、
   ``WR_change_index_of_webdriver``）；
-* ``WR_element_submit``、``WR_element_value_of_css_property``、
-  ``WR_element_get_dom_attribute``、``WR_check_current_webdriver``、
-  ``WR_element_assert``；
 * callback（callback executor 沒有 ``WR_pw_*`` 命令）；
 * 視覺回歸（``WR_visual_capture_baseline``、``WR_visual_compare``）與瀏覽器
   錄製器（``WR_recorder_*``）。

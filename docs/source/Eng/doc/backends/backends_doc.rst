@@ -103,11 +103,28 @@ Equivalent commands
      - ``WR_get_cookies``, ``WR_get_cookie``, ``WR_add_cookie``,
        ``WR_delete_cookie``, ``WR_delete_all_cookies``, ``WR_save_cookies``,
        ``WR_load_cookies``
-     - ``WR_pw_get_cookies``, ``WR_pw_add_cookies`` (a list),
-       ``WR_pw_clear_cookies``, ``WR_pw_save_storage_state`` (load it back
-       with the ``storage_state`` context option)
-     - Playwright has no per-name get or delete; its saved state holds
-       cookies and localStorage together.
+     - ``WR_pw_get_cookies``, ``WR_pw_get_cookie``, ``WR_pw_add_cookies``
+       (a list), ``WR_pw_delete_cookie``, ``WR_pw_clear_cookies``,
+       ``WR_pw_save_storage_state`` (load it back with the ``storage_state``
+       context option)
+     - Playwright's saved state holds cookies and localStorage together.
+   * - Submit, CSS value, DOM attribute
+     - ``WR_element_submit``, ``WR_element_value_of_css_property``,
+       ``WR_element_get_dom_attribute``
+     - ``WR_pw_element_submit``, ``WR_pw_element_value_of_css_property``,
+       ``WR_pw_element_get_attribute``
+     - Playwright's ``get_attribute`` already reads the DOM attribute.
+       ``WR_pw_element_submit`` uses the form's ``requestSubmit``, so its
+       submit event and validation run.
+   * - Assertions
+     - ``WR_check_current_webdriver``, ``WR_element_assert``
+     - ``WR_pw_check_current_page`` (``title``, ``url`` / ``current_url``,
+       ``viewport_size``, ``page_count``), ``WR_pw_element_assert``
+       (``tag_name``, ``text``, ``value``, ``visible``, ``enabled``,
+       ``checked``, ``size``, ``location``)
+     - The Playwright checks raise, so a mismatch fails its action. The
+       Selenium ones record the mismatch in the test record but let the
+       action pass.
    * - Tabs
      - ``WR_new_window``, ``WR_switch``, ``WR_switch_to_window_by_url``,
        ``WR_switch_to_window_by_title``, ``WR_close_window``
@@ -192,9 +209,6 @@ Not on Playwright yet (the Playwright API supports them):
   ``WR_wait_for_download``, ``WR_attach_to_existing_browser``;
 * several drivers at once (``WR_new_driver`` more than once,
   ``WR_change_index_of_webdriver``);
-* ``WR_element_submit``, ``WR_element_value_of_css_property``,
-  ``WR_element_get_dom_attribute``, ``WR_check_current_webdriver``,
-  ``WR_element_assert``;
 * callbacks (the callback executor has no ``WR_pw_*`` command);
 * visual regression (``WR_visual_capture_baseline``,
   ``WR_visual_compare``) and the browser recorder (``WR_recorder_*``).

@@ -5,7 +5,7 @@ import functools
 import inspect
 from typing import Any, Callable
 
-from je_web_runner.utils.exception.exceptions import WebRunnerException
+from je_web_runner.utils.exception.exceptions import WebRunnerAssertException, WebRunnerException
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
 
@@ -52,3 +52,18 @@ def recorded(hidden: tuple[str, ...] = ()) -> Callable[[Callable[..., Any]], Cal
         return wrapper
 
     return decorator
+
+
+def check_fields(getters: dict[str, Callable[[], Any]], expected: dict[str, Any], what: str) -> None:
+    """
+    依 ``expected`` 斷言欄位值；只讀取被要求的欄位
+    Assert each ``expected`` field against its getter, reading only the fields asked for.
+    Raises :class:`WebRunnerAssertException` on the first mismatch or an unknown field.
+    """
+    for name, value in expected.items():
+        getter = getters.get(name)
+        if getter is None:
+            raise WebRunnerAssertException(f"{what} has no field {name!r}; known: {sorted(getters)}")
+        actual = getter()
+        if actual != value:
+            raise WebRunnerAssertException(f"{what} {name} should be {value!r} but was {actual!r}")

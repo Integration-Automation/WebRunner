@@ -5,7 +5,7 @@ import base64
 from typing import Any
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
-from je_web_runner.webdriver._playwright_mixins._common import recorded
+from je_web_runner.webdriver._playwright_mixins._common import check_fields, recorded
 
 
 class _StateMixin:
@@ -25,6 +25,31 @@ class _StateMixin:
     @recorded()
     def clear_cookies(self) -> None:
         self.context.clear_cookies()
+
+    def get_cookie(self, name: str) -> dict | None:
+        """The first cookie called ``name`` in the context, or None."""
+        return next((cookie for cookie in self.context.cookies() if cookie.get("name") == name), None)
+
+    @recorded()
+    def delete_cookie(self, name: str) -> None:
+        """Delete every cookie called ``name`` (Playwright 1.43+ filters by name)."""
+        self.context.clear_cookies(name=name)
+
+    @recorded()
+    def check_current_page(self, check_dict: dict[str, Any]) -> None:
+        """
+        斷言目前頁面的欄位（``title``、``url`` / ``current_url``、``viewport_size``、``page_count``）
+        Assert fields of the current page; raises ``WebRunnerAssertException`` on a
+        mismatch or an unknown field. The Playwright twin of ``WR_check_current_webdriver``.
+        """
+        getters = {
+            "title": self.page.title,
+            "url": lambda: self.page.url,
+            "current_url": lambda: self.page.url,
+            "viewport_size": lambda: self.page.viewport_size,
+            "page_count": lambda: len(self._pages),
+        }
+        check_fields(getters, check_dict, "page")
 
     # ----- screenshots -------------------------------------------------
 

@@ -339,6 +339,18 @@ def pw_drag_and_drop_offset(selector: str, target_x: float, target_y: float) -> 
     playwright_wrapper_instance.drag_and_drop_offset(selector, target_x, target_y)
 
 
+def pw_get_cookie(name: str) -> dict | None:
+    return playwright_wrapper_instance.get_cookie(name)
+
+
+def pw_delete_cookie(name: str) -> None:
+    playwright_wrapper_instance.delete_cookie(name)
+
+
+def pw_check_current_page(check_dict: dict) -> None:
+    playwright_wrapper_instance.check_current_page(check_dict)
+
+
 def pw_quit() -> None:
     playwright_wrapper_instance.quit()
 
