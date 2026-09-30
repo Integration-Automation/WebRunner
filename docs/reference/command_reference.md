@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (453 commands).
+Auto-generated from the executor's event_dict (466 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -230,14 +230,18 @@ Auto-generated from the executor's event_dict (453 commands).
 | `WR_product_factory` | `() -> 'Factory'` |  |
 | `WR_pw_a11y_run_audit` | `(axe_source: 'str', options: 'dict[str, Any] | None' = None) -> 'dict[str, Any]'` | 在當前 Playwright 頁面執行 axe.run，回傳結果 dict |
 | `WR_pw_add_cookies` | `(cookies: 'list[dict]') -> 'None'` |  |
+| `WR_pw_add_init_script` | `(source: 'str') -> 'None'` |  |
 | `WR_pw_assert_no_4xx_or_5xx` | `() -> 'None'` |  |
 | `WR_pw_assert_no_5xx` | `() -> 'None'` |  |
 | `WR_pw_assert_no_console_errors` | `() -> 'None'` |  |
 | `WR_pw_back` | `() -> 'None'` |  |
+| `WR_pw_block_urls` | `(patterns: 'list[str]') -> 'None'` |  |
+| `WR_pw_bring_to_front` | `() -> 'None'` |  |
 | `WR_pw_cdp` | `(method: 'str', params: 'dict[str, Any] | None' = None) -> 'Any'` | 在當前 Playwright page 執行 CDP 命令 |
 | `WR_pw_cdp_reset_sessions` | `() -> 'None'` | Drop cached Playwright CDP sessions (e.g. after browser restart). |
 | `WR_pw_check` | `(selector: 'str', **options: 'Any') -> 'None'` |  |
 | `WR_pw_clear_cookies` | `() -> 'None'` |  |
+| `WR_pw_clear_geolocation` | `() -> 'None'` |  |
 | `WR_pw_clear_permissions` | `() -> 'None'` |  |
 | `WR_pw_click` | `(selector: 'str', **options: 'Any') -> 'None'` |  |
 | `WR_pw_clock_install` | `(fake_now_ms: 'float | None' = None) -> 'None'` |  |
@@ -248,6 +252,7 @@ Auto-generated from the executor's event_dict (453 commands).
 | `WR_pw_content` | `() -> 'str'` |  |
 | `WR_pw_dblclick` | `(selector: 'str', **options: 'Any') -> 'None'` |  |
 | `WR_pw_drag_and_drop` | `(source_selector: 'str', target_selector: 'str', **options: 'Any') -> 'None'` |  |
+| `WR_pw_drag_and_drop_offset` | `(selector: 'str', target_x: 'float', target_y: 'float') -> 'None'` |  |
 | `WR_pw_element_change` | `(element_index: 'int') -> 'None'` | Switch ``current_element`` to ``current_element_list[element_index]``. |
 | `WR_pw_element_check` | `() -> 'None'` |  |
 | `WR_pw_element_clear` | `() -> 'None'` | Clear the value (Playwright equivalent of fill('')) . |
@@ -306,6 +311,7 @@ Auto-generated from the executor's event_dict (453 commands).
 | `WR_pw_page_count` | `() -> 'int'` |  |
 | `WR_pw_perf_collect` | `(observe_ms: 'int' = 1000) -> 'dict[str, Any]'` | 透過 ``page.evaluate`` 抓取效能指標 |
 | `WR_pw_press` | `(selector: 'str', key: 'str', **options: 'Any') -> 'None'` |  |
+| `WR_pw_print_page` | `(file_path: 'str') -> 'str'` |  |
 | `WR_pw_quit` | `() -> 'None'` |  |
 | `WR_pw_refresh` | `() -> 'None'` |  |
 | `WR_pw_route_clear` | `() -> 'None'` |  |
@@ -315,7 +321,11 @@ Auto-generated from the executor's event_dict (453 commands).
 | `WR_pw_save_storage_state` | `(path: 'str') -> 'str'` |  |
 | `WR_pw_save_test_object_to_selector` | `(test_object_name: 'str', object_type: 'str' = 'CSS_SELECTOR') -> 'str'` | 把 TestObject 存進 ``test_object_record`` 並回傳對應的 Playwright selector |
 | `WR_pw_screenshot` | `(path: 'str', full_page: 'bool' = False) -> 'str'` |  |
+| `WR_pw_screenshot_base64` | `(full_page: 'bool' = False) -> 'str'` |  |
 | `WR_pw_screenshot_bytes` | `(full_page: 'bool' = False) -> 'bytes'` |  |
+| `WR_pw_scroll` | `(scroll_x: 'float', scroll_y: 'float') -> 'None'` |  |
+| `WR_pw_scroll_to_bottom` | `() -> 'None'` |  |
+| `WR_pw_scroll_to_top` | `() -> 'None'` |  |
 | `WR_pw_select_option` | `(selector: 'str', value: 'Any', **options: 'Any') -> 'list[str]'` |  |
 | `WR_pw_session_storage_clear` | `() -> 'None'` |  |
 | `WR_pw_session_storage_get` | `(key: 'str') -> 'str | None'` |  |
@@ -338,6 +348,8 @@ Auto-generated from the executor's event_dict (453 commands).
 | `WR_pw_sw_clear_caches` | `() -> 'list[str]'` |  |
 | `WR_pw_sw_unregister` | `() -> 'list[bool]'` |  |
 | `WR_pw_switch_to_page` | `(index: 'int') -> 'None'` |  |
+| `WR_pw_switch_to_page_by_title` | `(pattern: 'str') -> 'bool'` |  |
+| `WR_pw_switch_to_page_by_url` | `(pattern: 'str') -> 'bool'` |  |
 | `WR_pw_throttle` | `(preset: 'str') -> 'Any'` | Apply ``preset`` via the active Playwright page's CDP session. |
 | `WR_pw_throttle_clear` | `() -> 'Any'` |  |
 | `WR_pw_title` | `() -> 'str'` |  |
@@ -346,6 +358,7 @@ Auto-generated from the executor's event_dict (453 commands).
 | `WR_pw_tracing_start` | `(screenshots: 'bool' = True, snapshots: 'bool' = True, sources: 'bool' = False) -> 'None'` |  |
 | `WR_pw_tracing_stop` | `(path: 'str') -> 'str'` |  |
 | `WR_pw_type_text` | `(selector: 'str', value: 'str', delay: 'float' = 0, **options: 'Any') -> 'None'` |  |
+| `WR_pw_unblock_urls` | `() -> 'None'` |  |
 | `WR_pw_uncheck` | `(selector: 'str', **options: 'Any') -> 'None'` |  |
 | `WR_pw_upload_file` | `(input_selector: 'str', file_path: 'str') -> 'None'` | 對指定的 file input 送入檔案（Playwright） |
 | `WR_pw_url` | `() -> 'str'` |  |

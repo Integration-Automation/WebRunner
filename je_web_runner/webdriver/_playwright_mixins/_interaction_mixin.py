@@ -4,7 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
-from je_web_runner.webdriver._playwright_mixins._common import recorded
+from je_web_runner.webdriver._playwright_mixins._common import PlaywrightBackendError, recorded
 
 
 class _InteractionMixin:
@@ -55,6 +55,31 @@ class _InteractionMixin:
     @recorded()
     def drag_and_drop(self, source_selector: str, target_selector: str, **options: Any) -> None:
         self.page.drag_and_drop(source_selector, target_selector, **options)
+
+    @recorded()
+    def drag_and_drop_offset(self, selector: str, target_x: float, target_y: float) -> None:
+        """Drag the element matching ``selector`` by ``(target_x, target_y)`` pixels from its centre."""
+        box = self.page.locator(selector).bounding_box()
+        if box is None:
+            raise PlaywrightBackendError(f"element {selector!r} is not visible")
+        start_x, start_y = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+        self.page.mouse.move(start_x, start_y)
+        self.page.mouse.down()
+        self.page.mouse.move(start_x + target_x, start_y + target_y, steps=5)
+        self.page.mouse.up()
+
+    @recorded()
+    def scroll(self, scroll_x: float, scroll_y: float) -> None:
+        """Scroll by ``(scroll_x, scroll_y)`` pixels with the mouse wheel."""
+        self.page.mouse.wheel(scroll_x, scroll_y)
+
+    @recorded()
+    def scroll_to_top(self) -> None:
+        self.page.evaluate("window.scrollTo(0, 0)")
+
+    @recorded()
+    def scroll_to_bottom(self) -> None:
+        self.page.evaluate("window.scrollTo(0, document.body.scrollHeight)")
 
     # ----- script ------------------------------------------------------
 

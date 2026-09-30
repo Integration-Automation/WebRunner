@@ -1,6 +1,7 @@
 """Cookie、截圖、等待、viewport、網路 route / Cookies, screenshots, waits, viewport, routes."""
 from __future__ import annotations
 
+import base64
 from typing import Any
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -34,6 +35,16 @@ class _StateMixin:
 
     def screenshot_bytes(self, full_page: bool = False) -> bytes:
         return self.page.screenshot(full_page=full_page)
+
+    def screenshot_base64(self, full_page: bool = False) -> str:
+        """The page screenshot as a base64 PNG string."""
+        return base64.b64encode(self.page.screenshot(full_page=full_page)).decode("ascii")
+
+    @recorded()
+    def print_page(self, file_path: str) -> str:
+        """Save the page as PDF (Chromium, headless only: a Playwright limit)."""
+        self.page.pdf(path=file_path)
+        return file_path
 
     # ----- waits -------------------------------------------------------
 

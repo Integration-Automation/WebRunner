@@ -92,8 +92,13 @@ Equivalent commands
    * - Screenshot
      - ``WR_save_screenshot``, ``WR_save_full_page_screenshot``,
        ``WR_get_screenshot_as_png``, ``WR_get_screenshot_as_base64``
-     - ``WR_pw_screenshot`` (``full_page``), ``WR_pw_screenshot_bytes``
-     - No base64 form on Playwright.
+     - ``WR_pw_screenshot`` (``full_page``), ``WR_pw_screenshot_bytes``,
+       ``WR_pw_screenshot_base64``
+     - Same forms on both.
+   * - PDF
+     - ``WR_print_page``
+     - ``WR_pw_print_page``
+     - Playwright prints only from headless Chromium.
    * - Cookies
      - ``WR_get_cookies``, ``WR_get_cookie``, ``WR_add_cookie``,
        ``WR_delete_cookie``, ``WR_delete_all_cookies``, ``WR_save_cookies``,
@@ -106,9 +111,25 @@ Equivalent commands
    * - Tabs
      - ``WR_new_window``, ``WR_switch``, ``WR_switch_to_window_by_url``,
        ``WR_switch_to_window_by_title``, ``WR_close_window``
-     - ``WR_pw_new_page``, ``WR_pw_switch_to_page``, ``WR_pw_close_page``,
-       ``WR_pw_page_count``
-     - Playwright switches by index only.
+     - ``WR_pw_new_page``, ``WR_pw_switch_to_page`` (by index),
+       ``WR_pw_switch_to_page_by_url``, ``WR_pw_switch_to_page_by_title``,
+       ``WR_pw_close_page``, ``WR_pw_page_count``, ``WR_pw_bring_to_front``
+     - URL and title match a case-sensitive substring on both; Playwright also
+       tracks pages the site opens itself.
+   * - Scroll, drag by an offset
+     - ``WR_scroll``, ``WR_scroll_to_top``, ``WR_scroll_to_bottom``,
+       ``WR_drag_and_drop_offset``
+     - ``WR_pw_scroll``, ``WR_pw_scroll_to_top``, ``WR_pw_scroll_to_bottom``,
+       ``WR_pw_drag_and_drop_offset``
+     - Playwright's drag takes a selector; Selenium's drags the element
+       passed to it.
+   * - Init script, blocked URLs
+     - ``WR_add_script_to_evaluate_on_new_document``, ``WR_block_urls`` /
+       ``WR_unblock_urls`` (CDP)
+     - ``WR_pw_add_init_script``, ``WR_pw_block_urls`` / ``WR_pw_unblock_urls``
+     - Selenium's are Chromium-only. Patterns use ``*`` for anything on both.
+       On Playwright both carry over to rebuilt contexts; both init-script
+       commands are behind the arbitrary-script gate.
    * - Frames
      - ``WR_switch``, ``WR_iframe_switch_chain``,
        ``WR_iframe_back_to_default``
@@ -123,7 +144,8 @@ Equivalent commands
      - ``WR_set_geolocation``, ``WR_set_timezone``, ``WR_set_locale``
      - ``WR_pw_set_geolocation``, ``WR_pw_set_timezone``,
        ``WR_pw_set_locale``
-     - Selenium's are Chromium-only (CDP). ``WR_pw_set_timezone`` and
+     - ``WR_pw_clear_geolocation`` clears the override (Selenium:
+       ``WR_clear_geolocation_override``). Selenium's are Chromium-only (CDP). ``WR_pw_set_timezone`` and
        ``WR_pw_set_locale`` rebuild the Playwright context: cookies,
        localStorage and the current page's URL carry over, other open pages
        close.
@@ -166,20 +188,14 @@ Not possible on Playwright:
 
 Not on Playwright yet (the Playwright API supports them):
 
-* ``WR_add_script_to_evaluate_on_new_document``, ``WR_block_urls`` /
-  ``WR_unblock_urls``, ``WR_set_cache_disabled``,
-  ``WR_clear_geolocation_override``, ``WR_bring_to_front``,
-  ``WR_print_page``, ``WR_set_download_directory`` / ``WR_wait_for_download``,
-  ``WR_attach_to_existing_browser``;
+* ``WR_set_cache_disabled``, ``WR_set_download_directory`` /
+  ``WR_wait_for_download``, ``WR_attach_to_existing_browser``;
 * several drivers at once (``WR_new_driver`` more than once,
   ``WR_change_index_of_webdriver``);
 * ``WR_element_submit``, ``WR_element_value_of_css_property``,
   ``WR_element_get_dom_attribute``, ``WR_check_current_webdriver``,
   ``WR_element_assert``;
-* ``WR_scroll``, ``WR_scroll_to_top``, ``WR_scroll_to_bottom``,
-  ``WR_drag_and_drop_offset``;
-* switching tabs by URL or title; callbacks (the callback executor has no
-  ``WR_pw_*`` command);
+* callbacks (the callback executor has no ``WR_pw_*`` command);
 * visual regression (``WR_visual_capture_baseline``,
   ``WR_visual_compare``) and the browser recorder (``WR_recorder_*``).
 

@@ -89,8 +89,13 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
    * - 截圖
      - ``WR_save_screenshot``、``WR_save_full_page_screenshot``、
        ``WR_get_screenshot_as_png``、``WR_get_screenshot_as_base64``
-     - ``WR_pw_screenshot``（``full_page``）、``WR_pw_screenshot_bytes``
-     - Playwright 沒有 base64 形式。
+     - ``WR_pw_screenshot``（``full_page``）、``WR_pw_screenshot_bytes``、
+       ``WR_pw_screenshot_base64``
+     - 兩邊的形式相同。
+   * - PDF
+     - ``WR_print_page``
+     - ``WR_pw_print_page``
+     - Playwright 只能從 headless Chromium 列印。
    * - Cookie
      - ``WR_get_cookies``、``WR_get_cookie``、``WR_add_cookie``、
        ``WR_delete_cookie``、``WR_delete_all_cookies``、``WR_save_cookies``、
@@ -103,9 +108,24 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
    * - 分頁
      - ``WR_new_window``、``WR_switch``、``WR_switch_to_window_by_url``、
        ``WR_switch_to_window_by_title``、``WR_close_window``
-     - ``WR_pw_new_page``、``WR_pw_switch_to_page``、``WR_pw_close_page``、
-       ``WR_pw_page_count``
-     - Playwright 只能依索引切換。
+     - ``WR_pw_new_page``、``WR_pw_switch_to_page``（依索引）、
+       ``WR_pw_switch_to_page_by_url``、``WR_pw_switch_to_page_by_title``、
+       ``WR_pw_close_page``、``WR_pw_page_count``、``WR_pw_bring_to_front``
+     - 兩邊的 URL 與標題都比對大小寫敏感的子字串；Playwright 還會追蹤網站自己
+       開的分頁。
+   * - 捲動、依偏移拖曳
+     - ``WR_scroll``、``WR_scroll_to_top``、``WR_scroll_to_bottom``、
+       ``WR_drag_and_drop_offset``
+     - ``WR_pw_scroll``、``WR_pw_scroll_to_top``、``WR_pw_scroll_to_bottom``、
+       ``WR_pw_drag_and_drop_offset``
+     - Playwright 的拖曳收 selector；Selenium 的拖曳傳給它的元素。
+   * - Init script、封鎖 URL
+     - ``WR_add_script_to_evaluate_on_new_document``、``WR_block_urls`` /
+       ``WR_unblock_urls``\ （CDP）
+     - ``WR_pw_add_init_script``、``WR_pw_block_urls`` / ``WR_pw_unblock_urls``
+     - Selenium 的只支援 Chromium。兩邊的 pattern 都以 ``*`` 代表任意字元。
+       Playwright 的兩者都會帶到重建的 context；兩個 init script 命令都受
+       任意腳本閘門管制。
    * - Frame
      - ``WR_switch``、``WR_iframe_switch_chain``、
        ``WR_iframe_back_to_default``
@@ -120,11 +140,12 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
      - ``WR_set_geolocation``、``WR_set_timezone``、``WR_set_locale``
      - ``WR_pw_set_geolocation``、``WR_pw_set_timezone``、
        ``WR_pw_set_locale``
-     - Selenium 的只支援 Chromium（CDP）。``WR_pw_set_timezone`` 與
+     - ``WR_pw_clear_geolocation`` 清除覆寫（Selenium：
+       ``WR_clear_geolocation_override``）。Selenium 的只支援 Chromium（CDP）。``WR_pw_set_timezone`` 與
        ``WR_pw_set_locale`` 會重建 Playwright context：cookie、localStorage
        與目前分頁的網址會帶過去，其他開著的分頁會關閉。
    * - User agent、額外 header、其他 context 選項
-     - ``WR_set_user_agent``、``WR_set_extra_http_headers``（CDP）
+     - ``WR_set_user_agent``、``WR_set_extra_http_headers``\ （CDP）
      - ``WR_pw_set_user_agent``、``WR_pw_set_extra_http_headers``、
        ``WR_pw_set_context_options``（任何 ``browser.new_context`` 選項）、
        帶 ``context_options`` 的 ``WR_pw_launch``
@@ -160,20 +181,14 @@ Playwright 做不到：
 
 Playwright 還沒有（Playwright API 本身支援）：
 
-* ``WR_add_script_to_evaluate_on_new_document``、``WR_block_urls`` /
-  ``WR_unblock_urls``、``WR_set_cache_disabled``、
-  ``WR_clear_geolocation_override``、``WR_bring_to_front``、
-  ``WR_print_page``、``WR_set_download_directory`` / ``WR_wait_for_download``、
-  ``WR_attach_to_existing_browser``；
+* ``WR_set_cache_disabled``、``WR_set_download_directory`` /
+  ``WR_wait_for_download``、``WR_attach_to_existing_browser``；
 * 同時開多個 driver（多次 ``WR_new_driver``、
   ``WR_change_index_of_webdriver``）；
 * ``WR_element_submit``、``WR_element_value_of_css_property``、
   ``WR_element_get_dom_attribute``、``WR_check_current_webdriver``、
   ``WR_element_assert``；
-* ``WR_scroll``、``WR_scroll_to_top``、``WR_scroll_to_bottom``、
-  ``WR_drag_and_drop_offset``；
-* 依 URL 或標題切換分頁；callback（callback executor 沒有 ``WR_pw_*``
-  命令）；
+* callback（callback executor 沒有 ``WR_pw_*`` 命令）；
 * 視覺回歸（``WR_visual_capture_baseline``、``WR_visual_compare``）與瀏覽器
   錄製器（``WR_recorder_*``）。
 

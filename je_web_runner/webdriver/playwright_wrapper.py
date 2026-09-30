@@ -81,6 +81,9 @@ class PlaywrightWrapper(
         self._emulation_keys: set[str] = set()
         # Tracing options while a trace is being recorded (see _RecordingMixin), else None.
         self._trace_options: dict[str, Any] | None = None
+        # Init scripts and URL blocks, re-applied to every rebuilt context.
+        self._init_scripts: list[str] = []
+        self._blocked_urls: list[Any] = []
         self.element_wrapper = element_wrapper or playwright_element_wrapper
 
     # ----- lifecycle ---------------------------------------------------
@@ -146,6 +149,7 @@ class PlaywrightWrapper(
             kwargs["storage_state"] = storage_state
         context = self._browser.new_context(**kwargs)
         context.on("page", self._track_page)
+        self._reapply_context_setup(context)
         self._restart_tracing(context)
         return context
 
@@ -163,6 +167,8 @@ class PlaywrightWrapper(
             self._context_options = {}
             self._emulation_keys = set()
             self._trace_options = None
+            self._init_scripts = []
+            self._blocked_urls = []
             if self._playwright is not None:
                 self._playwright.stop()
             self._playwright = None
@@ -279,6 +285,58 @@ def pw_video_start(video_dir: str, width: int | None = None, height: int | None 
 
 def pw_video_stop() -> list[str]:
     return playwright_wrapper_instance.stop_video_recording()
+
+
+def pw_add_init_script(source: str) -> None:
+    playwright_wrapper_instance.add_init_script(source)
+
+
+def pw_block_urls(patterns: list[str]) -> None:
+    playwright_wrapper_instance.block_urls(patterns)
+
+
+def pw_unblock_urls() -> None:
+    playwright_wrapper_instance.unblock_urls()
+
+
+def pw_clear_geolocation() -> None:
+    playwright_wrapper_instance.clear_geolocation()
+
+
+def pw_bring_to_front() -> None:
+    playwright_wrapper_instance.bring_to_front()
+
+
+def pw_switch_to_page_by_url(pattern: str) -> bool:
+    return playwright_wrapper_instance.switch_to_page_by_url(pattern)
+
+
+def pw_switch_to_page_by_title(pattern: str) -> bool:
+    return playwright_wrapper_instance.switch_to_page_by_title(pattern)
+
+
+def pw_screenshot_base64(full_page: bool = False) -> str:
+    return playwright_wrapper_instance.screenshot_base64(full_page=full_page)
+
+
+def pw_print_page(file_path: str) -> str:
+    return playwright_wrapper_instance.print_page(file_path)
+
+
+def pw_scroll(scroll_x: float, scroll_y: float) -> None:
+    playwright_wrapper_instance.scroll(scroll_x, scroll_y)
+
+
+def pw_scroll_to_top() -> None:
+    playwright_wrapper_instance.scroll_to_top()
+
+
+def pw_scroll_to_bottom() -> None:
+    playwright_wrapper_instance.scroll_to_bottom()
+
+
+def pw_drag_and_drop_offset(selector: str, target_x: float, target_y: float) -> None:
+    playwright_wrapper_instance.drag_and_drop_offset(selector, target_x, target_y)
 
 
 def pw_quit() -> None:

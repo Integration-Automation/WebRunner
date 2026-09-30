@@ -524,6 +524,7 @@ Playwright 後端在 `WR_pw_*` 下涵蓋 Selenium 封裝的大部分日常操作
 - **Context 選項** —— `WR_pw_launch(context_options={...})`、`WR_pw_set_context_options`（任何 `browser.new_context` 選項）、`WR_pw_set_user_agent`、`WR_pw_set_extra_http_headers`、`WR_pw_save_storage_state`。封裝維持一份合併後的 context 選項，所以裝置模擬、時區、語系與 HAR 錄製不再互相覆蓋；需要新 context 的設定會把 cookie、localStorage 與目前分頁的網址帶過去。
 - **HAR + 路由模擬** —— `WR_pw_start_har_recording`、`WR_pw_stop_har_recording`、`WR_pw_route_mock`、`WR_pw_route_mock_json`、`WR_pw_route_unmock`、`WR_pw_route_clear`。
 - **Trace viewer / 錄影** —— `WR_pw_tracing_start`、`WR_pw_tracing_save_chunk(path)`、`WR_pw_tracing_stop(path)`（用 `playwright show-trace` 開啟 zip）；`WR_pw_video_start(video_dir, width, height)` 與 `WR_pw_video_stop`（回傳影片檔）。記錄 trace 期間若已設 `executor.set_failure_screenshot_dir(...)`，每個失敗的動作還會在截圖旁存下 `<timestamp>_<command>.trace.zip`。
+- **對應 Selenium 的命令** —— `WR_pw_add_init_script`、`WR_pw_block_urls` / `WR_pw_unblock_urls`（`*` 萬用字元；兩者都會帶到重建的 context）、`WR_pw_clear_geolocation`、`WR_pw_bring_to_front`、`WR_pw_switch_to_page_by_url` / `_by_title`、`WR_pw_screenshot_base64`、`WR_pw_print_page`（headless Chromium）、`WR_pw_scroll` / `_to_top` / `_to_bottom`、`WR_pw_drag_and_drop_offset`。
 
 現有腳本可以逐步遷移到 Playwright；`TestObject` 記錄會自動翻譯為 Playwright 選擇器（`CSS_SELECTOR` → 原樣，`XPATH` → `xpath=…`，`ID` → `#…`，`NAME` → `[name="…"]`，`LINK_TEXT` → `text=…`，`PARTIAL_LINK_TEXT` → `:has-text("…")`）。
 
@@ -755,7 +756,7 @@ python -m je_web_runner.mcp_server
 預設工具清單（22 個工具）公開：
 
 即時瀏覽器執行：
-- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 453 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 466 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批次執行磁碟上的 JSON 檔案
 - `webrunner_list_commands` —— 探索完整的 `WR_*` 介面面
 

@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-18 | 2026-10-01 | Playwright twins: init script, URL blocking, page switching, PDF, scrolling, drag by offset | #change #playwright | [2026-10](2026-10.md) |
 | U-20261001-17 | 2026-10-01 | Playwright trace and video commands; failed actions save the running trace | #done #playwright #observability | [2026-10](2026-10.md) |
 | U-20261001-16 | 2026-10-01 | Playwright keeps one merged set of context options; rebuilds keep cookies and the page | #change #playwright | [2026-10](2026-10.md) |
 | U-20261001-15 | 2026-10-01 | Aggregated dashboard redesign: status cards, trend chart, schedule and triage pages, live refresh | #done #dashboard #ui | [2026-10](2026-10.md) |
@@ -105,5 +106,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 17 |
+| [2026-10.md](2026-10.md) | 2026-10 | 18 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

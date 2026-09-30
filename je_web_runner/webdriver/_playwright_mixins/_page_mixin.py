@@ -62,6 +62,26 @@ class _PageMixin:
         page.close()
         self._forget_page(page)
 
+    @recorded()
+    def bring_to_front(self) -> None:
+        """Activate the current page's tab."""
+        self.page.bring_to_front()
+
+    def switch_to_page_by_url(self, pattern: str) -> bool:
+        """Switch to the first page whose URL contains ``pattern`` (case-sensitive); False if none does."""
+        return self._switch_to_first(lambda page: pattern in page.url)
+
+    def switch_to_page_by_title(self, pattern: str) -> bool:
+        """Switch to the first page whose title contains ``pattern`` (case-sensitive); False if none does."""
+        return self._switch_to_first(lambda page: pattern in page.title())
+
+    def _switch_to_first(self, matches: Any) -> bool:
+        for index, page in enumerate(self._pages):
+            if matches(page):
+                self._page_index = index
+                return True
+        return False
+
     def page_count(self) -> int:
         return len(self._pages)
 

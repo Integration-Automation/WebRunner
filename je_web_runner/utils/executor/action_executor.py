@@ -45,6 +45,7 @@ _ARBITRARY_SCRIPT_COMMANDS = frozenset({
     "WR_pw_cdp",
     "WR_execute_cdp_cmd",
     "WR_add_script_to_evaluate_on_new_document",
+    "WR_pw_add_init_script",
 })
 
 

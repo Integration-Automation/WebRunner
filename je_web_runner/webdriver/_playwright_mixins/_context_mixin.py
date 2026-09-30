@@ -1,6 +1,7 @@
 """Context 設定：裝置模擬、地理位置、權限、時區、時鐘、語系、HAR / Context-level settings."""
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -13,6 +14,15 @@ from je_web_runner.webdriver._playwright_mixins._common import (
 )
 
 _HAR_KEYS = ("record_har_path", "record_har_content")
+
+
+def _wildcard_regex(pattern: str) -> re.Pattern:
+    """A whole-URL regex for a Selenium / CDP ``setBlockedURLs`` pattern, where ``*`` matches anything."""
+    return re.compile("^" + ".*".join(re.escape(part) for part in pattern.split("*")) + "$")
+
+
+def _abort(route: Any) -> None:
+    route.abort()
 
 
 class _ContextMixin:
@@ -78,6 +88,47 @@ class _ContextMixin:
         merged = {**(self._context_options.get("extra_http_headers") or {}), **headers}
         self._context_options["extra_http_headers"] = merged
         self.context.set_extra_http_headers(merged)
+
+    def _reapply_context_setup(self, context: Any) -> None:
+        """Give a freshly opened context the init scripts and URL blocks set so far."""
+        for source in self._init_scripts:
+            context.add_init_script(source)
+        for pattern in self._blocked_urls:
+            context.route(pattern, _abort)
+
+    @recorded()
+    def add_init_script(self, source: str) -> None:
+        """
+        在每份新文件的腳本執行前注入 JavaScript
+        Run ``source`` in every new document before its own scripts, in every page of
+        this context and of rebuilt ones. Behind the arbitrary-script gate.
+        """
+        self._init_scripts.append(source)
+        self.context.add_init_script(source)
+
+    @recorded()
+    def block_urls(self, patterns: list[str]) -> None:
+        """
+        阻擋符合任一 pattern 的請求（``*`` 萬用字元，比對整個 URL）
+        Abort requests whose whole URL matches any pattern; ``*`` matches anything,
+        as in Selenium's ``WR_block_urls`` (e.g. ``"*.doubleclick.net/*"``).
+        """
+        for pattern in patterns:
+            regex = _wildcard_regex(pattern)
+            self._blocked_urls.append(regex)
+            self.context.route(regex, _abort)
+
+    @recorded()
+    def unblock_urls(self) -> None:
+        """Remove every block added by :meth:`block_urls`."""
+        for regex in self._blocked_urls:
+            self.context.unroute(regex)
+        self._blocked_urls = []
+
+    @recorded()
+    def clear_geolocation(self) -> None:
+        """Remove the geolocation override."""
+        self.context.set_geolocation(None)
 
     def save_storage_state(self, path: str) -> str:
         """Write the context's cookies and localStorage to ``path`` (load it with ``storage_state``)."""
