@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-14 | 2026-10-01 | Split the aggregated dashboard module; read the ledger once per summary | #refactor #dashboard | [2026-10](2026-10.md) |
 | U-20261001-13 | 2026-10-01 | MCP server passes the official client's round trip in both eras | #done #mcp #tests | [2026-10](2026-10.md) |
 | U-20261001-12 | 2026-10-01 | MCP server serves the stateless 2026-07-28 revision beside the handshake ones | #change #mcp | [2026-10](2026-10.md) |
 | U-20261001-11 | 2026-10-01 | MCP caller policy: no package loading or script re-enabling; optional file root | #change #mcp #security | [2026-10](2026-10.md) |
@@ -101,5 +102,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 13 |
+| [2026-10.md](2026-10.md) | 2026-10 | 14 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

@@ -221,7 +221,7 @@ then the other feature subpackages.
 | `lcp_image_audit` | LCP image preload audit. |
 | `lighthouse` | Lighthouse 跑分器：呼叫官方 ``lighthouse`` Node CLI，回傳分數摘要。 |
 | `lighthouse_regression` | Lighthouse score regression tracker. |
-| `live_dashboard` | Live Dashboard:把既有 run_ledger / flake_detector / locator_health / |
+| `live_dashboard` | Aggregated local dashboard: runs, flake scores, quarantine and locator health in one web UI. |
 | `llm_token_cost_tracker` | Per-test LLM token & dollar cost tracker. |
 | `load_test` | 把 HTTP action 餵進 Locust 跑壓力測試。 |
 | `locator_hardener` | 讀脆弱 locator(來自 ``locator_health`` 報告)+ 周圍 DOM,LLM 建議更穩的 selector。 |

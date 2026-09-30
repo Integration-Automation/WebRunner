@@ -74,6 +74,30 @@ class TestBuildSummary(unittest.TestCase):
             self.assertEqual(summary["quarantined_tests"], 1)
             self.assertEqual(summary["weak_locators"], 3)
 
+    def test_whole_summary(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            summary = build_summary(_make_seeded_config(Path(tmpdir)))
+        self.assertEqual(summary, {
+            "total_runs": 5, "passed": 3, "failed": 2, "pass_rate": 0.6, "flaky_tests": 1,
+            "quarantined_tests": 1, "weak_locators": 3, "average_locator_score": 75.5,
+        })
+
+    def test_ledger_is_read_once_per_summary(self):
+        from unittest.mock import patch
+        import builtins
+        with tempfile.TemporaryDirectory() as tmpdir:
+            config = _make_seeded_config(Path(tmpdir))
+            real_open = builtins.open
+            opened = []
+
+            def counting_open(file, *args, **kwargs):
+                opened.append(Path(file).name)
+                return real_open(file, *args, **kwargs)
+
+            with patch("builtins.open", counting_open):
+                build_summary(config)
+        self.assertEqual(opened.count("ledger.json"), 1)
+
     def test_empty_config_is_safe(self):
         summary = build_summary(DashboardConfig())
         self.assertEqual(summary["total_runs"], 0)

@@ -58,7 +58,7 @@ wired into the executor as `WR_*` commands, others are reachable only from Pytho
 | MCP server | `python -m je_web_runner.mcp_server` → `serve_stdio()` | Newline-delimited JSON-RPC over stdio; `build_default_tools()` (offline tools) + `build_browser_tools()` (`webrunner_run_actions`, `webrunner_run_action_files`, `webrunner_list_commands`). |
 | LSP | `python -m je_web_runner.action_lsp` → `action_lsp/server.py:serve_stdio` | Completion from `executor.event_dict`; diagnostics from the action linter. |
 | TCP server | `start_web_runner_socket_server()` in `utils/socket_server/web_runner_socket_server.py` | Default `localhost:9941`, optional `auth_token` and TLS; client helpers `send_command`, `read_frame`, `encode_frame`. |
-| HTTP dashboards | `utils/dashboard/live_dashboard.py`, `utils/live_dashboard/server.py` (`DashboardServer`) | Local progress and summary views; there is no general REST API. |
+| HTTP dashboards | `utils/dashboard/live_dashboard.py` (per-run progress), `utils/live_dashboard/server.py` (`DashboardServer`: routes; `_data.py` loaders, `_pages.py` HTML, `_assets.py` stylesheet, `_config.py`) | Local progress and summary views; there is no general REST API. |
 | pytest plugin, GUI | none | GUI access is provided by consumers (AutoControlGUI `gui/webrunner_tab.py`, PyBreeze menus). |
 
 ## 4. Main flows

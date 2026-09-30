@@ -28,338 +28,59 @@ reflects the latest state — no caching, no daemon process needed.
 """
 from __future__ import annotations
 
-import html
 import json
 import threading
 import urllib.parse
-from dataclasses import dataclass
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
-from je_web_runner.utils.exception.exceptions import WebRunnerException
-from je_web_runner.utils.flake_detector.detector import (
-    QuarantineRegistry,
-    compute_flake_scores,
+from je_web_runner.utils.live_dashboard._assets import BASE_CSS
+from je_web_runner.utils.live_dashboard._config import DashboardConfig, LiveDashboardError
+from je_web_runner.utils.live_dashboard._data import (
+    _load_flake_scores,
+    _load_locator_report,
+    _load_quarantine,
+    _load_runs,
+    _load_schedule,
+    _load_triage,
+    build_summary,
+)
+from je_web_runner.utils.live_dashboard._pages import (
+    render_flake,
+    render_locators,
+    render_not_found,
+    render_overview,
+    render_quarantine,
+    render_runs,
 )
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
-
-class LiveDashboardError(WebRunnerException):
-    """Raised on configuration / startup failures."""
+__all__ = ["DashboardConfig", "DashboardServer", "LiveDashboardError", "build_summary"]
 
 
-# ---------- config -------------------------------------------------------
-
-@dataclass
-class DashboardConfig:
-    """
-    指定每個資料來源檔案路徑。任何一個 None 就會在 UI 上顯示成空白。
-    """
-    ledger_path: str | Path | None = None
-    quarantine_path: str | Path | None = None
-    locator_findings_path: str | Path | None = None
-    schedule_path: str | Path | None = None
-    triage_report_path: str | Path | None = None
-    bind_host: str = "127.0.0.1"
-    bind_port: int = 0
-
-    def __post_init__(self) -> None:
-        for attr in (
-            "ledger_path", "quarantine_path", "locator_findings_path",
-            "schedule_path", "triage_report_path",
-        ):
-            value = getattr(self, attr)
-            if value is not None and not isinstance(value, Path):
-                setattr(self, attr, Path(value))
-
-
-# ---------- data loaders -------------------------------------------------
-
-def _load_runs(ledger_path: Path | None, limit: int = 50) -> list[dict[str, Any]]:
-    if ledger_path is None or not ledger_path.exists():
-        return []
-    try:
-        with open(ledger_path, encoding="utf-8") as fp:
-            data = json.load(fp)
-    except (OSError, ValueError) as error:
-        web_runner_logger.warning(f"dashboard _load_runs: {error!r}")
-        return []
-    runs = data.get("runs") if isinstance(data, dict) else None
-    if not isinstance(runs, list):
-        return []
-    return [r for r in runs[-limit:][::-1] if isinstance(r, dict)]
-
-
-def _load_flake_scores(ledger_path: Path | None) -> list[dict[str, Any]]:
-    if ledger_path is None or not ledger_path.exists():
-        return []
-    try:
-        scores = compute_flake_scores(ledger_path)
-    except (WebRunnerException, OSError, ValueError) as error:
-        web_runner_logger.warning(f"dashboard _load_flake_scores: {error!r}")
-        return []
-    entries = [s.to_dict() for s in scores.values()]
-    entries.sort(key=lambda e: (-e["flake_score"], e["path"]))
-    return entries
-
-
-def _load_quarantine(quarantine_path: Path | None) -> list[dict[str, Any]]:
-    if quarantine_path is None or not quarantine_path.exists():
-        return []
-    try:
-        registry = QuarantineRegistry(quarantine_path)
-    except (WebRunnerException, ValueError, TypeError) as error:
-        web_runner_logger.warning(f"dashboard _load_quarantine: {error!r}")
-        return []
-    return [e.to_dict() for e in registry.list()]
-
-
-def _load_locator_report(path: Path | None) -> dict[str, Any]:
-    if path is None or not path.exists():
-        return {}
-    try:
-        with open(path, encoding="utf-8") as fp:
-            return json.load(fp)
-    except (OSError, ValueError) as error:
-        web_runner_logger.warning(f"dashboard _load_locator_report: {error!r}")
-        return {}
-
-
-def _load_schedule(path: Path | None) -> dict[str, Any]:
-    if path is None or not path.exists():
-        return {}
-    try:
-        with open(path, encoding="utf-8") as fp:
-            return json.load(fp)
-    except (OSError, ValueError) as error:
-        web_runner_logger.warning(f"dashboard _load_schedule: {error!r}")
-        return {}
-
-
-def _load_triage(path: Path | None) -> dict[str, Any]:
-    if path is None or not path.exists():
-        return {}
-    try:
-        with open(path, encoding="utf-8") as fp:
-            return json.load(fp)
-    except (OSError, ValueError) as error:
-        web_runner_logger.warning(f"dashboard _load_triage: {error!r}")
-        return {}
-
-
-# ---------- summary ------------------------------------------------------
-
-def build_summary(config: DashboardConfig) -> dict[str, Any]:
-    """One-shot snapshot used by ``/`` and ``/api/summary``."""
-    runs = _load_runs(config.ledger_path, limit=10_000)
-    total = len(runs)
-    passed = sum(1 for r in runs if r.get("passed"))
-    failed = total - passed
-    pass_rate = (passed / total) if total else 0.0
-    flake_entries = _load_flake_scores(config.ledger_path)
-    flake_count = sum(1 for f in flake_entries if f.get("is_flaky"))
-    quarantine = _load_quarantine(config.quarantine_path)
-    locator_report = _load_locator_report(config.locator_findings_path)
-    return {
-        "total_runs": total,
-        "passed": passed,
-        "failed": failed,
-        "pass_rate": round(pass_rate, 4),
-        "flaky_tests": flake_count,
-        "quarantined_tests": len(quarantine),
-        "weak_locators": locator_report.get("weak", 0) if isinstance(locator_report, dict) else 0,
-        "average_locator_score": (
-            locator_report.get("average_score", 0)
-            if isinstance(locator_report, dict) else 0
-        ),
-    }
-
-
-# ---------- HTML rendering -----------------------------------------------
-
-_BASE_CSS = """
-body { font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-       margin: 0; background: #f5f5f7; color: #1d1d1f; }
-nav  { background: #1d1d1f; color: #fff; padding: 12px 24px; }
-nav a { color: #fff; margin-right: 16px; text-decoration: none; }
-nav a:hover { text-decoration: underline; }
-main { padding: 24px; max-width: 1200px; margin: 0 auto; }
-h1   { margin-top: 0; }
-.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-         gap: 16px; margin-bottom: 32px; }
-.card  { background: #fff; padding: 16px; border-radius: 8px;
-         box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-.card .label { color: #6e6e73; font-size: 12px; text-transform: uppercase; }
-.card .value { font-size: 28px; font-weight: 600; margin-top: 4px; }
-table { width: 100%; border-collapse: collapse; background: #fff;
-        border-radius: 8px; overflow: hidden;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #f0f0f3; }
-th { background: #fafafa; font-size: 13px; color: #6e6e73; }
-tr:last-child td { border-bottom: none; }
-.bad   { color: #c9302c; font-weight: 600; }
-.good  { color: #1d8348; font-weight: 600; }
-.muted { color: #6e6e73; }
-.empty { color: #6e6e73; padding: 32px; text-align: center; }
-code   { background: #f0f0f3; padding: 2px 6px; border-radius: 4px;
-         font-family: 'SF Mono', Consolas, monospace; font-size: 12px; }
-"""
-
-
-def _html_escape(value: Any) -> str:
-    return html.escape(str(value if value is not None else ""), quote=True)
-
-
-def _layout(title: str, body: str) -> str:
-    return (
-        "<!DOCTYPE html><html><head>"
-        f"<meta charset='utf-8'><title>{_html_escape(title)} — WebRunner</title>"
-        "<link rel='stylesheet' href='/static/app.css'></head><body>"
-        "<nav>"
-        "<a href='/'>Overview</a>"
-        "<a href='/runs'>Runs</a>"
-        "<a href='/flake'>Flake</a>"
-        "<a href='/quarantine'>Quarantine</a>"
-        "<a href='/locators'>Locators</a>"
-        "</nav>"
-        f"<main>{body}</main></body></html>"
-    )
-
-
-def _render_overview(summary: dict[str, Any]) -> str:
-    pass_rate_pct = f"{summary['pass_rate'] * 100:.1f}%"
-    cards = [
-        ("Total runs", summary["total_runs"]),
-        ("Pass rate", pass_rate_pct),
-        ("Passed", summary["passed"]),
-        ("Failed", summary["failed"]),
-        ("Flaky tests", summary["flaky_tests"]),
-        ("Quarantined", summary["quarantined_tests"]),
-        ("Weak locators", summary["weak_locators"]),
-        ("Avg locator score", summary["average_locator_score"]),
-    ]
-    card_html = "".join(
-        f"<div class='card'><div class='label'>{_html_escape(label)}</div>"
-        f"<div class='value'>{_html_escape(value)}</div></div>"
-        for label, value in cards
-    )
-    body = (
-        "<h1>WebRunner overview</h1>"
-        f"<div class='cards'>{card_html}</div>"
-    )
-    return _layout("Overview", body)
-
-
-def _render_runs(runs: list[dict[str, Any]]) -> str:
-    if not runs:
-        return _layout("Runs", "<h1>Runs</h1><div class='empty'>No runs recorded yet.</div>")
-    rows = []
-    for run in runs:
-        cls = "good" if run.get("passed") else "bad"
-        label = "PASS" if run.get("passed") else "FAIL"
-        rows.append(
-            f"<tr><td><code>{_html_escape(run.get('path'))}</code></td>"
-            f"<td class='{cls}'>{label}</td>"
-            f"<td class='muted'>{_html_escape(run.get('time', ''))}</td></tr>"
-        )
-    body = (
-        "<h1>Recent runs</h1>"
-        "<table><thead><tr><th>Test</th><th>Result</th><th>When</th></tr></thead>"
-        f"<tbody>{''.join(rows)}</tbody></table>"
-    )
-    return _layout("Runs", body)
-
-
-def _render_flake(entries: list[dict[str, Any]]) -> str:
-    flaky_only = [e for e in entries if e.get("is_flaky")]
-    if not flaky_only:
-        return _layout("Flake", "<h1>Flake leaderboard</h1><div class='empty'>No flaky tests detected.</div>")
-    rows = []
-    for entry in flaky_only[:50]:
-        rows.append(
-            f"<tr><td><code>{_html_escape(entry.get('path'))}</code></td>"
-            f"<td class='bad'>{entry.get('flake_score', 0):.2f}</td>"
-            f"<td>{entry.get('runs', 0)}</td>"
-            f"<td>{entry.get('fails', 0)}</td>"
-            f"<td class='muted'>{_html_escape(entry.get('last_run', ''))}</td></tr>"
-        )
-    body = (
-        "<h1>Flake leaderboard</h1>"
-        "<table><thead><tr><th>Test</th><th>Score</th>"
-        "<th>Runs</th><th>Fails</th><th>Last</th></tr></thead>"
-        f"<tbody>{''.join(rows)}</tbody></table>"
-    )
-    return _layout("Flake", body)
-
-
-def _render_quarantine(entries: list[dict[str, Any]]) -> str:
-    if not entries:
-        return _layout("Quarantine", "<h1>Quarantine</h1><div class='empty'>Registry is empty.</div>")
-    rows = []
-    for entry in entries:
-        rows.append(
-            f"<tr><td><code>{_html_escape(entry.get('test_id'))}</code></td>"
-            f"<td>{entry.get('flake_score', 0):.2f}</td>"
-            f"<td>{_html_escape(entry.get('reason', ''))}</td>"
-            f"<td class='muted'>{_html_escape(entry.get('quarantined_at', ''))}</td></tr>"
-        )
-    body = (
-        "<h1>Quarantined tests</h1>"
-        "<table><thead><tr><th>Test</th><th>Score</th>"
-        "<th>Reason</th><th>Since</th></tr></thead>"
-        f"<tbody>{''.join(rows)}</tbody></table>"
-    )
-    return _layout("Quarantine", body)
-
-
-def _render_locators(report: dict[str, Any]) -> str:
-    if not report:
-        return _layout("Locators", "<h1>Locators</h1><div class='empty'>No locator report loaded.</div>")
-    summary_cards = [
-        ("Total", report.get("total", 0)),
-        ("Weak", report.get("weak", 0)),
-        ("Strong", report.get("strong", 0)),
-        ("Avg score", report.get("average_score", 0)),
-    ]
-    card_html = "".join(
-        f"<div class='card'><div class='label'>{_html_escape(label)}</div>"
-        f"<div class='value'>{_html_escape(value)}</div></div>"
-        for label, value in summary_cards
-    )
-    weakest = report.get("weakest") or []
-    rows = []
-    for entry in weakest[:30]:
-        reasons = ", ".join(entry.get("reasons") or []) or "—"
-        value = entry.get("value", "")
-        if isinstance(value, str) and len(value) > 60:
-            value = value[:57] + "…"
-        rows.append(
-            f"<tr><td><code>{_html_escape(entry.get('file_path'))}</code></td>"
-            f"<td>{entry.get('action_index', '')}</td>"
-            f"<td><code>{_html_escape(entry.get('strategy', ''))}</code></td>"
-            f"<td><code>{_html_escape(value)}</code></td>"
-            f"<td>{entry.get('score', 0)}</td>"
-            f"<td class='muted'>{_html_escape(reasons)}</td></tr>"
-        )
-    rows_html = (
-        "<table><thead><tr><th>File</th><th>Idx</th><th>Strategy</th>"
-        "<th>Value</th><th>Score</th><th>Reasons</th></tr></thead>"
-        f"<tbody>{''.join(rows)}</tbody></table>"
-        if rows else "<div class='empty'>No weak locators.</div>"
-    )
-    body = (
-        "<h1>Locator health</h1>"
-        f"<div class='cards'>{card_html}</div>"
-        "<h2>Weakest</h2>" + rows_html
-    )
-    return _layout("Locators", body)
-
-
-# ---------- request handler ---------------------------------------------
-
-def _make_handler(config: DashboardConfig) -> type[BaseHTTPRequestHandler]:  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+def _make_handler(config: DashboardConfig) -> type[BaseHTTPRequestHandler]:
     """Bind ``config`` into a fresh handler class so each server is isolated."""
+
+    html_routes: dict[str, Callable[[], str]] = {
+        "/": lambda: render_overview(build_summary(config)),
+        "/runs": lambda: render_runs(_load_runs(config.ledger_path)),
+        "/flake": lambda: render_flake(_load_flake_scores(config.ledger_path)),
+        "/quarantine": lambda: render_quarantine(_load_quarantine(config.quarantine_path)),
+        "/locators": lambda: render_locators(_load_locator_report(config.locator_findings_path)),
+    }
+    json_routes: dict[str, Callable[[Any], Any]] = {
+        "/api/summary": lambda _query: build_summary(config),
+        "/api/runs": lambda query: _load_runs(config.ledger_path, _query_limit(query)),
+        "/api/flake": lambda _query: _load_flake_scores(config.ledger_path),
+        "/api/quarantine": lambda _query: _load_quarantine(config.quarantine_path),
+        "/api/locators": lambda _query: _load_locator_report(config.locator_findings_path),
+        "/api/schedule": lambda _query: _load_schedule(config.schedule_path),
+        "/api/triage": lambda _query: _load_triage(config.triage_report_path),
+    }
+    text_routes: dict[str, tuple[str, bytes]] = {
+        "/static/app.css": ("text/css; charset=utf-8", BASE_CSS.encode("utf-8")),
+        "/healthz": ("text/plain", b"ok"),
+    }
 
     class DashboardHandler(BaseHTTPRequestHandler):
         protocol_version = "HTTP/1.1"
@@ -375,72 +96,46 @@ def _make_handler(config: DashboardConfig) -> type[BaseHTTPRequestHandler]:  # N
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Content-Security-Policy", "default-src 'self'")
             self.end_headers()
-            # Body callers escape any user-controlled text via _html_escape before
+            # Body callers escape any user-controlled text via html_escape before
             # reaching here (see _send_html). The CSP + nosniff headers above are
             # defence in depth.
-            self.wfile.write(body)  # NOSONAR pythonsecurity:S5131 — _send_html callers escape via _html_escape; CSP + nosniff added above as defence in depth
+            # NOSONAR below: pages escape every value via html_escape; CSP + nosniff are defence in depth.
+            self.wfile.write(body)  # NOSONAR pythonsecurity:S5131
 
-        def _send_html(self, html: str, status: int = 200) -> None:
-            self._send(status, "text/html; charset=utf-8", html.encode("utf-8"))
+        def _send_html(self, page: str, status: int = 200) -> None:
+            self._send(status, "text/html; charset=utf-8", page.encode("utf-8"))
 
         def _send_json(self, payload: Any, status: int = 200) -> None:
             body = json.dumps(payload, ensure_ascii=False, indent=2).encode("utf-8")
             self._send(status, "application/json; charset=utf-8", body)
 
-        def _query_limit(self, parsed) -> int:
-            params = urllib.parse.parse_qs(parsed.query)
-            raw = params.get("limit", ["50"])[0]
-            try:
-                value = int(raw)
-            except ValueError:
-                value = 50
-            return max(1, min(value, 5000))
-
         def do_GET(self) -> None:
             parsed = urllib.parse.urlparse(self.path)
             path = parsed.path
             try:
-                if path == "/":
-                    self._send_html(_render_overview(build_summary(config)))
-                elif path == "/runs":
-                    self._send_html(_render_runs(_load_runs(config.ledger_path)))
-                elif path == "/flake":
-                    self._send_html(_render_flake(_load_flake_scores(config.ledger_path)))
-                elif path == "/quarantine":
-                    self._send_html(_render_quarantine(_load_quarantine(config.quarantine_path)))
-                elif path == "/locators":
-                    self._send_html(_render_locators(_load_locator_report(config.locator_findings_path)))
-                elif path == "/api/summary":
-                    self._send_json(build_summary(config))
-                elif path == "/api/runs":
-                    self._send_json(_load_runs(config.ledger_path, self._query_limit(parsed)))
-                elif path == "/api/flake":
-                    self._send_json(_load_flake_scores(config.ledger_path))
-                elif path == "/api/quarantine":
-                    self._send_json(_load_quarantine(config.quarantine_path))
-                elif path == "/api/locators":
-                    self._send_json(_load_locator_report(config.locator_findings_path))
-                elif path == "/api/schedule":
-                    self._send_json(_load_schedule(config.schedule_path))
-                elif path == "/api/triage":
-                    self._send_json(_load_triage(config.triage_report_path))
-                elif path == "/static/app.css":
-                    self._send(200, "text/css; charset=utf-8", _BASE_CSS.encode("utf-8"))
-                elif path == "/healthz":
-                    self._send(200, "text/plain", b"ok")
+                if path in html_routes:
+                    self._send_html(html_routes[path]())
+                elif path in json_routes:
+                    self._send_json(json_routes[path](parsed.query))
+                elif path in text_routes:
+                    self._send(200, *text_routes[path])
                 else:
-                    self._send_html(
-                        _layout(
-                            "Not found",
-                            f"<h1>Not found</h1><p>No route for {_html_escape(path)}</p>",
-                        ),
-                        status=404,
-                    )
-            except Exception as error:  # NOSONAR python:S5754 — surface to client as 500 rather than crashing the worker thread
+                    self._send_html(render_not_found(path), status=404)
+            except Exception as error:  # NOSONAR python:S5754 — a 500, not a dead worker thread
                 web_runner_logger.warning(f"dashboard handler error: {error!r}")
                 self._send_json({"error": repr(error)}, status=500)
 
     return DashboardHandler
+
+
+def _query_limit(query: str) -> int:
+    params = urllib.parse.parse_qs(query)
+    raw = params.get("limit", ["50"])[0]
+    try:
+        value = int(raw)
+    except ValueError:
+        value = 50
+    return max(1, min(value, 5000))
 
 
 # ---------- server wrapper -----------------------------------------------
@@ -504,7 +199,7 @@ class DashboardServer:
             host = "127.0.0.1"
         # S5332 ok: dashboard binds to loopback by default; intentionally HTTP
         # so the user can open it in a browser without a self-signed cert.
-        return f"http://{host}:{port}"  # NOSONAR S5332 — intentional plain HTTP (localhost/dev-configured endpoint), not a security-sensitive transport
+        return f"http://{host}:{port}"  # NOSONAR S5332 — plain HTTP on purpose: a localhost dev endpoint
 
     def __enter__(self) -> DashboardServer:
         self.start()
