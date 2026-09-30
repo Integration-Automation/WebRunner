@@ -154,22 +154,8 @@ class Executor:
         png = _try_selenium_screenshot() or _try_playwright_screenshot()
         if not png:
             return None
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        raw_name = str(action[0] if isinstance(action, list) and action else "unknown")
-        # Strip any path separators and limit to safe characters; otherwise an
-        # action JSON could ship a command name like ``../../etc/passwd`` and
-        # cause a path traversal write (SonarCloud S2083).
-        safe_name = "".join(ch for ch in raw_name if ch.isalnum() or ch in "-_")[:64] or "unknown"
-        base_dir = Path(self.failure_screenshot_dir).resolve()
-        target = (base_dir / f"{timestamp}_{safe_name}.png").resolve()
-        # Belt-and-braces: confirm the resolved path stays inside the
-        # configured directory before writing.
-        try:
-            target.relative_to(base_dir)
-        except ValueError:
-            web_runner_logger.error(
-                f"failure screenshot path escapes configured dir: {target!r}"
-            )
+        target = self._failure_artifact_path(action, ".png")
+        if target is None:
             return None
         try:
             target.write_bytes(png)
@@ -177,6 +163,41 @@ class Executor:
         except OSError as error:
             web_runner_logger.error(f"failure screenshot write failed: {error!r}")
             return None
+
+    def _capture_failure_trace(self, action) -> str | None:
+        """Save the running Playwright trace beside the failure screenshot. Returns path or None."""
+        wrapper = _pw.playwright_wrapper_instance
+        if not self.failure_screenshot_dir or not getattr(wrapper, "tracing_active", False):
+            return None
+        target = self._failure_artifact_path(action, ".trace.zip")
+        if target is None:
+            return None
+        try:
+            return wrapper.save_trace_chunk(str(target))
+        except Exception as error:  # the action already failed; its trace is best effort
+            web_runner_logger.error(f"failure trace save failed: {error!r}")
+            return None
+
+    def _failure_artifact_path(self, action, suffix: str) -> Path | None:
+        """``<failure dir>/<timestamp>_<command><suffix>``, or None if it would leave the directory."""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        raw_name = str(action[0] if isinstance(action, list) and action else "unknown")
+        # Strip any path separators and limit to safe characters; otherwise an
+        # action JSON could ship a command name like ``../../etc/passwd`` and
+        # cause a path traversal write (SonarCloud S2083).
+        safe_name = "".join(ch for ch in raw_name if ch.isalnum() or ch in "-_")[:64] or "unknown"
+        base_dir = Path(self.failure_screenshot_dir).resolve()
+        target = (base_dir / f"{timestamp}_{safe_name}{suffix}").resolve()
+        # Belt-and-braces: confirm the resolved path stays inside the
+        # configured directory before writing.
+        try:
+            target.relative_to(base_dir)
+        except ValueError:
+            web_runner_logger.error(
+                f"failure artifact path escapes configured dir: {target!r}"
+            )
+            return None
+        return target
 
     def set_allow_arbitrary_script(self, enabled: bool) -> None:
         """
@@ -330,10 +351,14 @@ class Executor:
         return action_list
 
     def _failure_text(self, action, error: Exception) -> str:
+        artifacts = []
         screenshot_path = self._capture_failure_screenshot(action)
         if screenshot_path:
-            return f"{error!r} (failure screenshot: {screenshot_path})"
-        return repr(error)
+            artifacts.append(f"failure screenshot: {screenshot_path}")
+        trace_path = self._capture_failure_trace(action)
+        if trace_path:
+            artifacts.append(f"trace: {trace_path}")
+        return f"{error!r} ({'; '.join(artifacts)})" if artifacts else repr(error)
 
     def execute_files(self, execute_files_list: list) -> list:
         """

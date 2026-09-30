@@ -16,8 +16,6 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: X-
 
 - **#12** [DECIDE] Async execution engine (`AsyncExecutor` / `async_execute_action`): Provide an opt-in asyncio runner and asynchronous Playwright backend (`playwright.async_api`). Enables concurrent test execution via `asyncio.gather` for multi-tab, multi-user, and WebSocket streaming tests with lower resource overhead than thread/process pools.
 
-- **#13** Playwright trace viewer & video recording lifecycle commands: Expose declarative commands in action JSON (`WR_pw_tracing_start`, `WR_pw_tracing_stop`, `WR_pw_video_save`) and auto-attach trace zip and video recordings into `failure_bundle` on action failures when `failure_screenshot_dir` is configured.
-
 - **#14** W3C WebDriver BiDi cross-browser event interception: Extend `je_web_runner/utils/bidi_backend` with unified W3C BiDi listeners for network interception (`network.beforeRequestSent`, `network.responseCompleted`), console logging (`log.entryAdded`), and DOM mutation events that function consistently across both Chrome and Firefox without depending on Chrome-specific CDP protocols.
 
 - **#15** Interactive HTML report enhancements: Upgrade `utils/generate_report/generate_html_report.py` to optionally generate a self-contained interactive report with step-by-step screenshot timeline, network request waterfall viewer, axe-core a11y violation badges, and expandable error trace diffs.

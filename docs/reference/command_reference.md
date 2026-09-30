@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (448 commands).
+Auto-generated from the executor's event_dict (453 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -342,10 +342,15 @@ Auto-generated from the executor's event_dict (448 commands).
 | `WR_pw_throttle_clear` | `() -> 'Any'` |  |
 | `WR_pw_title` | `() -> 'str'` |  |
 | `WR_pw_to_url` | `(url: 'str', **goto_options: 'Any') -> 'None'` |  |
+| `WR_pw_tracing_save_chunk` | `(path: 'str') -> 'str'` |  |
+| `WR_pw_tracing_start` | `(screenshots: 'bool' = True, snapshots: 'bool' = True, sources: 'bool' = False) -> 'None'` |  |
+| `WR_pw_tracing_stop` | `(path: 'str') -> 'str'` |  |
 | `WR_pw_type_text` | `(selector: 'str', value: 'str', delay: 'float' = 0, **options: 'Any') -> 'None'` |  |
 | `WR_pw_uncheck` | `(selector: 'str', **options: 'Any') -> 'None'` |  |
 | `WR_pw_upload_file` | `(input_selector: 'str', file_path: 'str') -> 'None'` | 對指定的 file input 送入檔案（Playwright） |
 | `WR_pw_url` | `() -> 'str'` |  |
+| `WR_pw_video_start` | `(video_dir: 'str', width: 'int | None' = None, height: 'int | None' = None) -> 'None'` |  |
+| `WR_pw_video_stop` | `() -> 'list[str]'` |  |
 | `WR_pw_viewport_size` | `() -> 'dict | None'` |  |
 | `WR_pw_wait_for_load_state` | `(state: 'str' = 'load', timeout: 'float | None' = None) -> 'None'` |  |
 | `WR_pw_wait_for_selector` | `(selector: 'str', timeout: 'float | None' = None, state: 'str' = 'visible')` |  |

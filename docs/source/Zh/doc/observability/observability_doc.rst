@@ -2,7 +2,8 @@
 可觀測
 ======
 
-* 失敗自動截圖
+* 失敗自動截圖；記錄 Playwright trace 期間（``WR_pw_tracing_start``）也會在截圖旁存下
+  ``<timestamp>_<command>.trace.zip``
 * 全域重試策略
 * OpenTelemetry tracing hook（軟相依）
 * 即時 progress dashboard（stdlib HTTP）：``start_dashboard("127.0.0.1", 8080)``

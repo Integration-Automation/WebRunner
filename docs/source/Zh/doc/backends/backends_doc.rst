@@ -183,7 +183,8 @@ Playwright 還沒有（Playwright API 本身支援）：
 Selenium 做不到：
 
 * WebKit。
-* trace viewer 與原生錄影。
+* trace viewer 與原生錄影（``WR_pw_tracing_start`` / ``WR_pw_tracing_stop``、
+  ``WR_pw_video_start`` / ``WR_pw_video_stop``）。
 * 每個動作前自動等元素可操作；Selenium 只有 implicit 與 explicit wait。
 
 Selenium 還沒有：

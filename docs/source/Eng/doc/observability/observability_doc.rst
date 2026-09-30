@@ -5,7 +5,9 @@ Observability
 * **Failure auto-screenshot** — set
   ``executor.set_failure_screenshot_dir(path)``; failed actions write a PNG
   named ``<timestamp>_<command>.png`` and the path is appended to the
-  execution record.
+  execution record. While a Playwright trace is recording
+  (``WR_pw_tracing_start``), the trace so far is also saved as
+  ``<timestamp>_<command>.trace.zip`` beside it and named in the record.
 * **Retry policy** — ``executor.set_retry_policy(retries, backoff)``; linear
   backoff between attempts, propagates the original error after the final
   retry.

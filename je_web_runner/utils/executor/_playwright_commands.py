@@ -39,6 +39,12 @@ PLAYWRIGHT_COMMANDS: dict[str, Any] = {
     "WR_pw_set_user_agent": _pw.pw_set_user_agent,
     "WR_pw_set_extra_http_headers": _pw.pw_set_extra_http_headers,
     "WR_pw_save_storage_state": _pw.pw_save_storage_state,
+    # trace viewer / video
+    "WR_pw_tracing_start": _pw.pw_tracing_start,
+    "WR_pw_tracing_save_chunk": _pw.pw_tracing_save_chunk,
+    "WR_pw_tracing_stop": _pw.pw_tracing_stop,
+    "WR_pw_video_start": _pw.pw_video_start,
+    "WR_pw_video_stop": _pw.pw_video_stop,
     "WR_pw_to_url": _pw.pw_to_url,
     "WR_pw_forward": _pw.pw_forward,
     "WR_pw_back": _pw.pw_back,

@@ -27,6 +27,7 @@ from je_web_runner.webdriver._playwright_mixins import (
     _ContextMixin,
     _InteractionMixin,
     _PageMixin,
+    _RecordingMixin,
     _StateMixin,
 )
 from je_web_runner.webdriver._playwright_mixins._common import (
@@ -60,6 +61,7 @@ class PlaywrightWrapper(
     _PageMixin,
     _InteractionMixin,
     _StateMixin,
+    _RecordingMixin,
 ):
     """
     Playwright 同步 API 的完整 backend 包裝
@@ -77,6 +79,8 @@ class PlaywrightWrapper(
         # of them came from the current device descriptor.
         self._context_options: dict[str, Any] = {}
         self._emulation_keys: set[str] = set()
+        # Tracing options while a trace is being recorded (see _RecordingMixin), else None.
+        self._trace_options: dict[str, Any] | None = None
         self.element_wrapper = element_wrapper or playwright_element_wrapper
 
     # ----- lifecycle ---------------------------------------------------
@@ -142,6 +146,7 @@ class PlaywrightWrapper(
             kwargs["storage_state"] = storage_state
         context = self._browser.new_context(**kwargs)
         context.on("page", self._track_page)
+        self._restart_tracing(context)
         return context
 
     def quit(self) -> None:
@@ -157,6 +162,7 @@ class PlaywrightWrapper(
             self._browser = None
             self._context_options = {}
             self._emulation_keys = set()
+            self._trace_options = None
             if self._playwright is not None:
                 self._playwright.stop()
             self._playwright = None
@@ -253,6 +259,26 @@ def pw_set_extra_http_headers(headers: dict[str, str]) -> None:
 
 def pw_save_storage_state(path: str) -> str:
     return playwright_wrapper_instance.save_storage_state(path)
+
+
+def pw_tracing_start(screenshots: bool = True, snapshots: bool = True, sources: bool = False) -> None:
+    playwright_wrapper_instance.start_tracing(screenshots=screenshots, snapshots=snapshots, sources=sources)
+
+
+def pw_tracing_save_chunk(path: str) -> str:
+    return playwright_wrapper_instance.save_trace_chunk(path)
+
+
+def pw_tracing_stop(path: str) -> str:
+    return playwright_wrapper_instance.stop_tracing(path)
+
+
+def pw_video_start(video_dir: str, width: int | None = None, height: int | None = None) -> None:
+    playwright_wrapper_instance.start_video_recording(video_dir, width=width, height=height)
+
+
+def pw_video_stop() -> list[str]:
+    return playwright_wrapper_instance.stop_video_recording()
 
 
 def pw_quit() -> None:

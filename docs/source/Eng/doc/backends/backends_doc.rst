@@ -189,7 +189,8 @@ Only on Playwright
 Not possible on Selenium:
 
 * WebKit.
-* The trace viewer and native video recording.
+* The trace viewer and native video recording (``WR_pw_tracing_start`` /
+  ``WR_pw_tracing_stop``, ``WR_pw_video_start`` / ``WR_pw_video_stop``).
 * Waiting for actionability before every action; Selenium only has implicit
   and explicit waits.
 
