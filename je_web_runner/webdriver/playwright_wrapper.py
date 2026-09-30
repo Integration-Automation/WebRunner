@@ -19,24 +19,25 @@ from __future__ import annotations
 
 from typing import Any
 
-from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import (
     test_object_record,
 )
-from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.webdriver._playwright_mixins import (
+    _ContextMixin,
+    _InteractionMixin,
+    _PageMixin,
+    _StateMixin,
+)
+from je_web_runner.webdriver._playwright_mixins._common import (
+    BROWSER_NOT_LAUNCHED,
+    PlaywrightBackendError,
+)
 from je_web_runner.webdriver.playwright_element_wrapper import (
     PlaywrightElementWrapper,
     playwright_element_wrapper,
 )
-from je_web_runner.webdriver.playwright_locator import (
-    selector_for_recorded_name,
-    test_object_to_selector,
-)
-
-
-class PlaywrightBackendError(WebRunnerException):
-    """Raised when the Playwright backend is misused or unavailable."""
+from je_web_runner.webdriver.playwright_locator import test_object_to_selector
 
 
 def _require_playwright():
@@ -53,16 +54,13 @@ def _require_playwright():
 
 _SUPPORTED_BROWSERS = frozenset({"chromium", "firefox", "webkit"})
 
-_BROWSER_NOT_LAUNCHED = "Playwright browser not launched; call launch() first"
-_RUNTIME_NOT_STARTED = "Playwright runtime not started"
-_CLOCK_API_UNAVAILABLE = "Playwright clock API unavailable; upgrade Playwright"
 
-
-def _record(name: str, params, error: Exception | None) -> None:
-    record_action_to_list(f"Playwright {name}", params, error)
-
-
-class PlaywrightWrapper:
+class PlaywrightWrapper(
+    _ContextMixin,
+    _PageMixin,
+    _InteractionMixin,
+    _StateMixin,
+):
     """
     Playwright 同步 API 的完整 backend 包裝
     Full sync-API wrapper for Playwright, organised around one browser /
@@ -94,7 +92,7 @@ class PlaywrightWrapper:
     @property
     def browser(self):
         if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
+            raise PlaywrightBackendError(BROWSER_NOT_LAUNCHED)
         return self._browser
 
     def launch(
@@ -139,174 +137,6 @@ class PlaywrightWrapper:
             kwargs["record_har_content"] = record_har_content
         return self._browser.new_context(**kwargs) if kwargs else self._browser.new_context()
 
-    def _device_options(self, device_name: str) -> dict:
-        """Look up Playwright's built-in device descriptor by name."""
-        if self._playwright is None:
-            raise PlaywrightBackendError(_RUNTIME_NOT_STARTED)
-        devices = getattr(self._playwright, "devices", None)
-        if not devices or device_name not in devices:
-            available = sorted(devices.keys()) if devices else []
-            raise PlaywrightBackendError(
-                f"unknown device {device_name!r}; available examples: {available[:5]}"
-            )
-        return dict(devices[device_name])
-
-    def start_emulation(self, device_name: str) -> None:
-        """
-        套用 Playwright 內建裝置設定（重建 context 與 page）
-        Apply a Playwright device descriptor by name; the current context is
-        closed and replaced with one configured for the requested device.
-        """
-        web_runner_logger.info(f"playwright start_emulation: {device_name}")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(extra_options=self._device_options(device_name))
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
-    def stop_emulation(self) -> None:
-        """Replace the device-emulating context with a plain one."""
-        web_runner_logger.info("playwright stop_emulation")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context()
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
-    # ----- geolocation / permissions / timezone / clock --------------
-
-    def set_geolocation(
-        self,
-        latitude: float,
-        longitude: float,
-        accuracy: float | None = None,
-    ) -> None:
-        """Set the page geolocation; remember to grant ``geolocation`` permission first."""
-        web_runner_logger.info(f"playwright set_geolocation: {latitude}, {longitude}")
-        coords: dict[str, float] = {"latitude": latitude, "longitude": longitude}
-        if accuracy is not None:
-            coords["accuracy"] = accuracy
-        self.context.set_geolocation(coords)
-
-    def grant_permissions(
-        self,
-        permissions: list[str],
-        origin: str | None = None,
-    ) -> None:
-        """Grant browser permissions (e.g. ``geolocation`` / ``clipboard-read``)."""
-        if origin is None:
-            self.context.grant_permissions(permissions)
-        else:
-            self.context.grant_permissions(permissions, origin=origin)
-
-    def clear_permissions(self) -> None:
-        self.context.clear_permissions()
-
-    def set_timezone(self, timezone_id: str) -> None:
-        """
-        重建 context 並指定時區（Playwright 不支援直接修改既有 context 的時區）
-        Recreate the context with ``timezoneId``; the existing page is closed.
-        """
-        web_runner_logger.info(f"playwright set_timezone: {timezone_id}")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(extra_options={"timezone_id": timezone_id})
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
-    def clock_install(self, fake_now_ms: float | None = None) -> None:
-        """Install Playwright's clock (requires Playwright 1.45+)."""
-        clock = getattr(self.context, "clock", None)
-        if clock is None:
-            raise PlaywrightBackendError(_CLOCK_API_UNAVAILABLE)
-        if fake_now_ms is None:
-            clock.install()
-        else:
-            clock.install(time=fake_now_ms)
-
-    def clock_set_time(self, time_ms: float) -> None:
-        clock = getattr(self.context, "clock", None)
-        if clock is None:
-            raise PlaywrightBackendError(_CLOCK_API_UNAVAILABLE)
-        clock.set_fixed_time(time_ms)
-
-    def clock_run_for(self, duration_ms: float) -> None:
-        clock = getattr(self.context, "clock", None)
-        if clock is None:
-            raise PlaywrightBackendError(_CLOCK_API_UNAVAILABLE)
-        clock.run_for(duration_ms)
-
-    def set_locale(
-        self,
-        locale: str,
-        accept_language: str | None = None,
-    ) -> None:
-        """
-        切換 ``locale`` 與 ``Accept-Language``（重建 context）
-        Recreate the context with the given ``locale`` (and optional
-        Accept-Language override). The current page is closed.
-        """
-        web_runner_logger.info(f"playwright set_locale: {locale}")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        options: dict[str, Any] = {"locale": locale}
-        if accept_language:
-            options["extra_http_headers"] = {"Accept-Language": accept_language}
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(extra_options=options)
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
-    def list_device_names(self) -> list[str]:
-        """Return all device names known to the active Playwright runtime."""
-        if self._playwright is None:
-            raise PlaywrightBackendError(_RUNTIME_NOT_STARTED)
-        devices = getattr(self._playwright, "devices", None) or {}
-        return sorted(devices.keys())
-
-    def start_har_recording(self, har_path: str, content: str = "omit") -> None:
-        """
-        於現有 browser 內重建 context 並開啟 HAR 錄製
-        Recreate the context with HAR recording enabled. Existing pages are
-        closed; a fresh page is opened on the new context.
-        """
-        web_runner_logger.info(f"playwright start_har_recording: {har_path}")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(har_path, content)
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
-    def stop_har_recording(self) -> None:
-        """
-        關閉並寫出當前 HAR，重建一個未錄製的 context
-        Close the recording context (which flushes the HAR file) and replace
-        it with a fresh non-recording context.
-        """
-        web_runner_logger.info("playwright stop_har_recording")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._browser.new_context()
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
     def quit(self) -> None:
         """Close everything and stop the Playwright runtime."""
         web_runner_logger.info("playwright quit")
@@ -321,272 +151,6 @@ class PlaywrightWrapper:
             if self._playwright is not None:
                 self._playwright.stop()
             self._playwright = None
-
-    # ----- pages / tabs ------------------------------------------------
-
-    def new_page(self) -> int:
-        """Open a new page in the current context; returns its index."""
-        page = self.context.new_page()
-        self._pages.append(page)
-        self._page_index = len(self._pages) - 1
-        return self._page_index
-
-    def switch_to_page(self, index: int) -> None:
-        if index < 0 or index >= len(self._pages):
-            raise PlaywrightBackendError(f"page index {index} out of range")
-        self._page_index = index
-
-    def close_page(self, index: int | None = None) -> None:
-        target_index = self._page_index if index is None else index
-        if target_index < 0 or target_index >= len(self._pages):
-            raise PlaywrightBackendError(f"page index {target_index} out of range")
-        self._pages[target_index].close()
-        del self._pages[target_index]
-        if not self._pages:
-            self._page_index = -1
-        else:
-            self._page_index = min(self._page_index, len(self._pages) - 1)
-
-    def page_count(self) -> int:
-        return len(self._pages)
-
-    # ----- navigation --------------------------------------------------
-
-    def to_url(self, url: str, **goto_options: Any) -> None:
-        web_runner_logger.info(f"playwright to_url: {url}")
-        params = {"url": url}
-        try:
-            self.page.goto(url, **goto_options)
-            _record("to_url", params, None)
-        except Exception as error:
-            web_runner_logger.error(f"playwright to_url failed: {error!r}")
-            _record("to_url", params, error)
-
-    def forward(self) -> None:
-        self.page.go_forward()
-
-    def back(self) -> None:
-        self.page.go_back()
-
-    def refresh(self) -> None:
-        self.page.reload()
-
-    def url(self) -> str:
-        return self.page.url
-
-    def title(self) -> str:
-        return self.page.title()
-
-    def content(self) -> str:
-        return self.page.content()
-
-    def set_default_timeout(self, timeout_ms: float) -> None:
-        self.page.set_default_timeout(timeout_ms)
-
-    def set_default_navigation_timeout(self, timeout_ms: float) -> None:
-        self.page.set_default_navigation_timeout(timeout_ms)
-
-    # ----- finding -----------------------------------------------------
-
-    def find_element(self, selector: str):
-        web_runner_logger.info(f"playwright find_element: {selector}")
-        return self.page.query_selector(selector)
-
-    def find_elements(self, selector: str) -> list[Any]:
-        web_runner_logger.info(f"playwright find_elements: {selector}")
-        return self.page.query_selector_all(selector)
-
-    def find_element_with_test_object_record(self, element_name: str):
-        """
-        Resolve ``element_name`` from ``test_object_record`` and capture the
-        first matching element on ``element_wrapper``.
-        """
-        selector = selector_for_recorded_name(element_name)
-        element = self.page.query_selector(selector)
-        self.element_wrapper.current_element = element
-        return element
-
-    def find_elements_with_test_object_record(self, element_name: str):
-        selector = selector_for_recorded_name(element_name)
-        elements = self.page.query_selector_all(selector)
-        self.element_wrapper.current_element_list = list(elements)
-        if elements:
-            self.element_wrapper.current_element = elements[0]
-        return elements
-
-    # ----- direct page-level element shortcuts ------------------------
-
-    def click(self, selector: str, **options: Any) -> None:
-        web_runner_logger.info(f"playwright click: {selector}")
-        self.page.click(selector, **options)
-
-    def dblclick(self, selector: str, **options: Any) -> None:
-        self.page.dblclick(selector, **options)
-
-    def hover(self, selector: str, **options: Any) -> None:
-        self.page.hover(selector, **options)
-
-    def fill(self, selector: str, value: str, **options: Any) -> None:
-        web_runner_logger.info(f"playwright fill: {selector}")
-        self.page.fill(selector, value, **options)
-
-    def type_text(self, selector: str, value: str, delay: float = 0) -> None:
-        self.page.type(selector, value, delay=delay)
-
-    def press(self, selector: str, key: str) -> None:
-        self.page.press(selector, key)
-
-    def check(self, selector: str) -> None:
-        self.page.check(selector)
-
-    def uncheck(self, selector: str) -> None:
-        self.page.uncheck(selector)
-
-    def select_option(self, selector: str, value: Any) -> list[str]:
-        return self.page.select_option(selector, value)
-
-    def drag_and_drop(self, source_selector: str, target_selector: str, **options: Any) -> None:
-        self.page.drag_and_drop(source_selector, target_selector, **options)
-
-    # ----- script ------------------------------------------------------
-
-    def evaluate(self, expression: str, arg: Any = None):
-        return self.page.evaluate(expression, arg) if arg is not None else self.page.evaluate(expression)
-
-    def evaluate_handle(self, expression: str, arg: Any = None):
-        if arg is not None:
-            return self.page.evaluate_handle(expression, arg)
-        return self.page.evaluate_handle(expression)
-
-    # ----- cookies -----------------------------------------------------
-
-    def get_cookies(self) -> list[dict]:
-        return self.context.cookies()
-
-    def add_cookies(self, cookies: list[dict]) -> None:
-        self.context.add_cookies(cookies)
-
-    def clear_cookies(self) -> None:
-        self.context.clear_cookies()
-
-    # ----- screenshots -------------------------------------------------
-
-    def screenshot(self, path: str, full_page: bool = False) -> str:
-        self.page.screenshot(path=path, full_page=full_page)
-        return path
-
-    def screenshot_bytes(self, full_page: bool = False) -> bytes:
-        return self.page.screenshot(full_page=full_page)
-
-    # ----- waits -------------------------------------------------------
-
-    def wait_for_selector(self, selector: str, timeout: float | None = None, state: str = "visible"):
-        if timeout is None:
-            return self.page.wait_for_selector(selector, state=state)
-        return self.page.wait_for_selector(selector, timeout=timeout, state=state)
-
-    def wait_for_load_state(self, state: str = "load", timeout: float | None = None) -> None:
-        if timeout is None:
-            self.page.wait_for_load_state(state)
-        else:
-            self.page.wait_for_load_state(state, timeout=timeout)
-
-    def wait_for_timeout(self, timeout_ms: float) -> None:
-        self.page.wait_for_timeout(timeout_ms)
-
-    def wait_for_url(self, url: str, timeout: float | None = None) -> None:
-        if timeout is None:
-            self.page.wait_for_url(url)
-        else:
-            self.page.wait_for_url(url, timeout=timeout)
-
-    # ----- viewport / window ------------------------------------------
-
-    def set_viewport_size(self, width: int, height: int) -> None:
-        self.page.set_viewport_size({"width": width, "height": height})
-
-    def viewport_size(self) -> dict | None:
-        return self.page.viewport_size
-
-    # ----- mouse / keyboard -------------------------------------------
-
-    def mouse_click(self, x: float, y: float, button: str = "left", click_count: int = 1) -> None:
-        self.page.mouse.click(x, y, button=button, click_count=click_count)
-
-    def mouse_move(self, x: float, y: float, steps: int = 1) -> None:
-        self.page.mouse.move(x, y, steps=steps)
-
-    def mouse_down(self, button: str = "left", click_count: int = 1) -> None:
-        self.page.mouse.down(button=button, click_count=click_count)
-
-    def mouse_up(self, button: str = "left", click_count: int = 1) -> None:
-        self.page.mouse.up(button=button, click_count=click_count)
-
-    def keyboard_press(self, key: str) -> None:
-        self.page.keyboard.press(key)
-
-    def keyboard_type(self, text: str, delay: float = 0) -> None:
-        self.page.keyboard.type(text, delay=delay)
-
-    def keyboard_down(self, key: str) -> None:
-        self.page.keyboard.down(key)
-
-    def keyboard_up(self, key: str) -> None:
-        self.page.keyboard.up(key)
-
-    # ----- frames ------------------------------------------------------
-
-    def frames(self) -> list[Any]:
-        return list(self.page.frames)
-
-    def main_frame(self) -> Any:
-        return self.page.main_frame
-
-    # ----- network route mocking --------------------------------------
-
-    def route_mock(self, url_pattern: str, response: dict) -> None:
-        """
-        將符合 ``url_pattern`` 的請求以 stub 回應
-        Stub network requests matching ``url_pattern`` with a static response.
-
-        ``response`` 支援 keys: ``status`` (int), ``body`` (str/bytes),
-        ``headers`` (dict), ``content_type`` (str)。
-        """
-        web_runner_logger.info(f"playwright route_mock: {url_pattern}")
-        fulfill_kwargs = {
-            "status": response.get("status", 200),
-            "body": response.get("body", ""),
-            "headers": response.get("headers", {}),
-        }
-        if "content_type" in response:
-            fulfill_kwargs["content_type"] = response["content_type"]
-
-        def _handler(route, request):
-            route.fulfill(**fulfill_kwargs)
-
-        self.page.route(url_pattern, _handler)
-
-    def route_mock_json(self, url_pattern: str, json_data: Any, status: int = 200) -> None:
-        """JSON 便捷版本 / Convenience for JSON responses."""
-        import json as _json
-
-        self.route_mock(
-            url_pattern,
-            {
-                "status": status,
-                "body": _json.dumps(json_data),
-                "headers": {"Content-Type": "application/json"},
-                "content_type": "application/json",
-            },
-        )
-
-    def route_unmock(self, url_pattern: str) -> None:
-        """Remove a specific route handler (Playwright will fall through to network)."""
-        self.page.unroute(url_pattern)
-
-    def route_clear(self) -> None:
-        """Remove all route handlers on the current page."""
-        self.page.unroute_all()
 
 
 playwright_wrapper_instance = PlaywrightWrapper()

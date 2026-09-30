@@ -10,9 +10,7 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: X-
 
 - **#8** [BLOCKED: Workspace X-6 step 1] Delay log file creation until first log record and support configurable log paths (`WEBRUNNER_LOG_PATH` / `WEBRUNNER_LOG_DIR`). Follow JEDITOR pattern: do not open `WEBRunner.log` in cwd on module import. Preserve exact import path `je_web_runner.utils.logging.loggin_instance` and logger exports for downstream consumer compatibility (Jeffrey_RPA conftest hook).
 
-- **#9** Refactor large modules to comply with the 750-line file length limit (`CLAUDE.md` §Complexity & Maintainability):
-  1. `je_web_runner/utils/executor/action_executor.py` (1059 lines): extract the ~600-line `event_dict` command mapping table into `_command_registry.py` / `_event_table.py`, keeping the execution engine, retry policy, and lifecycle handlers in `action_executor.py` (~350 lines).
-  2. `je_web_runner/webdriver/playwright_wrapper.py` (869 lines): extract domain-specific logic into `_playwright_mixins/` (`_navigation_mixin.py`, `_actions_mixin.py`, `_emulation_mixin.py`, `_storage_cookies_mixin.py`, `_assertions_mixin.py`), mirroring `WebDriverWrapper`'s mixin structure.
+- **#9** `je_web_runner/utils/executor/action_executor.py` (1062 lines) is over the 750-line file limit (`CLAUDE.md` §Complexity & Maintainability): extract the ~400-line `event_dict` command table (`:214-617`) into its own module, keeping the execution engine, retry policy and lifecycle handlers in `action_executor.py`. Keep `executor`, `execute_action`, `execute_files` and `add_command_to_executor` importable from `action_executor` (`architecture.md` §6).
 
 - **#10** Packaging & CLI: Add a first-class `webrunner` console script entry point in `pyproject.toml` (`[project.scripts] webrunner = "je_web_runner.__main__:main"`, with optional `web_runner` alias). Update `test/unit_test/test_legacy_cli_contract.py` to verify console script invocation matches `python -m je_web_runner`, enabling direct shell execution and `pipx run je_web_runner`.
 
