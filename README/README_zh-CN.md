@@ -767,7 +767,7 @@ python -m je_web_runner.mcp_server
 默认工具列表（22 个工具）暴露：
 
 实时浏览器执行：
-- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 531 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 533 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批量运行磁盘上的 JSON 文件
 - `webrunner_list_commands` —— 发现完整的 `WR_*` 接口面
 
@@ -817,7 +817,7 @@ serve_stdio(server=server)
 - stdio 一律是 UTF-8、行尾 `\n`，与控制台代码页无关。进程写到 stdout 的其他内容（`print`、子进程）都改走 stderr，所以客户端只会收到协议消息。
 - 工具执行失败时回传 `isError: true` 与错误信息，让客户端能修正调用。`webrunner_run_actions` 与 `webrunner_run_action_files` 在有动作失败时也会设 `isError`，并把失败的记录键列在 `failed`。
 - 未知的工具或不是对象的 `arguments` 回 JSON-RPC `-32602` 错误。通知（notification）一律不回应，批量请求以 `-32600` 拒绝。
-- 执行工具会拒绝 `WR_add_package_to_executor`、`WR_add_package_to_callback_executor`、`WR_set_allow_arbitrary_script`、`WR_ac_run` 与 `WR_ac_run_actions`，嵌套的动作列表也一样：模型不应能加载 `os`、重新打开操作者关掉的脚本闸门，或通过 AutoControl 操作桌面。设 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` 可解除。设了 `WEBRUNNER_MCP_ROOT` 时，`webrunner_run_action_files` 与 `webrunner_compute_trend` 只读取该目录内的文件。
+- 执行工具会拒绝 `WR_add_package_to_executor`、`WR_add_package_to_callback_executor`、`WR_set_allow_arbitrary_script` 与操作或读取桌面的 `WR_ac_*` 命令（`WR_ac_available`、`WR_ac_list_commands` 以外的全部），嵌套的动作列表也一样：模型不应能加载 `os`、重新打开操作者关掉的脚本闸门，或通过 AutoControl 碰到桌面。设 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` 可解除。设了 `WEBRUNNER_MCP_ROOT` 时，`webrunner_run_action_files` 与 `webrunner_compute_trend` 只读取该目录内的文件。
 - 每个工具都有 `title` 与 `annotations`：离线工具与 `webrunner_list_commands` 是 `readOnlyHint: true`，两个执行工具是 `destructiveHint: true`、`openWorldHint: true`。输入 schema 说明每个参数并拒绝未知参数；参数不符时回传 `isError` 结果并指出问题。结果是 JSON 对象时也会以 `structuredContent` 送出，两个执行工具另外声明 `outputSchema`。
 
 ## 动作 JSON LSP
@@ -1630,8 +1630,12 @@ from je_web_runner.utils.ci_annotations.github_annotations import (
 | `WR_ac_list_commands` | 桥接会执行的 `AC_*` 命令 |
 | `WR_ac_run` | 执行一个 AutoControl 动作并返回它的值：`["WR_ac_run", [["AC_write", {"write_string": "hello"}]]]` |
 | `WR_ac_run_actions` | 依序执行一串 AutoControl 动作并返回各自的值；第一个失败就停止 |
+| `WR_ac_fill_native_file_dialog` | 在操作系统的打开或保存对话框输入路径（转成绝对路径）后按 Enter（`submit=false` 则不按）；先等 `wait_seconds`（1）秒让对话框出现 |
+| `WR_ac_assert_image_on_screen` | 屏幕上找不到模板图片就失败；返回其中心 `[x, y]`（`detect_threshold` 是 AutoControl 的比对阈值） |
 
-AutoControl 动作失败时，它所在的 `WR_ac_*` 动作以 `AutoControlBridgeError` 失败。桥接会拒绝超出桌面范围的 AutoControl 命令：shell 命令与程序（`AC_shell_command`、`AC_execute_process`）、加载包（`AC_add_package_*`）、动作列表与文件（`AC_execute_action`、`AC_execute_files`）、`AC_run_agent`，以及回头调用 WebRunner 的 `AC_web_*`。这些名称出现在动作的任何位置都会被拒绝，包括循环体与以 JSON 字符串传入的主体。除非设 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`，MCP server 会拒绝 `WR_ac_run` 与 `WR_ac_run_actions`。
+AutoControl 动作失败时，它所在的 `WR_ac_*` 动作以 `AutoControlBridgeError` 失败。桥接会拒绝超出桌面范围的 AutoControl 命令：shell 命令与程序（`AC_shell_command`、`AC_execute_process`）、加载包（`AC_add_package_*`）、动作列表与文件（`AC_execute_action`、`AC_execute_files`）、`AC_run_agent`，以及回头调用 WebRunner 的 `AC_web_*`。这些名称出现在动作的任何位置都会被拒绝，包括循环体与以 JSON 字符串传入的主体。除非设 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`，MCP server 会拒绝 `WR_ac_available`、`WR_ac_list_commands` 以外的每个 `WR_ac_*` 命令。
+
+这两个原生命令会拒绝窗口不在这台机器屏幕上的 Selenium driver：headless 浏览器，或远程的（grid 或设备云）。Playwright 浏览器不会被检查，因为 Playwright 不报告它是否以 headless 启动：请以 `headless=False` 启动。
 
 另一个方向，也就是 AutoControl 的 `AC_web_*` 命令执行 `WR_*` 命令，属于 AutoControl。
 

@@ -688,6 +688,8 @@ COMMANDS: dict[str, Any] = {
         "WR_ac_list_commands": _autocontrol.ac_list_commands,
         "WR_ac_run": _autocontrol.ac_run,
         "WR_ac_run_actions": _autocontrol.ac_run_actions,
+        "WR_ac_fill_native_file_dialog": _autocontrol.fill_native_file_dialog,
+        "WR_ac_assert_image_on_screen": _autocontrol.assert_image_on_screen,
 }
 
 

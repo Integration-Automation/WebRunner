@@ -131,7 +131,10 @@ extra (`je_web_runner[autocontrol]`) that is never imported at import time: impo
 process DPI-aware on Windows and takes about a second, and Jeffrey_RPA imports this tree. `ac_available` uses
 `importlib.util.find_spec`. It relies on `je_auto_control.utils.executor.action_executor.executor` with
 `execute_action(actions, raise_on_error=True)` (a record dict, one unique key per action, in order) and
-`known_commands()`. It refuses `AC_shell_command`,
+`known_commands()`, and on the `AC_*` commands the native ones send: `AC_write` (`write_string`),
+`AC_type_keyboard` (`keycode`), `AC_get_keyboard_keys_table` (its `enter` or `return` key) and
+`AC_locate_image_center` (`image`, `detect_threshold`; returns the centre, raises when not found). It refuses
+`AC_shell_command`,
 `AC_execute_process`, `AC_add_package_*`, `AC_execute_action`, `AC_execute_files`, `AC_run_agent` and `AC_web_*`
 anywhere in an action. `test/integration_test/test_autocontrol_bridge_real.py` checks these against the installed
 package and skips without it.

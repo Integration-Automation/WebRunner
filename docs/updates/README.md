@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-28 | 2026-10-01 | Native file dialog and image-on-screen commands; basic auth blocked | #change #autocontrol | [2026-10](2026-10.md) |
 | U-20261001-27 | 2026-10-01 | WR_ac_*: run AutoControl actions from WebRunner, refusing escalation | #change #autocontrol #security | [2026-10](2026-10.md) |
 | U-20261001-26 | 2026-10-01 | execute_one: one action through the executor's gates, raising on failure | #change #api #autocontrol | [2026-10](2026-10.md) |
 | U-20261001-25 | 2026-10-01 | Selenium event capture, HAR and response mocks over W3C BiDi | #done #selenium #bidi | [2026-10](2026-10.md) |
@@ -115,5 +116,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 27 |
+| [2026-10.md](2026-10.md) | 2026-10 | 28 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

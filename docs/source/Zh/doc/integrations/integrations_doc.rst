@@ -29,7 +29,16 @@ CI 與整合
 * ``WR_ac_run``：執行一個 AutoControl 動作並回傳它的值，例如
   ``["WR_ac_run", [["AC_write", {"write_string": "hello"}]]]``；
 * ``WR_ac_run_actions``：依序執行一串 AutoControl 動作並回傳各自的值；
-  第一個失敗就停止。
+  第一個失敗就停止；
+* ``WR_ac_fill_native_file_dialog(file_path, submit=True, wait_seconds=1)``：
+  在作業系統的開啟或儲存對話框輸入路徑（轉成絕對路徑），``submit`` 不為
+  false 時再按 Enter；
+* ``WR_ac_assert_image_on_screen(image_path, detect_threshold=None)``：螢幕上
+  找不到範本圖片就失敗；回傳其中心 ``[x, y]``。
+
+這兩個原生命令會拒絕視窗不在這台機器螢幕上的 Selenium driver：headless
+瀏覽器，或遠端的（grid 或裝置雲）。Playwright 瀏覽器不會被檢查，因為
+Playwright 不回報它是否以 headless 啟動：請以 ``headless=False`` 啟動。
 
 AutoControl 動作失敗時，它所在的 ``WR_ac_*`` 動作以 ``AutoControlBridgeError``
 失敗。橋接會拒絕 shell 命令與程式（``AC_shell_command``、
@@ -37,8 +46,8 @@ AutoControl 動作失敗時，它所在的 ``WR_ac_*`` 動作以 ``AutoControlBr
 （``AC_execute_action``、``AC_execute_files``）、``AC_run_agent``，以及回頭
 呼叫 WebRunner 的 ``AC_web_*``；這些名稱出現在動作的任何位置都會被拒絕，
 包括迴圈本體與以 JSON 字串傳入的本體。除非設
-``WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1``，MCP server 會拒絕 ``WR_ac_run``
-與 ``WR_ac_run_actions``。
+``WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1``，MCP server 會拒絕
+``WR_ac_available``、``WR_ac_list_commands`` 以外的每個 ``WR_ac_*`` 命令。
 
 AI 輔助
 =======

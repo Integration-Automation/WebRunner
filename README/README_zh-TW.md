@@ -767,7 +767,7 @@ python -m je_web_runner.mcp_server
 預設工具清單（22 個工具）公開：
 
 即時瀏覽器執行：
-- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 531 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 533 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批次執行磁碟上的 JSON 檔案
 - `webrunner_list_commands` —— 探索完整的 `WR_*` 介面面
 
@@ -817,7 +817,7 @@ serve_stdio(server=server)
 - stdio 一律是 UTF-8、行尾 `\n`，與主控台字碼頁無關。行程寫到 stdout 的其他內容（`print`、子行程）都改走 stderr，所以客戶端只會收到協定訊息。
 - 工具執行失敗時回傳 `isError: true` 與錯誤訊息，讓客戶端能修正呼叫。`webrunner_run_actions` 與 `webrunner_run_action_files` 在有動作失敗時也會設 `isError`，並把失敗的紀錄鍵列在 `failed`。
 - 未知的工具或不是物件的 `arguments` 回 JSON-RPC `-32602` 錯誤。通知（notification）一律不回應，批次請求以 `-32600` 拒絕。
-- 執行工具會拒絕 `WR_add_package_to_executor`、`WR_add_package_to_callback_executor`、`WR_set_allow_arbitrary_script`、`WR_ac_run` 與 `WR_ac_run_actions`，巢狀的動作清單也一樣：模型不應能載入 `os`、重新打開操作者關掉的腳本閘門，或透過 AutoControl 操作桌面。設 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` 可解除。設了 `WEBRUNNER_MCP_ROOT` 時，`webrunner_run_action_files` 與 `webrunner_compute_trend` 只讀取該目錄內的檔案。
+- 執行工具會拒絕 `WR_add_package_to_executor`、`WR_add_package_to_callback_executor`、`WR_set_allow_arbitrary_script` 與操作或讀取桌面的 `WR_ac_*` 命令（`WR_ac_available`、`WR_ac_list_commands` 以外的全部），巢狀的動作清單也一樣：模型不應能載入 `os`、重新打開操作者關掉的腳本閘門，或透過 AutoControl 碰到桌面。設 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` 可解除。設了 `WEBRUNNER_MCP_ROOT` 時，`webrunner_run_action_files` 與 `webrunner_compute_trend` 只讀取該目錄內的檔案。
 - 每個工具都有 `title` 與 `annotations`：離線工具與 `webrunner_list_commands` 是 `readOnlyHint: true`，兩個執行工具是 `destructiveHint: true`、`openWorldHint: true`。輸入 schema 說明每個參數並拒絕未知參數；參數不符時回傳 `isError` 結果並指出問題。結果是 JSON 物件時也會以 `structuredContent` 送出，兩個執行工具另外宣告 `outputSchema`。
 
 ## 動作 JSON LSP
@@ -1630,8 +1630,12 @@ from je_web_runner.utils.ci_annotations.github_annotations import (
 | `WR_ac_list_commands` | 橋接會執行的 `AC_*` 命令 |
 | `WR_ac_run` | 執行一個 AutoControl 動作並回傳它的值：`["WR_ac_run", [["AC_write", {"write_string": "hello"}]]]` |
 | `WR_ac_run_actions` | 依序執行一串 AutoControl 動作並回傳各自的值；第一個失敗就停止 |
+| `WR_ac_fill_native_file_dialog` | 在作業系統的開啟或儲存對話框輸入路徑（轉成絕對路徑）後按 Enter（`submit=false` 則不按）；先等 `wait_seconds`（1）秒讓對話框出現 |
+| `WR_ac_assert_image_on_screen` | 螢幕上找不到範本圖片就失敗；回傳其中心 `[x, y]`（`detect_threshold` 是 AutoControl 的比對門檻） |
 
-AutoControl 動作失敗時，它所在的 `WR_ac_*` 動作以 `AutoControlBridgeError` 失敗。橋接會拒絕超出桌面範圍的 AutoControl 命令：shell 命令與程式（`AC_shell_command`、`AC_execute_process`）、載入套件（`AC_add_package_*`）、動作清單與檔案（`AC_execute_action`、`AC_execute_files`）、`AC_run_agent`，以及回頭呼叫 WebRunner 的 `AC_web_*`。這些名稱出現在動作的任何位置都會被拒絕，包括迴圈本體與以 JSON 字串傳入的本體。除非設 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`，MCP server 會拒絕 `WR_ac_run` 與 `WR_ac_run_actions`。
+AutoControl 動作失敗時，它所在的 `WR_ac_*` 動作以 `AutoControlBridgeError` 失敗。橋接會拒絕超出桌面範圍的 AutoControl 命令：shell 命令與程式（`AC_shell_command`、`AC_execute_process`）、載入套件（`AC_add_package_*`）、動作清單與檔案（`AC_execute_action`、`AC_execute_files`）、`AC_run_agent`，以及回頭呼叫 WebRunner 的 `AC_web_*`。這些名稱出現在動作的任何位置都會被拒絕，包括迴圈本體與以 JSON 字串傳入的本體。除非設 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`，MCP server 會拒絕 `WR_ac_available`、`WR_ac_list_commands` 以外的每個 `WR_ac_*` 命令。
+
+這兩個原生命令會拒絕視窗不在這台機器螢幕上的 Selenium driver：headless 瀏覽器，或遠端的（grid 或裝置雲）。Playwright 瀏覽器不會被檢查，因為 Playwright 不回報它是否以 headless 啟動：請以 `headless=False` 啟動。
 
 另一個方向，也就是 AutoControl 的 `AC_web_*` 命令執行 `WR_*` 命令，屬於 AutoControl。
 

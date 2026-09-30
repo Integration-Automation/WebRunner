@@ -13,8 +13,15 @@ from je_web_runner.utils.autocontrol_bridge.bridge import (
     ac_run,
     ac_run_actions,
 )
+from je_web_runner.utils.autocontrol_bridge.native import (
+    assert_image_on_screen,
+    fill_native_file_dialog,
+    invisible_reason,
+    require_visible_browser,
+)
 
 __all__ = [
     "DENIED_COMMANDS", "DENIED_PREFIXES", "AutoControlBridgeError",
     "ac_available", "ac_list_commands", "ac_run", "ac_run_actions",
+    "assert_image_on_screen", "fill_native_file_dialog", "invisible_reason", "require_visible_browser",
 ]

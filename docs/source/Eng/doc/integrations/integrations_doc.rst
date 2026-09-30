@@ -38,7 +38,18 @@ WebRunner imports it only when one of these commands runs:
 * ``WR_ac_run``: run one AutoControl action and return its value, for
   example ``["WR_ac_run", [["AC_write", {"write_string": "hello"}]]]``;
 * ``WR_ac_run_actions``: run a list of AutoControl actions in order and
-  return their values; the first failure stops it.
+  return their values; the first failure stops it;
+* ``WR_ac_fill_native_file_dialog(file_path, submit=True, wait_seconds=1)``:
+  type the path (made absolute) into the operating system's open or save
+  dialog, then press Enter unless ``submit`` is false;
+* ``WR_ac_assert_image_on_screen(image_path, detect_threshold=None)``: fail
+  unless the template image is on the screen; returns its centre ``[x, y]``.
+
+The two native commands refuse a Selenium driver whose window is not on
+this machine's screen: a headless browser, or a remote one (a grid or a
+device cloud). A Playwright browser is not checked, because Playwright does
+not report whether it was launched headless: launch it with
+``headless=False``.
 
 A failed AutoControl action fails its ``WR_ac_*`` action with
 ``AutoControlBridgeError``. The bridge refuses shell commands and programs
@@ -46,8 +57,9 @@ A failed AutoControl action fails its ``WR_ac_*`` action with
 (``AC_add_package_*``), action lists and files (``AC_execute_action``,
 ``AC_execute_files``), ``AC_run_agent`` and calls back into WebRunner
 (``AC_web_*``), anywhere in the action, including loop bodies and bodies
-passed as JSON strings. The MCP server refuses ``WR_ac_run`` and
-``WR_ac_run_actions`` unless ``WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1``.
+passed as JSON strings. The MCP server refuses every
+``WR_ac_*`` command but ``WR_ac_available`` and ``WR_ac_list_commands``
+unless ``WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1``.
 
 AI assistance
 =============

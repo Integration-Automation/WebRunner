@@ -30,6 +30,10 @@ class TestRealAutoControl(unittest.TestCase):
         keys = next(iter(record.values()))
         self.assertIn("tab", keys)
 
+    def test_the_key_table_names_enter(self):
+        from je_web_runner.utils.autocontrol_bridge.native import _enter_key
+        self.assertIn(_enter_key(), ("enter", "return"))
+
     def test_an_unknown_command_fails_as_a_bridge_error(self):
         with self.assertRaises(AutoControlBridgeError):
             ac_run(["AC_definitely_not_a_command"])
