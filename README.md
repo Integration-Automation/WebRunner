@@ -611,6 +611,15 @@ print(result["manifest_path"])  # → run_2026_04_26.manifest.json
 
 The manifest captures the actual paths produced — CI globs no longer need to know the per-format conventions.
 
+**Interactive HTML report.** `generate_interactive_html_report(html_name, screenshot_dir=None, har_path=None, a11y_results=None)` (`WR_generate_interactive_html_report`) writes one self-contained `<html_name>.html`, with no external resources and no script; each section expands with `<details>`:
+
+- a timeline of every recorded step, failures open, with the screenshots from `screenshot_dir` placed where they were taken and embedded (the executor's failure screenshots are named by time, other images go by their modification time);
+- each failure's full error, plus a unified diff when an assertion compares two values (`a != b`, `expected X but got Y`);
+- a network waterfall from a HAR 1.2 file (`WR_pw_start_har_recording` / `WR_start_har_recording` write one), with method, status, duration and URL per request;
+- axe-core violation badges by impact and the violations themselves, from the result dict or its JSON file.
+
+Every recorded value is escaped.
+
 ## Observability
 
 ```python
@@ -772,7 +781,7 @@ python -m je_web_runner.mcp_server
 The default tool list (22 tools) exposes:
 
 Live browser execution:
-- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 535 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
+- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 536 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
 - `webrunner_run_action_files` — batch-run JSON files on disk
 - `webrunner_list_commands` — discover the full `WR_*` surface
 

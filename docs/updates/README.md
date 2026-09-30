@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-34 | 2026-10-01 | Interactive HTML report: timeline with screenshots, error diffs, waterfall, axe badges | #done #reports | [2026-10](2026-10.md) |
 | U-20261001-33 | 2026-10-01 | Impact index cache: parse only the action files that changed | #done #performance #impact-analysis | [2026-10](2026-10.md) |
 | U-20261001-32 | 2026-10-01 | WR_assert_web_vitals: one budget for LCP, CLS, INP and FCP | #done #performance | [2026-10](2026-10.md) |
 | U-20261001-31 | 2026-10-01 | webrunner / web_runner console scripts | #done #cli #packaging | [2026-10](2026-10.md) |
@@ -121,5 +122,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 33 |
+| [2026-10.md](2026-10.md) | 2026-10 | 34 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

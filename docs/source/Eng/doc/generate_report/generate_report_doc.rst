@@ -42,6 +42,29 @@ Each row shows: function name, parameters, timestamp, and exception (if any).
     # Save to file (creates test_results.html)
     generate_html_report("test_results")
 
+Interactive HTML Report
+-----------------------
+
+``generate_interactive_html_report(html_name, screenshot_dir=None,
+har_path=None, a11y_results=None)`` (``WR_generate_interactive_html_report``)
+writes one self-contained ``<html_name>.html`` with no external resources and
+no script; every section expands with ``<details>``:
+
+* a timeline of every recorded step, failures open, with the screenshots from
+  ``screenshot_dir`` embedded under the step they follow (failure screenshots
+  are named by time, other images go by their modification time);
+* each failure's full error, plus a unified diff when an assertion compares
+  two values (``a != b``, ``expected X but got Y``);
+* a network waterfall from a HAR 1.2 file;
+* axe-core violation badges by impact, from the result dict or its JSON file.
+
+.. code-block:: python
+
+    from je_web_runner import generate_interactive_html_report
+
+    generate_interactive_html_report("run", screenshot_dir="failures",
+                                     har_path="run.har", a11y_results="axe.json")
+
 JSON Report
 -----------
 

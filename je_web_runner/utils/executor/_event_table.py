@@ -14,6 +14,7 @@ from typing import Any, Callable
 from je_web_runner.manager.webrunner_manager import web_runner
 from je_web_runner.utils.generate_report.generate_html_report import generate_html
 from je_web_runner.utils.generate_report.generate_html_report import generate_html_report
+from je_web_runner.utils.generate_report.interactive_html_report import generate_interactive_html_report
 from je_web_runner.utils.generate_report.generate_json_report import generate_json
 from je_web_runner.utils.generate_report.generate_json_report import generate_json_report
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
@@ -284,6 +285,7 @@ COMMANDS: dict[str, Any] = {
         # generate report
         "WR_generate_html": generate_html,
         "WR_generate_html_report": generate_html_report,
+        "WR_generate_interactive_html_report": generate_interactive_html_report,
         "WR_generate_json": generate_json,
         "WR_generate_json_report": generate_json_report,
         "WR_generate_xml": generate_xml,

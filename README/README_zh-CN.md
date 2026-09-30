@@ -607,6 +607,15 @@ print(result["manifest_path"])  # → run_2026_04_26.manifest.json
 
 清单会捕获实际产出的路径 —— CI 的通配符不再需要知道每种格式的约定。
 
+**交互式 HTML 报告。** `generate_interactive_html_report(html_name, screenshot_dir=None, har_path=None, a11y_results=None)`（`WR_generate_interactive_html_report`）写出一个自包含的 `<html_name>.html`，没有外部资源也没有 script；每一段都以 `<details>` 展开：
+
+- 每个记录步骤的时间轴，失败的步骤默认展开，`screenshot_dir` 里的截图内嵌在拍摄时所在的步骤下（executor 的失败截图以时间命名，其他图片按修改时间）；
+- 每个失败的完整错误，断言比较两个值时（`a != b`、`expected X but got Y`）再附上 unified diff；
+- 由 HAR 1.2 文件（`WR_pw_start_har_recording` / `WR_start_har_recording` 会写出）画出的网络瀑布图，每个请求列出方法、状态码、耗时与 URL；
+- axe-core 违规按严重度的徽章与违规列表，来源可以是结果 dict 或它的 JSON 文件。
+
+所有记录的值都会转义。
+
 ## 可观测性
 
 ```python
@@ -768,7 +777,7 @@ python -m je_web_runner.mcp_server
 默认工具列表（22 个工具）暴露：
 
 实时浏览器执行：
-- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 535 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 536 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批量运行磁盘上的 JSON 文件
 - `webrunner_list_commands` —— 发现完整的 `WR_*` 接口面
 

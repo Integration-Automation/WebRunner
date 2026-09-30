@@ -163,6 +163,7 @@
             "WR_generate_allure_report",
             "WR_generate_html",
             "WR_generate_html_report",
+            "WR_generate_interactive_html_report",
             "WR_generate_json",
             "WR_generate_json_report",
             "WR_generate_junit_xml",

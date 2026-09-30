@@ -14,8 +14,6 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: X-
 
 - **#12** [DECIDE] Async execution engine (`AsyncExecutor` / `async_execute_action`): Provide an opt-in asyncio runner and asynchronous Playwright backend (`playwright.async_api`). Enables concurrent test execution via `asyncio.gather` for multi-tab, multi-user, and WebSocket streaming tests with lower resource overhead than thread/process pools.
 
-- **#15** Interactive HTML report enhancements: Upgrade `utils/generate_report/generate_html_report.py` to optionally generate a self-contained interactive report with step-by-step screenshot timeline, network request waterfall viewer, axe-core a11y violation badges, and expandable error trace diffs.
-
 - **#25** [DECIDE] Impact-based selection on the command line. `impact_analysis.build_index` now takes `cache_path` (the Python API), but the CLI (`utils/cli/cli_main.py`) never builds an impact index, so the `--cache-impact` flag #16 asked for would have nothing to cache. Decide whether `-d` should select by impact (for example `--affected-by locator:NAME` / `url:FRAGMENT` / `template:NAME` / `command:WR_x`, with `--impact-cache PATH`), and what feeds it in CI (names typed by hand, or derived from a git diff of locator/template files); then the flag goes on that option.
 
 - **#20** Two-way bridge with AutoControl (`je_auto_control`, AutoControlGUI repo; workspace X-27), what is left:

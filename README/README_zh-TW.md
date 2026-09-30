@@ -607,6 +607,15 @@ print(result["manifest_path"])  # → run_2026_04_26.manifest.json
 
 清單會擷取實際產出的路徑 —— CI 的萬用字元不再需要知道每種格式的慣例。
 
+**互動式 HTML 報告。** `generate_interactive_html_report(html_name, screenshot_dir=None, har_path=None, a11y_results=None)`（`WR_generate_interactive_html_report`）寫出一個自給自足的 `<html_name>.html`，沒有外部資源也沒有 script；每一段都以 `<details>` 展開：
+
+- 每個紀錄步驟的時間軸，失敗的步驟預設展開，`screenshot_dir` 裡的截圖內嵌在拍攝時所在的步驟下（executor 的失敗截圖以時間命名，其他圖片依修改時間）；
+- 每個失敗的完整錯誤，斷言比較兩個值時（`a != b`、`expected X but got Y`）再附上 unified diff；
+- 由 HAR 1.2 檔案（`WR_pw_start_har_recording` / `WR_start_har_recording` 會寫出）畫出的網路瀑布圖，每個請求列出方法、狀態碼、耗時與 URL；
+- axe-core 違規依嚴重度的徽章與違規清單，來源可以是結果 dict 或它的 JSON 檔。
+
+所有紀錄的值都會跳脫。
+
 ## 可觀測性
 
 ```python
@@ -768,7 +777,7 @@ python -m je_web_runner.mcp_server
 預設工具清單（22 個工具）公開：
 
 即時瀏覽器執行：
-- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 535 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 536 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批次執行磁碟上的 JSON 檔案
 - `webrunner_list_commands` —— 探索完整的 `WR_*` 介面面
 

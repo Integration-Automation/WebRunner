@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (535 commands).
+Auto-generated from the executor's event_dict (536 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -155,6 +155,7 @@ Auto-generated from the executor's event_dict (535 commands).
 | `WR_generate_allure_report` | `(output_dir: 'str' = 'allure-results') -> 'list[str]'` | 把 test cases 寫成 ``<uuid>-result.json`` |
 | `WR_generate_html` | `() -> str` | 產生完整 HTML 報告字串 |
 | `WR_generate_html_report` | `(html_name: str = 'default_name')` | 產生並輸出 HTML 報告檔案 |
+| `WR_generate_interactive_html_report` | `(html_name: 'str' = 'default_name', screenshot_dir: 'str | None' = None, har_path: 'str | None' = None, a11y_results: 'dict[str, Any] | str | None' = None) -> 'str'` | 產生並寫出互動式 HTML 報告 |
 | `WR_generate_json` | `()` | 產生測試結果的 JSON 結構 |
 | `WR_generate_json_report` | `(json_file_name: str = 'default_name')` | 產生並輸出 JSON 測試報告 |
 | `WR_generate_junit_xml` | `() -> str` | 產生 JUnit 格式 XML 字串 |
@@ -531,8 +532,8 @@ Auto-generated from the executor's event_dict (535 commands).
 | `WR_user_factory` | `(prefix: 'str' = 'user') -> 'Factory'` | Default user shape: id / name / email / password. |
 | `WR_validate_action_file` | `(json_file_path: 'str') -> 'bool'` | 讀取並驗證動作 JSON 檔案 |
 | `WR_validate_action_json` | `(data: 'list | dict') -> 'bool'` | 驗證動作 JSON 是否符合執行器格式 |
-| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000019EBB9FCA40>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
-| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000019EBB9FCA40>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
+| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000022CACA19620>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
+| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000022CACA19620>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
 | `WR_wait_for_download` | `(directory: 'str', timeout: 'float' = 60.0, suffix: 'str | None' = None, poll_seconds: 'float' = 0.5) -> 'str'` | 等待 ``directory`` 內出現新檔案（會跳過 ``.crdownload`` / ``.part``） |
 | `WR_wait_for_element` | `(selector: 'str', by: 'str' = 'css selector', timeout: 'float' = 10.0, state: 'str' = 'visible') -> 'Any'` | 等元素出現（``present`` / ``visible`` / ``clickable``）或消失（``hidden``） |
 | `WR_wait_for_ready_state` | `(timeout: 'float' = 30.0) -> 'bool'` | Wait until ``document.readyState`` is ``complete``. |
