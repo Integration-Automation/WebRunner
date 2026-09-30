@@ -44,6 +44,13 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
      - ``WR_pw_launch``、``WR_pw_quit``
      - Playwright 跑 Chromium、Firefox 或 WebKit，同一時間一個瀏覽器、一個
        context。
+   * - 附加、設定檔、遠端
+     - ``WR_attach_to_existing_browser``、``WR_chrome_options_with_extension``、
+       ``WR_start_remote_driver``
+     - ``WR_pw_connect_over_cdp``、``WR_pw_launch_persistent``
+       （``extension_paths``）、``WR_pw_connect``\ （Playwright browser server）
+     - 附加或 persistent 的 Playwright context 選項固定：會重建 context 的
+       設定在那裡會拋出例外。結束附加的瀏覽器只會中斷連線。
    * - 導覽
      - ``WR_to_url``、``WR_back``、``WR_forward``、``WR_refresh``
      - ``WR_pw_to_url``、``WR_pw_back``、``WR_pw_forward``、``WR_pw_refresh``
@@ -168,6 +175,13 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
        帶 ``context_options`` 的 ``WR_pw_launch``
      - Selenium 的只支援 Chromium。Playwright 維持一份合併後的 context
        選項，所以每個設定都不會蓋掉其他設定。
+   * - 下載、快取
+     - ``WR_set_download_directory`` + ``WR_wait_for_download``、
+       ``WR_set_cache_disabled``\ （CDP）
+     - ``WR_pw_download(selector, save_to)``\ （點擊並儲存一步完成）、
+       ``WR_pw_set_cache_disabled``
+     - Playwright 的快取開關各瀏覽器都能用：只要有 route 生效，HTTP 快取就會
+       關閉。
    * - 網路節流、原始 CDP
      - ``WR_throttle``、``WR_set_network_conditions``、
        ``WR_execute_cdp_cmd``、``WR_cdp``
@@ -198,8 +212,6 @@ Playwright 做不到：
 
 Playwright 還沒有（Playwright API 本身支援）：
 
-* ``WR_set_cache_disabled``、``WR_set_download_directory`` /
-  ``WR_wait_for_download``、``WR_attach_to_existing_browser``；
 * 同時開多個 driver（多次 ``WR_new_driver``、
   ``WR_change_index_of_webdriver``）；
 * callback（callback executor 沒有 ``WR_pw_*`` 命令）；

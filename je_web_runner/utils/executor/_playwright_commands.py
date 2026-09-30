@@ -69,6 +69,12 @@ PLAYWRIGHT_COMMANDS: dict[str, Any] = {
     "WR_pw_find_by": _pw.pw_find_by,
     "WR_pw_set_dialog_policy": _pw.pw_set_dialog_policy,
     "WR_pw_last_dialog": _pw.pw_last_dialog,
+    # connecting, persistent profile, downloads, cache
+    "WR_pw_connect": _pw.pw_connect,
+    "WR_pw_connect_over_cdp": _pw.pw_connect_over_cdp,
+    "WR_pw_launch_persistent": _pw.pw_launch_persistent,
+    "WR_pw_download": _pw.pw_download,
+    "WR_pw_set_cache_disabled": _pw.pw_set_cache_disabled,
     "WR_pw_element_submit": _pw_element.submit,
     "WR_pw_element_value_of_css_property": _pw_element.value_of_css_property,
     "WR_pw_element_assert": _pw_element.check_current_element,

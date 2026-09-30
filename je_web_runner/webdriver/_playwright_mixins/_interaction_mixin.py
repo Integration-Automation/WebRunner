@@ -1,6 +1,7 @@
 """頁面層級的元素操作、腳本、滑鼠鍵盤、frame / Page-level interaction."""
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -67,6 +68,22 @@ class _InteractionMixin:
         self.page.mouse.down()
         self.page.mouse.move(start_x + target_x, start_y + target_y, steps=5)
         self.page.mouse.up()
+
+    @recorded()
+    def download(self, selector: str, save_to: str) -> str:
+        """
+        點擊並儲存它觸發的下載
+        Click ``selector``, wait for the download it starts, and save it to ``save_to``:
+        that file, or inside that directory under the name the site suggested.
+        """
+        with self.page.expect_download() as download_info:
+            self._target.click(selector)
+        download = download_info.value
+        target = Path(save_to)
+        if target.is_dir():
+            target = target / download.suggested_filename
+        download.save_as(str(target))
+        return str(target)
 
     @recorded()
     def scroll(self, scroll_x: float, scroll_y: float) -> None:

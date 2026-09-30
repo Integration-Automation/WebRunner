@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (478 commands).
+Auto-generated from the executor's event_dict (483 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -249,10 +249,13 @@ Auto-generated from the executor's event_dict (478 commands).
 | `WR_pw_clock_run_for` | `(duration_ms: 'float') -> 'None'` |  |
 | `WR_pw_clock_set_time` | `(time_ms: 'float') -> 'None'` |  |
 | `WR_pw_close_page` | `(index: 'int | None' = None) -> 'None'` |  |
+| `WR_pw_connect` | `(ws_endpoint: 'str', browser: 'str' = 'chromium', context_options: 'dict | None' = None) -> 'None'` |  |
+| `WR_pw_connect_over_cdp` | `(endpoint_url: 'str') -> 'None'` |  |
 | `WR_pw_console_messages` | `() -> 'list[dict[str, Any]]'` |  |
 | `WR_pw_content` | `() -> 'str'` |  |
 | `WR_pw_dblclick` | `(selector: 'str', **options: 'Any') -> 'None'` |  |
 | `WR_pw_delete_cookie` | `(name: 'str') -> 'None'` |  |
+| `WR_pw_download` | `(selector: 'str', save_to: 'str') -> 'str'` |  |
 | `WR_pw_drag_and_drop` | `(source_selector: 'str', target_selector: 'str', **options: 'Any') -> 'None'` |  |
 | `WR_pw_drag_and_drop_offset` | `(selector: 'str', target_x: 'float', target_y: 'float') -> 'None'` |  |
 | `WR_pw_element_assert` | `(check_dict: 'dict') -> 'None'` | 斷言目前元素的欄位；不符時拋出例外 |
@@ -304,6 +307,7 @@ Auto-generated from the executor's event_dict (478 commands).
 | `WR_pw_keyboard_up` | `(key: 'str') -> 'None'` |  |
 | `WR_pw_last_dialog` | `() -> 'dict | None'` |  |
 | `WR_pw_launch` | `(browser: 'str' = 'chromium', headless: 'bool' = True, **options: 'Any') -> 'None'` |  |
+| `WR_pw_launch_persistent` | `(user_data_dir: 'str', browser: 'str' = 'chromium', headless: 'bool' = True, extension_paths: 'list[str] | None' = None, **context_options: 'Any') -> 'None'` |  |
 | `WR_pw_list_devices` | `() -> 'list[str]'` |  |
 | `WR_pw_local_storage_all` | `() -> 'dict'` |  |
 | `WR_pw_local_storage_clear` | `() -> 'None'` |  |
@@ -338,6 +342,7 @@ Auto-generated from the executor's event_dict (478 commands).
 | `WR_pw_session_storage_clear` | `() -> 'None'` |  |
 | `WR_pw_session_storage_get` | `(key: 'str') -> 'str | None'` |  |
 | `WR_pw_session_storage_set` | `(key: 'str', value: 'str') -> 'None'` |  |
+| `WR_pw_set_cache_disabled` | `(disabled: 'bool' = True) -> 'None'` |  |
 | `WR_pw_set_context_options` | `(**options: 'Any') -> 'None'` |  |
 | `WR_pw_set_default_navigation_timeout` | `(timeout_ms: 'float') -> 'None'` |  |
 | `WR_pw_set_default_timeout` | `(timeout_ms: 'float') -> 'None'` |  |

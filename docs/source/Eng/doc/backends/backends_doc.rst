@@ -45,6 +45,14 @@ Equivalent commands
      - ``WR_pw_launch``, ``WR_pw_quit``
      - Playwright runs Chromium, Firefox or WebKit, one browser and one
        context at a time.
+   * - Attach, profile, remote
+     - ``WR_attach_to_existing_browser``, ``WR_chrome_options_with_extension``,
+       ``WR_start_remote_driver``
+     - ``WR_pw_connect_over_cdp``, ``WR_pw_launch_persistent``
+       (``extension_paths``), ``WR_pw_connect`` (a Playwright browser server)
+     - An attached or persistent Playwright context keeps its options: the
+       settings that rebuild a context raise there. Quitting an attached
+       browser only disconnects.
    * - Navigate
      - ``WR_to_url``, ``WR_back``, ``WR_forward``, ``WR_refresh``
      - ``WR_pw_to_url``, ``WR_pw_back``, ``WR_pw_forward``, ``WR_pw_refresh``
@@ -176,6 +184,13 @@ Equivalent commands
        ``WR_pw_launch`` with ``context_options``
      - Selenium's are Chromium-only. Playwright keeps one merged set of
        context options, so each setting leaves the others in place.
+   * - Downloads, cache
+     - ``WR_set_download_directory`` + ``WR_wait_for_download``,
+       ``WR_set_cache_disabled`` (CDP)
+     - ``WR_pw_download(selector, save_to)`` (clicks and saves in one step),
+       ``WR_pw_set_cache_disabled``
+     - Playwright's cache switch works on every browser: any active route
+       turns the HTTP cache off.
    * - Throttling, raw CDP
      - ``WR_throttle``, ``WR_set_network_conditions``,
        ``WR_execute_cdp_cmd``, ``WR_cdp``
@@ -208,8 +223,6 @@ Not possible on Playwright:
 
 Not on Playwright yet (the Playwright API supports them):
 
-* ``WR_set_cache_disabled``, ``WR_set_download_directory`` /
-  ``WR_wait_for_download``, ``WR_attach_to_existing_browser``;
 * several drivers at once (``WR_new_driver`` more than once,
   ``WR_change_index_of_webdriver``);
 * callbacks (the callback executor has no ``WR_pw_*`` command);

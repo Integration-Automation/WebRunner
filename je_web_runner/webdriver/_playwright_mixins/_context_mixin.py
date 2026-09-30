@@ -25,6 +25,10 @@ def _abort(route: Any) -> None:
     route.abort()
 
 
+def _fallback(route: Any) -> None:
+    route.fallback()
+
+
 class _ContextMixin:
     """裝置模擬、地理位置、權限、時區、時鐘、語系、HAR 錄製。
 
@@ -40,6 +44,11 @@ class _ContextMixin:
 
     def _rebuild_context(self) -> None:
         """Close the context and open one with the current options, keeping cookies, storage and the URL."""
+        if self._fixed_context:
+            raise PlaywrightBackendError(
+                "this context was attached (connect_over_cdp) or is persistent, so its options are fixed; "
+                "pass them to launch_persistent, or launch a new browser"
+            )
         if self._browser is None:
             raise PlaywrightBackendError(BROWSER_NOT_LAUNCHED)
         state, url = None, None
@@ -94,6 +103,8 @@ class _ContextMixin:
             context.add_init_script(source)
         for pattern in self._blocked_urls:
             context.route(pattern, _abort)
+        if self._cache_route is not None:
+            context.route("**/*", self._cache_route)
 
     @recorded()
     def add_init_script(self, source: str) -> None:
@@ -123,6 +134,22 @@ class _ContextMixin:
         for regex in self._blocked_urls:
             self.context.unroute(regex)
         self._blocked_urls = []
+
+    @recorded()
+    def set_cache_disabled(self, disabled: bool = True) -> None:
+        """
+        停用（或恢復）HTTP 快取
+        Disable the HTTP cache (``True``) or restore it (``False``). Playwright turns the
+        cache off whenever a route is active, so this adds a route that passes every
+        request on (``fallback``, leaving URL blocks and mocks in effect); works on every
+        browser, unlike Selenium's CDP ``WR_set_cache_disabled``.
+        """
+        if disabled and self._cache_route is None:
+            self._cache_route = _fallback
+            self.context.route("**/*", _fallback)
+        elif not disabled and self._cache_route is not None:
+            self.context.unroute("**/*", self._cache_route)
+            self._cache_route = None
 
     @recorded()
     def clear_geolocation(self) -> None:

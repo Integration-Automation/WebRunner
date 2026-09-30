@@ -124,6 +124,37 @@ class TestRealBrowser(unittest.TestCase):
         self.assertTrue(zipfile.is_zipfile(trace))
         self.assertTrue(Path(state).is_file())
 
+    def test_download_and_cache_switch(self):
+        link = "<a id='dl' download='hello.txt' href='data:text/plain,hello'>get</a>"
+        saved = _run([
+            ["WR_pw_to_url", {"url": _data_url(link)}],
+            ["WR_pw_set_cache_disabled", {"disabled": True}],
+            ["WR_pw_download", {"selector": "#dl", "save_to": self.tmp.name}],
+            ["WR_pw_set_cache_disabled", {"disabled": False}],
+        ])[2]
+        self.assertEqual(Path(saved).name, "hello.txt")
+        self.assertEqual(Path(saved).read_text(encoding="utf-8"), "hello")
+
+
+class TestPersistentProfile(unittest.TestCase):
+
+    def test_launch_persistent_and_fixed_options(self):
+        from je_web_runner.webdriver.playwright_wrapper import PlaywrightBackendError, PlaywrightWrapper
+        wrapper = PlaywrightWrapper()
+        with tempfile.TemporaryDirectory() as profile:
+            try:
+                wrapper.launch_persistent(profile, headless=True, locale="fr-FR")
+            except PlaywrightBackendError:
+                raise
+            except Exception as error:  # the browser build is not installed here
+                raise unittest.SkipTest(f"Chromium for Playwright is not available: {error!r}")
+            try:
+                self.assertEqual(wrapper.evaluate("navigator.language"), "fr-FR")
+                with self.assertRaises(PlaywrightBackendError):
+                    wrapper.set_timezone("UTC")
+            finally:
+                wrapper.quit()
+
 
 if __name__ == "__main__":
     unittest.main()

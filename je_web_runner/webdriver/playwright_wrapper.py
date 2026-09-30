@@ -24,6 +24,7 @@ from je_web_runner.utils.test_object.test_object_record.test_object_record_class
     test_object_record,
 )
 from je_web_runner.webdriver._playwright_mixins import (
+    _ConnectMixin,
     _ContextMixin,
     _InteractionMixin,
     _PageMixin,
@@ -64,6 +65,7 @@ class PlaywrightWrapper(
     _StateMixin,
     _RecordingMixin,
     _ScopeMixin,
+    _ConnectMixin,
 ):
     """
     Playwright 同步 API 的完整 backend 包裝
@@ -73,6 +75,11 @@ class PlaywrightWrapper(
 
     def __init__(self, element_wrapper: PlaywrightElementWrapper | None = None) -> None:
         self._playwright = None
+        self._reset_state()
+        self.element_wrapper = element_wrapper or playwright_element_wrapper
+
+    def _reset_state(self) -> None:
+        """Forget the browser, context, pages and every setting (start, and after quit)."""
         self._browser = None
         self._context = None
         self._pages: list[Any] = []
@@ -81,17 +88,19 @@ class PlaywrightWrapper(
         # of them came from the current device descriptor.
         self._context_options: dict[str, Any] = {}
         self._emulation_keys: set[str] = set()
+        # True for an adopted context (connect_over_cdp, launch_persistent): no rebuilds.
+        self._fixed_context = False
         # Tracing options while a trace is being recorded (see _RecordingMixin), else None.
         self._trace_options: dict[str, Any] | None = None
-        # Init scripts and URL blocks, re-applied to every rebuilt context.
+        # Init scripts, URL blocks and the cache-off route, re-applied to every rebuilt context.
         self._init_scripts: list[str] = []
         self._blocked_urls: list[Any] = []
+        self._cache_route: Any = None
         # The selected iframe (None: the page) and the dialog policy (see _ScopeMixin).
         self._frame: Any = None
         self._dialog_policy: tuple[str, str | None] | None = None
         self._dialog_pages: list[Any] = []
         self._last_dialog: dict[str, Any] | None = None
-        self.element_wrapper = element_wrapper or playwright_element_wrapper
 
     # ----- lifecycle ---------------------------------------------------
 
@@ -131,6 +140,16 @@ class PlaywrightWrapper(
         arguments go to ``browser_type.launch``.
         """
         web_runner_logger.info(f"playwright launch: browser={browser}, headless={headless}")
+        self._browser = self._browser_type(browser).launch(headless=headless, **launch_options)
+        self._context_options = dict(context_options or {})
+        self._emulation_keys = set()
+        if record_har_path:
+            self._context_options.update({"record_har_path": record_har_path, "record_har_content": record_har_content})
+        self._context = self._open_context()
+        self._reset_pages(self._context.new_page())
+
+    def _browser_type(self, browser: str) -> Any:
+        """Start the Playwright runtime and return its ``chromium`` / ``firefox`` / ``webkit``."""
         if browser not in _SUPPORTED_BROWSERS:
             raise PlaywrightBackendError(
                 f"unsupported playwright browser: {browser!r}; "
@@ -138,14 +157,7 @@ class PlaywrightWrapper(
             )
         sync_playwright = _require_playwright()
         self._playwright = sync_playwright().start()
-        browser_type = getattr(self._playwright, browser)
-        self._browser = browser_type.launch(headless=headless, **launch_options)
-        self._context_options = dict(context_options or {})
-        self._emulation_keys = set()
-        if record_har_path:
-            self._context_options.update({"record_har_path": record_har_path, "record_har_content": record_har_content})
-        self._context = self._open_context()
-        self._reset_pages(self._context.new_page())
+        return getattr(self._playwright, browser)
 
     def _open_context(self, storage_state: Any = None):
         """Create a context with the merged options (plus ``storage_state`` carried from the last one)."""
@@ -159,25 +171,19 @@ class PlaywrightWrapper(
         return context
 
     def quit(self) -> None:
-        """Close everything and stop the Playwright runtime."""
+        """
+        關閉並停止 Playwright
+        Close the browser (for ``connect_over_cdp``: disconnect, leaving it running), or
+        the persistent context when there is no browser object, then stop the runtime.
+        """
         web_runner_logger.info("playwright quit")
         try:
             if self._browser is not None:
                 self._browser.close()
+            elif self._context is not None:
+                self._context.close()
         finally:
-            self._pages = []
-            self._page_index = -1
-            self._context = None
-            self._browser = None
-            self._context_options = {}
-            self._emulation_keys = set()
-            self._trace_options = None
-            self._init_scripts = []
-            self._blocked_urls = []
-            self._frame = None
-            self._dialog_policy = None
-            self._dialog_pages = []
-            self._last_dialog = None
+            self._reset_state()
             if self._playwright is not None:
                 self._playwright.stop()
             self._playwright = None
@@ -382,6 +388,28 @@ def pw_set_dialog_policy(action: str = "accept", prompt_text: str | None = None)
 
 def pw_last_dialog() -> dict | None:
     return playwright_wrapper_instance.last_dialog()
+
+
+def pw_connect(ws_endpoint: str, browser: str = "chromium", context_options: dict | None = None) -> None:
+    playwright_wrapper_instance.connect(ws_endpoint, browser=browser, context_options=context_options)
+
+
+def pw_connect_over_cdp(endpoint_url: str) -> None:
+    playwright_wrapper_instance.connect_over_cdp(endpoint_url)
+
+
+def pw_launch_persistent(user_data_dir: str, browser: str = "chromium", headless: bool = True,
+                         extension_paths: list[str] | None = None, **context_options: Any) -> None:
+    playwright_wrapper_instance.launch_persistent(
+        user_data_dir, browser=browser, headless=headless, extension_paths=extension_paths, **context_options)
+
+
+def pw_download(selector: str, save_to: str) -> str:
+    return playwright_wrapper_instance.download(selector, save_to)
+
+
+def pw_set_cache_disabled(disabled: bool = True) -> None:
+    playwright_wrapper_instance.set_cache_disabled(disabled)
 
 
 def pw_quit() -> None:
