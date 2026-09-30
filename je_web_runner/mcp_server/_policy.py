@@ -7,7 +7,9 @@ to one directory:
 
 * ``WR_add_package_to_executor`` / ``WR_add_package_to_callback_executor`` import
   any Python package and expose its functions, ``os`` and ``subprocess`` included;
-* ``WR_set_allow_arbitrary_script`` would re-open a script gate the operator closed.
+* ``WR_set_allow_arbitrary_script`` would re-open a script gate the operator closed;
+* ``WR_ac_run`` / ``WR_ac_run_actions`` drive the real mouse, keyboard and screen through
+  AutoControl, outside the browser.
 
 ``WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`` lifts the refusal. ``WEBRUNNER_MCP_ROOT``,
 when set, is the only directory ``webrunner_run_action_files`` and
@@ -24,6 +26,8 @@ UNSAFE_COMMANDS = frozenset({
     "WR_add_package_to_executor",
     "WR_add_package_to_callback_executor",
     "WR_set_allow_arbitrary_script",
+    "WR_ac_run",
+    "WR_ac_run_actions",
 })
 ALLOW_UNSAFE_ENV = "WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS"
 ROOT_ENV = "WEBRUNNER_MCP_ROOT"

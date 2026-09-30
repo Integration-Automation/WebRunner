@@ -52,6 +52,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - [Auth & APIs](#auth--apis)
 - [Recorder](#recorder)
 - [CI / Integrations](#ci--integrations)
+- [Desktop control (AutoControl)](#desktop-control-autocontrol)
 - [AI Assistance](#ai-assistance)
 - [CLI Usage](#cli-usage)
 - [Test Record](#test-record)
@@ -770,7 +771,7 @@ python -m je_web_runner.mcp_server
 The default tool list (22 tools) exposes:
 
 Live browser execution:
-- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 527 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
+- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 531 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
 - `webrunner_run_action_files` — batch-run JSON files on disk
 - `webrunner_list_commands` — discover the full `WR_*` surface
 
@@ -820,7 +821,7 @@ The server speaks both MCP eras, decided per request:
 - stdio is UTF-8 with `\n` line ends whatever the console code page. Anything else the process writes to stdout (`print`, child processes) goes to stderr, so only protocol messages reach the client.
 - A tool that fails returns a result with `isError: true` and the error text, so the client can correct its call. `webrunner_run_actions` and `webrunner_run_action_files` also set `isError` when an action failed, and list the failed record keys under `failed`.
 - An unknown tool or non-object `arguments` is a JSON-RPC `-32602` error. Notifications are never answered, and batch requests are rejected with `-32600`.
-- The run tools refuse `WR_add_package_to_executor`, `WR_add_package_to_callback_executor` and `WR_set_allow_arbitrary_script`, including inside nested action lists: a model must not load `os` or re-open a script gate the operator closed. `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` lifts this. When `WEBRUNNER_MCP_ROOT` is set, `webrunner_run_action_files` and `webrunner_compute_trend` only read files inside that directory.
+- The run tools refuse `WR_add_package_to_executor`, `WR_add_package_to_callback_executor`, `WR_set_allow_arbitrary_script`, `WR_ac_run` and `WR_ac_run_actions`, including inside nested action lists: a model must not load `os`, re-open a script gate the operator closed, or drive the desktop through AutoControl. `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` lifts this. When `WEBRUNNER_MCP_ROOT` is set, `webrunner_run_action_files` and `webrunner_compute_trend` only read files inside that directory.
 - Every tool has a `title` and `annotations`: the offline tools and `webrunner_list_commands` are `readOnlyHint: true`, the two run tools `destructiveHint: true` and `openWorldHint: true`. Input schemas describe each argument and reject unknown ones; arguments that do not match come back as an `isError` result naming the problem. A result that is a JSON object is also sent as `structuredContent`, and the two run tools declare an `outputSchema`.
 
 ## Action JSON LSP
@@ -1629,6 +1630,21 @@ For GitHub Actions inline annotations, run `emit_from_junit_xml("run_junit.xml")
 `docker/docker-compose.yml` ships a Selenium Grid 4 stack (hub + Chrome + Firefox nodes); `docker/.env.example` exposes the version pin and concurrency settings.
 
 The IDE config examples under [`docs/ide/`](docs/ide/) wire VS Code and JetBrains to the action JSON schema produced by `WR_export_action_schema`.
+
+## Desktop control (AutoControl)
+
+`pip install je_web_runner[autocontrol]` adds [AutoControl](https://github.com/Integration-Automation/AutoControlGUI) (`je_auto_control`), which drives the real mouse, keyboard and screen. The `WR_ac_*` commands reach it from an action file, and WebRunner imports it only when one of them runs.
+
+| Command | What it does |
+| --- | --- |
+| `WR_ac_available` | Whether `je_auto_control` is installed (looked up, not imported) |
+| `WR_ac_list_commands` | The `AC_*` commands the bridge will run |
+| `WR_ac_run` | Run one AutoControl action and return its value: `["WR_ac_run", [["AC_write", {"write_string": "hello"}]]]` |
+| `WR_ac_run_actions` | Run a list of AutoControl actions in order and return their values; the first failure stops it |
+
+A failed AutoControl action fails its `WR_ac_*` action with `AutoControlBridgeError`. The bridge refuses the AutoControl commands that reach beyond the desktop: shell commands and programs (`AC_shell_command`, `AC_execute_process`), package loading (`AC_add_package_*`), action lists and files (`AC_execute_action`, `AC_execute_files`), `AC_run_agent`, and calls back into WebRunner (`AC_web_*`). They are refused anywhere in the action, including loop bodies and bodies passed as JSON strings. The MCP server refuses `WR_ac_run` and `WR_ac_run_actions` unless `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`.
+
+The other direction, AutoControl's `AC_web_*` commands running `WR_*` commands, is part of AutoControl.
 
 ## AI Assistance
 

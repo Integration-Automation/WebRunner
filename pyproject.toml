@@ -53,6 +53,11 @@ classifiers = [
     "Topic :: Software Development :: Quality Assurance",
 ]
 
+# Optional: the WR_ac_* commands drive the desktop through AutoControl, which is imported
+# only when one of them runs.
+[project.optional-dependencies]
+autocontrol = ["je_auto_control>=0.0.224"]
+
 [project.urls]
 Homepage = "https://github.com/Integration-Automation/WebRunner"
 Documentation = "https://webrunner.readthedocs.io/en/latest/"

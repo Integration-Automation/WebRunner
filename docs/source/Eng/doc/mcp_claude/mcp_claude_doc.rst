@@ -171,7 +171,7 @@ Tool catalog
 
 The server registers 22 tools out of the box. Use
 ``webrunner_list_commands`` for the *full* runtime command list (every
-``WR_*`` registered in the action executor, 527 of them).
+``WR_*`` registered in the action executor, 531 of them).
 
 Authoring & lint
 ----------------
@@ -307,7 +307,9 @@ lists (``WR_execute_action``, ``WR_execute_files``):
   which import any Python package and expose its functions (``os``,
   ``subprocess`` …);
 * ``WR_set_allow_arbitrary_script``, which would re-open a script gate the
-  operator closed.
+  operator closed;
+* ``WR_ac_run`` and ``WR_ac_run_actions``, which drive the real mouse,
+  keyboard and screen through AutoControl.
 
 A refused command is reported like any failed action: the result has
 ``isError: true`` and the command under ``failed``.

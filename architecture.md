@@ -37,7 +37,7 @@ wired into the executor as `WR_*` commands, others are reachable only from Pytho
 | --- | --- |
 | Core engine and action I/O | `executor`, `callback`, `package_manager`, `json`, `test_object`, `test_record`, `exception`, `logging`, `file_process`, `xml` |
 | Run orchestration and CI | `cli`, `socket_server`, `watch_mode`, `scheduler`, `sharding`, `test_filter`, `run_ledger`, `pipeline`, `k8s_runner`, `fanout`, `multi_user`, `ab_run` |
-| Browser and driver control | `cdp`, `cdp_tap`, `bidi`, `bidi_backend`, `driver_dispatch`, `chrome_profile`, `browser_pool`, `process_supervisor`, `driver_pin`, `cloud_grid`, `device_cloud`, `appium_integration`, `dom_traversal`, `storage`, `network_emulation`, `smart_wait` |
+| Browser and driver control | `cdp`, `cdp_tap`, `bidi`, `bidi_backend`, `driver_dispatch`, `chrome_profile`, `browser_pool`, `process_supervisor`, `driver_pin`, `cloud_grid`, `device_cloud`, `appium_integration`, `dom_traversal`, `storage`, `network_emulation`, `smart_wait`, `autocontrol_bridge` (desktop control through AutoControl) |
 | Authoring and code generation | `recorder`, `action_formatter`, `action_templates`, `md_authoring`, `linter`, `schema`, `docs`, `pom_generator`, `sel_to_pw`, `session_to_test`, `openapi_to_e2e`, `project` |
 | Reporting and observability | `generate_report`, `observability`, `otel_bridge`, `trace_recorder`, `failure_bundle`, `replay_studio`, `dashboard`, `live_dashboard`, `notifier`, `ci_annotations`, `test_management` |
 | Reliability, flakes and test governance | `adaptive_retry`, `self_healing`, `flake_detector`, `flakiness_graveyard`, `repro_minimizer`, `failure_triage`, `failure_cluster`, `locator_health`, `mutation_testing`, `impact_analysis`, `coverage_map`, `pr_risk_score`, `test_owners_map` |
@@ -125,6 +125,16 @@ python -m je_web_runner -d DIR [--tag/--exclude-tag] [--rerun-failed LEDGER] [--
 | AutoControlGUI | Optional `utils/webrunner_bridge/bridge.py` (not a declared dependency; found with `importlib.util.find_spec`, imported lazily). | `je_web_runner.utils.executor.action_executor`: `execute_one` (one action through the gates, raising `WebRunnerExecuteException`), falling back to `executor.event_dict` on releases without it; `executor.event_dict` `WR_*` keys for listing; the commands `WR_get_webdriver_manager`, `WR_to_url`, `WR_quit`, `WR_save_screenshot`, `WR_get_current_url` (guarded by `test/unit_test/test_public_api.py`); `je_web_runner.utils.exception.exceptions.WebRunnerException` as the failure it wraps. |
 | TestPioneer | Declared dependency; `from je_web_runner import execute_action` in-process. | `execute_action`. |
 | PyBreeze | Subprocess `python -m je_web_runner --execute_str <json>` / `--execute_file <path>`, reading stdout. | Legacy CLI flags, Windows double-encoded `--execute_str`, results printed to stdout; guarded by `test/unit_test/test_legacy_cli_contract.py`. |
+
+**Outbound (optional):** `utils/autocontrol_bridge/` (`WR_ac_*`) runs AutoControlGUI's `je_auto_control`, an optional
+extra (`je_web_runner[autocontrol]`) that is never imported at import time: importing `je_auto_control` makes the
+process DPI-aware on Windows and takes about a second, and Jeffrey_RPA imports this tree. `ac_available` uses
+`importlib.util.find_spec`. It relies on `je_auto_control.utils.executor.action_executor.executor` with
+`execute_action(actions, raise_on_error=True)` (a record dict, one unique key per action, in order) and
+`known_commands()`. It refuses `AC_shell_command`,
+`AC_execute_process`, `AC_add_package_*`, `AC_execute_action`, `AC_execute_files`, `AC_run_agent` and `AC_web_*`
+anywhere in an action. `test/integration_test/test_autocontrol_bridge_real.py` checks these against the installed
+package and skips without it.
 
 **Public promise (README):** the top-level `webdriver_wrapper_instance`, `execute_action`, `TestObject` and the
 original CLI entry points (`-e`, `-d`, `--execute_str`) stay unchanged; README › Advanced WebDriverWrapper also keeps

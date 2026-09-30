@@ -25,6 +25,30 @@ CI / integrations
   ``docs/ide/jetbrains-jsonschemamapping.example.xml`` wire the action JSON
   schema into VS Code / JetBrains.
 
+Desktop control (AutoControl)
+=============================
+
+``pip install je_web_runner[autocontrol]`` adds AutoControl
+(``je_auto_control``), which drives the real mouse, keyboard and screen.
+WebRunner imports it only when one of these commands runs:
+
+* ``WR_ac_available``: whether ``je_auto_control`` is installed (looked up,
+  not imported);
+* ``WR_ac_list_commands``: the ``AC_*`` commands the bridge will run;
+* ``WR_ac_run``: run one AutoControl action and return its value, for
+  example ``["WR_ac_run", [["AC_write", {"write_string": "hello"}]]]``;
+* ``WR_ac_run_actions``: run a list of AutoControl actions in order and
+  return their values; the first failure stops it.
+
+A failed AutoControl action fails its ``WR_ac_*`` action with
+``AutoControlBridgeError``. The bridge refuses shell commands and programs
+(``AC_shell_command``, ``AC_execute_process``), package loading
+(``AC_add_package_*``), action lists and files (``AC_execute_action``,
+``AC_execute_files``), ``AC_run_agent`` and calls back into WebRunner
+(``AC_web_*``), anywhere in the action, including loop bodies and bodies
+passed as JSON strings. The MCP server refuses ``WR_ac_run`` and
+``WR_ac_run_actions`` unless ``WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1``.
+
 AI assistance
 =============
 

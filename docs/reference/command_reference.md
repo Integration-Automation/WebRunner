@@ -1,12 +1,16 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (527 commands).
+Auto-generated from the executor's event_dict (531 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
 | `WR_a11y_load_axe` | `(path: 'str') -> 'str'` | 讀取本地 axe-core JS 原始碼檔案 / Read a local axe-core source file. |
 | `WR_a11y_run_audit` | `(axe_source: 'str', options: 'dict[str, Any] | None' = None) -> 'dict[str, Any]'` | 在當前 Selenium 頁面執行 axe.run，回傳結果 dict |
 | `WR_a11y_summarise` | `(results: 'dict[str, Any]') -> 'list[dict[str, Any]]'` | 將 axe 結果壓縮成只含 ``id`` / ``impact`` / ``help`` / ``nodes`` 數量的清單 |
+| `WR_ac_available` | `() -> 'bool'` | AutoControl 是否已安裝（不 import） |
+| `WR_ac_list_commands` | `() -> 'list[str]'` | 列出可經橋接執行的 AutoControl 命令 |
+| `WR_ac_run` | `(action: 'list') -> 'Any'` | 執行一個 AutoControl 動作並回傳結果 |
+| `WR_ac_run_actions` | `(actions: 'list') -> 'list[Any]'` | 依序執行 AutoControl 動作並回傳各自的結果；第一個失敗就拋出 |
 | `WR_add_cookie` | `(cookie_dict: 'dict') -> 'None'` | 新增 cookie 到當前頁面 |
 | `WR_add_package_to_callback_executor` | `(package)` | 將套件的成員加入到 callback_executor 的 event_dict |
 | `WR_add_package_to_executor` | `(package)` | 將套件的成員加入到 executor 的 event_dict |
@@ -523,8 +527,8 @@ Auto-generated from the executor's event_dict (527 commands).
 | `WR_user_factory` | `(prefix: 'str' = 'user') -> 'Factory'` | Default user shape: id / name / email / password. |
 | `WR_validate_action_file` | `(json_file_path: 'str') -> 'bool'` | 讀取並驗證動作 JSON 檔案 |
 | `WR_validate_action_json` | `(data: 'list | dict') -> 'bool'` | 驗證動作 JSON 是否符合執行器格式 |
-| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002734E7727A0>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
-| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002734E7727A0>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
+| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002D27CD92E80>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
+| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002D27CD92E80>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
 | `WR_wait_for_download` | `(directory: 'str', timeout: 'float' = 60.0, suffix: 'str | None' = None, poll_seconds: 'float' = 0.5) -> 'str'` | 等待 ``directory`` 內出現新檔案（會跳過 ``.crdownload`` / ``.part``） |
 | `WR_wait_for_element` | `(selector: 'str', by: 'str' = 'css selector', timeout: 'float' = 10.0, state: 'str' = 'visible') -> 'Any'` | 等元素出現（``present`` / ``visible`` / ``clickable``）或消失（``hidden``） |
 | `WR_wait_for_ready_state` | `(timeout: 'float' = 30.0) -> 'bool'` | Wait until ``document.readyState`` is ``complete``. |

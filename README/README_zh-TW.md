@@ -52,6 +52,7 @@ WebRunner（`je_web_runner`）最初只是一個 Selenium 封裝，如今已成�
 - [認證與 API](#認證與-api)
 - [錄製器](#錄製器)
 - [CI / 整合](#ci--整合)
+- [桌面控制（AutoControl）](#桌面控制autocontrol)
 - [AI 輔助](#ai-輔助)
 - [CLI 用法](#cli-用法)
 - [測試記錄](#測試記錄)
@@ -766,7 +767,7 @@ python -m je_web_runner.mcp_server
 預設工具清單（22 個工具）公開：
 
 即時瀏覽器執行：
-- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 527 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 531 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批次執行磁碟上的 JSON 檔案
 - `webrunner_list_commands` —— 探索完整的 `WR_*` 介面面
 
@@ -816,7 +817,7 @@ serve_stdio(server=server)
 - stdio 一律是 UTF-8、行尾 `\n`，與主控台字碼頁無關。行程寫到 stdout 的其他內容（`print`、子行程）都改走 stderr，所以客戶端只會收到協定訊息。
 - 工具執行失敗時回傳 `isError: true` 與錯誤訊息，讓客戶端能修正呼叫。`webrunner_run_actions` 與 `webrunner_run_action_files` 在有動作失敗時也會設 `isError`，並把失敗的紀錄鍵列在 `failed`。
 - 未知的工具或不是物件的 `arguments` 回 JSON-RPC `-32602` 錯誤。通知（notification）一律不回應，批次請求以 `-32600` 拒絕。
-- 執行工具會拒絕 `WR_add_package_to_executor`、`WR_add_package_to_callback_executor` 與 `WR_set_allow_arbitrary_script`，巢狀的動作清單也一樣：模型不應能載入 `os`，也不應能重新打開操作者關掉的腳本閘門。設 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` 可解除。設了 `WEBRUNNER_MCP_ROOT` 時，`webrunner_run_action_files` 與 `webrunner_compute_trend` 只讀取該目錄內的檔案。
+- 執行工具會拒絕 `WR_add_package_to_executor`、`WR_add_package_to_callback_executor`、`WR_set_allow_arbitrary_script`、`WR_ac_run` 與 `WR_ac_run_actions`，巢狀的動作清單也一樣：模型不應能載入 `os`、重新打開操作者關掉的腳本閘門，或透過 AutoControl 操作桌面。設 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` 可解除。設了 `WEBRUNNER_MCP_ROOT` 時，`webrunner_run_action_files` 與 `webrunner_compute_trend` 只讀取該目錄內的檔案。
 - 每個工具都有 `title` 與 `annotations`：離線工具與 `webrunner_list_commands` 是 `readOnlyHint: true`，兩個執行工具是 `destructiveHint: true`、`openWorldHint: true`。輸入 schema 說明每個參數並拒絕未知參數；參數不符時回傳 `isError` 結果並指出問題。結果是 JSON 物件時也會以 `structuredContent` 送出，兩個執行工具另外宣告 `outputSchema`。
 
 ## 動作 JSON LSP
@@ -1618,6 +1619,21 @@ from je_web_runner.utils.ci_annotations.github_annotations import (
 `docker/docker-compose.yml` 提供一個 Selenium Grid 4 堆疊（hub + Chrome + Firefox 節點）；`docker/.env.example` 公開版本固定和並行設定。
 
 [`docs/ide/`](../docs/ide/) 下的 IDE 設定範例將 VS Code 和 JetBrains 接線到由 `WR_export_action_schema` 產出的動作 JSON schema。
+
+## 桌面控制（AutoControl）
+
+`pip install je_web_runner[autocontrol]` 會加裝 [AutoControl](https://github.com/Integration-Automation/AutoControlGUI)（`je_auto_control`），它操作真正的滑鼠、鍵盤與螢幕。action 檔透過 `WR_ac_*` 命令使用它，WebRunner 只在其中一個命令執行時才 import 它。
+
+| 命令 | 作用 |
+| --- | --- |
+| `WR_ac_available` | `je_auto_control` 是否已安裝（只查找，不 import） |
+| `WR_ac_list_commands` | 橋接會執行的 `AC_*` 命令 |
+| `WR_ac_run` | 執行一個 AutoControl 動作並回傳它的值：`["WR_ac_run", [["AC_write", {"write_string": "hello"}]]]` |
+| `WR_ac_run_actions` | 依序執行一串 AutoControl 動作並回傳各自的值；第一個失敗就停止 |
+
+AutoControl 動作失敗時，它所在的 `WR_ac_*` 動作以 `AutoControlBridgeError` 失敗。橋接會拒絕超出桌面範圍的 AutoControl 命令：shell 命令與程式（`AC_shell_command`、`AC_execute_process`）、載入套件（`AC_add_package_*`）、動作清單與檔案（`AC_execute_action`、`AC_execute_files`）、`AC_run_agent`，以及回頭呼叫 WebRunner 的 `AC_web_*`。這些名稱出現在動作的任何位置都會被拒絕，包括迴圈本體與以 JSON 字串傳入的本體。除非設 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`，MCP server 會拒絕 `WR_ac_run` 與 `WR_ac_run_actions`。
+
+另一個方向，也就是 AutoControl 的 `AC_web_*` 命令執行 `WR_*` 命令，屬於 AutoControl。
 
 ## AI 輔助
 

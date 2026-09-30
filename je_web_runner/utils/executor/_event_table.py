@@ -113,6 +113,7 @@ from je_web_runner.utils.self_healing.healing_locator import (
     register_fallbacks as _heal_register_fallbacks,
 )
 from je_web_runner.utils.bidi.selenium_events import selenium_bidi_events as _bidi_events
+from je_web_runner.utils import autocontrol_bridge as _autocontrol
 from je_web_runner.utils.executor._playwright_commands import PLAYWRIGHT_COMMANDS
 from je_web_runner.utils.json.json_validator import validate_action_file, validate_action_json
 from je_web_runner.utils.package_manager.package_manager_class import package_manager
@@ -681,6 +682,12 @@ COMMANDS: dict[str, Any] = {
         "WR_route_mock_json": _bidi_events.route_mock_json,
         "WR_route_unmock": _bidi_events.route_unmock,
         "WR_route_clear": _bidi_events.route_clear,
+
+        # ----- AutoControl bridge (optional je_auto_control, imported only when a command runs) -----
+        "WR_ac_available": _autocontrol.ac_available,
+        "WR_ac_list_commands": _autocontrol.ac_list_commands,
+        "WR_ac_run": _autocontrol.ac_run,
+        "WR_ac_run_actions": _autocontrol.ac_run_actions,
 }
 
 

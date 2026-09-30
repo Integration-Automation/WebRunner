@@ -155,7 +155,7 @@ Claude Code(終端機客戶端)以專案為單位,從 repo 根目錄的
 ========
 
 server 預設註冊 22 個工具。完整 runtime 指令清單(executor 中所有
-``WR_*``,共 527 個)請呼叫 ``webrunner_list_commands``。
+``WR_*``,共 531 個)請呼叫 ``webrunner_list_commands``。
 
 撰寫與 lint
 -----------
@@ -274,7 +274,9 @@ MCP 客戶端是依讀到的文字行動的模型,所以執行工具會拒絕能
 
 * ``WR_add_package_to_executor`` 與 ``WR_add_package_to_callback_executor``:
   會匯入任何 Python 套件並開放其函式(``os``、``subprocess`` …);
-* ``WR_set_allow_arbitrary_script``:會重新打開操作者關掉的腳本閘門。
+* ``WR_set_allow_arbitrary_script``:會重新打開操作者關掉的腳本閘門;
+* ``WR_ac_run`` 與 ``WR_ac_run_actions``:透過 AutoControl 操作真正的滑鼠、
+  鍵盤與螢幕。
 
 被拒絕的命令和其他失敗的動作一樣回報:結果的 ``isError`` 為 true,命令列在
 ``failed``。

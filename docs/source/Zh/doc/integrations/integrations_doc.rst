@@ -17,6 +17,29 @@ CI 與整合
 * Selenium Grid 4 docker-compose
 * VS Code / JetBrains JSON Schema 設定範例
 
+桌面控制（AutoControl）
+==============================
+
+``pip install je_web_runner[autocontrol]`` 會加裝 AutoControl
+（``je_auto_control``），它操作真正的滑鼠、鍵盤與螢幕。WebRunner 只在下列
+命令執行時才 import 它：
+
+* ``WR_ac_available``：``je_auto_control`` 是否已安裝（只查找，不 import）；
+* ``WR_ac_list_commands``：橋接會執行的 ``AC_*`` 命令；
+* ``WR_ac_run``：執行一個 AutoControl 動作並回傳它的值，例如
+  ``["WR_ac_run", [["AC_write", {"write_string": "hello"}]]]``；
+* ``WR_ac_run_actions``：依序執行一串 AutoControl 動作並回傳各自的值；
+  第一個失敗就停止。
+
+AutoControl 動作失敗時，它所在的 ``WR_ac_*`` 動作以 ``AutoControlBridgeError``
+失敗。橋接會拒絕 shell 命令與程式（``AC_shell_command``、
+``AC_execute_process``）、載入套件（``AC_add_package_*``）、動作清單與檔案
+（``AC_execute_action``、``AC_execute_files``）、``AC_run_agent``，以及回頭
+呼叫 WebRunner 的 ``AC_web_*``；這些名稱出現在動作的任何位置都會被拒絕，
+包括迴圈本體與以 JSON 字串傳入的本體。除非設
+``WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1``，MCP server 會拒絕 ``WR_ac_run``
+與 ``WR_ac_run_actions``。
+
 AI 輔助
 =======
 
