@@ -44,6 +44,7 @@ from je_web_runner.utils.ab_run import ab_runner as _ab
 from je_web_runner.utils.cloud_grid import cloud_drivers as _cloud
 from je_web_runner.utils.ci_annotations import github_annotations as _gh_annotations
 from je_web_runner.utils.lighthouse import lighthouse_runner as _lighthouse
+from je_web_runner.utils.web_vitals import vitals as _web_vitals
 from je_web_runner.utils.load_test import locust_wrapper as _locust
 from je_web_runner.utils.test_management import jira_client as _jira
 from je_web_runner.utils.test_management import testrail_client as _testrail
@@ -586,6 +587,7 @@ COMMANDS: dict[str, Any] = {
         # Lighthouse
         "WR_lighthouse_run": _lighthouse.run_lighthouse,
         "WR_lighthouse_assert_scores": _lighthouse.assert_scores,
+        "WR_assert_web_vitals": _web_vitals.assert_web_vitals,
 
         # Locust load testing
         "WR_locust_run": _locust.run_locust,

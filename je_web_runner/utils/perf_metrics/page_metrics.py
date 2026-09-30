@@ -1,6 +1,8 @@
 """
 頁面效能指標擷取：FCP / LCP / CLS / TTFB / DOMContentLoaded / load。
-Page performance metrics: FCP / LCP / CLS / TTFB / domContentLoaded / load.
+Page performance metrics: FCP / LCP / CLS / TTFB / domContentLoaded / load, plus what
+explains them: the LCP element (``lcp_element``, ``lcp_url``) and the elements whose shifts
+added the most to CLS (``cls_sources``, at most three ``{node, value}``).
 
 採用 PerformanceObserver；LCP / CLS 需要等一小段時間累積，因此呼叫者可指定
 等待秒數。
@@ -24,6 +26,13 @@ class PerfMetricsError(WebRunnerException):
 _COLLECT_JS_TEMPLATE = r"""
 (function(observeMs, done) {
   var out = {};
+  function describe(node) {
+    if (!node || !node.nodeName) return null;
+    var name = node.nodeName.toLowerCase();
+    if (node.id) return name + '#' + node.id;
+    if (node.classList && node.classList.length) return name + '.' + node.classList[0];
+    return name;
+  }
   try {
     var nav = performance.getEntriesByType('navigation')[0];
     if (nav) {
@@ -39,11 +48,18 @@ _COLLECT_JS_TEMPLATE = r"""
 
   var lcp = 0;
   var cls = 0;
+  var lcpElement = null;
+  var lcpUrl = null;
+  var shifts = [];
   var lcpObs, clsObs;
   try {
     lcpObs = new PerformanceObserver(function(list) {
       var entries = list.getEntries();
-      if (entries.length) lcp = entries[entries.length - 1].startTime;
+      if (!entries.length) return;
+      var last = entries[entries.length - 1];
+      lcp = last.startTime;
+      lcpElement = describe(last.element);
+      lcpUrl = last.url || null;
     });
     lcpObs.observe({type: 'largest-contentful-paint', buffered: true});
   } catch (e) {}
@@ -51,7 +67,12 @@ _COLLECT_JS_TEMPLATE = r"""
     clsObs = new PerformanceObserver(function(list) {
       var entries = list.getEntries();
       for (var i = 0; i < entries.length; i++) {
-        if (!entries[i].hadRecentInput) cls += entries[i].value;
+        if (entries[i].hadRecentInput) continue;
+        cls += entries[i].value;
+        var sources = entries[i].sources || [];
+        for (var j = 0; j < sources.length; j++) {
+          shifts.push({node: describe(sources[j].node), value: entries[i].value});
+        }
       }
     });
     clsObs.observe({type: 'layout-shift', buffered: true});
@@ -60,6 +81,10 @@ _COLLECT_JS_TEMPLATE = r"""
   setTimeout(function() {
     out.lcp = lcp;
     out.cls = cls;
+    out.lcp_element = lcpElement;
+    out.lcp_url = lcpUrl;
+    shifts.sort(function(a, b) { return b.value - a.value; });
+    out.cls_sources = shifts.slice(0, 3);
     try { if (lcpObs) lcpObs.disconnect(); } catch (e) {}
     try { if (clsObs) clsObs.disconnect(); } catch (e) {}
     done(out);

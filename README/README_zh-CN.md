@@ -689,7 +689,8 @@ python -m je_web_runner --execute_dir ./actions --shard 4/4
 - **安全响应头审计** —— `WR_audit_security_headers_url` 检查 HSTS / CSP / X-Frame-Options / X-Content-Type-Options / Referrer-Policy / Permissions-Policy。
 - **无障碍审计** —— `WR_a11y_run_audit` 注入用户提供的 axe-core（`load_axe_source`）并针对活动会话运行；Playwright 变体为 `WR_pw_a11y_run_audit`。
 - **Lighthouse** —— `WR_lighthouse_run` 外壳调用官方的 `lighthouse` Node CLI；`WR_lighthouse_assert_scores` 强制执行预算。
-- **页面性能指标** —— `WR_perf_collect` / `WR_pw_perf_collect` 通过 `PerformanceObserver` 快照 FCP / LCP / CLS / TTFB / domContentLoaded / load；`WR_perf_assert_within` 检查阈值。
+- **页面性能指标** —— `WR_perf_collect` / `WR_pw_perf_collect` 通过 `PerformanceObserver` 快照 FCP / LCP / CLS / TTFB / domContentLoaded / load，并附上 LCP 元素（`lcp_element`、`lcp_url`）与位移最大的元素（`cls_sources`）；`WR_perf_assert_within` 检查阈值。
+- **Core Web Vitals 预算** —— `WR_assert_web_vitals(budgets=None, observe_ms=1000, source="page", url=None, json_path=None, html_path=None)` 一步断言 LCP、CLS、INP 与 FCP。`source="page"` 量执行中后端的当前页面（Selenium，否则 Playwright），INP 取自 event-timing 记录（调用前 104 ms 以上的交互也算；没有交互时 INP 不量）。`source="lighthouse"` 对 `url` 跑 Lighthouse 并读它的实验室审计，以 Total Blocking Time（`tbt`）取代 INP。预算默认为 Google 的「good」上限（LCP 2500 ms、CLS 0.1、INP 200 ms、FCP 1800 ms），每项指标评为 good / needs-improvement / poor。超出预算时动作失败，信息写出指标、评级与诊断（LCP 元素、位移的元素、最慢的交互）；`json_path` / `html_path` 不论成败都写出明细。
 - **视觉回归** —— `WR_visual_capture_baseline` + `WR_visual_compare`（Pillow 软依赖）。
 - **快照测试** —— `WR_match_snapshot` / `WR_update_snapshot`（文本/DOM，不匹配时输出统一差异）。
 - **网络限速** —— `WR_throttle("slow_3g")` / `WR_pw_throttle("offline")`；预设涵盖 Slow 3G、Fast 3G、Regular 4G、Wi-Fi、Offline、no-throttling。
@@ -767,7 +768,7 @@ python -m je_web_runner.mcp_server
 默认工具列表（22 个工具）暴露：
 
 实时浏览器执行：
-- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 534 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 535 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批量运行磁盘上的 JSON 文件
 - `webrunner_list_commands` —— 发现完整的 `WR_*` 接口面
 

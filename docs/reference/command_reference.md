@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (534 commands).
+Auto-generated from the executor's event_dict (535 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -29,6 +29,7 @@ Auto-generated from the executor's event_dict (534 commands).
 | `WR_assert_no_5xx` | `() -> 'None'` |  |
 | `WR_assert_no_console_errors` | `() -> 'None'` |  |
 | `WR_assert_no_secrets` | `(data: 'Any') -> 'None'` | 掃描並在有發現時拋例外 / Scan and raise ``SecretsFound`` on any hit. |
+| `WR_assert_web_vitals` | `(budgets: 'dict[str, float] | None' = None, observe_ms: 'int' = 1000, source: 'str' = 'page', url: 'str | None' = None, json_path: 'str | None' = None, html_path: 'str | None' = None, lighthouse_path: 'str' = 'lighthouse') -> 'dict[str, Any]'` | 斷言 LCP / CLS / INP / FCP 都在預算內 |
 | `WR_attach_to_existing_browser` | `(debugger_address: 'str', webdriver_name: 'str' = 'chrome', options: 'list[str] | None' = None, experimental_options: 'dict | None' = None, **kwargs)` | 附加到一個已啟動且開啟 remote debugging 埠的 Chrome / Edge 實例。 |
 | `WR_audit_security_headers` | `(headers: 'dict[str, str]', required: 'list[dict[str, Any]] | None' = None) -> 'list[dict[str, Any]]'` | 對 headers dict 套用規則表，回傳所有違反項目 |
 | `WR_audit_security_headers_url` | `(url: 'str', timeout: 'int' = 30, required: 'list[dict[str, Any]] | None' = None) -> 'list[dict[str, Any]]'` | GET ``url`` 並稽核回應 headers |
@@ -530,8 +531,8 @@ Auto-generated from the executor's event_dict (534 commands).
 | `WR_user_factory` | `(prefix: 'str' = 'user') -> 'Factory'` | Default user shape: id / name / email / password. |
 | `WR_validate_action_file` | `(json_file_path: 'str') -> 'bool'` | 讀取並驗證動作 JSON 檔案 |
 | `WR_validate_action_json` | `(data: 'list | dict') -> 'bool'` | 驗證動作 JSON 是否符合執行器格式 |
-| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000001B05BA23560>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
-| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000001B05BA23560>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
+| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000019EBB9FCA40>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
+| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000019EBB9FCA40>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
 | `WR_wait_for_download` | `(directory: 'str', timeout: 'float' = 60.0, suffix: 'str | None' = None, poll_seconds: 'float' = 0.5) -> 'str'` | 等待 ``directory`` 內出現新檔案（會跳過 ``.crdownload`` / ``.part``） |
 | `WR_wait_for_element` | `(selector: 'str', by: 'str' = 'css selector', timeout: 'float' = 10.0, state: 'str' = 'visible') -> 'Any'` | 等元素出現（``present`` / ``visible`` / ``clickable``）或消失（``hidden``） |
 | `WR_wait_for_ready_state` | `(timeout: 'float' = 30.0) -> 'bool'` | Wait until ``document.readyState`` is ``complete``. |

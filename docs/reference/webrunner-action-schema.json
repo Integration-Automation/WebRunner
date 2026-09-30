@@ -38,6 +38,7 @@
             "WR_assert_no_5xx",
             "WR_assert_no_console_errors",
             "WR_assert_no_secrets",
+            "WR_assert_web_vitals",
             "WR_attach_to_existing_browser",
             "WR_audit_security_headers",
             "WR_audit_security_headers_url",
