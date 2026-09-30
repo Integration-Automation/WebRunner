@@ -8,10 +8,15 @@ Transport: ndjson over stdio (one JSON object per line). Run via::
 
     python -m je_web_runner.mcp_server
 
-Supported methods: ``initialize``, ``notifications/initialized``,
-``tools/list``, ``tools/call`` and ``ping``. ``initialize`` answers with the
-client's protocol version when it is one of :data:`SUPPORTED_PROTOCOL_VERSIONS`,
-otherwise with the newest.
+Both protocol eras are served, decided per request:
+
+* handshake era (2024-11-05 to 2025-11-25): ``initialize``,
+  ``notifications/initialized``, ``tools/list``, ``tools/call`` and ``ping``.
+  ``initialize`` answers with the client's protocol version when it is one of
+  :data:`SUPPORTED_PROTOCOL_VERSIONS`, otherwise with the newest.
+* 2026-07-28 (stateless): a request whose ``params._meta`` names a protocol
+  version is served on its own, without ``initialize``: ``server/discover``,
+  ``tools/list`` and ``tools/call`` (see :mod:`._stateless`).
 """
 from __future__ import annotations
 
@@ -19,59 +24,35 @@ import json
 import os
 import sys
 import traceback
-from importlib import metadata
 from dataclasses import dataclass, field
 from typing import Any, Callable, TextIO
 
-from je_web_runner.mcp_server._types import McpInvalidParams, McpServerError, Tool, ToolResult
+from je_web_runner.mcp_server._protocol import (
+    INSTRUCTIONS,
+    SUPPORTED_PROTOCOL_VERSIONS,
+    negotiate_protocol_version,
+    server_info,
+    server_version,
+)
+from je_web_runner.mcp_server._stateless import DISCOVER_METHOD, discover_result, shape_result, stateless_version
+from je_web_runner.mcp_server._types import (
+    McpInvalidParams,
+    McpProtocolError,
+    McpServerError,
+    Tool,
+    ToolResult,
+)
 from je_web_runner.mcp_server._validation import validate_arguments
 from je_web_runner.mcp_server.offline_tools import build_default_tools
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
-
-#: Every revision with the ``initialize`` handshake this server speaks, newest first.
-#: The server offers tools only, so the later revisions' optional features (resources,
-#: prompts, elicitation, tasks) do not apply; it follows the rules they add for every
-#: version: tool failures are ``isError`` results, notifications get no reply, batches
-#: are rejected.
-SUPPORTED_PROTOCOL_VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
-_NEWEST_PROTOCOL_VERSION = SUPPORTED_PROTOCOL_VERSIONS[0]
-#: The first revision whose ``Implementation`` carries ``description``.
-_DESCRIPTION_SINCE = "2025-11-25"
-_SERVER_DESCRIPTION = (
-    "Browser automation with Selenium or Playwright: run WebRunner action lists, "
-    "plus offline tools for authoring, linting and triaging them."
-)
-_INSTRUCTIONS = (
-    "WebRunner drives a real browser through action lists of [command, params] entries. "
-    "Call webrunner_list_commands to see the WR_* commands, then webrunner_run_actions to run them; "
-    "the browser stays open between calls until an action list runs WR_quit (Selenium) or WR_pw_quit "
-    "(Playwright). A result with isError true lists the failed actions under 'failed'. The other "
-    "tools (lint, format, translate, scan, shard...) work offline and never open a browser."
-)
-
-_SERVER_NAME = "webrunner-mcp"
-_DISTRIBUTIONS = ("je_web_runner", "je_web_runner_dev")
+__all__ = [
+    "SUPPORTED_PROTOCOL_VERSIONS", "McpInvalidParams", "McpProtocolError", "McpServer", "McpServerError",
+    "Tool", "ToolResult", "build_default_tools", "make_default_server", "negotiate_protocol_version",
+    "serve_stdio", "server_version",
+]
 
 
-def negotiate_protocol_version(requested: Any) -> str:
-    """
-    回覆 ``initialize`` 用的協定版本
-    The version to answer ``initialize`` with: the client's when this server speaks it,
-    otherwise the newest. An unsupported version is never echoed back, because the client
-    would take it as agreed.
-    """
-    return requested if requested in SUPPORTED_PROTOCOL_VERSIONS else _NEWEST_PROTOCOL_VERSION
-
-
-def server_version() -> str:
-    """The installed package's version (stable or dev distribution), or ``0+unknown`` from a source tree."""
-    for distribution in _DISTRIBUTIONS:
-        try:
-            return metadata.version(distribution)
-        except metadata.PackageNotFoundError:
-            continue
-    return "0+unknown"
 
 
 @dataclass
@@ -103,6 +84,35 @@ class McpServer:
         params = message.get("params") or {}
         if not isinstance(method, str):
             return self._error(request_id, -32600, "method must be a string")
+        if not isinstance(params, dict):
+            return self._error(request_id, -32602, "params must be an object")
+        try:
+            result = self._run(method, params)
+        except McpProtocolError as error:
+            return self._error(request_id, error.code, str(error), error.data)
+        except Exception as error:  # pylint: disable=broad-except — answered as -32603 and logged
+            web_runner_logger.error(
+                f"mcp handler crashed in {method!r}: {error!r}\n{traceback.format_exc()}"
+            )
+            return self._error(request_id, -32603, f"internal error: {error!r}")
+        return {"jsonrpc": "2.0", "id": request_id, "result": result}
+
+    def _run(self, method: str, params: dict[str, Any]) -> Any:
+        """Serve ``method`` in the era the request declares (``initialize`` is always the handshake)."""
+        version = None if method == "initialize" else stateless_version(params)
+        if version is None:
+            if method == DISCOVER_METHOD:
+                raise McpInvalidParams(f"{DISCOVER_METHOD} needs the 2026-07-28 _meta fields")
+            return self._run_handshake_era(method, params)
+        if method == DISCOVER_METHOD:
+            result = discover_result(INSTRUCTIONS)
+        elif method in ("tools/list", "tools/call"):
+            result = self._run_handshake_era(method, params)
+        else:
+            raise McpProtocolError(-32601, f"unknown method {method!r} in {version}")
+        return shape_result(method, result, server_info(version))
+
+    def _run_handshake_era(self, method: str, params: dict[str, Any]) -> Any:
         handlers: dict[str, Callable[[dict[str, Any]], Any]] = {
             "initialize": self._initialize,
             "tools/list": lambda _params: self._tools_list(),
@@ -112,17 +122,8 @@ class McpServer:
         }
         handler = handlers.get(method)
         if handler is None:
-            return self._error(request_id, -32601, f"unknown method {method!r}")
-        try:
-            result = handler(params)
-        except McpInvalidParams as error:
-            return self._error(request_id, -32602, str(error))
-        except Exception as error:  # pylint: disable=broad-except — answered as -32603 and logged
-            web_runner_logger.error(
-                f"mcp handler crashed in {method!r}: {error!r}\n{traceback.format_exc()}"
-            )
-            return self._error(request_id, -32603, f"internal error: {error!r}")
-        return {"jsonrpc": "2.0", "id": request_id, "result": result}
+            raise McpProtocolError(-32601, f"unknown method {method!r}")
+        return handler(params)
 
     def _on_initialized(self, _params: dict[str, Any]) -> None:
         self.initialized = True
@@ -131,14 +132,11 @@ class McpServer:
         client_version = params.get("protocolVersion")
         version = negotiate_protocol_version(client_version)
         web_runner_logger.info(f"mcp initialize: client {client_version!r}, answered {version!r}")
-        server_info = {"name": _SERVER_NAME, "version": server_version()}
-        if version >= _DESCRIPTION_SINCE:
-            server_info["description"] = _SERVER_DESCRIPTION
         return {
             "protocolVersion": version,
             "capabilities": {"tools": {"listChanged": False}},
-            "serverInfo": server_info,
-            "instructions": _INSTRUCTIONS,
+            "serverInfo": server_info(version),
+            "instructions": INSTRUCTIONS,
         }
 
     def _tools_list(self) -> dict[str, Any]:
@@ -168,12 +166,11 @@ class McpServer:
         return _value_result(result, is_error=False)
 
     @staticmethod
-    def _error(request_id: Any, code: int, message: str) -> dict[str, Any]:
-        return {
-            "jsonrpc": "2.0",
-            "id": request_id,
-            "error": {"code": code, "message": message},
-        }
+    def _error(request_id: Any, code: int, message: str, data: Any = None) -> dict[str, Any]:
+        error: dict[str, Any] = {"code": code, "message": message}
+        if data is not None:
+            error["data"] = data
+        return {"jsonrpc": "2.0", "id": request_id, "error": error}
 
 
 def _render(value: Any) -> str:

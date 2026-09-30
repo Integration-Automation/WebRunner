@@ -13,8 +13,20 @@ class McpServerError(WebRunnerException):
     """Raised when the server encounters a fatal protocol error."""
 
 
-class McpInvalidParams(McpServerError):
+class McpProtocolError(McpServerError):
+    """Answered as a JSON-RPC error with ``code``, plus ``data`` when it is set."""
+
+    def __init__(self, code: int, message: str, data: Any = None) -> None:
+        super().__init__(message)
+        self.code = code
+        self.data = data
+
+
+class McpInvalidParams(McpProtocolError):
     """A request's params are unusable (unknown tool, arguments not an object); JSON-RPC -32602."""
+
+    def __init__(self, message: str, data: Any = None) -> None:
+        super().__init__(-32602, message, data)
 
 
 #: ``annotations`` for a tool that only computes or reads local input: no side effects.

@@ -17,8 +17,10 @@ WebRunner 內建 **Model Context Protocol (MCP) server**,把 action 撰寫
 ===========
 
 Model Context Protocol 是 Anthropic 用來讓 Claude 安全呼叫本機工具的
-JSON-RPC 2.0 協定。WebRunner 支援 ``2025-11-25``、``2025-06-18``、
-``2025-03-26`` 與 ``2024-11-05`` 版本(客戶端的版本是其中之一時
+JSON-RPC 2.0 協定。WebRunner 支援無狀態的 ``2026-07-28`` 版(
+``params._meta`` 寫明協定版本的請求不需要 ``initialize``;
+``server/discover`` 回報支援的版本與能力),以及握手版本 ``2025-11-25``、
+``2025-06-18``、``2025-03-26`` 與 ``2024-11-05``(客戶端的版本是其中之一時
 ``initialize`` 就回該版本,否則回 ``2025-11-25``),
 透過 **stdio 上的 newline-delimited JSON** (每行一個 JSON-RPC 訊息)
 通訊,因此任何支援 MCP stdio 的客戶端都能直接驅動 WebRunner,
@@ -302,10 +304,10 @@ MCP 客戶端是依讀到的文字行動的模型,所以執行工具會拒絕能
 * **JSON 無法序列化** — Browser tools 透過 ``_serialize_value`` 把
   ``WebDriver`` / ``WebElement`` 轉成 ``repr()`` 字串。自訂回傳值若不是
   JSON-friendly,需要在該 helper 下能 reduce。
-* **Protocol 版本不合** — WebRunner 支援 ``2025-11-25``、``2025-06-18``、
-  ``2025-03-26`` 與 ``2024-11-05``。客戶端要求其他版本時會收到
-  ``2025-11-25``,由客戶端決定能否繼續;只支援更新的無狀態版本的客戶端
-  無法連線。
+* **Protocol 版本不合** — WebRunner 支援 ``2026-07-28`` 與握手版本
+  ``2025-11-25`` 到 ``2024-11-05``。握手客戶端要求其他版本時會收到
+  ``2025-11-25``,由客戶端決定能否繼續;無狀態請求寫了其他版本時回錯誤
+  ``-32022``,``data`` 列出支援的版本。
 
 ----
 

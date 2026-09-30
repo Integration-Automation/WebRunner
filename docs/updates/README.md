@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-12 | 2026-10-01 | MCP server serves the stateless 2026-07-28 revision beside the handshake ones | #change #mcp | [2026-10](2026-10.md) |
 | U-20261001-11 | 2026-10-01 | MCP caller policy: no package loading or script re-enabling; optional file root | #change #mcp #security | [2026-10](2026-10.md) |
 | U-20261001-10 | 2026-10-01 | Package gate in front of WR_add_package_to_executor | #done #security #executor | [2026-10](2026-10.md) |
 | U-20261001-09 | 2026-10-01 | MCP tools: titles, annotations, described closed schemas, argument checks, structuredContent | #change #mcp | [2026-10](2026-10.md) |
@@ -99,5 +100,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 11 |
+| [2026-10.md](2026-10.md) | 2026-10 | 12 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

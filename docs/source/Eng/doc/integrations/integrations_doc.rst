@@ -68,8 +68,10 @@ Default tools registered (19 in total):
   ``webrunner_render_k8s``, ``webrunner_partition_shard``
 
 Custom tools register via ``McpServer.register(Tool(...))``; the server
-speaks MCP ``2025-11-25`` down to ``2024-11-05`` (``initialize`` /
-``notifications/initialized`` / ``tools/list`` / ``tools/call`` / ``ping``).
+speaks the stateless MCP ``2026-07-28`` (``server/discover`` /
+``tools/list`` / ``tools/call``) and the handshake revisions ``2025-11-25``
+down to ``2024-11-05`` (``initialize`` / ``notifications/initialized`` /
+``tools/list`` / ``tools/call`` / ``ping``).
 
 Action JSON LSP
 ===============

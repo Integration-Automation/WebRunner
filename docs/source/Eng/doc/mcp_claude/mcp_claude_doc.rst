@@ -19,9 +19,13 @@ What is MCP?
 
 The Model Context Protocol is a JSON-RPC 2.0 wire protocol Anthropic
 uses to give Claude controlled access to local tools. WebRunner
-speaks protocol versions ``2025-11-25``, ``2025-06-18``, ``2025-03-26``
-and ``2024-11-05`` (``initialize`` answers with the client's version when
-it is one of these, otherwise with ``2025-11-25``) over
+speaks the stateless ``2026-07-28`` revision (a request whose
+``params._meta`` names its protocol version is served without
+``initialize``; ``server/discover`` reports the versions and
+capabilities) and the handshake revisions ``2025-11-25``,
+``2025-06-18``, ``2025-03-26`` and ``2024-11-05`` (``initialize``
+answers with the client's version when it is one of these, otherwise
+with ``2025-11-25``) over
 **newline-delimited JSON over stdio** — every line is one JSON-RPC
 message — so any client
 that speaks MCP stdio can drive WebRunner without HTTP, sockets, or
@@ -337,11 +341,11 @@ Troubleshooting
   ``WebDriver`` / ``WebElement`` instances to ``repr()`` strings via
   ``_serialize_value``. Custom return types must be JSON-friendly or
   reduce cleanly under that helper.
-* **Protocol mismatch** — WebRunner speaks ``2025-11-25``,
-  ``2025-06-18``, ``2025-03-26`` and ``2024-11-05``. A client that asks
-  for another version gets ``2025-11-25`` back and decides whether it can
-  continue; a client that only speaks a newer, stateless revision cannot
-  connect.
+* **Protocol mismatch** — WebRunner speaks ``2026-07-28`` and the
+  handshake revisions ``2025-11-25`` to ``2024-11-05``. A handshake
+  client that asks for another version gets ``2025-11-25`` back and
+  decides whether it can continue; a stateless request naming another
+  version gets error ``-32022`` with the supported versions in ``data``.
 
 ----
 

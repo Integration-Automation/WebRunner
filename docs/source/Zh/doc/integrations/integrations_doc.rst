@@ -54,8 +54,8 @@ MCP server
 * Sharding / infra：``webrunner_diff_shard`` / ``webrunner_render_k8s``
   / ``webrunner_partition_shard``
 
-可透過 ``McpServer.register(Tool(...))`` 自行擴充工具，支援的協定版本
-從 ``2025-11-25`` 到 ``2024-11-05``。
+可透過 ``McpServer.register(Tool(...))`` 自行擴充工具，支援無狀態的
+``2026-07-28`` 與握手版本 ``2025-11-25`` 到 ``2024-11-05``。
 
 Action JSON LSP
 ===============

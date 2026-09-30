@@ -774,7 +774,10 @@ server.register(Tool(
 serve_stdio(server=server)
 ```
 
-该服务器支持 MCP `2025-11-25`、`2025-06-18`、`2025-03-26` 与 `2024-11-05`：客户端的版本是其中之一时 `initialize` 就回该版本，否则回 `2025-11-25`，并附上套件版本与给模型的简短 `instructions`。方法：`initialize`、`notifications/initialized`、`tools/list`、`tools/call`、`ping`。
+该服务器同时支持 MCP 的两个时代，按每个请求判断：
+
+- `2026-07-28`（无状态）：`params._meta` 写明 `io.modelcontextprotocol/protocolVersion`（并带 `io.modelcontextprotocol/clientCapabilities`）的请求会单独处理，不需要 `initialize`。方法：`server/discover`（支持的版本、能力、`instructions`）、`tools/list`、`tools/call`。结果带 `resultType`、`_meta` 里的服务器身份，可缓存的结果另带 `ttlMs` / `cacheScope`；`_meta` 写其他版本时回错误 `-32022` 并列出支持的版本。
+- `2025-11-25`、`2025-06-18`、`2025-03-26` 与 `2024-11-05`（握手）：客户端的版本是其中之一时 `initialize` 就回该版本，否则回 `2025-11-25`，并附上套件版本与给模型的简短 `instructions`。方法：`initialize`、`notifications/initialized`、`tools/list`、`tools/call`、`ping`。
 
 - stdio 一律是 UTF-8、行尾 `\n`，与控制台代码页无关。进程写到 stdout 的其他内容（`print`、子进程）都改走 stderr，所以客户端只会收到协议消息。
 - 工具执行失败时回传 `isError: true` 与错误信息，让客户端能修正调用。`webrunner_run_actions` 与 `webrunner_run_action_files` 在有动作失败时也会设 `isError`，并把失败的记录键列在 `failed`。
