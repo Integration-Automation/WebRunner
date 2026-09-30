@@ -18,12 +18,17 @@ Routes:
 * ``GET /api/flake``      JSON flake scores
 * ``GET /api/quarantine`` JSON quarantine entries
 * ``GET /api/locators``   JSON locator findings
+* ``GET /api/schedule``   JSON schedule report, passed through
+* ``GET /api/triage``     JSON triage report, passed through
+* ``GET /static/app.css`` the stylesheet (same origin, so the CSP allows it)
+* ``GET /healthz``        ``ok``
 
 Every request re-reads the underlying files so the dashboard always
 reflects the latest state — no caching, no daemon process needed.
 """
 from __future__ import annotations
 
+import html
 import json
 import threading
 import urllib.parse
@@ -38,7 +43,6 @@ from je_web_runner.utils.flake_detector.detector import (
     compute_flake_scores,
 )
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
-from je_web_runner.utils.run_ledger.ledger import LedgerError
 
 
 class LiveDashboardError(WebRunnerException):
@@ -92,7 +96,7 @@ def _load_flake_scores(ledger_path: Path | None) -> list[dict[str, Any]]:
         return []
     try:
         scores = compute_flake_scores(ledger_path)
-    except (LedgerError, OSError, ValueError) as error:
+    except (WebRunnerException, OSError, ValueError) as error:
         web_runner_logger.warning(f"dashboard _load_flake_scores: {error!r}")
         return []
     entries = [s.to_dict() for s in scores.values()]
@@ -105,7 +109,7 @@ def _load_quarantine(quarantine_path: Path | None) -> list[dict[str, Any]]:
         return []
     try:
         registry = QuarantineRegistry(quarantine_path)
-    except WebRunnerException as error:
+    except (WebRunnerException, ValueError, TypeError) as error:
         web_runner_logger.warning(f"dashboard _load_quarantine: {error!r}")
         return []
     return [e.to_dict() for e in registry.list()]
@@ -204,18 +208,14 @@ code   { background: #f0f0f3; padding: 2px 6px; border-radius: 4px;
 
 
 def _html_escape(value: Any) -> str:
-    text = str(value if value is not None else "")
-    return (
-        text.replace("&", "&amp;").replace("<", "&lt;")
-        .replace(">", "&gt;").replace('"', "&quot;")
-    )
+    return html.escape(str(value if value is not None else ""), quote=True)
 
 
 def _layout(title: str, body: str) -> str:
     return (
         "<!DOCTYPE html><html><head>"
         f"<meta charset='utf-8'><title>{_html_escape(title)} — WebRunner</title>"
-        f"<style>{_BASE_CSS}</style></head><body>"
+        "<link rel='stylesheet' href='/static/app.css'></head><body>"
         "<nav>"
         "<a href='/'>Overview</a>"
         "<a href='/runs'>Runs</a>"
@@ -424,6 +424,8 @@ def _make_handler(config: DashboardConfig) -> type[BaseHTTPRequestHandler]:  # N
                     self._send_json(_load_schedule(config.schedule_path))
                 elif path == "/api/triage":
                     self._send_json(_load_triage(config.triage_report_path))
+                elif path == "/static/app.css":
+                    self._send(200, "text/css; charset=utf-8", _BASE_CSS.encode("utf-8"))
                 elif path == "/healthz":
                     self._send(200, "text/plain", b"ok")
                 else:

@@ -201,6 +201,62 @@ class TestHttpEndpoints(unittest.TestCase):
         self.assertEqual(body, b"ok")
 
 
+class TestPageSafety(unittest.TestCase):
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.tmp.cleanup)
+        self.tmpdir = Path(self.tmp.name)
+
+    def _serve(self, config: DashboardConfig) -> DashboardServer:
+        server = DashboardServer(config)
+        server.start()
+        self.addCleanup(server.stop)
+        return server
+
+    def test_stylesheet_is_served_from_the_same_origin(self):
+        # The CSP ``default-src 'self'`` blocks inline <style>, so the CSS must
+        # come from a same-origin URL for the page to be styled at all.
+        server = self._serve(DashboardConfig())
+        with urllib.request.urlopen(server.url + "/", timeout=5) as resp:  # nosec B310 — localhost only
+            csp = resp.headers["Content-Security-Policy"]
+            page = resp.read().decode("utf-8")
+        self.assertEqual(csp, "default-src 'self'")
+        self.assertNotIn("<style", page)
+        self.assertIn("href='/static/app.css'", page)
+        with urllib.request.urlopen(server.url + "/static/app.css", timeout=5) as resp:  # nosec B310 — localhost only
+            content_type = resp.headers["Content-Type"]
+            css = resp.read().decode("utf-8")
+        self.assertTrue(content_type.startswith("text/css"))
+        self.assertIn(".card", css)
+
+    def test_single_quotes_are_escaped(self):
+        quarantine = self.tmpdir / "q.json"
+        quarantine.write_text(json.dumps({"entries": [
+            {"test_id": "a'b<x>", "reason": "r", "flake_score": 0.5,
+             "quarantined_at": "2026-10-01T00:00:00+00:00"},
+        ]}), encoding="utf-8")
+        server = self._serve(DashboardConfig(quarantine_path=quarantine))
+        page = _http_get(server.url + "/quarantine").decode("utf-8")
+        self.assertIn("a&#x27;b&lt;x&gt;", page)
+        self.assertNotIn("a'b", page)
+
+    def test_ledger_without_runs_key_does_not_fail_the_pages(self):
+        ledger = self.tmpdir / "ledger.json"
+        ledger.write_text("{}", encoding="utf-8")
+        server = self._serve(DashboardConfig(ledger_path=ledger))
+        self.assertIn("WebRunner overview", _http_get(server.url + "/").decode("utf-8"))
+        self.assertIn("No flaky", _http_get(server.url + "/flake").decode("utf-8"))
+
+    def test_malformed_quarantine_score_does_not_fail_the_page(self):
+        quarantine = self.tmpdir / "q.json"
+        quarantine.write_text(json.dumps({"entries": [
+            {"test_id": "a.json", "reason": "r", "flake_score": "high"},
+        ]}), encoding="utf-8")
+        server = self._serve(DashboardConfig(quarantine_path=quarantine))
+        self.assertIn("empty", _http_get(server.url + "/quarantine").decode("utf-8").lower())
+
+
 class TestEmptyServer(unittest.TestCase):
 
     def test_endpoints_work_with_no_data(self):
