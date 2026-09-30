@@ -921,7 +921,7 @@ python -m je_web_runner.action_lsp
 
 ### 测试编排
 
-- **测试影响分析** —— `impact_analysis.build_index("./actions")` 遍历每个动作 JSON 文件，将定位器名、URL、模板名和 `WR_*` 命令投影到一个反向索引；`affected_action_files(index, locators=["primary_cta"])` 回答“哪些测试触及这个？”，使差异感知分片可以超越文件名匹配。
+- **测试影响分析** —— `impact_analysis.build_index("./actions")` 遍历每个动作 JSON 文件，将定位器名、URL、模板名和 `WR_*` 命令投影到一个反向索引；`affected_action_files(index, locators=["primary_cta"])` 回答“哪些测试触及这个？”，使差异感知分片可以超越文件名匹配。`build_index("./actions", cache_path=".webrunner_impact_cache.json")` 把每个文件的名称存进缓存，只解析有变动的文件：修改时间与大小相同就沿用，时间变了（新 checkout）但 SHA-256 相同也沿用。实测 3000 个各 30 个动作的文件：不用缓存 510 ms，用缓存 138 ms。
 
 ## 专项模块
 

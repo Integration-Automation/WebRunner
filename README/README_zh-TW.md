@@ -921,7 +921,7 @@ python -m je_web_runner.action_lsp
 
 ### 測試編排
 
-- **測試影響分析** —— `impact_analysis.build_index("./actions")` 走訪每個動作 JSON 檔案，將定位器名、URL、範本名和 `WR_*` 命令投影到一個反向索引；`affected_action_files(index, locators=["primary_cta"])` 回答「哪些測試觸及這個？」，使差異感知分片可以超越檔名比對。
+- **測試影響分析** —— `impact_analysis.build_index("./actions")` 走訪每個動作 JSON 檔案，將定位器名、URL、範本名和 `WR_*` 命令投影到一個反向索引；`affected_action_files(index, locators=["primary_cta"])` 回答「哪些測試觸及這個？」，使差異感知分片可以超越檔名比對。`build_index("./actions", cache_path=".webrunner_impact_cache.json")` 把每個檔案的名稱存進快取，只解析有變動的檔案：修改時間與大小相同就沿用，時間變了（新 checkout）但 SHA-256 相同也沿用。實測 3000 個各 30 個動作的檔案：不用快取 510 ms，用快取 138 ms。
 
 ## 專項模組
 

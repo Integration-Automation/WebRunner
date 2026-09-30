@@ -33,6 +33,9 @@ Test impact analysis
 locator / URL / template / command 反查表；
 ``affected_action_files(index, locators=["primary_cta"])`` 回傳所有
 參考此 locator 的測試檔，搭配 ``sharding.diff_shard`` 做精準測試選擇。
+``build_index("./actions", cache_path=".webrunner_impact_cache.json")`` 只解析
+有變動的檔案：修改時間與大小相同就從快取沿用，時間變了（新 checkout）但
+SHA-256 相同也沿用。
 
 Bootstrapper / driver pinner
 ============================
