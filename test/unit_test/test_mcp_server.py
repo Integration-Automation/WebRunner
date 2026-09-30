@@ -378,6 +378,89 @@ class TestBrowserTools(unittest.TestCase):
         self.assertEqual(payload["failed"], ["execute: ['WR_no_such_command']"])
         self.assertEqual(len(payload["record"]), 2)
 
+    def test_run_actions_returns_structured_content(self):
+        result = self._call("webrunner_run_actions", {"actions": [["WR_sleep", {"seconds": 0}]]})["result"]
+        self.assertEqual(result["structuredContent"], json.loads(result["content"][0]["text"]))
+        self.assertEqual(result["structuredContent"]["failed"], [])
+
+
+class TestToolMetadata(unittest.TestCase):
+    """Every shipped tool carries what MCP 2025-06-18+ clients use to present and gate it."""
+
+    def setUp(self):
+        self.tools = make_default_server()._tools_list()["tools"]  # pylint: disable=protected-access
+
+    def test_every_tool_has_a_title_and_annotations(self):
+        for tool in self.tools:
+            self.assertTrue(tool.get("title"), tool["name"])
+            self.assertIn("readOnlyHint", tool["annotations"], tool["name"])
+
+    def test_only_the_browser_tools_have_side_effects(self):
+        browser = {"webrunner_run_actions", "webrunner_run_action_files"}
+        for tool in self.tools:
+            hints = tool["annotations"]
+            if tool["name"] in browser:
+                self.assertFalse(hints["readOnlyHint"], tool["name"])
+                self.assertTrue(hints["destructiveHint"], tool["name"])
+                self.assertTrue(hints["openWorldHint"], tool["name"])
+            else:
+                self.assertTrue(hints["readOnlyHint"], tool["name"])
+                self.assertFalse(hints["openWorldHint"], tool["name"])
+
+    def test_every_input_schema_is_closed_and_described(self):
+        for tool in self.tools:
+            schema = tool["inputSchema"]
+            self.assertIs(schema.get("additionalProperties"), False, tool["name"])
+            for name, spec in schema["properties"].items():
+                self.assertTrue(spec.get("description"), f"{tool['name']}.{name}")
+
+    def test_names_fit_the_convention(self):
+        import re
+        for tool in self.tools:
+            self.assertRegex(tool["name"], re.compile(r"^webrunner_[a-z0-9_]+$"))
+            self.assertLessEqual(len(tool["name"]), 48, tool["name"])
+
+    def test_browser_tools_declare_their_output(self):
+        by_name = {tool["name"]: tool for tool in self.tools}
+        for name in ("webrunner_run_actions", "webrunner_run_action_files"):
+            self.assertEqual(by_name[name]["outputSchema"]["type"], "object", name)
+
+
+class TestArgumentValidation(unittest.TestCase):
+    """Bad arguments come back as tool errors the model can read and fix (MCP 2025-11-25, SEP-1303)."""
+
+    def setUp(self):
+        self.server = make_default_server()
+
+    def _call(self, name, arguments):
+        return self.server.handle({"id": 1, "method": "tools/call", "params": {
+            "name": name, "arguments": arguments,
+        }})["result"]
+
+    def test_missing_required_argument(self):
+        result = self._call("webrunner_partition_shard", {"paths": ["a"], "index": 1})
+        self.assertTrue(result["isError"])
+        self.assertIn("'total'", result["content"][0]["text"])
+
+    def test_wrong_type(self):
+        result = self._call("webrunner_partition_shard", {"paths": ["a"], "index": "x", "total": 2})
+        self.assertTrue(result["isError"])
+        self.assertIn("'index'", result["content"][0]["text"])
+
+    def test_boolean_is_not_an_integer(self):
+        result = self._call("webrunner_partition_shard", {"paths": ["a"], "index": True, "total": 2})
+        self.assertTrue(result["isError"])
+
+    def test_unknown_argument(self):
+        result = self._call("webrunner_locator_strength", {"strategy": "ID", "value": "x", "extra": 1})
+        self.assertTrue(result["isError"])
+        self.assertIn("'extra'", result["content"][0]["text"])
+
+    def test_null_optional_argument_counts_as_omitted(self):
+        result = self._call("webrunner_summary_markdown",
+                            {"total": 1, "passed": 1, "failed": 0, "run_url": None})
+        self.assertFalse(result["isError"])
+
 
 if __name__ == "__main__":
     unittest.main()

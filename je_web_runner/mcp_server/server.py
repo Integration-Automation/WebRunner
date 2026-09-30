@@ -24,6 +24,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, TextIO
 
 from je_web_runner.mcp_server._types import McpInvalidParams, McpServerError, Tool, ToolResult
+from je_web_runner.mcp_server._validation import validate_arguments
 from je_web_runner.mcp_server.offline_tools import build_default_tools
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
@@ -152,6 +153,9 @@ class McpServer:
             raise McpInvalidParams(f"unknown tool {name!r}")
         if not isinstance(arguments, dict):
             raise McpInvalidParams("'arguments' must be an object")
+        problems = validate_arguments(self.tools[name].input_schema, arguments)
+        if problems:
+            return _text_result("invalid arguments: " + "; ".join(problems), is_error=True)
         try:
             result = self.tools[name].handler(arguments)
         except Exception as error:  # pylint: disable=broad-except — a tool failure is a result, not a crash
@@ -160,8 +164,8 @@ class McpServer:
             )
             return _text_result(f"{type(error).__name__}: {error}", is_error=True)
         if isinstance(result, ToolResult):
-            return _text_result(_render(result.value), is_error=result.is_error)
-        return _text_result(_render(result), is_error=False)
+            return _value_result(result.value, is_error=result.is_error)
+        return _value_result(result, is_error=False)
 
     @staticmethod
     def _error(request_id: Any, code: int, message: str) -> dict[str, Any]:
@@ -178,6 +182,16 @@ def _render(value: Any) -> str:
 
 def _text_result(text: str, *, is_error: bool) -> dict[str, Any]:
     return {"content": [{"type": "text", "text": text}], "isError": is_error}
+
+
+def _value_result(value: Any, *, is_error: bool) -> dict[str, Any]:
+    """A handler's value as text, plus ``structuredContent`` when it is a JSON object."""
+    text = _render(value)
+    result = _text_result(text, is_error=is_error)
+    if isinstance(value, dict):
+        # Re-parse the rendered text so the structured copy is plain JSON too.
+        result["structuredContent"] = json.loads(text)
+    return result
 
 
 def make_default_server() -> McpServer:

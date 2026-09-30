@@ -24,7 +24,7 @@ import io
 from contextlib import redirect_stdout
 from typing import Any
 
-from je_web_runner.mcp_server._types import McpServerError, Tool, ToolResult
+from je_web_runner.mcp_server._types import DRIVES_BROWSER, READ_ONLY, McpServerError, Tool, ToolResult
 
 
 def _serialize_value(value: Any) -> Any:
@@ -86,6 +86,7 @@ def build_browser_tools() -> list[Tool]:
     return [
         Tool(
             name="webrunner_run_actions",
+            title="Run actions in a browser",
             description=(
                 "Execute a WebRunner action list against a real browser. Each"
                 " entry is [command_name, params] where params is a dict of"
@@ -111,13 +112,28 @@ def build_browser_tools() -> list[Tool]:
             ),
             input_schema={
                 "type": "object",
-                "properties": {"actions": {"type": "array"}},
+                "properties": {"actions": {
+                    "type": "array", "items": {"type": "array"},
+                    "description": "WebRunner action list: [command_name, params] entries.",
+                }},
                 "required": ["actions"],
+                "additionalProperties": False,
             },
             handler=_tool_run_actions,
+            annotations=DRIVES_BROWSER,
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "stdout": {"type": "string"},
+                    "record": {"type": "object"},
+                    "failed": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["stdout", "record", "failed"],
+            },
         ),
         Tool(
             name="webrunner_run_action_files",
+            title="Run action files in a browser",
             description=(
                 "Read one or more JSON action files from disk and execute"
                 " them sequentially against a real browser. Returns"
@@ -128,20 +144,36 @@ def build_browser_tools() -> list[Tool]:
             input_schema={
                 "type": "object",
                 "properties": {
-                    "files": {"type": "array", "items": {"type": "string"}},
+                    "files": {
+                        "type": "array", "items": {"type": "string"},
+                        "description": "Paths of action JSON files, run in order.",
+                    },
                 },
                 "required": ["files"],
+                "additionalProperties": False,
             },
             handler=_tool_run_action_files,
+            annotations=DRIVES_BROWSER,
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "stdout": {"type": "string"},
+                    "records": {"type": "array", "items": {"type": "object"}},
+                    "failed": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}},
+                },
+                "required": ["stdout", "records", "failed"],
+            },
         ),
         Tool(
             name="webrunner_list_commands",
+            title="List the WR_* commands",
             description=(
                 "Return every WR_* command currently registered in the"
                 " executor, so a caller can discover the action surface"
                 " before composing webrunner_run_actions payloads."
             ),
-            input_schema={"type": "object", "properties": {}},
+            input_schema={"type": "object", "properties": {}, "additionalProperties": False},
             handler=_tool_list_commands,
+            annotations=READ_ONLY,
         ),
     ]

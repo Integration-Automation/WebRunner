@@ -253,6 +253,15 @@ Sharding 與 infra
 把上面這段存成 ``my_mcp.py``,並把客戶端的 ``command`` / ``args`` 改指
 這個檔(取代 ``python -m je_web_runner.mcp_server``)即可。
 
+``Tool`` 另外接受 ``title``、``annotations``(例如
+``je_web_runner.mcp_server._types.READ_ONLY``)與 ``output_schema``,
+有設定才會出現在 ``tools/list``。執行 handler 前,server 會依
+``input_schema`` 檢查參數(``type``、``required``、``properties``、
+``additionalProperties: false``、一層 ``items.type``),不符時回傳
+``isError`` 結果。handler 回傳 dict 時,除了文字也會以
+``structuredContent`` 送出;要回報失敗但不丟例外,回傳
+``ToolResult(value, is_error=True)``。
+
 ----
 
 疑難排解

@@ -280,6 +280,16 @@ External code can extend the server by calling ``McpServer.register``:
 Save the script as ``my_mcp.py`` and point your client's ``command`` /
 ``args`` at it instead of ``python -m je_web_runner.mcp_server``.
 
+``Tool`` also takes ``title``, ``annotations`` (for example
+``je_web_runner.mcp_server._types.READ_ONLY``) and ``output_schema``;
+they are sent in ``tools/list`` only when set. Before a handler runs, the
+server checks the arguments against ``input_schema`` (``type``,
+``required``, ``properties``, ``additionalProperties: false``, one level
+of ``items.type``) and answers a mismatch with an ``isError`` result. A
+handler that returns a dict gets it sent as ``structuredContent`` as well
+as text; return ``ToolResult(value, is_error=True)`` to report a failure
+without raising.
+
 ----
 
 Troubleshooting

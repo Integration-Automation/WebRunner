@@ -17,19 +17,43 @@ class McpInvalidParams(McpServerError):
     """A request's params are unusable (unknown tool, arguments not an object); JSON-RPC -32602."""
 
 
+#: ``annotations`` for a tool that only computes or reads local input: no side effects.
+READ_ONLY = {"readOnlyHint": True, "openWorldHint": False}
+#: ``annotations`` for a tool that drives a real browser against arbitrary sites.
+DRIVES_BROWSER = {
+    "readOnlyHint": False, "destructiveHint": True, "idempotentHint": False, "openWorldHint": True,
+}
+
+
 @dataclass
 class Tool:
+    """
+    一個 MCP 工具：名稱、說明、參數 schema 與處理函式
+    One MCP tool. ``title``, ``annotations`` (MCP 2025-03-26+) and ``output_schema``
+    (2025-06-18+) are optional and only sent when set.
+    """
     name: str
     description: str
     input_schema: dict[str, Any]
     handler: Callable[[dict[str, Any]], Any]
+    title: str | None = None
+    annotations: dict[str, Any] | None = None
+    output_schema: dict[str, Any] | None = None
 
     def schema(self) -> dict[str, Any]:
-        return {
+        """The tool as ``tools/list`` sends it."""
+        schema: dict[str, Any] = {
             "name": self.name,
             "description": self.description,
             "inputSchema": self.input_schema,
         }
+        if self.title:
+            schema["title"] = self.title
+        if self.annotations:
+            schema["annotations"] = self.annotations
+        if self.output_schema:
+            schema["outputSchema"] = self.output_schema
+        return schema
 
 
 @dataclass
