@@ -1695,6 +1695,8 @@ python -m je_web_runner --validate ./action_smoke.json
 python -m je_web_runner --migrate ./actions --migrate-dry-run
 ```
 
+Installing the package also installs two console scripts, `webrunner` and `web_runner`, with the same flags, output and exit codes as `python -m je_web_runner` (`webrunner -e actions.json`, `pipx run --spec je_web_runner webrunner -d ./actions`).
+
 Compose any of the flags above; the dispatcher applies tag filters → ledger / re-run-failed → sharding → dependency-aware ordering before handing files to the runner.
 
 ## Test Record

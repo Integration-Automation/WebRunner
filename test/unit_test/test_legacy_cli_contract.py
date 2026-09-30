@@ -84,3 +84,43 @@ def test_no_flag_exits_non_zero(tmp_path):
 
 def test_create_project_dir_is_exported():
     assert callable(je_web_runner.create_project_dir)  # nosec B101
+
+
+# The console scripts ``webrunner`` / ``web_runner`` call ``je_web_runner.__main__:run``;
+# an installed script does ``sys.exit(run())`` with the script's name as ``argv[0]``.
+_CONSOLE_SCRIPT = "import sys; from je_web_runner.__main__ import run; sys.argv[0] = 'webrunner'; sys.exit(run())"
+
+
+def _run_console_script(cwd: Path, *args: str) -> subprocess.CompletedProcess:
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(REPO_ROOT), env.get("PYTHONPATH")]))
+    env["PYTHONIOENCODING"] = "utf-8"
+    # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
+    return subprocess.run(  # nosec B603 - fixed interpreter, test-controlled arguments
+        [sys.executable, "-c", _CONSOLE_SCRIPT, *args],
+        cwd=cwd, env=env, capture_output=True, text=True, encoding="utf-8",
+        timeout=300, check=False,
+    )
+
+
+@pytest.mark.parametrize("toml_name", ["pyproject.toml", "dev.toml"])
+def test_console_scripts_point_at_the_module_entry(toml_name):
+    text = (REPO_ROOT / toml_name).read_text(encoding="utf-8")
+    section = text.split("[project.scripts]", 1)[1].split("\n[", 1)[0]
+    for script in ("webrunner", "web_runner"):
+        assert f'{script} = "je_web_runner.__main__:run"' in section, (toml_name, script)  # nosec B101
+
+
+def test_console_script_runs_like_python_dash_m(tmp_path):
+    target = tmp_path / "out"
+    payload = _pybreeze_execute_str(_actions(target))
+    _assert_ran(_run_console_script(tmp_path, "--execute_str", payload), target)
+    assert _run_console_script(tmp_path).returncode == _run_cli(tmp_path).returncode != 0  # nosec B101
+
+
+def test_console_script_reports_an_escaping_error_on_one_line(tmp_path):
+    missing = str(tmp_path / "no_such_actions.json")
+    by_script = _run_console_script(tmp_path, "-e", missing)
+    by_module = _run_cli(tmp_path, "-e", missing)
+    assert by_script.returncode == by_module.returncode  # nosec B101
+    assert by_script.stderr.strip().splitlines()[-1:] == by_module.stderr.strip().splitlines()[-1:]  # nosec B101

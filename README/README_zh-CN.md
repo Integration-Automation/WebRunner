@@ -1684,6 +1684,8 @@ python -m je_web_runner --validate ./action_smoke.json
 python -m je_web_runner --migrate ./actions --migrate-dry-run
 ```
 
+安装包时也会装上两个控制台命令 `webrunner` 与 `web_runner`，参数、输出与退出码都和 `python -m je_web_runner` 相同（`webrunner -e actions.json`、`pipx run --spec je_web_runner webrunner -d ./actions`）。
+
 可以组合上面任意标志；分发器在把文件交给运行器之前，先应用标签过滤 → 账本 / 重跑失败项 → 分片 → 依赖感知排序。
 
 ## 测试记录

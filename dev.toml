@@ -36,6 +36,11 @@ classifiers = [
 [project.optional-dependencies]
 autocontrol = ["je_auto_control>=0.0.224"]
 
+# Console scripts: the same entry point as ``python -m je_web_runner``.
+[project.scripts]
+webrunner = "je_web_runner.__main__:run"
+web_runner = "je_web_runner.__main__:run"
+
 [project.urls]
 Homepage = "https://github.com/Integration-Automation/WebRunner"
 Documentation = "https://webrunner.readthedocs.io/en/latest/"

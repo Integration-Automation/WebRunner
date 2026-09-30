@@ -5,6 +5,10 @@ Overview
 --------
 
 WebRunner can be executed directly from the command line using the ``je_web_runner`` module.
+Installing the package also installs the console scripts ``webrunner`` and
+``web_runner``, which take the same flags and give the same output and exit
+codes, so ``webrunner -e actions.json`` equals ``python -m je_web_runner -e
+actions.json`` (``pipx run --spec je_web_runner webrunner`` works too).
 
 Commands
 --------

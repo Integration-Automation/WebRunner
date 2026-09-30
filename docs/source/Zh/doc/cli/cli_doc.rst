@@ -4,7 +4,10 @@
 概述
 ----
 
-WebRunner 可以直接從命令列使用 ``je_web_runner`` 模組執行。
+WebRunner 可以直接從命令列使用 ``je_web_runner`` 模組執行。安裝套件時也會裝上
+主控台指令 ``webrunner`` 與 ``web_runner``，旗標、輸出與結束碼都相同，所以
+``webrunner -e actions.json`` 等於 ``python -m je_web_runner -e actions.json``
+（也可以用 ``pipx run --spec je_web_runner webrunner``）。
 
 指令
 ----
