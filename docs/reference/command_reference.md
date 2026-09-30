@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (472 commands).
+Auto-generated from the executor's event_dict (478 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -285,6 +285,7 @@ Auto-generated from the executor's event_dict (472 commands).
 | `WR_pw_event_capture_stop` | `() -> 'None'` |  |
 | `WR_pw_extension_args` | `(extension_dir: 'str') -> 'list[str]'` | 回傳給 ``pw_launch(args=...)`` 用的旗標清單（Chromium only） |
 | `WR_pw_fill` | `(selector: 'str', value: 'str', **options: 'Any') -> 'None'` |  |
+| `WR_pw_find_by` | `(by: 'str', value: 'str', wait: 'bool' = True, **options: 'Any')` |  |
 | `WR_pw_find_element` | `(selector: 'str')` |  |
 | `WR_pw_find_element_with_test_object_record` | `(element_name: 'str')` |  |
 | `WR_pw_find_elements` | `(selector: 'str') -> 'list[Any]'` |  |
@@ -301,6 +302,7 @@ Auto-generated from the executor's event_dict (472 commands).
 | `WR_pw_keyboard_press` | `(key: 'str') -> 'None'` |  |
 | `WR_pw_keyboard_type` | `(text: 'str', delay: 'float' = 0) -> 'None'` |  |
 | `WR_pw_keyboard_up` | `(key: 'str') -> 'None'` |  |
+| `WR_pw_last_dialog` | `() -> 'dict | None'` |  |
 | `WR_pw_launch` | `(browser: 'str' = 'chromium', headless: 'bool' = True, **options: 'Any') -> 'None'` |  |
 | `WR_pw_list_devices` | `() -> 'list[str]'` |  |
 | `WR_pw_local_storage_all` | `() -> 'dict'` |  |
@@ -339,6 +341,7 @@ Auto-generated from the executor's event_dict (472 commands).
 | `WR_pw_set_context_options` | `(**options: 'Any') -> 'None'` |  |
 | `WR_pw_set_default_navigation_timeout` | `(timeout_ms: 'float') -> 'None'` |  |
 | `WR_pw_set_default_timeout` | `(timeout_ms: 'float') -> 'None'` |  |
+| `WR_pw_set_dialog_policy` | `(action: 'str' = 'accept', prompt_text: 'str | None' = None) -> 'None'` |  |
 | `WR_pw_set_extra_http_headers` | `(headers: 'dict[str, str]') -> 'None'` |  |
 | `WR_pw_set_geolocation` | `(latitude: 'float', longitude: 'float', accuracy: 'float | None' = None) -> 'None'` |  |
 | `WR_pw_set_locale` | `(locale: 'str', accept_language: 'str | None' = None) -> 'None'` |  |
@@ -353,9 +356,12 @@ Auto-generated from the executor's event_dict (472 commands).
 | `WR_pw_sw_bypass` | `(bypass: 'bool' = True) -> 'None'` | Bypass the service worker via CDP on the active Playwright page. |
 | `WR_pw_sw_clear_caches` | `() -> 'list[str]'` |  |
 | `WR_pw_sw_unregister` | `() -> 'list[bool]'` |  |
+| `WR_pw_switch_to_frame` | `(selectors: 'str | list[str]') -> 'None'` |  |
+| `WR_pw_switch_to_main_frame` | `() -> 'None'` |  |
 | `WR_pw_switch_to_page` | `(index: 'int') -> 'None'` |  |
 | `WR_pw_switch_to_page_by_title` | `(pattern: 'str') -> 'bool'` |  |
 | `WR_pw_switch_to_page_by_url` | `(pattern: 'str') -> 'bool'` |  |
+| `WR_pw_switch_to_parent_frame` | `() -> 'None'` |  |
 | `WR_pw_throttle` | `(preset: 'str') -> 'Any'` | Apply ``preset`` via the active Playwright page's CDP session. |
 | `WR_pw_throttle_clear` | `() -> 'Any'` |  |
 | `WR_pw_title` | `() -> 'str'` |  |

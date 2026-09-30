@@ -62,6 +62,13 @@ PLAYWRIGHT_COMMANDS: dict[str, Any] = {
     "WR_pw_get_cookie": _pw.pw_get_cookie,
     "WR_pw_delete_cookie": _pw.pw_delete_cookie,
     "WR_pw_check_current_page": _pw.pw_check_current_page,
+    # frame scope, role / text lookup, dialogs
+    "WR_pw_switch_to_frame": _pw.pw_switch_to_frame,
+    "WR_pw_switch_to_parent_frame": _pw.pw_switch_to_parent_frame,
+    "WR_pw_switch_to_main_frame": _pw.pw_switch_to_main_frame,
+    "WR_pw_find_by": _pw.pw_find_by,
+    "WR_pw_set_dialog_policy": _pw.pw_set_dialog_policy,
+    "WR_pw_last_dialog": _pw.pw_last_dialog,
     "WR_pw_element_submit": _pw_element.submit,
     "WR_pw_element_value_of_css_property": _pw_element.value_of_css_property,
     "WR_pw_element_assert": _pw_element.check_current_element,

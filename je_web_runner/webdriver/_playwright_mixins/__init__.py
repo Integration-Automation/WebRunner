@@ -7,6 +7,7 @@ from je_web_runner.webdriver._playwright_mixins._context_mixin import _ContextMi
 from je_web_runner.webdriver._playwright_mixins._interaction_mixin import _InteractionMixin
 from je_web_runner.webdriver._playwright_mixins._page_mixin import _PageMixin
 from je_web_runner.webdriver._playwright_mixins._recording_mixin import _RecordingMixin
+from je_web_runner.webdriver._playwright_mixins._scope_mixin import _ScopeMixin
 from je_web_runner.webdriver._playwright_mixins._state_mixin import _StateMixin
 
 __all__ = [
@@ -14,5 +15,6 @@ __all__ = [
     "_InteractionMixin",
     "_PageMixin",
     "_RecordingMixin",
+    "_ScopeMixin",
     "_StateMixin",
 ]

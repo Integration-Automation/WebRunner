@@ -48,8 +48,7 @@ class _ContextMixin:
             self._context.close()
         self._context = self._open_context(storage_state=state)
         page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
+        self._reset_pages(page)
         if isinstance(url, str) and url.startswith(("http://", "https://")):
             try:
                 page.goto(url)

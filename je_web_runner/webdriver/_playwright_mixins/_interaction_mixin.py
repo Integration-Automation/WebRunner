@@ -17,49 +17,49 @@ class _InteractionMixin:
     @recorded()
     def click(self, selector: str, **options: Any) -> None:
         web_runner_logger.info(f"playwright click: {selector}")
-        self.page.click(selector, **options)
+        self._target.click(selector, **options)
 
     @recorded()
     def dblclick(self, selector: str, **options: Any) -> None:
-        self.page.dblclick(selector, **options)
+        self._target.dblclick(selector, **options)
 
     @recorded()
     def hover(self, selector: str, **options: Any) -> None:
-        self.page.hover(selector, **options)
+        self._target.hover(selector, **options)
 
     @recorded()
     def fill(self, selector: str, value: str, **options: Any) -> None:
         web_runner_logger.info(f"playwright fill: {selector}")
-        self.page.fill(selector, value, **options)
+        self._target.fill(selector, value, **options)
 
     @recorded()
     def type_text(self, selector: str, value: str, delay: float = 0, **options: Any) -> None:
-        self.page.type(selector, value, delay=delay, **options)
+        self._target.type(selector, value, delay=delay, **options)
 
     @recorded()
     def press(self, selector: str, key: str, **options: Any) -> None:
-        self.page.press(selector, key, **options)
+        self._target.press(selector, key, **options)
 
     @recorded()
     def check(self, selector: str, **options: Any) -> None:
-        self.page.check(selector, **options)
+        self._target.check(selector, **options)
 
     @recorded()
     def uncheck(self, selector: str, **options: Any) -> None:
-        self.page.uncheck(selector, **options)
+        self._target.uncheck(selector, **options)
 
     @recorded()
     def select_option(self, selector: str, value: Any, **options: Any) -> list[str]:
-        return self.page.select_option(selector, value, **options)
+        return self._target.select_option(selector, value, **options)
 
     @recorded()
     def drag_and_drop(self, source_selector: str, target_selector: str, **options: Any) -> None:
-        self.page.drag_and_drop(source_selector, target_selector, **options)
+        self._target.drag_and_drop(source_selector, target_selector, **options)
 
     @recorded()
     def drag_and_drop_offset(self, selector: str, target_x: float, target_y: float) -> None:
         """Drag the element matching ``selector`` by ``(target_x, target_y)`` pixels from its centre."""
-        box = self.page.locator(selector).bounding_box()
+        box = self._target.locator(selector).bounding_box()
         if box is None:
             raise PlaywrightBackendError(f"element {selector!r} is not visible")
         start_x, start_y = box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
@@ -85,12 +85,12 @@ class _InteractionMixin:
 
     @recorded()
     def evaluate(self, expression: str, arg: Any = None):
-        return self.page.evaluate(expression, arg) if arg is not None else self.page.evaluate(expression)
+        return self._target.evaluate(expression, arg) if arg is not None else self._target.evaluate(expression)
 
     def evaluate_handle(self, expression: str, arg: Any = None):
         if arg is not None:
-            return self.page.evaluate_handle(expression, arg)
-        return self.page.evaluate_handle(expression)
+            return self._target.evaluate_handle(expression, arg)
+        return self._target.evaluate_handle(expression)
 
     @recorded()
     def mouse_click(self, x: float, y: float, button: str = "left", click_count: int = 1) -> None:

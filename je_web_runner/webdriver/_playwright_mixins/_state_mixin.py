@@ -76,8 +76,8 @@ class _StateMixin:
     @recorded()
     def wait_for_selector(self, selector: str, timeout: float | None = None, state: str = "visible"):
         if timeout is None:
-            return self.page.wait_for_selector(selector, state=state)
-        return self.page.wait_for_selector(selector, timeout=timeout, state=state)
+            return self._target.wait_for_selector(selector, state=state)
+        return self._target.wait_for_selector(selector, timeout=timeout, state=state)
 
     @recorded()
     def wait_for_load_state(self, state: str = "load", timeout: float | None = None) -> None:

@@ -28,6 +28,7 @@ from je_web_runner.webdriver._playwright_mixins import (
     _InteractionMixin,
     _PageMixin,
     _RecordingMixin,
+    _ScopeMixin,
     _StateMixin,
 )
 from je_web_runner.webdriver._playwright_mixins._common import (
@@ -62,6 +63,7 @@ class PlaywrightWrapper(
     _InteractionMixin,
     _StateMixin,
     _RecordingMixin,
+    _ScopeMixin,
 ):
     """
     Playwright 同步 API 的完整 backend 包裝
@@ -84,6 +86,11 @@ class PlaywrightWrapper(
         # Init scripts and URL blocks, re-applied to every rebuilt context.
         self._init_scripts: list[str] = []
         self._blocked_urls: list[Any] = []
+        # The selected iframe (None: the page) and the dialog policy (see _ScopeMixin).
+        self._frame: Any = None
+        self._dialog_policy: tuple[str, str | None] | None = None
+        self._dialog_pages: list[Any] = []
+        self._last_dialog: dict[str, Any] | None = None
         self.element_wrapper = element_wrapper or playwright_element_wrapper
 
     # ----- lifecycle ---------------------------------------------------
@@ -138,9 +145,7 @@ class PlaywrightWrapper(
         if record_har_path:
             self._context_options.update({"record_har_path": record_har_path, "record_har_content": record_har_content})
         self._context = self._open_context()
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
+        self._reset_pages(self._context.new_page())
 
     def _open_context(self, storage_state: Any = None):
         """Create a context with the merged options (plus ``storage_state`` carried from the last one)."""
@@ -169,6 +174,10 @@ class PlaywrightWrapper(
             self._trace_options = None
             self._init_scripts = []
             self._blocked_urls = []
+            self._frame = None
+            self._dialog_policy = None
+            self._dialog_pages = []
+            self._last_dialog = None
             if self._playwright is not None:
                 self._playwright.stop()
             self._playwright = None
@@ -349,6 +358,30 @@ def pw_delete_cookie(name: str) -> None:
 
 def pw_check_current_page(check_dict: dict) -> None:
     playwright_wrapper_instance.check_current_page(check_dict)
+
+
+def pw_switch_to_frame(selectors: str | list[str]) -> None:
+    playwright_wrapper_instance.switch_to_frame(selectors)
+
+
+def pw_switch_to_parent_frame() -> None:
+    playwright_wrapper_instance.switch_to_parent_frame()
+
+
+def pw_switch_to_main_frame() -> None:
+    playwright_wrapper_instance.switch_to_main_frame()
+
+
+def pw_find_by(by: str, value: str, wait: bool = True, **options: Any):
+    return playwright_wrapper_instance.find_by(by, value, wait=wait, **options)
+
+
+def pw_set_dialog_policy(action: str = "accept", prompt_text: str | None = None) -> None:
+    playwright_wrapper_instance.set_dialog_policy(action, prompt_text=prompt_text)
+
+
+def pw_last_dialog() -> dict | None:
+    return playwright_wrapper_instance.last_dialog()
 
 
 def pw_quit() -> None:

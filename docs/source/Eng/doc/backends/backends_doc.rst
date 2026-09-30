@@ -150,9 +150,12 @@ Equivalent commands
    * - Frames
      - ``WR_switch``, ``WR_iframe_switch_chain``,
        ``WR_iframe_back_to_default``
-     - ``WR_pw_frame_locator_chain``
-     - Playwright addresses a frame through a locator instead of switching
-       into it; later ``WR_pw_*`` commands still act on the page.
+     - ``WR_pw_switch_to_frame`` (a selector or a list for nested iframes),
+       ``WR_pw_switch_to_parent_frame``, ``WR_pw_switch_to_main_frame``
+     - The same model on both: the selector commands act in the selected
+       frame until you switch back; on Playwright a navigation or a page
+       switch also returns to the page. Mouse, keyboard and screenshots stay
+       page-level.
    * - Device emulation
      - ``WR_set_device_metrics`` + ``WR_set_user_agent``
      - ``WR_pw_emulate``, ``WR_pw_list_devices``
@@ -235,17 +238,16 @@ Not on Selenium yet:
 * ``WR_pw_start_har_recording``, ``WR_pw_event_capture_start``,
   ``WR_pw_assert_no_console_errors``;
 * ``WR_pw_grant_permissions``, ``WR_pw_clock_install``, and named devices
-  (``WR_pw_emulate``).
-
-On neither backend yet
-----------------------
-
-* Accepting or dismissing a JavaScript dialog from an action file. Selenium
+  (``WR_pw_emulate``);
+* answering JavaScript dialogs: ``WR_pw_set_dialog_policy`` (``accept`` with
+  an optional prompt text, ``dismiss``) and ``WR_pw_last_dialog``. Selenium
   reaches an alert through ``WR_switch`` but has no accept or dismiss
-  command; Playwright dismisses dialogs unless a handler was registered
-  before the dialog opened.
-* Role and text locators (Playwright's ``get_by_role`` …). Selenium can only
-  approximate them with XPath.
+  command.
+
+Only approximated on Selenium: finding elements the way a user would,
+``WR_pw_find_by`` (``role``, ``text``, ``label``, ``placeholder``,
+``alt_text``, ``title``, ``test_id``). Selenium can only express these as
+XPath.
 
 Cloud Grid
 ==========

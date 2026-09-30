@@ -144,9 +144,11 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
    * - Frame
      - ``WR_switch``、``WR_iframe_switch_chain``、
        ``WR_iframe_back_to_default``
-     - ``WR_pw_frame_locator_chain``
-     - Playwright 透過 locator 指定 frame，而不是切進去；之後的 ``WR_pw_*``
-       命令仍作用在頁面上。
+     - ``WR_pw_switch_to_frame``\ （一個 selector，或巢狀 iframe 的一串 selector）、
+       ``WR_pw_switch_to_parent_frame``、``WR_pw_switch_to_main_frame``
+     - 兩邊的模型相同：切換後 selector 命令都作用在選定的 frame，直到切回來；
+       Playwright 在導覽或切換分頁時也會回到頁面。滑鼠、鍵盤與截圖一律作用在
+       頁面上。
    * - 裝置模擬
      - ``WR_set_device_metrics`` + ``WR_set_user_agent``
      - ``WR_pw_emulate``、``WR_pw_list_devices``
@@ -225,16 +227,14 @@ Selenium 還沒有：
 * ``WR_pw_start_har_recording``、``WR_pw_event_capture_start``、
   ``WR_pw_assert_no_console_errors``；
 * ``WR_pw_grant_permissions``、``WR_pw_clock_install``，以及具名裝置
-  （``WR_pw_emulate``）。
+  （``WR_pw_emulate``）；
+* 回應 JavaScript 對話框：``WR_pw_set_dialog_policy``\ （``accept``，可附 prompt
+  文字；``dismiss``）與 ``WR_pw_last_dialog``。Selenium 可以用 ``WR_switch``
+  取得 alert，但沒有接受或關閉的命令。
 
-兩邊都還沒有
-------------
-
-* 在 action 檔裡接受或關閉 JavaScript 對話框。Selenium 可以用 ``WR_switch``
-  取得 alert，但沒有接受或關閉的命令；Playwright 會自動關閉對話框，除非在
-  對話框出現前已註冊 handler。
-* role 與文字 locator（Playwright 的 ``get_by_role`` …）。Selenium 只能用
-  XPath 近似。
+Selenium 只能近似：以使用者的角度找元素，``WR_pw_find_by``\ （``role``、
+``text``、``label``、``placeholder``、``alt_text``、``title``、``test_id``）。
+Selenium 只能用 XPath 表達。
 
 雲端 Grid
 =========

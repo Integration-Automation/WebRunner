@@ -22,7 +22,15 @@ class _PageMixin:
         page = self.context.new_page()
         self._track_page(page)
         self._page_index = self._pages.index(page)
+        self._frame = None
         return self._page_index
+
+    def _reset_pages(self, page: Any) -> None:
+        """Make ``page`` the only, current page (after a launch or a context rebuild)."""
+        self._pages = [page]
+        self._page_index = 0
+        self._frame = None
+        self._watch_dialogs(page)
 
     def _track_page(self, page: Any) -> None:
         """
@@ -34,12 +42,14 @@ class _PageMixin:
             return
         self._pages.append(page)
         page.on("close", self._forget_page)
+        self._watch_dialogs(page)
 
     def _forget_page(self, page: Any) -> None:
         index = next((i for i, known in enumerate(self._pages) if known is page), None)
         if index is None:
             return
         del self._pages[index]
+        self._frame = None
         if not self._pages:
             self._page_index = -1
         elif index < self._page_index:
@@ -52,6 +62,7 @@ class _PageMixin:
         if index < 0 or index >= len(self._pages):
             raise PlaywrightBackendError(f"page index {index} out of range")
         self._page_index = index
+        self._frame = None
 
     @recorded()
     def close_page(self, index: int | None = None) -> None:
@@ -79,6 +90,7 @@ class _PageMixin:
         for index, page in enumerate(self._pages):
             if matches(page):
                 self._page_index = index
+                self._frame = None
                 return True
         return False
 
@@ -91,6 +103,7 @@ class _PageMixin:
         web_runner_logger.info(f"playwright to_url: {url}")
         params = {"url": url}
         try:
+            self._frame = None
             self.page.goto(url, **goto_options)
             record("to_url", params, None)
         except Exception as error:
@@ -99,14 +112,17 @@ class _PageMixin:
 
     @recorded()
     def forward(self) -> None:
+        self._frame = None
         self.page.go_forward()
 
     @recorded()
     def back(self) -> None:
+        self._frame = None
         self.page.go_back()
 
     @recorded()
     def refresh(self) -> None:
+        self._frame = None
         self.page.reload()
 
     def url(self) -> str:
@@ -130,11 +146,11 @@ class _PageMixin:
 
     def find_element(self, selector: str):
         web_runner_logger.info(f"playwright find_element: {selector}")
-        return self.page.query_selector(selector)
+        return self._target.query_selector(selector)
 
     def find_elements(self, selector: str) -> list[Any]:
         web_runner_logger.info(f"playwright find_elements: {selector}")
-        return self.page.query_selector_all(selector)
+        return self._target.query_selector_all(selector)
 
     def find_element_with_test_object_record(self, element_name: str):
         """
@@ -142,13 +158,13 @@ class _PageMixin:
         first matching element on ``element_wrapper``.
         """
         selector = selector_for_recorded_name(element_name)
-        element = self.page.query_selector(selector)
+        element = self._target.query_selector(selector)
         self.element_wrapper.current_element = element
         return element
 
     def find_elements_with_test_object_record(self, element_name: str):
         selector = selector_for_recorded_name(element_name)
-        elements = self.page.query_selector_all(selector)
+        elements = self._target.query_selector_all(selector)
         self.element_wrapper.current_element_list = list(elements)
         if elements:
             self.element_wrapper.current_element = elements[0]
