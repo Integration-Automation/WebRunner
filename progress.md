@@ -43,5 +43,3 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: X-
   3. S2: `je_web_runner/utils/autocontrol_bridge/` with `WR_ac_available`, `WR_ac_list_commands`, `WR_ac_run`, `WR_ac_run_actions`; deny `AC_shell_command`, `AC_execute_process`, `AC_add_package_*`, `AC_execute_action` and re-entry through `AC_web_*`; `autocontrol` extra.
   4. S3: `WR_ac_fill_native_file_dialog`, `WR_ac_basic_auth` (takes env-var names, never values), `WR_ac_assert_image_on_screen`; refuse headless/remote/cloud drivers.
   5. S4: viewport → screen coordinate mapping (element rect, `screenX/Y`, outer/inner size, `devicePixelRatio`; OS scale from AutoControl `monitor_layout`), then `WR_ac_click_element_native`.
-
-- **#21** MCP conformance test with the official client: add `mcp` (2.x) to `dev_requirements.txt` and `.github/requirements/ci.in`, regenerate the hash-locked `ci.txt` (command in its header), and add a stdio round-trip test that drives `python -m je_web_runner.mcp_server` through `mcp.client` in both eras (the server itself stays hand-rolled, no runtime `mcp` dependency).
