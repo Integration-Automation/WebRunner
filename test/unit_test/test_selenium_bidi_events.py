@@ -3,6 +3,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from selenium.common.exceptions import WebDriverException
@@ -60,6 +61,16 @@ class TestUrlPatterns(unittest.TestCase):
         for pattern in ("", "https://a.test/*.js", "*/api/*", {"path": "/x"}, 5):
             with self.subTest(pattern=pattern), self.assertRaises(BidiEventsError):
                 to_bidi_url_pattern(pattern)
+
+
+class TestConnection(unittest.TestCase):
+
+    def test_older_and_newer_selenium_keep_the_connection_under_different_names(self):
+        older, newer = object(), object()
+        self.assertIs(selenium_events._connection(SimpleNamespace(network=SimpleNamespace(conn=older))), older)
+        self.assertIs(selenium_events._connection(SimpleNamespace(network=SimpleNamespace(_conn=newer))), newer)
+        with self.assertRaises(BidiEventsError):
+            selenium_events._connection(SimpleNamespace(network=SimpleNamespace()))
 
 
 class TestDriverChecks(unittest.TestCase):

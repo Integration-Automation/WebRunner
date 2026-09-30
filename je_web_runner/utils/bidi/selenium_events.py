@@ -70,6 +70,19 @@ class _RawEvent:
         return params
 
 
+def _connection(driver: Any) -> Any:
+    """
+    驅動程式的 BiDi WebSocket 連線
+    The driver's BiDi WebSocket connection: ``network.conn`` in older Selenium (4.41 has
+    it), ``network._conn`` in newer (4.49). Reading ``driver.network`` starts BiDi.
+    """
+    network = driver.network
+    conn = getattr(network, "conn", None) or getattr(network, "_conn", None)
+    if conn is None:
+        raise BidiEventsError("this Selenium version exposes no BiDi connection on driver.network")
+    return conn
+
+
 def _command(method: str, params: dict[str, Any]) -> Any:
     from selenium.webdriver.common.bidi.common import command_builder
     return command_builder(method, params)
@@ -147,7 +160,7 @@ class SeleniumBidiEvents:
         return driver
 
     def _listen(self, event_name: str, callback: Callable[[dict[str, Any]], None]) -> tuple[Any, Any]:
-        conn = self._driver().network.conn
+        conn = _connection(self._driver())
         event = _RawEvent(event_name)
         callback_id = conn.add_callback(event, callback)
         with _BIDI_LOCK:
@@ -155,7 +168,7 @@ class SeleniumBidiEvents:
         return event, callback_id
 
     def _stop_listening(self, event: Any, callback_id: Any) -> None:
-        conn = self._driver().network.conn
+        conn = _connection(self._driver())
         conn.remove_callback(event, callback_id)
         with _BIDI_LOCK:
             conn.execute(_command("session.unsubscribe", {"events": [event.event_class]}))
@@ -187,7 +200,7 @@ class SeleniumBidiEvents:
         with _BIDI_LOCK:
             self._preload_id = driver.script._add_preload_script(  # pylint: disable=protected-access
                 _DOM_OBSERVER, arguments=[channel])
-            driver.network.conn.execute(_command("script.callFunction", {
+            _connection(driver).execute(_command("script.callFunction", {
                 "functionDeclaration": _DOM_OBSERVER, "arguments": [channel], "awaitPromise": False,
                 "target": {"context": context},
             }))
@@ -306,7 +319,7 @@ class SeleniumBidiEvents:
         except (TypeError, ValueError, AttributeError) as error:
             raise BidiEventsError(f"unusable mock response {response!r}: {error!r}") from error
         with _BIDI_LOCK:
-            result = self._driver().network.conn.execute(_command(
+            result = _connection(self._driver()).execute(_command(
                 "network.addIntercept", {"phases": ["beforeRequestSent"], "urlPatterns": [bidi_pattern]}))
         self._mocks[result["intercept"]] = (url_pattern, dict(response))
         if self._mock_listener is None:
@@ -334,7 +347,7 @@ class SeleniumBidiEvents:
     def _remove_mock(self, intercept: str) -> None:
         del self._mocks[intercept]
         with _BIDI_LOCK:
-            self._driver().network.conn.execute(_command("network.removeIntercept", {"intercept": intercept}))
+            _connection(self._driver()).execute(_command("network.removeIntercept", {"intercept": intercept}))
 
     def _stop_mock_listener(self) -> None:
         if self._mock_listener is not None:
@@ -349,7 +362,7 @@ class SeleniumBidiEvents:
             return
         request_id = params.get("request", {}).get("request")
         _pattern, mock = self._mocks[ours[-1]]
-        conn = self._driver().network.conn
+        conn = _connection(self._driver())
         with _BIDI_LOCK:
             try:
                 conn.execute(_command("network.provideResponse", _provide_params(request_id, mock)))
