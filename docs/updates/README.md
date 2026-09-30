@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-05 | 2026-10-01 | Move the WR_* command table out of action_executor.py | #done #refactor #executor | [2026-10](2026-10.md) |
 | U-20261001-04 | 2026-10-01 | Split PlaywrightWrapper into mixins under the 750-line limit | #refactor #playwright | [2026-10](2026-10.md) |
 | U-20261001-03 | 2026-10-01 | Selenium→Playwright translator targets only registered commands | #change #playwright | [2026-10](2026-10.md) |
 | U-20261001-02 | 2026-10-01 | MCP server: UTF-8 stdio, silent notifications, isError for tool failures | #change #mcp | [2026-10](2026-10.md) |
@@ -92,5 +93,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 4 |
+| [2026-10.md](2026-10.md) | 2026-10 | 5 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
