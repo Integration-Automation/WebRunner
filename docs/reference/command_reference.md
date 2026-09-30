@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (483 commands).
+Auto-generated from the executor's event_dict (489 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -325,6 +325,10 @@ Auto-generated from the executor's event_dict (483 commands).
 | `WR_pw_press` | `(selector: 'str', key: 'str', **options: 'Any') -> 'None'` |  |
 | `WR_pw_print_page` | `(file_path: 'str') -> 'str'` |  |
 | `WR_pw_quit` | `() -> 'None'` |  |
+| `WR_pw_recorder_pull_events` | `()` |  |
+| `WR_pw_recorder_save` | `(output_path, raw_events_path=None)` |  |
+| `WR_pw_recorder_start` | `()` |  |
+| `WR_pw_recorder_stop` | `()` |  |
 | `WR_pw_refresh` | `() -> 'None'` |  |
 | `WR_pw_route_clear` | `() -> 'None'` |  |
 | `WR_pw_route_mock` | `(url_pattern: 'str', response: 'dict') -> 'None'` |  |
@@ -382,6 +386,8 @@ Auto-generated from the executor's event_dict (483 commands).
 | `WR_pw_video_start` | `(video_dir: 'str', width: 'int | None' = None, height: 'int | None' = None) -> 'None'` |  |
 | `WR_pw_video_stop` | `() -> 'list[str]'` |  |
 | `WR_pw_viewport_size` | `() -> 'dict | None'` |  |
+| `WR_pw_visual_capture_baseline` | `(baseline_path: 'str') -> 'str'` | :func:`capture_baseline` for the current Playwright page. |
+| `WR_pw_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0) -> 'dict'` | :func:`compare_with_baseline` for the current Playwright page. |
 | `WR_pw_wait_for_load_state` | `(state: 'str' = 'load', timeout: 'float | None' = None) -> 'None'` |  |
 | `WR_pw_wait_for_selector` | `(selector: 'str', timeout: 'float | None' = None, state: 'str' = 'visible')` |  |
 | `WR_pw_wait_for_timeout` | `(timeout_ms: 'float') -> 'None'` |  |
@@ -483,7 +489,7 @@ Auto-generated from the executor's event_dict (483 commands).
 | `WR_user_factory` | `(prefix: 'str' = 'user') -> 'Factory'` | Default user shape: id / name / email / password. |
 | `WR_validate_action_file` | `(json_file_path: 'str') -> 'bool'` | 讀取並驗證動作 JSON 檔案 |
 | `WR_validate_action_json` | `(data: 'list | dict') -> 'bool'` | 驗證動作 JSON 是否符合執行器格式 |
-| `WR_visual_capture_baseline` | `(baseline_path: 'str') -> 'str'` | 擷取當前頁面並儲存為基準圖 |
-| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
+| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000024A52CF04A0>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
+| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000024A52CF04A0>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
 | `WR_wait_for_download` | `(directory: 'str', timeout: 'float' = 60.0, suffix: 'str | None' = None, poll_seconds: 'float' = 0.5) -> 'str'` | 等待 ``directory`` 內出現新檔案（會跳過 ``.crdownload`` / ``.part``） |
 | `WR_write_pom_to_file` | `(source: 'str', output_path: 'str') -> 'str'` | Write generated source to ``output_path``; returns the path written. |

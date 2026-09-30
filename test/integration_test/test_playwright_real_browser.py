@@ -135,6 +135,20 @@ class TestRealBrowser(unittest.TestCase):
         self.assertEqual(Path(saved).name, "hello.txt")
         self.assertEqual(Path(saved).read_text(encoding="utf-8"), "hello")
 
+    def test_recorder_and_visual_regression(self):
+        pytest.importorskip("PIL", reason="visual regression needs Pillow")
+        baseline = str(Path(self.tmp.name) / "base.png")
+        values = _run([
+            ["WR_pw_recorder_start"],
+            ["WR_pw_click", {"selector": "#box"}],
+            ["WR_pw_recorder_pull_events"],
+            ["WR_pw_recorder_stop"],
+            ["WR_pw_visual_capture_baseline", {"baseline_path": baseline}],
+            ["WR_pw_visual_compare", {"baseline_path": baseline}],
+        ])
+        self.assertTrue(any(event.get("type") == "click" for event in values[2]))
+        self.assertTrue(values[5]["match"])
+
 
 class TestPersistentProfile(unittest.TestCase):
 

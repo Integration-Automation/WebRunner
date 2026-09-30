@@ -25,7 +25,7 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: X-
 - **#17** Unified Core Web Vitals budget assertion (`WR_assert_web_vitals`): Combine `perf_metrics`, `inp_tracker`, and `lighthouse` into a single declarative command to assert LCP, CLS, INP, and FCP budgets in one step with automated diagnostic breakdown in JSON and HTML reports.
 
 - **#19** Selenium ↔ Playwright parity. The comparison in `docs/source/{Eng,Zh}/doc/backends/backends_doc.rst` lists the equivalent commands and what is on one backend only; move each gap closed below from its "not yet" list in both languages and the READMEs' Playwright section (`test/unit_test/test_backends_doc_commands.py` checks every named command exists). There is no backend abstraction: commands are picked by prefix. Stages:
-  1. Playwright gaps: `WR_pw_*` callbacks (the callback executor registers none), visual regression (`WR_visual_*` screenshot through Selenium) and the browser recorder (`WR_recorder_*`).
+  1. Playwright: several browsers at once (the twin of `WR_new_driver` called more than once and `WR_change_index_of_webdriver`); `PlaywrightWrapper` holds one browser, and other modules import its singleton by name, so switching has to swap the wrapper's state rather than the instance.
   2. Selenium gaps: JSON-usable waits (`WR_explicit_wait` needs a Python callable), alert accept/dismiss/text, check/uncheck, hover, inner text/HTML, find by raw selector, named device presets, permissions and fake clock via CDP.
   3. Selenium gaps that need CDP/BiDi: declarative route mock (`WR_enable_fetch_interception` leaves JSON callers without a request id), event capture and asserts (with #14), HAR.
 

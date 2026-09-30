@@ -182,6 +182,14 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
        ``WR_pw_set_cache_disabled``
      - Playwright 的快取開關各瀏覽器都能用：只要有 route 生效，HTTP 快取就會
        關閉。
+   * - 視覺回歸、錄製器、callback
+     - ``WR_visual_capture_baseline``、``WR_visual_compare``、
+       ``WR_recorder_start`` / ``_stop`` / ``_pull_events`` / ``_save``；
+       callback executor
+     - ``WR_pw_visual_capture_baseline``、``WR_pw_visual_compare``、
+       ``WR_pw_recorder_start`` / ``_stop`` / ``_pull_events`` / ``_save``；
+       每個 ``WR_pw_*`` 命令也都能當 callback 的觸發命令
+     - 行為相同：同一套比對與錄製腳本在 Playwright 頁面上執行。
    * - 網路節流、原始 CDP
      - ``WR_throttle``、``WR_set_network_conditions``、
        ``WR_execute_cdp_cmd``、``WR_cdp``
@@ -213,10 +221,7 @@ Playwright 做不到：
 Playwright 還沒有（Playwright API 本身支援）：
 
 * 同時開多個 driver（多次 ``WR_new_driver``、
-  ``WR_change_index_of_webdriver``）；
-* callback（callback executor 沒有 ``WR_pw_*`` 命令）；
-* 視覺回歸（``WR_visual_capture_baseline``、``WR_visual_compare``）與瀏覽器
-  錄製器（``WR_recorder_*``）。
+  ``WR_change_index_of_webdriver``）。
 
 只有 Playwright 有
 ------------------

@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from io import BytesIO
 from pathlib import Path
+from typing import Callable
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -32,9 +33,20 @@ def _require_pillow():
         ) from error
 
 
-def _capture_png_bytes() -> bytes:
-    """Pull a PNG screenshot from the current driver via the WebRunner wrapper."""
-    png = webdriver_wrapper_instance.get_screenshot_as_png()
+def _selenium_png() -> bytes:
+    """A PNG screenshot of the current Selenium page."""
+    return webdriver_wrapper_instance.get_screenshot_as_png()
+
+
+def _playwright_png() -> bytes:
+    """A PNG screenshot of the current Playwright page."""
+    from je_web_runner.webdriver import playwright_wrapper  # lazy: Playwright is optional
+    return playwright_wrapper.playwright_wrapper_instance.screenshot_bytes()
+
+
+def _capture_png_bytes(screenshot: Callable[[], bytes] = _selenium_png) -> bytes:
+    """Take a PNG screenshot with ``screenshot`` (the Selenium page by default)."""
+    png = screenshot()
     if not png:
         raise VisualRegressionError("driver returned no screenshot bytes")
     return png
@@ -44,17 +56,18 @@ def _ensure_parent(path: str) -> None:
     Path(path).parent.mkdir(parents=True, exist_ok=True)
 
 
-def capture_baseline(baseline_path: str) -> str:
+def capture_baseline(baseline_path: str, screenshot: Callable[[], bytes] = _selenium_png) -> str:
     """
     擷取當前頁面並儲存為基準圖
     Capture the current page and save it as the baseline image.
 
     :param baseline_path: 基準圖輸出路徑 / output path for the baseline PNG
+    :param screenshot: where the PNG comes from (the Selenium page by default)
     :return: 基準圖路徑 / the baseline path written
     """
     web_runner_logger.info(f"capture_baseline: {baseline_path}")
     _ensure_parent(baseline_path)
-    png = _capture_png_bytes()
+    png = _capture_png_bytes(screenshot)
     with open(baseline_path, "wb") as out_file:
         out_file.write(png)
     return baseline_path
@@ -73,6 +86,7 @@ def compare_with_baseline(
     diff_path: str | None = None,
     current_path: str | None = None,
     threshold: int = 0,
+    screenshot: Callable[[], bytes] = _selenium_png,
 ) -> dict:
     """
     擷取目前頁面並與基準圖比較
@@ -84,6 +98,7 @@ def compare_with_baseline(
     :param current_path: 同時保存目前截圖到此路徑 (預設不保存)
                           Optional path to also persist the current screenshot.
     :param threshold: 容忍像素差異數量 / pixel-difference tolerance
+    :param screenshot: where the current PNG comes from (the Selenium page by default)
     :return: dict 包含 match / pixel_diff / diff_image_path / 大小資訊
               dict with match / pixel_diff / diff_image_path / size info
     """
@@ -92,7 +107,7 @@ def compare_with_baseline(
         raise VisualRegressionError(f"baseline not found: {baseline_path}")
     pil_image, pil_image_chops = _require_pillow()
 
-    current_png = _capture_png_bytes()
+    current_png = _capture_png_bytes(screenshot)
     if current_path:
         _ensure_parent(current_path)
         with open(current_path, "wb") as out_file:
@@ -124,3 +139,19 @@ def compare_with_baseline(
         "pixel_diff": pixel_diff,
         "diff_image_path": target,
     }
+
+
+def playwright_capture_baseline(baseline_path: str) -> str:
+    """:func:`capture_baseline` for the current Playwright page."""
+    return capture_baseline(baseline_path, screenshot=_playwright_png)
+
+
+def playwright_compare_with_baseline(
+    baseline_path: str,
+    diff_path: str | None = None,
+    current_path: str | None = None,
+    threshold: int = 0,
+) -> dict:
+    """:func:`compare_with_baseline` for the current Playwright page."""
+    return compare_with_baseline(baseline_path, diff_path=diff_path, current_path=current_path,
+                                 threshold=threshold, screenshot=_playwright_png)

@@ -4,6 +4,7 @@ from sys import stderr
 from je_web_runner.manager.webrunner_manager import web_runner
 from je_web_runner.utils.exception.exception_tags import get_bad_trigger_function, get_bad_trigger_method
 from je_web_runner.utils.exception.exceptions import CallbackExecutorException
+from je_web_runner.utils.executor._playwright_commands import PLAYWRIGHT_COMMANDS
 from je_web_runner.utils.executor.action_executor import execute_action, execute_files
 from je_web_runner.utils.generate_report.generate_html_report import generate_html, generate_html_report
 from je_web_runner.utils.generate_report.generate_json_report import generate_json, generate_json_report
@@ -136,6 +137,9 @@ class CallbackFunctionExecutor:
             "WR_element_select_by_value": web_runner.webdriver_element.select_by_value,
             "WR_element_select_by_index": web_runner.webdriver_element.select_by_index,
             "WR_element_select_by_visible_text": web_runner.webdriver_element.select_by_visible_text,
+
+            # every Playwright command, as the action executor has them
+            **PLAYWRIGHT_COMMANDS,
         }
 
     def callback_function(

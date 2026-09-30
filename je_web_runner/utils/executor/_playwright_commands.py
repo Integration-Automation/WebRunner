@@ -8,8 +8,17 @@ from __future__ import annotations
 
 from typing import Any
 
+from je_web_runner.utils.recorder.browser_recorder import PlaywrightScriptRunner
+from je_web_runner.utils.recorder.browser_recorder import pull_events as _recorder_pull_events
+from je_web_runner.utils.recorder.browser_recorder import save_recording as _recorder_save_recording
+from je_web_runner.utils.recorder.browser_recorder import start_recording as _recorder_start
+from je_web_runner.utils.recorder.browser_recorder import stop_recording as _recorder_stop
+from je_web_runner.utils.visual_regression.visual_diff import playwright_capture_baseline as _pw_visual_baseline
+from je_web_runner.utils.visual_regression.visual_diff import playwright_compare_with_baseline as _pw_visual_compare
 from je_web_runner.webdriver import playwright_wrapper as _pw
 from je_web_runner.webdriver.playwright_element_wrapper import playwright_element_wrapper as _pw_element
+
+_PW_SCRIPTS = PlaywrightScriptRunner(_pw.playwright_wrapper_instance)
 
 PLAYWRIGHT_COMMANDS: dict[str, Any] = {
     # playwright backend — page-level operations
@@ -75,6 +84,15 @@ PLAYWRIGHT_COMMANDS: dict[str, Any] = {
     "WR_pw_launch_persistent": _pw.pw_launch_persistent,
     "WR_pw_download": _pw.pw_download,
     "WR_pw_set_cache_disabled": _pw.pw_set_cache_disabled,
+    # visual regression and the browser recorder on the Playwright page
+    "WR_pw_visual_capture_baseline": _pw_visual_baseline,
+    "WR_pw_visual_compare": _pw_visual_compare,
+    "WR_pw_recorder_start": lambda: _recorder_start(_PW_SCRIPTS),
+    "WR_pw_recorder_stop": lambda: _recorder_stop(_PW_SCRIPTS),
+    "WR_pw_recorder_pull_events": lambda: _recorder_pull_events(_PW_SCRIPTS),
+    "WR_pw_recorder_save": lambda output_path, raw_events_path=None: _recorder_save_recording(
+        _PW_SCRIPTS, output_path, raw_events_path
+    ),
     "WR_pw_element_submit": _pw_element.submit,
     "WR_pw_element_value_of_css_property": _pw_element.value_of_css_property,
     "WR_pw_element_assert": _pw_element.check_current_element,

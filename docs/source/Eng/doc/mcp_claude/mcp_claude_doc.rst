@@ -171,7 +171,7 @@ Tool catalog
 
 The server registers 22 tools out of the box. Use
 ``webrunner_list_commands`` for the *full* runtime command list (every
-``WR_*`` registered in the action executor, 483 of them).
+``WR_*`` registered in the action executor, 489 of them).
 
 Authoring & lint
 ----------------

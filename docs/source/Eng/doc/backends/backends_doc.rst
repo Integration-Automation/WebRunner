@@ -191,6 +191,15 @@ Equivalent commands
        ``WR_pw_set_cache_disabled``
      - Playwright's cache switch works on every browser: any active route
        turns the HTTP cache off.
+   * - Visual regression, recorder, callbacks
+     - ``WR_visual_capture_baseline``, ``WR_visual_compare``,
+       ``WR_recorder_start`` / ``_stop`` / ``_pull_events`` / ``_save``; the
+       callback executor
+     - ``WR_pw_visual_capture_baseline``, ``WR_pw_visual_compare``,
+       ``WR_pw_recorder_start`` / ``_stop`` / ``_pull_events`` / ``_save``;
+       every ``WR_pw_*`` command is also a callback trigger
+     - Same behaviour: the same comparison and recorder script run on the
+       Playwright page.
    * - Throttling, raw CDP
      - ``WR_throttle``, ``WR_set_network_conditions``,
        ``WR_execute_cdp_cmd``, ``WR_cdp``
@@ -224,10 +233,7 @@ Not possible on Playwright:
 Not on Playwright yet (the Playwright API supports them):
 
 * several drivers at once (``WR_new_driver`` more than once,
-  ``WR_change_index_of_webdriver``);
-* callbacks (the callback executor has no ``WR_pw_*`` command);
-* visual regression (``WR_visual_capture_baseline``,
-  ``WR_visual_compare``) and the browser recorder (``WR_recorder_*``).
+  ``WR_change_index_of_webdriver``).
 
 Only on Playwright
 ------------------
