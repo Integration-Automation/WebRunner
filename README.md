@@ -37,7 +37,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - [Action Executor](#action-executor)
 - [Backends](#backends)
   - [Selenium (default)](#selenium-default)
-  - [Playwright (full)](#playwright-full)
+  - [Playwright](#playwright)
   - [Cloud Grid](#cloud-grid)
   - [Appium (mobile)](#appium-mobile)
 - [Reports](#reports)
@@ -63,7 +63,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 
 ## Highlights
 
-- **Two backends, one executor.** Selenium is the default; the Playwright backend mirrors the same operational surface under `WR_pw_*` and is fully opt-in.
+- **Two backends, one executor.** Selenium is the default; the Playwright backend covers most of the same operations under `WR_pw_*` and is fully opt-in. A comparison table lists the equivalent commands and what exists on one backend only.
 - **Action JSON as a contract.** Every command resolves through `Executor.event_dict`; legacy aliases stay alongside snake_case names for back-compat, and a JSON Schema is exported for IDE autocomplete.
 - **Reports in five formats.** HTML, JSON, XML, JUnit XML (CI-native), and Allure result files; a single manifest binds every output for downstream globs.
 - **Orchestration built in.** Tag filters, dependency declarations with topological order, ledger-backed re-run-only-failed, flaky detection, A/B run mode, multi-user matrix, deterministic sharding, watch mode, and a stdlib scheduler.
@@ -511,9 +511,11 @@ executor.set_allow_arbitrary_script(False)                     # gate WR_execute
 
 Selenium is the original backend. Every legacy command (and its modern alias) routes here unless an explicit `WR_pw_*` / `WR_appium_*` prefix is used.
 
-### Playwright (full)
+### Playwright
 
-The Playwright backend mirrors the operational surface of the Selenium wrapper under `WR_pw_*`:
+The Playwright backend covers most everyday operations of the Selenium wrapper under `WR_pw_*`, but it is not a one-to-one copy. The comparison table in `docs/source/Eng/doc/backends/backends_doc.rst` lists the equivalent commands and how they differ (for example, timeouts in milliseconds instead of seconds, tabs switched by index only), what cannot exist on the other backend (Internet Explorer, Selenium Grid, Appium and OS window geometry on Selenium only; WebKit, the trace viewer and automatic actionability waits on Playwright only), and what is not on the other backend yet.
+
+The page-level shortcuts pass extra Playwright options through (`button`, `modifiers`, `timeout`, `force`, `wait_until` …), page-level actions are added to the test record like Selenium steps, and pages the site opens itself (popups, `window.open`) are tracked so `WR_pw_switch_to_page` can reach them. The commands:
 
 - **Lifecycle / pages / navigation** — `WR_pw_launch`, `WR_pw_quit`, `WR_pw_new_page`, `WR_pw_switch_to_page`, `WR_pw_close_page`, `WR_pw_to_url`, `WR_pw_forward`, `WR_pw_back`, `WR_pw_refresh`, `WR_pw_url`, `WR_pw_title`, `WR_pw_content`.
 - **Find** — `WR_pw_find_element`, `WR_pw_find_elements`, `WR_pw_find_element_with_test_object_record`, `WR_pw_find_with_healing`.

@@ -37,7 +37,7 @@ WebRunner（`je_web_runner`）最初只是一个 Selenium 封装，如今已成�
 - [动作执行器](#动作执行器)
 - [后端](#后端)
   - [Selenium（默认）](#selenium默认)
-  - [Playwright（完整）](#playwright完整)
+  - [Playwright](#playwright)
   - [Cloud Grid（云端网格）](#cloud-grid云端网格)
   - [Appium（移动端）](#appium移动端)
 - [报告](#报告)
@@ -63,7 +63,7 @@ WebRunner（`je_web_runner`）最初只是一个 Selenium 封装，如今已成�
 
 ## 亮点特性
 
-- **两个后端，一个执行器。** Selenium 为默认后端；Playwright 后端在 `WR_pw_*` 下镜像了相同的操作面，完全按需选用。
+- **两个后端，一个执行器。** Selenium 为默认后端；Playwright 后端在 `WR_pw_*` 下涵盖大部分相同的操作，完全按需选用。对照表列出对应的命令，以及只有其中一个后端才有的功能。
 - **动作 JSON 即契约。** 每个命令都通过 `Executor.event_dict` 解析；旧式别名与 snake_case 名称并存以保持向后兼容，并导出 JSON Schema 供 IDE 自动补全。
 - **五种格式的报告。** HTML、JSON、XML、JUnit XML（CI 原生）以及 Allure 结果文件；单一清单（manifest）将每个输出绑定起来，方便下游用通配符匹配。
 - **内建编排能力。** 标签过滤、带拓扑排序的依赖声明、由账本支撑的只重跑失败项、抖动检测、A/B 运行模式、多用户矩阵、确定性分片、监视模式，以及一个基于标准库的调度器。
@@ -507,9 +507,11 @@ executor.set_allow_arbitrary_script(False)                     # gate WR_execute
 
 Selenium 是最初的后端。除非显式使用 `WR_pw_*` / `WR_appium_*` 前缀，否则每个旧式命令（及其现代别名）都路由到这里。
 
-### Playwright（完整）
+### Playwright
 
-Playwright 后端在 `WR_pw_*` 下镜像了 Selenium 封装的操作面：
+Playwright 后端在 `WR_pw_*` 下涵盖 Selenium 封装的大部分日常操作，但不是一对一的复本。`docs/source/Zh/doc/backends/backends_doc.rst` 里的对照表列出对应的命令与差异（例如超时用毫秒而不是秒、标签页只能按索引切换）、另一个后端做不到的功能（只有 Selenium：Internet Explorer、Selenium Grid、Appium、操作系统窗口的位置与大小；只有 Playwright：WebKit、trace viewer、每个动作前自动等待元素可操作），以及另一个后端还没有的功能。
+
+页面级快捷方法会把额外的 Playwright 选项原样传下去（`button`、`modifiers`、`timeout`、`force`、`wait_until` …），页面级动作会像 Selenium 的步骤一样写进测试记录，网站自己打开的页面（popup、`window.open`）也会被追踪，`WR_pw_switch_to_page` 可以切过去。命令如下：
 
 - **生命周期 / 页面 / 导航** —— `WR_pw_launch`、`WR_pw_quit`、`WR_pw_new_page`、`WR_pw_switch_to_page`、`WR_pw_close_page`、`WR_pw_to_url`、`WR_pw_forward`、`WR_pw_back`、`WR_pw_refresh`、`WR_pw_url`、`WR_pw_title`、`WR_pw_content`。
 - **查找** —— `WR_pw_find_element`、`WR_pw_find_elements`、`WR_pw_find_element_with_test_object_record`、`WR_pw_find_with_healing`。

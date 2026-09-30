@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+from je_web_runner.webdriver._playwright_mixins._common import recorded
 from je_web_runner.webdriver._playwright_mixins._common import PlaywrightBackendError, record
 from je_web_runner.webdriver.playwright_locator import selector_for_recorded_name
 
@@ -15,28 +16,51 @@ class _PageMixin:
     by selector or recorded TestObject name.
     """
 
+    @recorded()
     def new_page(self) -> int:
         """Open a new page in the current context; returns its index."""
         page = self.context.new_page()
-        self._pages.append(page)
-        self._page_index = len(self._pages) - 1
+        self._track_page(page)
+        self._page_index = self._pages.index(page)
         return self._page_index
 
+    def _track_page(self, page: Any) -> None:
+        """
+        記住 context 開啟的每個分頁（包含網站自己開的 popup）
+        Remember a page the context opened, including popups and ``window.open``
+        pages the site opens itself; forget it again when it closes.
+        """
+        if any(known is page for known in self._pages):
+            return
+        self._pages.append(page)
+        page.on("close", self._forget_page)
+
+    def _forget_page(self, page: Any) -> None:
+        index = next((i for i, known in enumerate(self._pages) if known is page), None)
+        if index is None:
+            return
+        del self._pages[index]
+        if not self._pages:
+            self._page_index = -1
+        elif index < self._page_index:
+            self._page_index -= 1
+        else:
+            self._page_index = min(self._page_index, len(self._pages) - 1)
+
+    @recorded()
     def switch_to_page(self, index: int) -> None:
         if index < 0 or index >= len(self._pages):
             raise PlaywrightBackendError(f"page index {index} out of range")
         self._page_index = index
 
+    @recorded()
     def close_page(self, index: int | None = None) -> None:
         target_index = self._page_index if index is None else index
         if target_index < 0 or target_index >= len(self._pages):
             raise PlaywrightBackendError(f"page index {target_index} out of range")
-        self._pages[target_index].close()
-        del self._pages[target_index]
-        if not self._pages:
-            self._page_index = -1
-        else:
-            self._page_index = min(self._page_index, len(self._pages) - 1)
+        page = self._pages[target_index]
+        page.close()
+        self._forget_page(page)
 
     def page_count(self) -> int:
         return len(self._pages)
@@ -53,12 +77,15 @@ class _PageMixin:
             web_runner_logger.error(f"playwright to_url failed: {error!r}")
             record("to_url", params, error)
 
+    @recorded()
     def forward(self) -> None:
         self.page.go_forward()
 
+    @recorded()
     def back(self) -> None:
         self.page.go_back()
 
+    @recorded()
     def refresh(self) -> None:
         self.page.reload()
 
@@ -71,9 +98,11 @@ class _PageMixin:
     def content(self) -> str:
         return self.page.content()
 
+    @recorded()
     def set_default_timeout(self, timeout_ms: float) -> None:
         self.page.set_default_timeout(timeout_ms)
 
+    @recorded()
     def set_default_navigation_timeout(self, timeout_ms: float) -> None:
         self.page.set_default_navigation_timeout(timeout_ms)
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+from je_web_runner.webdriver._playwright_mixins._common import recorded
 from je_web_runner.webdriver._playwright_mixins._common import (
     BROWSER_NOT_LAUNCHED,
     CLOCK_API_UNAVAILABLE,
@@ -32,6 +33,7 @@ class _ContextMixin:
             )
         return dict(devices[device_name])
 
+    @recorded()
     def start_emulation(self, device_name: str) -> None:
         """
         套用 Playwright 內建裝置設定（重建 context 與 page）
@@ -48,6 +50,7 @@ class _ContextMixin:
         self._pages = [page]
         self._page_index = 0
 
+    @recorded()
     def stop_emulation(self) -> None:
         """Replace the device-emulating context with a plain one."""
         web_runner_logger.info("playwright stop_emulation")
@@ -62,6 +65,7 @@ class _ContextMixin:
 
     # ----- geolocation / permissions / timezone / clock --------------
 
+    @recorded()
     def set_geolocation(
         self,
         latitude: float,
@@ -75,6 +79,7 @@ class _ContextMixin:
             coords["accuracy"] = accuracy
         self.context.set_geolocation(coords)
 
+    @recorded()
     def grant_permissions(
         self,
         permissions: list[str],
@@ -86,9 +91,11 @@ class _ContextMixin:
         else:
             self.context.grant_permissions(permissions, origin=origin)
 
+    @recorded()
     def clear_permissions(self) -> None:
         self.context.clear_permissions()
 
+    @recorded()
     def set_timezone(self, timezone_id: str) -> None:
         """
         重建 context 並指定時區（Playwright 不支援直接修改既有 context 的時區）
@@ -104,6 +111,7 @@ class _ContextMixin:
         self._pages = [page]
         self._page_index = 0
 
+    @recorded()
     def clock_install(self, fake_now_ms: float | None = None) -> None:
         """Install Playwright's clock (requires Playwright 1.45+)."""
         clock = getattr(self.context, "clock", None)
@@ -114,18 +122,21 @@ class _ContextMixin:
         else:
             clock.install(time=fake_now_ms)
 
+    @recorded()
     def clock_set_time(self, time_ms: float) -> None:
         clock = getattr(self.context, "clock", None)
         if clock is None:
             raise PlaywrightBackendError(CLOCK_API_UNAVAILABLE)
         clock.set_fixed_time(time_ms)
 
+    @recorded()
     def clock_run_for(self, duration_ms: float) -> None:
         clock = getattr(self.context, "clock", None)
         if clock is None:
             raise PlaywrightBackendError(CLOCK_API_UNAVAILABLE)
         clock.run_for(duration_ms)
 
+    @recorded()
     def set_locale(
         self,
         locale: str,
@@ -156,6 +167,7 @@ class _ContextMixin:
         devices = getattr(self._playwright, "devices", None) or {}
         return sorted(devices.keys())
 
+    @recorded()
     def start_har_recording(self, har_path: str, content: str = "omit") -> None:
         """
         於現有 browser 內重建 context 並開啟 HAR 錄製
@@ -172,6 +184,7 @@ class _ContextMixin:
         self._pages = [page]
         self._page_index = 0
 
+    @recorded()
     def stop_har_recording(self) -> None:
         """
         關閉並寫出當前 HAR，重建一個未錄製的 context
@@ -183,7 +196,7 @@ class _ContextMixin:
             raise PlaywrightBackendError(BROWSER_NOT_LAUNCHED)
         if self._context is not None:
             self._context.close()
-        self._context = self._browser.new_context()
+        self._context = self._build_context()
         page = self._context.new_page()
         self._pages = [page]
         self._page_index = 0

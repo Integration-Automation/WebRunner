@@ -1,9 +1,9 @@
 """
-Playwright 同步 backend 完整版包裝器，與既有 Selenium 路徑並行。
-Full Playwright sync backend wrapper running side-by-side with the Selenium
-path. Mirrors the operational surface of ``WebDriverWrapper`` where it makes
-sense in Playwright (some Selenium-only concepts such as IE options or
-webdriver_manager bootstrap intentionally do not exist here).
+Playwright 同步 backend 包裝器，與既有 Selenium 路徑並行。
+Playwright sync backend wrapper running side-by-side with the Selenium path.
+It covers most everyday operations of ``WebDriverWrapper`` but is not a
+one-to-one copy; ``docs/source/Eng/doc/backends/backends_doc.rst`` lists the
+equivalent commands and what exists on one backend only.
 
 設計原則 / Design notes:
 - ``playwright`` 為軟相依，未安裝時呼叫才會丟出含安裝提示的錯誤。
@@ -135,7 +135,9 @@ class PlaywrightWrapper(
         if record_har_path:
             kwargs["record_har_path"] = record_har_path
             kwargs["record_har_content"] = record_har_content
-        return self._browser.new_context(**kwargs) if kwargs else self._browser.new_context()
+        context = self._browser.new_context(**kwargs) if kwargs else self._browser.new_context()
+        context.on("page", self._track_page)
+        return context
 
     def quit(self) -> None:
         """Close everything and stop the Playwright runtime."""
@@ -234,8 +236,8 @@ def pw_quit() -> None:
     playwright_wrapper_instance.quit()
 
 
-def pw_to_url(url: str) -> None:
-    playwright_wrapper_instance.to_url(url)
+def pw_to_url(url: str, **goto_options: Any) -> None:
+    playwright_wrapper_instance.to_url(url, **goto_options)
 
 
 def pw_forward() -> None:
@@ -302,44 +304,44 @@ def pw_find_elements_with_test_object_record(element_name: str):
     return playwright_wrapper_instance.find_elements_with_test_object_record(element_name)
 
 
-def pw_click(selector: str) -> None:
-    playwright_wrapper_instance.click(selector)
+def pw_click(selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.click(selector, **options)
 
 
-def pw_dblclick(selector: str) -> None:
-    playwright_wrapper_instance.dblclick(selector)
+def pw_dblclick(selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.dblclick(selector, **options)
 
 
-def pw_hover(selector: str) -> None:
-    playwright_wrapper_instance.hover(selector)
+def pw_hover(selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.hover(selector, **options)
 
 
-def pw_fill(selector: str, value: str) -> None:
-    playwright_wrapper_instance.fill(selector, value)
+def pw_fill(selector: str, value: str, **options: Any) -> None:
+    playwright_wrapper_instance.fill(selector, value, **options)
 
 
-def pw_type_text(selector: str, value: str, delay: float = 0) -> None:
-    playwright_wrapper_instance.type_text(selector, value, delay=delay)
+def pw_type_text(selector: str, value: str, delay: float = 0, **options: Any) -> None:
+    playwright_wrapper_instance.type_text(selector, value, delay=delay, **options)
 
 
-def pw_press(selector: str, key: str) -> None:
-    playwright_wrapper_instance.press(selector, key)
+def pw_press(selector: str, key: str, **options: Any) -> None:
+    playwright_wrapper_instance.press(selector, key, **options)
 
 
-def pw_check(selector: str) -> None:
-    playwright_wrapper_instance.check(selector)
+def pw_check(selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.check(selector, **options)
 
 
-def pw_uncheck(selector: str) -> None:
-    playwright_wrapper_instance.uncheck(selector)
+def pw_uncheck(selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.uncheck(selector, **options)
 
 
-def pw_select_option(selector: str, value: Any) -> list[str]:
-    return playwright_wrapper_instance.select_option(selector, value)
+def pw_select_option(selector: str, value: Any, **options: Any) -> list[str]:
+    return playwright_wrapper_instance.select_option(selector, value, **options)
 
 
-def pw_drag_and_drop(source_selector: str, target_selector: str) -> None:
-    playwright_wrapper_instance.drag_and_drop(source_selector, target_selector)
+def pw_drag_and_drop(source_selector: str, target_selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.drag_and_drop(source_selector, target_selector, **options)
 
 
 def pw_evaluate(expression: str, arg: Any = None):

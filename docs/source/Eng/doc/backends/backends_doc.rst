@@ -11,16 +11,202 @@ without a more specific prefix dispatch here.
 Playwright
 ==========
 
-A full mirror of the Selenium surface lives under ``WR_pw_*``:
+The Playwright backend lives under ``WR_pw_*`` and is opt-in: existing
+scripts keep running on Selenium. It covers most everyday operations, but it
+is not a one-to-one copy of the Selenium surface. The tables below list the
+equivalent commands and how they differ, then what exists on one backend only.
 
-* Lifecycle / pages / navigation
-* Find (with ``TestObject`` translation) and direct page-level shortcuts
+* Lifecycle / pages / navigation. Pages the site opens itself (popups,
+  ``window.open``) are tracked, so ``WR_pw_switch_to_page`` can reach them.
+* Find (with ``TestObject`` translation) and direct page-level shortcuts. The
+  shortcuts pass extra Playwright options through (``button``,
+  ``modifiers``, ``timeout``, ``force``, ``wait_until`` …).
 * Element-level wrapper
 * Mobile emulation, locale, timezone, geolocation, permissions, clock
 * HAR recording, route mocking, console + network event capture
 * Network throttling presets via CDP
 
-Switch is opt-in: existing scripts keep running on Selenium.
+Page-level actions are added to the test record, so they appear in the
+generated reports like Selenium steps.
+
+Equivalent commands
+-------------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 16 30 30 24
+
+   * - Task
+     - Selenium
+     - Playwright
+     - Difference
+   * - Start / stop
+     - ``WR_get_webdriver_manager`` (``WR_new_driver``), ``WR_quit``
+     - ``WR_pw_launch``, ``WR_pw_quit``
+     - Playwright runs Chromium, Firefox or WebKit, one browser and one
+       context at a time.
+   * - Navigate
+     - ``WR_to_url``, ``WR_back``, ``WR_forward``, ``WR_refresh``
+     - ``WR_pw_to_url``, ``WR_pw_back``, ``WR_pw_forward``, ``WR_pw_refresh``
+     - ``WR_pw_to_url`` accepts ``goto`` options such as ``wait_until``.
+   * - Page info
+     - ``WR_get_current_url``, ``WR_get_title``, ``WR_get_page_source``
+     - ``WR_pw_url``, ``WR_pw_title``, ``WR_pw_content``
+     - Names only.
+   * - Find a recorded ``TestObject``
+     - ``WR_find_recorded_element``, ``WR_find_recorded_elements``
+     - ``WR_pw_find_element_with_test_object_record``,
+       ``WR_pw_find_elements_with_test_object_record``
+     - The ``TestObject`` is translated to a Playwright selector.
+   * - Click, hover
+     - ``WR_element_click``; ``WR_left_click`` / ``WR_move_to_element``
+       then ``WR_perform``
+     - ``WR_pw_element_click`` / ``WR_pw_element_hover``, or ``WR_pw_click``
+       / ``WR_pw_hover`` with a selector
+     - Selenium's ActionChains commands queue until ``WR_perform``;
+       Playwright acts at once.
+   * - Type
+     - ``WR_element_input``
+     - ``WR_pw_element_type_text``, ``WR_pw_element_fill``
+     - ``WR_element_input`` and ``type_text`` append; ``fill`` replaces the
+       value.
+   * - Select an option
+     - ``WR_element_select_by_value`` / ``_by_index`` / ``_by_visible_text``
+     - ``WR_pw_select_option``, ``WR_pw_element_select_option``
+     - Playwright takes a value, ``{"index": n}`` or ``{"label": text}``.
+   * - Wait
+     - ``WR_implicitly_wait``
+     - ``WR_pw_wait_for_selector`` / ``_url`` / ``_load_state`` /
+       ``_timeout``
+     - Playwright also waits for an element to be actionable before every
+       action.
+   * - Timeouts
+     - ``WR_set_page_load_timeout``, ``WR_set_script_timeout``
+     - ``WR_pw_set_default_timeout``,
+       ``WR_pw_set_default_navigation_timeout``
+     - Seconds on Selenium, milliseconds on Playwright.
+   * - JavaScript
+     - ``WR_execute_script``, ``WR_execute_async_script``
+     - ``WR_pw_evaluate``
+     - ``WR_set_allow_arbitrary_script(False)`` closes both.
+   * - Screenshot
+     - ``WR_save_screenshot``, ``WR_save_full_page_screenshot``,
+       ``WR_get_screenshot_as_png``, ``WR_get_screenshot_as_base64``
+     - ``WR_pw_screenshot`` (``full_page``), ``WR_pw_screenshot_bytes``
+     - No base64 form on Playwright.
+   * - Cookies
+     - ``WR_get_cookies``, ``WR_get_cookie``, ``WR_add_cookie``,
+       ``WR_delete_cookie``, ``WR_delete_all_cookies``, ``WR_save_cookies``,
+       ``WR_load_cookies``
+     - ``WR_pw_get_cookies``, ``WR_pw_add_cookies`` (a list),
+       ``WR_pw_clear_cookies``
+     - Playwright has no per-name get or delete and no save to or load from
+       a file.
+   * - Tabs
+     - ``WR_new_window``, ``WR_switch``, ``WR_switch_to_window_by_url``,
+       ``WR_switch_to_window_by_title``, ``WR_close_window``
+     - ``WR_pw_new_page``, ``WR_pw_switch_to_page``, ``WR_pw_close_page``,
+       ``WR_pw_page_count``
+     - Playwright switches by index only.
+   * - Frames
+     - ``WR_switch``, ``WR_iframe_switch_chain``,
+       ``WR_iframe_back_to_default``
+     - ``WR_pw_frame_locator_chain``
+     - Playwright addresses a frame through a locator instead of switching
+       into it; later ``WR_pw_*`` commands still act on the page.
+   * - Device emulation
+     - ``WR_set_device_metrics`` + ``WR_set_user_agent``
+     - ``WR_pw_emulate``, ``WR_pw_list_devices``
+     - Selenium's form is Chromium-only (CDP) and has no named devices.
+   * - Geolocation, timezone, locale
+     - ``WR_set_geolocation``, ``WR_set_timezone``, ``WR_set_locale``
+     - ``WR_pw_set_geolocation``, ``WR_pw_set_timezone``,
+       ``WR_pw_set_locale``
+     - Selenium's are Chromium-only (CDP). ``WR_pw_set_timezone`` and
+       ``WR_pw_set_locale`` rebuild the Playwright context, which closes its
+       pages and drops its cookies.
+   * - Throttling, raw CDP
+     - ``WR_throttle``, ``WR_set_network_conditions``,
+       ``WR_execute_cdp_cmd``, ``WR_cdp``
+     - ``WR_pw_throttle``, ``WR_pw_cdp``
+     - Chromium only on both.
+   * - Storage, service workers, shadow DOM, upload, self-healing, axe,
+       performance
+     - ``WR_local_storage_*``, ``WR_session_storage_*``, ``WR_sw_*``,
+       ``WR_shadow_query``, ``WR_upload_file``, ``WR_find_with_healing``,
+       ``WR_a11y_run_audit``, ``WR_perf_collect``
+     - The same names with ``WR_pw_`` in front (``WR_pw_shadow_query``,
+       ``WR_pw_a11y_run_audit`` …)
+     - Same behaviour.
+
+Only on Selenium
+----------------
+
+Not possible on Playwright:
+
+* Internet Explorer and the real Safari browser; Playwright's WebKit is not
+  Safari.
+* Selenium Grid and the cloud grids (``WR_start_remote_driver``,
+  ``WR_connect_browserstack`` …): they speak the WebDriver protocol, which
+  Playwright does not.
+* Appium mobile sessions (``WR_appium_*``).
+* Window geometry (``WR_maximize_window``, ``WR_minimize_window``,
+  ``WR_fullscreen_window``, ``WR_set_window_position``,
+  ``WR_set_window_rect``): Playwright controls the viewport, not the OS
+  window. ``WR_pw_set_viewport_size`` is the nearest equivalent.
+
+Not on Playwright yet (the Playwright API supports them):
+
+* ``WR_add_script_to_evaluate_on_new_document``, ``WR_block_urls`` /
+  ``WR_unblock_urls``, ``WR_set_cache_disabled``,
+  ``WR_clear_geolocation_override``, ``WR_bring_to_front``,
+  ``WR_print_page``, ``WR_set_user_agent``, ``WR_set_extra_http_headers``,
+  ``WR_set_download_directory`` / ``WR_wait_for_download``,
+  ``WR_attach_to_existing_browser``;
+* several drivers at once (``WR_new_driver`` more than once,
+  ``WR_change_index_of_webdriver``);
+* ``WR_element_submit``, ``WR_element_value_of_css_property``,
+  ``WR_element_get_dom_attribute``, ``WR_check_current_webdriver``,
+  ``WR_element_assert``;
+* ``WR_scroll``, ``WR_scroll_to_top``, ``WR_scroll_to_bottom``,
+  ``WR_drag_and_drop_offset``;
+* switching tabs by URL or title; callbacks (the callback executor has no
+  ``WR_pw_*`` command);
+* visual regression (``WR_visual_capture_baseline``,
+  ``WR_visual_compare``) and the browser recorder (``WR_recorder_*``).
+
+Only on Playwright
+------------------
+
+Not possible on Selenium:
+
+* WebKit.
+* The trace viewer and native video recording.
+* Waiting for actionability before every action; Selenium only has implicit
+  and explicit waits.
+
+Not on Selenium yet:
+
+* ``WR_pw_check``, ``WR_pw_uncheck``, ``WR_pw_element_is_checked``,
+  ``WR_pw_element_inner_text``, ``WR_pw_element_inner_html``, and finding
+  by a raw selector (``WR_pw_find_element``);
+* ``WR_pw_route_mock`` / ``WR_pw_route_mock_json``. Selenium has the CDP
+  Fetch primitives (``WR_enable_fetch_interception`` …), but an action file
+  cannot complete them because it never learns the paused request's id;
+* ``WR_pw_start_har_recording``, ``WR_pw_event_capture_start``,
+  ``WR_pw_assert_no_console_errors``;
+* ``WR_pw_grant_permissions``, ``WR_pw_clock_install``, and named devices
+  (``WR_pw_emulate``).
+
+On neither backend yet
+----------------------
+
+* Accepting or dismissing a JavaScript dialog from an action file. Selenium
+  reaches an alert through ``WR_switch`` but has no accept or dismiss
+  command; Playwright dismisses dialogs unless a handler was registered
+  before the dialog opened.
+* Role and text locators (Playwright's ``get_by_role`` …). Selenium can only
+  approximate them with XPath.
 
 Cloud Grid
 ==========

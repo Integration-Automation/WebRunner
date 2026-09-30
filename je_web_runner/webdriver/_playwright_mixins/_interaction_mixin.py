@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+from je_web_runner.webdriver._playwright_mixins._common import recorded
 
 
 class _InteractionMixin:
@@ -13,40 +14,51 @@ class _InteractionMixin:
     and frame lookup.
     """
 
+    @recorded()
     def click(self, selector: str, **options: Any) -> None:
         web_runner_logger.info(f"playwright click: {selector}")
         self.page.click(selector, **options)
 
+    @recorded()
     def dblclick(self, selector: str, **options: Any) -> None:
         self.page.dblclick(selector, **options)
 
+    @recorded()
     def hover(self, selector: str, **options: Any) -> None:
         self.page.hover(selector, **options)
 
+    @recorded()
     def fill(self, selector: str, value: str, **options: Any) -> None:
         web_runner_logger.info(f"playwright fill: {selector}")
         self.page.fill(selector, value, **options)
 
-    def type_text(self, selector: str, value: str, delay: float = 0) -> None:
-        self.page.type(selector, value, delay=delay)
+    @recorded()
+    def type_text(self, selector: str, value: str, delay: float = 0, **options: Any) -> None:
+        self.page.type(selector, value, delay=delay, **options)
 
-    def press(self, selector: str, key: str) -> None:
-        self.page.press(selector, key)
+    @recorded()
+    def press(self, selector: str, key: str, **options: Any) -> None:
+        self.page.press(selector, key, **options)
 
-    def check(self, selector: str) -> None:
-        self.page.check(selector)
+    @recorded()
+    def check(self, selector: str, **options: Any) -> None:
+        self.page.check(selector, **options)
 
-    def uncheck(self, selector: str) -> None:
-        self.page.uncheck(selector)
+    @recorded()
+    def uncheck(self, selector: str, **options: Any) -> None:
+        self.page.uncheck(selector, **options)
 
-    def select_option(self, selector: str, value: Any) -> list[str]:
-        return self.page.select_option(selector, value)
+    @recorded()
+    def select_option(self, selector: str, value: Any, **options: Any) -> list[str]:
+        return self.page.select_option(selector, value, **options)
 
+    @recorded()
     def drag_and_drop(self, source_selector: str, target_selector: str, **options: Any) -> None:
         self.page.drag_and_drop(source_selector, target_selector, **options)
 
     # ----- script ------------------------------------------------------
 
+    @recorded()
     def evaluate(self, expression: str, arg: Any = None):
         return self.page.evaluate(expression, arg) if arg is not None else self.page.evaluate(expression)
 
@@ -55,27 +67,35 @@ class _InteractionMixin:
             return self.page.evaluate_handle(expression, arg)
         return self.page.evaluate_handle(expression)
 
+    @recorded()
     def mouse_click(self, x: float, y: float, button: str = "left", click_count: int = 1) -> None:
         self.page.mouse.click(x, y, button=button, click_count=click_count)
 
+    @recorded()
     def mouse_move(self, x: float, y: float, steps: int = 1) -> None:
         self.page.mouse.move(x, y, steps=steps)
 
+    @recorded()
     def mouse_down(self, button: str = "left", click_count: int = 1) -> None:
         self.page.mouse.down(button=button, click_count=click_count)
 
+    @recorded()
     def mouse_up(self, button: str = "left", click_count: int = 1) -> None:
         self.page.mouse.up(button=button, click_count=click_count)
 
+    @recorded()
     def keyboard_press(self, key: str) -> None:
         self.page.keyboard.press(key)
 
+    @recorded()
     def keyboard_type(self, text: str, delay: float = 0) -> None:
         self.page.keyboard.type(text, delay=delay)
 
+    @recorded()
     def keyboard_down(self, key: str) -> None:
         self.page.keyboard.down(key)
 
+    @recorded()
     def keyboard_up(self, key: str) -> None:
         self.page.keyboard.up(key)
 

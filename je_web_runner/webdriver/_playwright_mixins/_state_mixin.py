@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+from je_web_runner.webdriver._playwright_mixins._common import recorded
 
 
 class _StateMixin:
@@ -16,14 +17,17 @@ class _StateMixin:
     def get_cookies(self) -> list[dict]:
         return self.context.cookies()
 
+    @recorded(hidden=("cookies",))
     def add_cookies(self, cookies: list[dict]) -> None:
         self.context.add_cookies(cookies)
 
+    @recorded()
     def clear_cookies(self) -> None:
         self.context.clear_cookies()
 
     # ----- screenshots -------------------------------------------------
 
+    @recorded()
     def screenshot(self, path: str, full_page: bool = False) -> str:
         self.page.screenshot(path=path, full_page=full_page)
         return path
@@ -33,20 +37,24 @@ class _StateMixin:
 
     # ----- waits -------------------------------------------------------
 
+    @recorded()
     def wait_for_selector(self, selector: str, timeout: float | None = None, state: str = "visible"):
         if timeout is None:
             return self.page.wait_for_selector(selector, state=state)
         return self.page.wait_for_selector(selector, timeout=timeout, state=state)
 
+    @recorded()
     def wait_for_load_state(self, state: str = "load", timeout: float | None = None) -> None:
         if timeout is None:
             self.page.wait_for_load_state(state)
         else:
             self.page.wait_for_load_state(state, timeout=timeout)
 
+    @recorded()
     def wait_for_timeout(self, timeout_ms: float) -> None:
         self.page.wait_for_timeout(timeout_ms)
 
+    @recorded()
     def wait_for_url(self, url: str, timeout: float | None = None) -> None:
         if timeout is None:
             self.page.wait_for_url(url)
@@ -55,12 +63,14 @@ class _StateMixin:
 
     # ----- viewport / window ------------------------------------------
 
+    @recorded()
     def set_viewport_size(self, width: int, height: int) -> None:
         self.page.set_viewport_size({"width": width, "height": height})
 
     def viewport_size(self) -> dict | None:
         return self.page.viewport_size
 
+    @recorded()
     def route_mock(self, url_pattern: str, response: dict) -> None:
         """
         將符合 ``url_pattern`` 的請求以 stub 回應
@@ -83,6 +93,7 @@ class _StateMixin:
 
         self.page.route(url_pattern, _handler)
 
+    @recorded()
     def route_mock_json(self, url_pattern: str, json_data: Any, status: int = 200) -> None:
         """JSON 便捷版本 / Convenience for JSON responses."""
         import json as _json
@@ -97,10 +108,12 @@ class _StateMixin:
             },
         )
 
+    @recorded()
     def route_unmock(self, url_pattern: str) -> None:
         """Remove a specific route handler (Playwright will fall through to network)."""
         self.page.unroute(url_pattern)
 
+    @recorded()
     def route_clear(self) -> None:
         """Remove all route handlers on the current page."""
         self.page.unroute_all()
