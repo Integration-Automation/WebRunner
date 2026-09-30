@@ -242,6 +242,33 @@ Equivalent commands
        every ``WR_pw_*`` command is also a callback trigger
      - Same behaviour: the same comparison and recorder script run on the
        Playwright page.
+   * - Console, JavaScript errors, responses, DOM mutations
+     - ``WR_event_capture_start`` (``dom_mutations=True`` for DOM changes),
+       ``WR_event_capture_stop`` / ``_clear``, ``WR_console_messages``,
+       ``WR_network_responses``, ``WR_dom_mutations``,
+       ``WR_assert_no_console_errors``, ``WR_assert_no_5xx``,
+       ``WR_assert_no_4xx_or_5xx`` (BiDi)
+     - ``WR_pw_event_capture_start`` / ``_stop`` / ``_clear``,
+       ``WR_pw_console_messages``, ``WR_pw_network_responses``,
+       ``WR_pw_assert_no_console_errors``, ``WR_pw_assert_no_5xx``,
+       ``WR_pw_assert_no_4xx_or_5xx``
+     - Selenium's need a driver started with ``enable_bidi=True`` and work on
+       Chrome and Firefox. JavaScript errors land in the console list as
+       ``error``. DOM mutations are Selenium-only.
+   * - HAR
+     - ``WR_start_har_recording``, ``WR_stop_har_recording(har_path)`` (BiDi)
+     - ``WR_pw_start_har_recording(har_path)``, ``WR_pw_stop_har_recording``
+     - Selenium's HAR has headers, status and timings but no bodies (BiDi
+       events carry none); Playwright's can embed them.
+   * - Response mocks
+     - ``WR_route_mock``, ``WR_route_mock_json``, ``WR_route_unmock``,
+       ``WR_route_clear`` (BiDi)
+     - ``WR_pw_route_mock``, ``WR_pw_route_mock_json``, ``WR_pw_route_unmock``,
+       ``WR_pw_route_clear``
+     - Selenium takes an exact URL, ``*/path`` or ``**/path`` (that path on
+       any host), or a dict of URL parts (``hostname``, ``pathname`` …);
+       Playwright takes any glob. On Selenium a mock of the page's own document
+       blocks the navigation that loads it, so mock what the page fetches.
    * - Throttling, raw CDP
      - ``WR_throttle``, ``WR_set_network_conditions``,
        ``WR_execute_cdp_cmd``, ``WR_cdp``
@@ -282,14 +309,6 @@ Not possible on Selenium:
   ``WR_pw_tracing_stop``, ``WR_pw_video_start`` / ``WR_pw_video_stop``).
 * Waiting for actionability before every action; Selenium only has implicit
   and explicit waits.
-
-Not on Selenium yet:
-
-* ``WR_pw_route_mock`` / ``WR_pw_route_mock_json``. Selenium has the CDP
-  Fetch primitives (``WR_enable_fetch_interception`` …), but an action file
-  cannot complete them because it never learns the paused request's id;
-* ``WR_pw_start_har_recording``, ``WR_pw_event_capture_start``,
-  ``WR_pw_assert_no_console_errors``.
 
 Only approximated on Selenium: finding elements the way a user would,
 ``WR_pw_find_by`` (``role``, ``text``, ``label``, ``placeholder``,

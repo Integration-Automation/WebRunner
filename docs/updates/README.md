@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-25 | 2026-10-01 | Selenium event capture, HAR and response mocks over W3C BiDi | #done #selenium #bidi | [2026-10](2026-10.md) |
 | U-20261001-24 | 2026-10-01 | Selenium twins: JSON waits, raw selectors, dialogs, check/hover/text, devices, permissions, clock | #change #selenium | [2026-10](2026-10.md) |
 | U-20261001-23 | 2026-10-01 | Several Playwright browsers at once; one runtime for all launches | #change #playwright | [2026-10](2026-10.md) |
 | U-20261001-22 | 2026-10-01 | Playwright callbacks, visual regression and recorder | #change #playwright | [2026-10](2026-10.md) |
@@ -112,5 +113,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 24 |
+| [2026-10.md](2026-10.md) | 2026-10 | 25 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

@@ -112,6 +112,7 @@ from je_web_runner.utils.self_healing.healing_locator import (
     register_fallback as _heal_register_fallback,
     register_fallbacks as _heal_register_fallbacks,
 )
+from je_web_runner.utils.bidi.selenium_events import selenium_bidi_events as _bidi_events
 from je_web_runner.utils.executor._playwright_commands import PLAYWRIGHT_COMMANDS
 from je_web_runner.utils.json.json_validator import validate_action_file, validate_action_json
 from je_web_runner.utils.package_manager.package_manager_class import package_manager
@@ -663,6 +664,23 @@ COMMANDS: dict[str, Any] = {
         "WR_element_hover": web_runner.webdriver_element.hover,
         "WR_element_inner_text": web_runner.webdriver_element.inner_text,
         "WR_element_inner_html": web_runner.webdriver_element.inner_html,
+
+        # ----- W3C BiDi (driver started with enable_bidi=True): capture, HAR, mocks -----
+        "WR_event_capture_start": _bidi_events.start_event_capture,
+        "WR_event_capture_stop": _bidi_events.stop_event_capture,
+        "WR_event_capture_clear": _bidi_events.clear_event_capture,
+        "WR_console_messages": _bidi_events.console_messages,
+        "WR_network_responses": _bidi_events.network_responses,
+        "WR_dom_mutations": _bidi_events.dom_mutation_records,
+        "WR_assert_no_console_errors": _bidi_events.capture.assert_no_console_errors,
+        "WR_assert_no_5xx": _bidi_events.capture.assert_no_5xx,
+        "WR_assert_no_4xx_or_5xx": _bidi_events.capture.assert_no_4xx_or_5xx,
+        "WR_start_har_recording": _bidi_events.start_har_recording,
+        "WR_stop_har_recording": _bidi_events.stop_har_recording,
+        "WR_route_mock": _bidi_events.route_mock,
+        "WR_route_mock_json": _bidi_events.route_mock_json,
+        "WR_route_unmock": _bidi_events.route_unmock,
+        "WR_route_clear": _bidi_events.route_clear,
 }
 
 

@@ -227,6 +227,33 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
        ``WR_pw_recorder_start`` / ``_stop`` / ``_pull_events`` / ``_save``；
        每個 ``WR_pw_*`` 命令也都能當 callback 的觸發命令
      - 行為相同：同一套比對與錄製腳本在 Playwright 頁面上執行。
+   * - Console、JavaScript 錯誤、回應、DOM 變動
+     - ``WR_event_capture_start``\ （``dom_mutations=True`` 收 DOM 變動）、
+       ``WR_event_capture_stop`` / ``_clear``、``WR_console_messages``、
+       ``WR_network_responses``、``WR_dom_mutations``、
+       ``WR_assert_no_console_errors``、``WR_assert_no_5xx``、
+       ``WR_assert_no_4xx_or_5xx``\ （BiDi）
+     - ``WR_pw_event_capture_start`` / ``_stop`` / ``_clear``、
+       ``WR_pw_console_messages``、``WR_pw_network_responses``、
+       ``WR_pw_assert_no_console_errors``、``WR_pw_assert_no_5xx``、
+       ``WR_pw_assert_no_4xx_or_5xx``
+     - Selenium 的需要以 ``enable_bidi=True`` 啟動的 driver，Chrome 與 Firefox
+       都能用。JavaScript 錯誤以 ``error`` 記在 console 清單裡。DOM 變動只有
+       Selenium 有。
+   * - HAR
+     - ``WR_start_har_recording``、``WR_stop_har_recording(har_path)``\ （BiDi）
+     - ``WR_pw_start_har_recording(har_path)``、``WR_pw_stop_har_recording``
+     - Selenium 的 HAR 有 header、狀態碼與耗時，沒有內容（BiDi 事件不帶
+       body）；Playwright 的可以內嵌內容。
+   * - 回應模擬
+     - ``WR_route_mock``、``WR_route_mock_json``、``WR_route_unmock``、
+       ``WR_route_clear``\ （BiDi）
+     - ``WR_pw_route_mock``、``WR_pw_route_mock_json``、``WR_pw_route_unmock``、
+       ``WR_pw_route_clear``
+     - Selenium 接受完整 URL、``*/path`` 或 ``**/path``\ （任何主機上的這個
+       路徑），或 URL 各部分的 dict（``hostname``、``pathname`` …）；
+       Playwright 接受任何 glob。在 Selenium 上模擬頁面本身的文件會卡住載入它
+       的導覽，所以只模擬頁面去抓的資源。
    * - 網路節流、原始 CDP
      - ``WR_throttle``、``WR_set_network_conditions``、
        ``WR_execute_cdp_cmd``、``WR_cdp``
@@ -264,14 +291,6 @@ Selenium 做不到：
 * trace viewer 與原生錄影（``WR_pw_tracing_start`` / ``WR_pw_tracing_stop``、
   ``WR_pw_video_start`` / ``WR_pw_video_stop``）。
 * 每個動作前自動等元素可操作；Selenium 只有 implicit 與 explicit wait。
-
-Selenium 還沒有：
-
-* ``WR_pw_route_mock`` / ``WR_pw_route_mock_json``。Selenium 有 CDP Fetch
-  的基本命令（``WR_enable_fetch_interception`` …），但 action 檔永遠拿不到
-  被暫停請求的 id，所以無法完成；
-* ``WR_pw_start_har_recording``、``WR_pw_event_capture_start``、
-  ``WR_pw_assert_no_console_errors``。
 
 Selenium 只能近似：以使用者的角度找元素，``WR_pw_find_by``\ （``role``、
 ``text``、``label``、``placeholder``、``alt_text``、``title``、``test_id``）。

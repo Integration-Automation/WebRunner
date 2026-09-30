@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (512 commands).
+Auto-generated from the executor's event_dict (527 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -18,6 +18,9 @@ Auto-generated from the executor's event_dict (512 commands).
 | `WR_appium_ios_caps` | `(app: 'str', device_name: 'str' = 'iPhone 15', platform_version: 'str' = '17', automation_name: 'str' = 'XCUITest', extra: 'dict[str, Any] | None' = None) -> 'dict[str, Any]'` |  |
 | `WR_appium_quit` | `() -> 'None'` | Quit whatever driver is currently registered on the WebRunner wrapper. |
 | `WR_appium_start` | `(server_url: 'str', capabilities: 'dict[str, Any]', register: 'bool' = True) -> 'Any'` | 建立 Appium WebDriver 並註冊到 ``webdriver_wrapper_instance`` |
+| `WR_assert_no_4xx_or_5xx` | `() -> 'None'` |  |
+| `WR_assert_no_5xx` | `() -> 'None'` |  |
+| `WR_assert_no_console_errors` | `() -> 'None'` |  |
 | `WR_assert_no_secrets` | `(data: 'Any') -> 'None'` | 掃描並在有發現時拋例外 / Scan and raise ``SecretsFound`` on any hit. |
 | `WR_attach_to_existing_browser` | `(debugger_address: 'str', webdriver_name: 'str' = 'chrome', options: 'list[str] | None' = None, experimental_options: 'dict | None' = None, **kwargs)` | 附加到一個已啟動且開啟 remote debugging 埠的 Chrome / Edge 實例。 |
 | `WR_audit_security_headers` | `(headers: 'dict[str, str]', required: 'list[dict[str, Any]] | None' = None) -> 'list[dict[str, Any]]'` | 對 headers dict 套用規則表，回傳所有違反項目 |
@@ -50,6 +53,7 @@ Auto-generated from the executor's event_dict (512 commands).
 | `WR_connect_browserstack` | `(username: 'str', access_key: 'str', capabilities: 'dict[str, Any] | None' = None, hub_url: 'str | None' = None) -> 'WebDriver'` |  |
 | `WR_connect_lambdatest` | `(username: 'str', access_key: 'str', capabilities: 'dict[str, Any] | None' = None, hub_url: 'str | None' = None) -> 'WebDriver'` |  |
 | `WR_connect_saucelabs` | `(username: 'str', access_key: 'str', capabilities: 'dict[str, Any] | None' = None, hub_url: 'str | None' = None) -> 'WebDriver'` |  |
+| `WR_console_messages` | `() -> 'list[dict[str, Any]]'` | ``{type, text, location}`` per console message or JavaScript error collected. |
 | `WR_dashboard_start` | `(host: 'str' = '127.0.0.1', port: 'int' = 0) -> 'str'` |  |
 | `WR_dashboard_stop` | `() -> 'None'` |  |
 | `WR_db_assert_count` | `(connection_url: 'str', sql: 'str', expected: 'int', params: 'dict[str, Any] | None' = None) -> 'None'` | 斷言 SQL 回傳列數等於 ``expected``。 |
@@ -64,6 +68,7 @@ Auto-generated from the executor's event_dict (512 commands).
 | `WR_diff_har` | `(left: 'Any', right: 'Any') -> 'dict[str, list[dict[str, Any]]]'` | 比對兩份 HAR；回傳 ``{added, removed, changed}`` |
 | `WR_diff_har_files` | `(left_path: 'str', right_path: 'str') -> 'dict[str, list[dict[str, Any]]]'` | 讀取兩個 HAR 檔並比對 / Read two HAR files from disk and diff them. |
 | `WR_disable_fetch_interception` | `() -> 'None'` | 停止 Fetch 攔截 / Disable Fetch interception. |
+| `WR_dom_mutations` | `() -> 'list[dict[str, Any]]'` | ``{type, target, added, removed, attribute}`` per DOM mutation collected. |
 | `WR_drag_and_drop` | `(element_name: 'str', target_element_name: 'str') -> 'None'` | 使用 TestObjectRecord 中的元素名稱，拖曳元素到另一個元素上 |
 | `WR_drag_and_drop_offset` | `(element_name: 'str', offset_x: 'int', offset_y: 'int') -> 'None'` | 使用 TestObjectRecord 中的元素名稱，拖曳元素到指定偏移位置 |
 | `WR_element_assert` | `(check_dict: 'dict') -> 'None'` | 檢查當前 WebElement 是否符合指定條件 |
@@ -92,6 +97,9 @@ Auto-generated from the executor's event_dict (512 commands).
 | `WR_element_value_of_css_property` | `(property_name: 'str') -> 'str | None'` | 取得 CSS 屬性值 |
 | `WR_emulate_device` | `(name: 'str') -> 'None'` | 套用具名裝置（``utils/device_emulation`` 預設） |
 | `WR_enable_fetch_interception` | `(patterns: 'list | None' = None, handle_auth: 'bool' = False) -> 'None'` | 啟動 CDP ``Fetch.enable`` 開始攔截請求。 |
+| `WR_event_capture_clear` | `() -> 'None'` | Forget what was collected. |
+| `WR_event_capture_start` | `(dom_mutations: 'bool' = False) -> 'None'` | 開始收集 console、JavaScript 錯誤與網路回應（可選 DOM 變動） |
+| `WR_event_capture_stop` | `() -> 'None'` | Stop collecting; what was collected stays until :meth:`clear_event_capture`. |
 | `WR_execute` | `(driver_command: 'str', params: 'dict | None' = None) -> 'dict | None'` | 執行 Selenium WebDriver 的底層命令 |
 | `WR_execute_action` | `(action_list: list | dict) -> dict` | 執行一系列動作 |
 | `WR_execute_async_script` | `(script: 'str', *args)` | 執行非同步 JavaScript |
@@ -221,6 +229,7 @@ Auto-generated from the executor's event_dict (512 commands).
 | `WR_move_by_offset` | `(offset_x: 'int', offset_y: 'int') -> 'None'` | 滑鼠移動指定偏移量 |
 | `WR_move_to_element` | `(element_name: 'str')` | 使用 TestObjectRecord 中的元素名稱，將滑鼠移動到指定元素 |
 | `WR_move_to_element_with_offset` | `(element_name: 'str', offset_x: 'int', offset_y: 'int') -> 'None'` | 使用 TestObjectRecord 中的元素名稱，將滑鼠移動到指定元素並加上偏移量 |
+| `WR_network_responses` | `() -> 'list[dict[str, Any]]'` | ``{url, status, method, ok}`` per response collected. |
 | `WR_new_driver` | `(webdriver_name: str, options: list[str] | None = None, **kwargs) -> None` | 建立新的 WebDriver 實例 |
 | `WR_new_window` | `(type_hint: 'str' = 'tab') -> 'None'` | 開啟新的 tab 或 window，並自動切換到該視窗 |
 | `WR_notify_run_summary` | `(webhook_url: 'str', header: 'str' = 'WebRunner Run Summary') -> 'int'` | 一鍵：取摘要 → Slack 格式 → 送出 |
@@ -430,6 +439,10 @@ Auto-generated from the executor's event_dict (512 commands).
 | `WR_reset_actions` | `() -> 'None'` | 清除目前累積的 ActionChains 動作（搭配 ``WR_perform`` 使用） |
 | `WR_reset_scheduler` | `() -> 'None'` | Drop all registered jobs and counts (mainly for tests). |
 | `WR_right_click` | `(element_name: 'str | None' = None) -> 'None'` | 使用 TestObject 名稱找到元素並右鍵點擊 |
+| `WR_route_clear` | `() -> 'None'` | Remove every mock and stop intercepting. |
+| `WR_route_mock` | `(url_pattern: 'str | dict[str, str]', response: 'dict[str, Any]') -> 'None'` | 以固定回應回答符合 pattern 的請求 |
+| `WR_route_mock_json` | `(url_pattern: 'str | dict[str, str]', json_data: 'Any', status: 'int' = 200) -> 'None'` | A :meth:`route_mock` answering with ``json_data`` as JSON. |
+| `WR_route_unmock` | `(url_pattern: 'str | dict[str, str]') -> 'None'` | Remove the mocks registered for ``url_pattern``. |
 | `WR_run_ab` | `(action_data: 'Any', setup_a: 'Callable[[], Any] | None' = None, setup_b: 'Callable[[], Any] | None' = None, runner: 'Callable[[Any], Any] | None' = None) -> 'dict[str, Any]'` | 對兩個環境跑同一份 action 並回傳比對結果 |
 | `WR_run_for_users` | `(action_data: 'Any', user_setups: 'list[tuple[str, Callable[[], Any] | None]]', runner: 'Callable[[Any], Any] | None' = None) -> 'dict[str, Any]'` | 對每位使用者執行一次 ``action_data``，回傳記錄與差異 |
 | `WR_run_scheduler_for` | `(seconds: 'float') -> 'None'` |  |
@@ -479,7 +492,9 @@ Auto-generated from the executor's event_dict (512 commands).
 | `WR_skip_dependents_of_failed` | `(graph: 'dict[str, list[str]]', failed: 'Iterable[str]') -> 'list[str]'` | 回傳因為上游失敗而應該跳過的檔案 |
 | `WR_sleep` | `(seconds: 'int | float' = 1) -> 'float'` | 阻塞當前執行緒指定秒數，回傳實際睡眠的秒數。 |
 | `WR_snapshot_directory` | `(directory: 'str') -> 'list[str]'` | Take a snapshot of resolved file paths under ``directory``. |
+| `WR_start_har_recording` | `() -> 'None'` | Start recording every request and response of the driver into a HAR log. |
 | `WR_start_remote_driver` | `(hub_url: 'str', capabilities: 'dict[str, Any]', register: 'bool' = True) -> 'WebDriver'` | 啟動 Remote WebDriver；預設將其註冊到 ``webdriver_wrapper_instance`` |
+| `WR_stop_har_recording` | `(har_path: 'str | None') -> 'str | None'` | Stop recording and write the HAR 1.2 log to ``har_path`` (nothing is written for None). |
 | `WR_stop_scheduler` | `() -> 'None'` |  |
 | `WR_summarise_run` | `() -> 'dict[str, Any]'` | 從 ``test_record_instance`` 產生 pass/fail 統計 |
 | `WR_sw_bypass` | `(bypass: 'bool' = True) -> 'None'` | 透過 CDP 設定 ServiceWorker bypass（僅 Chromium 系） |
@@ -508,8 +523,8 @@ Auto-generated from the executor's event_dict (512 commands).
 | `WR_user_factory` | `(prefix: 'str' = 'user') -> 'Factory'` | Default user shape: id / name / email / password. |
 | `WR_validate_action_file` | `(json_file_path: 'str') -> 'bool'` | 讀取並驗證動作 JSON 檔案 |
 | `WR_validate_action_json` | `(data: 'list | dict') -> 'bool'` | 驗證動作 JSON 是否符合執行器格式 |
-| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002BCA0C811C0>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
-| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002BCA0C811C0>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
+| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002734E7727A0>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
+| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002734E7727A0>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
 | `WR_wait_for_download` | `(directory: 'str', timeout: 'float' = 60.0, suffix: 'str | None' = None, poll_seconds: 'float' = 0.5) -> 'str'` | 等待 ``directory`` 內出現新檔案（會跳過 ``.crdownload`` / ``.part``） |
 | `WR_wait_for_element` | `(selector: 'str', by: 'str' = 'css selector', timeout: 'float' = 10.0, state: 'str' = 'visible') -> 'Any'` | 等元素出現（``present`` / ``visible`` / ``clickable``）或消失（``hidden``） |
 | `WR_wait_for_ready_state` | `(timeout: 'float' = 30.0) -> 'bool'` | Wait until ``document.readyState`` is ``complete``. |
