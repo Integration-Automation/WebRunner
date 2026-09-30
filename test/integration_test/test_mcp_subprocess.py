@@ -25,7 +25,7 @@ _LOCATOR_CALL = {
         "arguments": {"strategy": "ID", "value": "submit"},
     },
 }
-_SHUTDOWN = {"jsonrpc": "2.0", "id": 4, "method": "shutdown"}
+_PING = {"jsonrpc": "2.0", "id": 4, "method": "ping"}
 
 
 def _spawn():
@@ -64,16 +64,16 @@ def _parse_messages(stdout_data):
 
 class TestMcpSubprocess(unittest.TestCase):
 
-    def test_init_list_call_shutdown(self):
+    def test_init_list_call_ping(self):
         proc = _spawn()
         stdout_data, stderr_data = _drive(proc, [
-            _INIT, _INITIALIZED, _LIST, _LOCATOR_CALL, _SHUTDOWN,
+            _INIT, _INITIALIZED, _LIST, _LOCATOR_CALL, _PING,
         ])
         self.assertEqual(proc.returncode, 0,
                          msg=f"non-zero exit; stderr={stderr_data!r}")
         responses = _parse_messages(stdout_data)
         ids = sorted(msg["id"] for msg in responses if "id" in msg)
-        # initialize / tools/list / tools/call / shutdown all return responses;
+        # initialize / tools/list / tools/call / ping all return responses;
         # notifications/initialized doesn't.
         self.assertEqual(ids, [1, 2, 3, 4])
 

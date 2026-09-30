@@ -19,8 +19,11 @@ What is MCP?
 
 The Model Context Protocol is a JSON-RPC 2.0 wire protocol Anthropic
 uses to give Claude controlled access to local tools. WebRunner
-implements protocol version ``2024-11-05`` over **newline-delimited
-JSON over stdio** — every line is one JSON-RPC message — so any client
+speaks protocol versions ``2025-11-25``, ``2025-06-18``, ``2025-03-26``
+and ``2024-11-05`` (``initialize`` answers with the client's version when
+it is one of these, otherwise with ``2025-11-25``) over
+**newline-delimited JSON over stdio** — every line is one JSON-RPC
+message — so any client
 that speaks MCP stdio can drive WebRunner without HTTP, sockets, or
 custom glue.
 
@@ -82,10 +85,7 @@ Add a ``webrunner`` entry under ``mcpServers``:
       "mcpServers": {
         "webrunner": {
           "command": "python",
-          "args": ["-m", "je_web_runner.mcp_server"],
-          "env": {
-            "WEBRUNNER_HEADLESS": "1"
-          }
+          "args": ["-m", "je_web_runner.mcp_server"]
         }
       }
     }
@@ -120,8 +120,10 @@ in ``.mcp.json`` next to your repo root:
       }
     }
 
-Or globally in ``~/.claude/mcp.json``. Restart Claude Code and run
-``/mcp`` to confirm the server connects.
+To use it in every project, add it at user scope instead:
+``claude mcp add --scope user webrunner -- python -m je_web_runner.mcp_server``
+(Claude Code stores user-scope servers in ``~/.claude.json``). Restart
+Claude Code and run ``/mcp`` to confirm the server connects.
 
 If a tool needs the action JSON to live somewhere Claude can read,
 keep your action files inside the project directory — Claude Code's
@@ -299,9 +301,11 @@ Troubleshooting
   ``WebDriver`` / ``WebElement`` instances to ``repr()`` strings via
   ``_serialize_value``. Custom return types must be JSON-friendly or
   reduce cleanly under that helper.
-* **Protocol mismatch** — WebRunner advertises
-  ``protocolVersion=2024-11-05``. Newer clients negotiate down; if
-  yours doesn't, pin the client to that version.
+* **Protocol mismatch** — WebRunner speaks ``2025-11-25``,
+  ``2025-06-18``, ``2025-03-26`` and ``2024-11-05``. A client that asks
+  for another version gets ``2025-11-25`` back and decides whether it can
+  continue; a client that only speaks a newer, stateless revision cannot
+  connect.
 
 ----
 

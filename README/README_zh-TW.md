@@ -771,7 +771,7 @@ server.register(Tool(
 serve_stdio(server=server)
 ```
 
-該伺服器講的是 MCP `2024-11-05`：`initialize`、`tools/list`、`tools/call`、`resources/list`、`ping`、`shutdown`。
+該伺服器支援 MCP `2025-11-25`、`2025-06-18`、`2025-03-26` 與 `2024-11-05`：客戶端的版本是其中之一時 `initialize` 就回該版本，否則回 `2025-11-25`，並附上套件版本與給模型的簡短 `instructions`。方法：`initialize`、`notifications/initialized`、`tools/list`、`tools/call`、`ping`。
 
 - stdio 一律是 UTF-8、行尾 `\n`，與主控台字碼頁無關。行程寫到 stdout 的其他內容（`print`、子行程）都改走 stderr，所以客戶端只會收到協定訊息。
 - 工具執行失敗時回傳 `isError: true` 與錯誤訊息，讓客戶端能修正呼叫。`webrunner_run_actions` 與 `webrunner_run_action_files` 在有動作失敗時也會設 `isError`，並把失敗的紀錄鍵列在 `failed`。

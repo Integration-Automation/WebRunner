@@ -45,7 +45,6 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: X-
   5. S4: viewport → screen coordinate mapping (element rect, `screenX/Y`, outer/inner size, `devicePixelRatio`; OS scale from AutoControl `monitor_layout`), then `WR_ac_click_element_native`.
 
 - **#21** Bring the MCP server (`je_web_runner/mcp_server/`) up to the current MCP spec, hand-rolled (no `mcp` runtime dependency; the SDK only as a dev dependency for a conformance test). Port from AutoControlGUI's two-era server (`utils/mcp_server/_protocol.py`, `_stateless.py`).
-  1. Version negotiation for the legacy era up to 2025-11-25; server version from package metadata; `instructions`; drop the unimplemented `resources` capability and the non-MCP `shutdown`; fix `docs/source/Eng/doc/mcp_claude/mcp_claude_doc.rst:87` (`WEBRUNNER_HEADLESS` is read by nothing), `:123` (Claude Code's user config is `~/.claude.json`), `:302-304` ("negotiate down").
-  2. Tool metadata: `title`, `annotations`, `outputSchema` + `structuredContent`, described input schemas with validation.
-  3. Security policy (with #11): deny `WR_add_package_to_executor` and script re-enabling by default, opt-in switch, optional path root for the file tools.
-  4. The 2026-07-28 era: `server/discover`, per-request `_meta`, `resultType`; a round-trip test with the official client.
+  1. Tool metadata: `title`, `annotations`, `outputSchema` + `structuredContent`, described input schemas with validation.
+  2. Security policy (with #11): deny `WR_add_package_to_executor` and script re-enabling by default, opt-in switch, optional path root for the file tools.
+  3. The 2026-07-28 era: `server/discover`, per-request `_meta`, `resultType`; a round-trip test with the official client.

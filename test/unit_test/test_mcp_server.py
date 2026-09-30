@@ -30,6 +30,38 @@ class TestMcpServer(unittest.TestCase):
         info = result["result"]["serverInfo"]
         self.assertEqual(info["name"], "webrunner-mcp")
 
+    def test_initialize_echoes_a_supported_protocol_version(self):
+        for version in ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"):
+            result = McpServer().handle({"id": 1, "method": "initialize",
+                                         "params": {"protocolVersion": version}})
+            self.assertEqual(result["result"]["protocolVersion"], version)
+
+    def test_initialize_answers_an_unknown_version_with_the_newest(self):
+        result = McpServer().handle({"id": 1, "method": "initialize",
+                                     "params": {"protocolVersion": "1999-01-01"}})
+        self.assertEqual(result["result"]["protocolVersion"], "2025-11-25")
+
+    def test_initialize_reports_package_version_instructions_and_only_tools(self):
+        from je_web_runner.mcp_server.server import server_version
+        result = McpServer().handle({"id": 1, "method": "initialize",
+                                     "params": {"protocolVersion": "2025-11-25"}})["result"]
+        self.assertEqual(result["serverInfo"]["version"], server_version())
+        self.assertNotEqual(result["serverInfo"]["version"], "0.1.0")
+        self.assertIn("webrunner_list_commands", result["instructions"])
+        self.assertEqual(set(result["capabilities"]), {"tools"})
+        self.assertIn("description", result["serverInfo"])
+
+    def test_server_description_only_from_2025_11_25(self):
+        result = McpServer().handle({"id": 1, "method": "initialize",
+                                     "params": {"protocolVersion": "2024-11-05"}})["result"]
+        self.assertNotIn("description", result["serverInfo"])
+
+    def test_resources_and_shutdown_are_not_offered(self):
+        server = McpServer()
+        for method in ("resources/list", "shutdown"):
+            result = server.handle({"id": 7, "method": method})
+            self.assertEqual(result["error"]["code"], -32601, method)
+
     def test_tools_list(self):
         server = McpServer()
         server.register(_tool())

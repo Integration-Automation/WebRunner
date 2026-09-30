@@ -8,8 +8,10 @@ Transport: ndjson over stdio (one JSON object per line). Run via::
 
     python -m je_web_runner.mcp_server
 
-Supported methods: ``initialize``, ``tools/list``, ``tools/call``,
-``resources/list``, ``ping``, ``shutdown``.
+Supported methods: ``initialize``, ``notifications/initialized``,
+``tools/list``, ``tools/call`` and ``ping``. ``initialize`` answers with the
+client's protocol version when it is one of :data:`SUPPORTED_PROTOCOL_VERSIONS`,
+otherwise with the newest.
 """
 from __future__ import annotations
 
@@ -17,6 +19,7 @@ import json
 import os
 import sys
 import traceback
+from importlib import metadata
 from dataclasses import dataclass, field
 from typing import Any, Callable, TextIO
 
@@ -32,14 +35,53 @@ class McpInvalidParams(McpServerError):
     """A request's params are unusable (unknown tool, arguments not an object); JSON-RPC -32602."""
 
 
-_MCP_PROTOCOL_VERSION = "2024-11-05"
+#: Every revision with the ``initialize`` handshake this server speaks, newest first.
+#: The server offers tools only, so the later revisions' optional features (resources,
+#: prompts, elicitation, tasks) do not apply; it follows the rules they add for every
+#: version: tool failures are ``isError`` results, notifications get no reply, batches
+#: are rejected.
+SUPPORTED_PROTOCOL_VERSIONS = ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05")
+_NEWEST_PROTOCOL_VERSION = SUPPORTED_PROTOCOL_VERSIONS[0]
+#: The first revision whose ``Implementation`` carries ``description``.
+_DESCRIPTION_SINCE = "2025-11-25"
+_SERVER_DESCRIPTION = (
+    "Browser automation with Selenium or Playwright: run WebRunner action lists, "
+    "plus offline tools for authoring, linting and triaging them."
+)
+_INSTRUCTIONS = (
+    "WebRunner drives a real browser through action lists of [command, params] entries. "
+    "Call webrunner_list_commands to see the WR_* commands, then webrunner_run_actions to run them; "
+    "the browser stays open between calls until an action list runs WR_quit (Selenium) or WR_pw_quit "
+    "(Playwright). A result with isError true lists the failed actions under 'failed'. The other "
+    "tools (lint, format, translate, scan, shard...) work offline and never open a browser."
+)
 
 # Reused error messages — extracted so SonarCloud S1192 stays quiet and
 # downstream tooling can grep for them.
 _ERR_ACTIONS_LIST = "'actions' must be a list"
 _ERR_TEXT_STRING = "'text' must be a string"
 _SERVER_NAME = "webrunner-mcp"
-_SERVER_VERSION = "0.1.0"
+_DISTRIBUTIONS = ("je_web_runner", "je_web_runner_dev")
+
+
+def negotiate_protocol_version(requested: Any) -> str:
+    """
+    回覆 ``initialize`` 用的協定版本
+    The version to answer ``initialize`` with: the client's when this server speaks it,
+    otherwise the newest. An unsupported version is never echoed back, because the client
+    would take it as agreed.
+    """
+    return requested if requested in SUPPORTED_PROTOCOL_VERSIONS else _NEWEST_PROTOCOL_VERSION
+
+
+def server_version() -> str:
+    """The installed package's version (stable or dev distribution), or ``0+unknown`` from a source tree."""
+    for distribution in _DISTRIBUTIONS:
+        try:
+            return metadata.version(distribution)
+        except metadata.PackageNotFoundError:
+            continue
+    return "0+unknown"
 
 
 @dataclass
@@ -101,9 +143,7 @@ class McpServer:
             "initialize": self._initialize,
             "tools/list": lambda _params: self._tools_list(),
             "tools/call": self._tools_call,
-            "resources/list": lambda _params: {"resources": []},
             "ping": lambda _params: {},
-            "shutdown": lambda _params: {},
             "notifications/initialized": self._on_initialized,
         }
         handler = handlers.get(method)
@@ -125,11 +165,16 @@ class McpServer:
 
     def _initialize(self, params: dict[str, Any]) -> dict[str, Any]:
         client_version = params.get("protocolVersion")
-        web_runner_logger.info(f"mcp initialize from clientProtocol={client_version!r}")
+        version = negotiate_protocol_version(client_version)
+        web_runner_logger.info(f"mcp initialize: client {client_version!r}, answered {version!r}")
+        server_info = {"name": _SERVER_NAME, "version": server_version()}
+        if version >= _DESCRIPTION_SINCE:
+            server_info["description"] = _SERVER_DESCRIPTION
         return {
-            "protocolVersion": _MCP_PROTOCOL_VERSION,
-            "capabilities": {"tools": {"listChanged": False}, "resources": {}},
-            "serverInfo": {"name": _SERVER_NAME, "version": _SERVER_VERSION},
+            "protocolVersion": version,
+            "capabilities": {"tools": {"listChanged": False}},
+            "serverInfo": server_info,
+            "instructions": _INSTRUCTIONS,
         }
 
     def _tools_list(self) -> dict[str, Any]:

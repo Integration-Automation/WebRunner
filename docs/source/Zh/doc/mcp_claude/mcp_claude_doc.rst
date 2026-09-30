@@ -17,7 +17,9 @@ WebRunner 內建 **Model Context Protocol (MCP) server**,把 action 撰寫
 ===========
 
 Model Context Protocol 是 Anthropic 用來讓 Claude 安全呼叫本機工具的
-JSON-RPC 2.0 協定。WebRunner 實作 ``2024-11-05`` 版本,
+JSON-RPC 2.0 協定。WebRunner 支援 ``2025-11-25``、``2025-06-18``、
+``2025-03-26`` 與 ``2024-11-05`` 版本(客戶端的版本是其中之一時
+``initialize`` 就回該版本,否則回 ``2025-11-25``),
 透過 **stdio 上的 newline-delimited JSON** (每行一個 JSON-RPC 訊息)
 通訊,因此任何支援 MCP stdio 的客戶端都能直接驅動 WebRunner,
 不需 HTTP、socket 或自訂橋接。
@@ -77,10 +79,7 @@ Claude Desktop 從 ``claude_desktop_config.json`` 讀取 MCP server:
       "mcpServers": {
         "webrunner": {
           "command": "python",
-          "args": ["-m", "je_web_runner.mcp_server"],
-          "env": {
-            "WEBRUNNER_HEADLESS": "1"
-          }
+          "args": ["-m", "je_web_runner.mcp_server"]
         }
       }
     }
@@ -114,7 +113,9 @@ Claude Code(終端機客戶端)以專案為單位,從 repo 根目錄的
       }
     }
 
-或寫到全域的 ``~/.claude/mcp.json``。重啟 Claude Code 後執行 ``/mcp``
+若要在每個專案都能用,改在使用者範圍加入:
+``claude mcp add --scope user webrunner -- python -m je_web_runner.mcp_server``
+(Claude Code 把使用者範圍的 server 存在 ``~/.claude.json``)。重啟 Claude Code 後執行 ``/mcp``
 確認 server 連得上。
 
 如果工具會讀寫 action JSON,請把檔案放在專案目錄內 — Claude Code
@@ -269,8 +270,10 @@ Sharding 與 infra
 * **JSON 無法序列化** — Browser tools 透過 ``_serialize_value`` 把
   ``WebDriver`` / ``WebElement`` 轉成 ``repr()`` 字串。自訂回傳值若不是
   JSON-friendly,需要在該 helper 下能 reduce。
-* **Protocol 版本不合** — WebRunner 公告 ``protocolVersion=2024-11-05``,
-  較新的客戶端會自動 negotiate down;若不行請把客戶端鎖定在這版。
+* **Protocol 版本不合** — WebRunner 支援 ``2025-11-25``、``2025-06-18``、
+  ``2025-03-26`` 與 ``2024-11-05``。客戶端要求其他版本時會收到
+  ``2025-11-25``,由客戶端決定能否繼續;只支援更新的無狀態版本的客戶端
+  無法連線。
 
 ----
 
