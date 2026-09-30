@@ -63,7 +63,29 @@ class TestTranslateActionList(unittest.TestCase):
                    ["WR_quit_all"]]
         result = translate_action_list(actions)
         self.assertEqual(len(result), 1)
-        self.assertEqual(result[0][0], "WR_pw_close_context")
+        self.assertEqual(result[0][0], "WR_pw_quit")
+
+    def test_every_translation_target_is_a_registered_command(self):
+        from je_web_runner.utils.executor.action_executor import executor
+        for command in supported_action_commands():
+            for action in translate_action_list([[command]]):
+                self.assertIn(action[0], executor.event_dict, f"{command} -> {action[0]}")
+
+    def test_element_commands_map_to_the_current_element_commands(self):
+        result = translate_action_list([
+            ["WR_element_click"],
+            ["WR_element_input", {"input_value": "hi"}],
+        ])
+        self.assertEqual(result, [
+            ["WR_pw_element_click"],
+            ["WR_pw_element_type_text", {"input_value": "hi"}],
+        ])
+
+    def test_window_size_drops_the_selenium_only_window_handle(self):
+        result = translate_action_list([
+            ["WR_set_window_size", {"width": 800, "height": 600, "window_handle": "current"}],
+        ])
+        self.assertEqual(result, [["WR_pw_set_viewport_size", {"width": 800, "height": 600}]])
 
     def test_unknown_command_passes_through(self):
         actions = [["WR_custom_action", {"x": 1}]]

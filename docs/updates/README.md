@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-03 | 2026-10-01 | Selenium→Playwright translator targets only registered commands | #change #playwright | [2026-10](2026-10.md) |
 | U-20261001-02 | 2026-10-01 | MCP server: UTF-8 stdio, silent notifications, isError for tool failures | #change #mcp | [2026-10](2026-10.md) |
 | U-20261001-01 | 2026-10-01 | Dashboard stylesheet loads under its own CSP; escaping and 500 fixes | #change #dashboard #security | [2026-10](2026-10.md) |
 | U-20260925-02 | 2026-09-25 | Translated READMEs link back to the repository root | #docs #tests | [2026-09](2026-09.md) |
@@ -90,5 +91,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 2 |
+| [2026-10.md](2026-10.md) | 2026-10 | 3 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

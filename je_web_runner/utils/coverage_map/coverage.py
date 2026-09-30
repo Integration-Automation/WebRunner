@@ -26,7 +26,6 @@ class CoverageMapError(WebRunnerException):
 _NAVIGATION_COMMANDS = {
     "WR_to_url",
     "WR_pw_to_url",
-    "WR_get_url",
 }
 
 
