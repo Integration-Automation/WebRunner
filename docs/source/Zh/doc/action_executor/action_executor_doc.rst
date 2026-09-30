@@ -42,6 +42,16 @@
 
 ``execute_action()`` 回傳一個字典，將每個動作對應到其回傳值。
 
+失敗的動作會記在這個字典裡，然後繼續執行下一個。若要執行單一動作並拿回它的值，
+改用 ``execute_one``：它經過同樣的命令閘門、重試策略與失敗截圖，不印出任何東西，
+動作失敗時拋出 ``WebRunnerExecuteException``\ （原本的錯誤是它的 ``__cause__``）：
+
+.. code-block:: python
+
+    from je_web_runner import execute_one
+
+    url = execute_one(["WR_get_current_url"])
+
 可用指令
 --------
 

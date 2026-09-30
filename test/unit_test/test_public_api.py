@@ -15,7 +15,7 @@ import je_web_runner
 PROMISED_TOP_LEVEL = (
     "webdriver_wrapper_instance", "web_element_wrapper", "get_webdriver_manager",
     "set_webdriver_options_argument", "TestObject", "create_test_object",
-    "get_test_object_type_list", "execute_action", "execute_files", "executor",
+    "get_test_object_type_list", "execute_action", "execute_files", "execute_one", "executor",
     "add_command_to_executor", "read_action_json", "get_dir_files_as_list",
     "create_project_dir", "test_record_instance", "callback_executor", "Keys",
     "web_runner_logger",
@@ -27,7 +27,9 @@ PROMISED_TOP_LEVEL = (
 # Module paths other repositories import directly. The logging module's name is misspelled in the
 # original code and stays that way: Jeffrey_RPA's conftest hooks that exact string.
 SUPPORTED_MODULE_PATHS = {
-    "je_web_runner.utils.executor.action_executor": ("executor", "execute_action", "execute_files"),
+    "je_web_runner.utils.executor.action_executor": (
+        "executor", "execute_action", "execute_files", "execute_one",
+    ),
     "je_web_runner.utils.logging.loggin_instance": ("web_runner_logger", "WebRunnerLoggingHandler"),
     "je_web_runner.webdriver.webdriver_wrapper": (
         "WebDriverWrapper", "webdriver_wrapper_instance",
@@ -74,3 +76,15 @@ def test_executor_commands_are_wr_prefixed_and_include_the_core_set():
     core = {"WR_to_url", "WR_click_element", "WR_input_to_element", "WR_get_current_url",
             "WR_get_title", "WR_save_screenshot"}
     assert core <= commands, sorted(core - commands)  # nosec B101
+
+
+# The WR_ commands AutoControlGUI's WebRunner bridge sends (web_open, web_quit, web_screenshot,
+# web_current_url in je_auto_control/utils/webrunner_bridge/bridge.py; architecture.md §6).
+AUTOCONTROL_BRIDGE_COMMANDS = (
+    "WR_get_webdriver_manager", "WR_to_url", "WR_quit", "WR_save_screenshot", "WR_get_current_url",
+)
+
+
+@pytest.mark.parametrize("command", AUTOCONTROL_BRIDGE_COMMANDS)
+def test_command_sent_by_the_autocontrol_bridge_is_registered(command):
+    assert command in je_web_runner.executor.event_dict  # nosec B101

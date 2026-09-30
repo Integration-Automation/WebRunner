@@ -311,6 +311,27 @@ class Executor:
 
         return execute_record_dict
 
+    def execute_one(self, action: list) -> Any:
+        """
+        執行單一動作並回傳結果；失敗時拋出例外，不印出任何東西
+        Run one action (``["WR_name"]``, ``["WR_name", {kwargs}]``, ``["WR_name", [args]]``
+        or ``["WR_name", [args], {kwargs}]``) the way :meth:`execute_action` runs each step
+        (refused commands, the arbitrary-script gate, the retry policy, the action span, the
+        failure screenshot and trace) and return what the command returned. Prints nothing.
+
+        :raises WebRunnerExecuteException: when the action is malformed or fails; the message
+                 names any failure screenshot or trace, and the original error is ``__cause__``.
+        """
+        if not isinstance(action, list) or not action or not isinstance(action[0], str):
+            raise WebRunnerExecuteException(
+                f"{executor_data_error}: an action is a list that starts with a command name, got {action!r}")
+        web_runner_logger.info(f"execute_one, action: {action}")
+        try:
+            return self._execute_with_retry(action)
+        except Exception as error:  # every failure leaves as one exception type, with its cause
+            web_runner_logger.error(f"execute_one, action: {action}, failed: {error!r}")
+            raise WebRunnerExecuteException(self._failure_text(action, error)) from error
+
     def collect_action_results(self, action_list: list | dict) -> tuple[dict, list[str]]:
         """
         執行動作清單但不印出；另外回傳失敗動作的紀錄鍵
@@ -383,6 +404,7 @@ class Executor:
 executor = Executor()
 package_manager.executor = executor
 
+
 def add_command_to_executor(command_dict: dict):
     """
     動態新增指令到 Executor
@@ -396,12 +418,22 @@ def add_command_to_executor(command_dict: dict):
         else:
             raise WebRunnerAddCommandException(add_command_exception_tag)
 
+
 def execute_action(action_list: list) -> dict:
     """
     全域方法：執行動作清單
     Global method: execute action list
     """
     return executor.execute_action(action_list)
+
+
+def execute_one(action: list) -> Any:
+    """
+    全域方法：執行單一動作，失敗時拋出
+    Global method: run one action and return its value; see :meth:`Executor.execute_one`.
+    """
+    return executor.execute_one(action)
+
 
 def execute_files(execute_files_list: list) -> list:
     """

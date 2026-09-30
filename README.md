@@ -382,6 +382,8 @@ actions = [
 execute_action(actions)
 ```
 
+`execute_action` records a failed step and moves on. To run one action and get its value back, use `execute_one(["WR_get_current_url"])`: it goes through the same command gates, retry policy and failure screenshots, prints nothing, and raises `WebRunnerExecuteException` (with the original error as its cause) when the action fails.
+
 The legacy names (`WR_get_webdriver_manager`, `WR_SaveTestObject`, `WR_quit`, `WR_input_to_element`, …) still work — see [Quality & Security](#quality--security) for the one-shot migration helper.
 
 ### Mixed positional + keyword arguments
@@ -405,10 +407,10 @@ policy protects:
 | CLI | `python -m je_web_runner` flags, including the original `-e/--execute_file`, `-d/--execute_dir` and `--execute_str` (Windows double-encoded JSON included) |
 | Action JSON | The `WR_*` command names registered in `executor.event_dict`, and the `webdriver_wrapper` / `meta` top-level keys of an action file |
 | Socket server | `start_web_runner_socket_server`, `send_command`, `read_frame`, `encode_frame` and the length-prefixed framing |
-| Supported module paths | `je_web_runner.utils.executor.action_executor` (`executor`), `je_web_runner.utils.logging.loggin_instance` (`web_runner_logger`, `WebRunnerLoggingHandler`), `je_web_runner.webdriver.webdriver_wrapper` (`WebDriverWrapper`, `webdriver_wrapper_instance`, the `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` patch targets) |
+| Supported module paths | `je_web_runner.utils.executor.action_executor` (`executor`, `execute_one`), `je_web_runner.utils.logging.loggin_instance` (`web_runner_logger`, `WebRunnerLoggingHandler`), `je_web_runner.webdriver.webdriver_wrapper` (`WebDriverWrapper`, `webdriver_wrapper_instance`, the `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` patch targets) |
 
 The three module paths are supported because other repositories already import them: AutoControlGUI's
-WebRunner bridge takes `executor`, Jeffrey_RPA hooks `loggin_instance` by that exact (misspelled)
+WebRunner bridge takes `executor` and `execute_one`, Jeffrey_RPA hooks `loggin_instance` by that exact (misspelled)
 name and patches the wrapper dictionaries. They are treated as public rather than asked to move.
 `test/unit_test/test_public_api.py` fails if any of them disappears.
 

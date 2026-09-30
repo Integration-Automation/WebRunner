@@ -380,6 +380,8 @@ actions = [
 execute_action(actions)
 ```
 
+`execute_action` 会记下失败的步骤然后继续。要执行单一动作并拿回它的值，用 `execute_one(["WR_get_current_url"])`：它经过同样的命令闸门、重试策略与失败截图，不打印任何东西，动作失败时抛出 `WebRunnerExecuteException`（原本的错误是它的 cause）。
+
 旧式名称（`WR_get_webdriver_manager`、`WR_SaveTestObject`、`WR_quit`、`WR_input_to_element`……）仍可使用 —— 关于一键迁移助手，请参见[质量与安全](#质量与安全)。
 
 ### 混合位置参数与关键字参数
@@ -402,10 +404,10 @@ execute_action(actions)
 | CLI | `python -m je_web_runner` 的各标志，包括原有的 `-e/--execute_file`、`-d/--execute_dir` 和 `--execute_str`（含 Windows 双重编码的 JSON） |
 | 动作 JSON | 在 `executor.event_dict` 中注册的 `WR_*` 命令名，以及动作文件的 `webdriver_wrapper` / `meta` 顶层键 |
 | 套接字服务器 | `start_web_runner_socket_server`、`send_command`、`read_frame`、`encode_frame` 以及长度前缀的分帧 |
-| 受支持的模块路径 | `je_web_runner.utils.executor.action_executor`（`executor`）、`je_web_runner.utils.logging.loggin_instance`（`web_runner_logger`、`WebRunnerLoggingHandler`）、`je_web_runner.webdriver.webdriver_wrapper`（`WebDriverWrapper`、`webdriver_wrapper_instance`，以及 `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` 补丁目标） |
+| 受支持的模块路径 | `je_web_runner.utils.executor.action_executor`（`executor`、`execute_one`）、`je_web_runner.utils.logging.loggin_instance`（`web_runner_logger`、`WebRunnerLoggingHandler`）、`je_web_runner.webdriver.webdriver_wrapper`（`WebDriverWrapper`、`webdriver_wrapper_instance`，以及 `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` 补丁目标） |
 
 这三个模块路径之所以受支持，是因为其他仓库已经导入它们：AutoControlGUI 的
-WebRunner 桥接取用 `executor`，Jeffrey_RPA 以那个确切（拼写有误）的名称
+WebRunner 桥接取用 `executor` 与 `execute_one`，Jeffrey_RPA 以那个确切（拼写有误）的名称
 钩取 `loggin_instance` 并对封装字典打补丁。它们被视为公共，而不是被要求迁移。
 如果其中任何一个消失，`test/unit_test/test_public_api.py` 就会失败。
 

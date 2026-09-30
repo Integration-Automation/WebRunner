@@ -8,6 +8,7 @@ from je_web_runner.utils.selenium_utils_wrapper.keys.selenium_keys import Keys
 from je_web_runner.utils.executor.action_executor import add_command_to_executor
 from je_web_runner.utils.executor.action_executor import execute_action
 from je_web_runner.utils.executor.action_executor import execute_files
+from je_web_runner.utils.executor.action_executor import execute_one
 from je_web_runner.utils.executor.action_executor import executor
 from je_web_runner.utils.file_process.get_dir_file_list import get_dir_files_as_list
 from je_web_runner.utils.generate_report.generate_html_report import generate_html
@@ -384,7 +385,7 @@ __all__ = [
     "web_element_wrapper", "set_webdriver_options_argument",
     "webdriver_wrapper_instance", "get_webdriver_manager",
     "get_desired_capabilities", "get_desired_capabilities_keys", "add_command_to_executor",
-    "execute_action", "execute_files", "executor",
+    "execute_action", "execute_files", "execute_one", "executor",
     "generate_html", "generate_html_report",
     "generate_json", "generate_json_report", "read_action_json",
     "generate_xml", "generate_xml_report",

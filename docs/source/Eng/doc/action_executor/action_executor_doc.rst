@@ -42,6 +42,18 @@ Basic Usage
 
 The ``execute_action()`` function returns a dict mapping each action to its return value.
 
+A failed action is recorded in that dict and the next one runs. To run one action and
+get its value back instead, use ``execute_one``: it goes through the same command gates,
+retry policy and failure screenshots, prints nothing, and raises
+``WebRunnerExecuteException`` (the original error is its ``__cause__``) when the action
+fails:
+
+.. code-block:: python
+
+    from je_web_runner import execute_one
+
+    url = execute_one(["WR_get_current_url"])
+
 Available Commands
 ------------------
 

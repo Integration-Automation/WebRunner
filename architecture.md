@@ -52,7 +52,7 @@ wired into the executor as `WR_*` commands, others are reachable only from Pytho
 
 | Surface | Exact name | Notes |
 | --- | --- | --- |
-| Python facade | `import je_web_runner` | `webdriver_wrapper_instance`, `web_element_wrapper`, `get_webdriver_manager`, `execute_action`, `execute_files`, `executor`, `add_command_to_executor`, `TestObject`, `test_record_instance`, report generators, `playwright_wrapper_instance`, `pw_*`. |
+| Python facade | `import je_web_runner` | `webdriver_wrapper_instance`, `web_element_wrapper`, `get_webdriver_manager`, `execute_action`, `execute_one`, `execute_files`, `executor`, `add_command_to_executor`, `TestObject`, `test_record_instance`, report generators, `playwright_wrapper_instance`, `pw_*`. |
 | Thematic facade | `je_web_runner.api.<theme>` | Same objects as `je_web_runner.utils.<area>`, grouped for discovery. |
 | CLI | `python -m je_web_runner` → `utils/cli/cli_main.py:main` | No console script is declared in `pyproject.toml`. Legacy flags: `-e/--execute_file FILE`, `-d/--execute_dir DIR`, `--execute_str JSON` (double-encoded JSON accepted on Windows). Newer: `--validate`, `--validate_dir`, `--parallel N`, `--parallel-mode thread\|process`, `--report BASE`, `--tag`, `--exclude-tag`, `--ledger`, `--rerun-failed`, `--watch`, `--migrate`, `--migrate-dry-run`, `--shard I/N`. There is no `-c` flag; scaffolding is `create_project_dir()`. |
 | MCP server | `python -m je_web_runner.mcp_server` → `serve_stdio()` | Newline-delimited JSON-RPC over stdio; `build_default_tools()` (offline tools) + `build_browser_tools()` (`webrunner_run_actions`, `webrunner_run_action_files`, `webrunner_list_commands`). |
@@ -122,7 +122,7 @@ python -m je_web_runner -d DIR [--tag/--exclude-tag] [--rerun-failed LEDGER] [--
 | --- | --- | --- |
 | Jeffrey_RPA | `JeffreyRPA/webrunner_je_only.py` and `webrunner_novelai.py` insert `D:\Codes\WebRunner` (or `WEBRUNNER_PATH`) at `sys.path[0]`, so the **live working tree** is imported; `Jeffrey_RPA/requirements.txt` requires `je_web_runner>=0.0.88` because of the four wrapper methods listed here. | `TestObject`, `webdriver_wrapper_instance` and its methods `get_current_url`, `get_title`, `save_screenshot`, `add_script_to_evaluate_on_new_document`; `JeffreyRPA/test_je_facade.py` imports `je_web_runner.webdriver.webdriver_wrapper` and checks `_webdriver_dict`. |
 | Jeffrey_RPA tests | `JeffreyRPA/conftest.py` hooks the import of `je_web_runner.utils.logging.loggin_instance` to park the log file outside the repo. | That exact, misspelled module path. **Do not rename it.** |
-| AutoControlGUI | Optional `utils/webrunner_bridge/bridge.py` (not a declared dependency). | Internal `je_web_runner.utils.executor.action_executor.executor` and its `event_dict` `WR_*` keys. |
+| AutoControlGUI | Optional `utils/webrunner_bridge/bridge.py` (not a declared dependency; found with `importlib.util.find_spec`, imported lazily). | `je_web_runner.utils.executor.action_executor`: `execute_one` (one action through the gates, raising `WebRunnerExecuteException`), falling back to `executor.event_dict` on releases without it; `executor.event_dict` `WR_*` keys for listing; the commands `WR_get_webdriver_manager`, `WR_to_url`, `WR_quit`, `WR_save_screenshot`, `WR_get_current_url` (guarded by `test/unit_test/test_public_api.py`); `je_web_runner.utils.exception.exceptions.WebRunnerException` as the failure it wraps. |
 | TestPioneer | Declared dependency; `from je_web_runner import execute_action` in-process. | `execute_action`. |
 | PyBreeze | Subprocess `python -m je_web_runner --execute_str <json>` / `--execute_file <path>`, reading stdout. | Legacy CLI flags, Windows double-encoded `--execute_str`, results printed to stdout; guarded by `test/unit_test/test_legacy_cli_contract.py`. |
 
@@ -131,7 +131,7 @@ original CLI entry points (`-e`, `-d`, `--execute_str`) stay unchanged; README �
 `WebDriverWrapper` and the `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` patch targets stable.
 
 **Supported module paths (public, README › Public API & Deprecation Policy):**
-`utils/executor/action_executor.py` (`executor`), `utils/logging/loggin_instance.py`
+`utils/executor/action_executor.py` (`executor`, `execute_one`), `utils/logging/loggin_instance.py`
 (`web_runner_logger`, also exported top-level since 0.0.90, and `WebRunnerLoggingHandler`),
 `webdriver/webdriver_wrapper.py`. Moves or renames are breaking changes and follow the deprecation
 policy; `test/unit_test/test_public_api.py` guards them.
