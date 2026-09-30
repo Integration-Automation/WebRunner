@@ -1,34 +1,39 @@
 """Smoke-test the thematic façade so it stays in sync with the underlying modules."""
 import importlib
+import importlib.util
 import unittest
+from pathlib import Path
 
 
-_FACADE_MODULES = [
-    "je_web_runner.api.authoring",
-    "je_web_runner.api.debugging",
-    "je_web_runner.api.frontend",
-    "je_web_runner.api.infra",
-    "je_web_runner.api.mobile",
-    "je_web_runner.api.networking",
-    "je_web_runner.api.observability",
-    "je_web_runner.api.quality",
-    "je_web_runner.api.reliability",
-    "je_web_runner.api.security",
-    "je_web_runner.api.test_data",
-]
+_API_DIR = Path(__file__).resolve().parents[2] / "je_web_runner" / "api"
+_THEMES = sorted(path.stem for path in _API_DIR.glob("*.py") if path.name != "__init__.py")
+_FACADE_MODULES = [f"je_web_runner.api.{theme}" for theme in _THEMES]
+_GENERATOR = Path(__file__).resolve().parents[2] / "scripts" / "gen_utils_index.py"
+
+
+def _index_generator():
+    spec = importlib.util.spec_from_file_location("gen_utils_index", _GENERATOR)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
 
 
 class TestFacadeImports(unittest.TestCase):
 
     def test_top_level_api_re_exports_themes(self):
         package = importlib.import_module("je_web_runner.api")
-        for theme in ("authoring", "debugging", "frontend", "infra", "mobile",
-                      "networking", "observability", "quality", "reliability",
-                      "security", "test_data"):
+        self.assertEqual(sorted(package.__all__), _THEMES)
+        for theme in _THEMES:
             self.assertTrue(
                 hasattr(package, theme),
                 msg=f"je_web_runner.api missing theme {theme!r}",
             )
+
+    def test_every_utils_subpackage_is_core_or_in_a_theme(self):
+        # A new subpackage must be re-exported by one theme (or be part of the core engine).
+        generator = _index_generator()
+        placed = set(generator.CORE).union(*(members for _heading, members in generator.facade_themes().values()))
+        self.assertEqual(sorted(set(generator.subpackages()) - placed), [])
 
     def test_each_theme_has_all(self):
         for module_name in _FACADE_MODULES:
@@ -77,6 +82,12 @@ class TestFacadeSpotChecks(unittest.TestCase):
     def test_authoring_format_actions_callable(self):
         from je_web_runner.api import authoring
         self.assertTrue(callable(authoring.format_actions))
+
+    def test_new_themes_spot_check(self):
+        from je_web_runner.api import audit, performance, platform
+        self.assertTrue(callable(performance.assert_web_vitals))
+        self.assertTrue(callable(platform.ac_run))
+        self.assertTrue(callable(audit.cors_matrix_classify))
 
     def test_security_pii_redact_callable(self):
         from je_web_runner.api import security

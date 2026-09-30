@@ -19,7 +19,7 @@ wired into the executor as `WR_*` commands, others are reachable only from Pytho
 | Path | Responsibility |
 | --- | --- |
 | `je_web_runner/__init__.py` | Facade: the original Selenium-flavoured public API plus selected helpers, listed in `__all__`. |
-| `je_web_runner/api/` | Thematic re-export facade (`authoring`, `debugging`, `frontend`, `infra`, `mobile`, `networking`, `observability`, `quality`, `reliability`, `security`, `test_data`); no logic of its own. |
+| `je_web_runner/api/` | Thematic re-export facade (`accessibility_i18n`, `ai`, `api_testing`, `audit`, `authoring`, `debugging`, `diagnostics`, `frontend`, `governance`, `infra`, `messaging`, `mobile`, `mobile_pwa`, `networking`, `observability`, `orchestration`, `performance`, `platform`, `quality`, `reliability`, `security`, `test_data`, `tooling`, `web_platform`); every `utils` subpackage outside the core engine is in exactly one theme (`test/unit_test/test_api_facade.py` fails otherwise); no logic of its own. |
 | `je_web_runner/webdriver/` | `webdriver_wrapper.py` (`WebDriverWrapper`, singleton `webdriver_wrapper_instance`) composed from `_wrapper_mixins/` (actions, cookies, media, navigation, scripting, parity: JSON waits / raw selectors / dialogs / CDP emulation; the Selenium event capture, HAR and response mocks live in `utils/bidi/selenium_events.py`, over W3C BiDi); `webdriver_with_options.py`; Playwright backend `playwright_wrapper.py` (`PlaywrightWrapper`: launch, context, quit, plus the `pw_*` module functions) composed from `_playwright_mixins/` (context, page, interaction, state, recording, scope: current frame / user-facing lookup / dialogs, connect: CDP attach / browser server / persistent profile, sessions: several browsers switched by index), `playwright_element_wrapper.py`, `playwright_locator.py`. |
 | `je_web_runner/element/` | `web_element_wrapper.py`: operations on the currently selected Selenium element. |
 | `je_web_runner/manager/` | `webrunner_manager.py`: `WebdriverManager` (singleton `web_runner`) for multiple live drivers. |
@@ -101,7 +101,7 @@ python -m je_web_runner -d DIR [--tag/--exclude-tag] [--rerun-failed LEDGER] [--
    renaming existing names. Commands that ship JS or CDP strings to the browser also go into `_ARBITRARY_SCRIPT_COMMANDS`.
 3. If callbacks must reach it, add it to the separate `event_dict` in `utils/callback/callback_function_executor.py`.
 4. For a Python-level public name, re-export it in `je_web_runner/__init__.py` (`__all__`) and/or the matching
-   `je_web_runner/api/<theme>.py`.
+   `je_web_runner/api/<theme>.py`. A new `utils` subpackage must go into one theme.
 5. Regenerate `docs/reference/command_reference.md` (`export_command_reference`, `utils/docs/command_reference.py`) and
    `docs/reference/webrunner-action-schema.json` (`export_schema`, `utils/schema/action_schema.py`).
 6. Add `test/unit_test/test_*.py`; add `test/integration_test/` coverage when several modules are wired together.

@@ -322,8 +322,9 @@ test/
 
 ## 主题化 API 门面
 
-80 多个工具辅助函数位于 `je_web_runner.utils.<area>` 下；为便于发现，
-它们同时也在 `je_web_runner.api` 下重新导出：
+工具辅助函数位于 `je_web_runner.utils.<area>` 下；核心引擎以外的每个子包，
+也都由 `je_web_runner.api` 下的一个主题重新导出（同一主题里两个包同名的名称会
+加上包前缀，例如 `cors_matrix_classify`）：
 
 ```python
 from je_web_runner.api import (
@@ -338,6 +339,19 @@ from je_web_runner.api import (
     reliability,    # adaptive retry, browser pool, smart wait, throttler, supervisor
     security,       # PII, license, CSP, cookie consent, header tampering
     test_data,      # DB fixtures, fixture record/replay, form auto-fill
+    accessibility_i18n,  # screen reader, forced colours, pseudo-localisation, RTL, OCR, visual AI
+    ai,             # LLM assist, auto-repair, edge cases, triage, RAG / tool-call / hallucination checks
+    api_testing,    # HTTP, auth, GraphQL N+1, gRPC, OpenAPI drift, rate limits, HAR tools
+    audit,          # clickjacking, CORS, cookies, CSP, XSS taint, open redirect, TLS, SRI, secrets, SBOM
+    diagnostics,    # OpenTelemetry bridge, backend log correlation, console error budget
+    governance,     # flakes, quarantine, owners, test debt, ROI, cost, PR risk, merge gates
+    messaging,      # email render / deliverability, push, OTP, webhooks, message queues, Slack digest
+    mobile_pwa,     # touch gestures, viewport, virtual keyboard, pull-to-refresh, real-device clouds
+    orchestration,  # A/B runs, personas, multi-user, flag matrix, chaos, data-driven, DB snapshots
+    performance,    # web vitals, INP, Lighthouse, bundle / third-party budgets, load tests
+    platform,       # CDP, BiDi, Chrome profiles, extensions, cloud grid, AutoControl bridge, CLI
+    tooling,        # recorder, action schema, command docs, POM generator, replay studio, dashboards
+    web_platform,   # WebSocket / SSE / WebRTC, storage, service workers, WebAuthn, WebUSB, payments…
 )
 ```
 

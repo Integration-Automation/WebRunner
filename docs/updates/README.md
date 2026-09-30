@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-35 | 2026-10-01 | Facade themes for every utils subpackage; the api package loads themes lazily | #done #api | [2026-10](2026-10.md) |
 | U-20261001-34 | 2026-10-01 | Interactive HTML report: timeline with screenshots, error diffs, waterfall, axe badges | #done #reports | [2026-10](2026-10.md) |
 | U-20261001-33 | 2026-10-01 | Impact index cache: parse only the action files that changed | #done #performance #impact-analysis | [2026-10](2026-10.md) |
 | U-20261001-32 | 2026-10-01 | WR_assert_web_vitals: one budget for LCP, CLS, INP and FCP | #done #performance | [2026-10](2026-10.md) |
@@ -122,5 +123,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 34 |
+| [2026-10.md](2026-10.md) | 2026-10 | 35 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

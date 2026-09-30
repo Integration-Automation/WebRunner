@@ -324,8 +324,9 @@ test/
 
 ## Thematic API Façade
 
-The 80+ utility helpers live under `je_web_runner.utils.<area>`; for
-discoverability they are also re-exported under `je_web_runner.api`:
+The utility helpers live under `je_web_runner.utils.<area>`; every subpackage outside the core
+engine is also re-exported by exactly one theme under `je_web_runner.api` (a name two packages of
+one theme share is prefixed with its package, e.g. `cors_matrix_classify`):
 
 ```python
 from je_web_runner.api import (
@@ -340,6 +341,19 @@ from je_web_runner.api import (
     reliability,    # adaptive retry, browser pool, smart wait, throttler, supervisor
     security,       # PII, license, CSP, cookie consent, header tampering
     test_data,      # DB fixtures, fixture record/replay, form auto-fill
+    accessibility_i18n,  # screen reader, forced colours, pseudo-localisation, RTL, OCR, visual AI
+    ai,             # LLM assist, auto-repair, edge cases, triage, RAG / tool-call / hallucination checks
+    api_testing,    # HTTP, auth, GraphQL N+1, gRPC, OpenAPI drift, rate limits, HAR tools
+    audit,          # clickjacking, CORS, cookies, CSP, XSS taint, open redirect, TLS, SRI, secrets, SBOM
+    diagnostics,    # OpenTelemetry bridge, backend log correlation, console error budget
+    governance,     # flakes, quarantine, owners, test debt, ROI, cost, PR risk, merge gates
+    messaging,      # email render / deliverability, push, OTP, webhooks, message queues, Slack digest
+    mobile_pwa,     # touch gestures, viewport, virtual keyboard, pull-to-refresh, real-device clouds
+    orchestration,  # A/B runs, personas, multi-user, flag matrix, chaos, data-driven, DB snapshots
+    performance,    # web vitals, INP, Lighthouse, bundle / third-party budgets, load tests
+    platform,       # CDP, BiDi, Chrome profiles, extensions, cloud grid, AutoControl bridge, CLI
+    tooling,        # recorder, action schema, command docs, POM generator, replay studio, dashboards
+    web_platform,   # WebSocket / SSE / WebRTC, storage, service workers, WebAuthn, WebUSB, payments…
 )
 ```
 

@@ -6,8 +6,6 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: X-
 
 ## Open
 
-- **#7** 189 of the 265 `je_web_runner/utils` subpackages are re-exported by no `je_web_runner.api` facade theme. Owner decided: add facade themes for them. Group the 189 subpackages into new thematic facade modules under `je_web_runner/api/` (e.g. `ai.py`, `platform.py`, `governance.py`, `mobile_pwa.py`, `messaging.py`, `audit.py`), re-export leaf helpers, and regenerate `docs/reference/utils_index.md`.
-
 - **#8** [BLOCKED: Workspace X-6 step 1] Delay log file creation until first log record and support configurable log paths (`WEBRUNNER_LOG_PATH` / `WEBRUNNER_LOG_DIR`). Follow JEDITOR pattern: do not open `WEBRunner.log` in cwd on module import. Preserve exact import path `je_web_runner.utils.logging.loggin_instance` and logger exports for downstream consumer compatibility (Jeffrey_RPA conftest hook).
 
 - **#22** [BLOCKED: two releases must ship the warning first] Flip the package gate's default to refuse packages outside the allowlist: `PackageManager.allow_arbitrary_packages` starts as `None` (load, with a `DeprecationWarning`) in `je_web_runner/utils/package_manager/package_manager_class.py`; set it to `False`, drop the warning branch in `_check_allowed`, and update the "Package gate" text in the three READMEs and `docs/source/{Eng,Zh}/doc/package_manager/package_manager_doc.rst`. README › Public API & Deprecation Policy: the warning must be in at least two releases after the one that introduced it (check `origin/main` for the version).
