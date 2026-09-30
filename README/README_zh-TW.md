@@ -619,6 +619,27 @@ notify_run_summary("https://hooks.slack.com/services/...")
 
 失敗截圖、OpenTelemetry 追蹤、重試策略以及即時儀表板都掛接到同一個 `Executor.event_dict`，因此它們可以組合而不產生耦合。
 
+儀表板有兩個。上面的 `start_dashboard` 即時顯示目前這次執行的進度；`DashboardServer`（`utils/live_dashboard`）則彙整其他模組寫出的檔案裡的歷史資料：
+
+```python
+from je_web_runner import DashboardConfig, DashboardServer
+
+server = DashboardServer(DashboardConfig(
+    ledger_path="ledger.json",                 # runs, pass-rate chart, flake scores
+    quarantine_path="quarantine.json",
+    locator_findings_path="locator_health.json",
+    schedule_path="schedule.json",             # test_scheduler output
+    triage_report_path="triage.json",          # failure_triage output
+    bind_port=8765,                            # 127.0.0.1 unless bind_host says otherwise
+))
+print(server.start())                          # http://127.0.0.1:8765, served from a daemon thread
+```
+
+- 頁面：Overview（依狀態上色的摘要卡片、每日通過率圖表加失敗長條、最新的執行）、Runs（`?limit=`、"Show more"）、Flake、Quarantine（附 triage 工單連結）、Locators（最弱的定位器與自我修復 fallback 最常觸發者）、Schedule、Triage。設為 `None` 的來源會顯示空狀態，並說明該設定哪個 `DashboardConfig` 欄位。
+- 表格點標題即可排序、輸入即可篩選（Runs 另可依結果篩選）；時間以瀏覽器的時區顯示。頁面每 15 秒更新資料並保留篩選條件，按 Pause 可停止。淺色與深色跟隨系統設定。
+- 同樣的資料也以 JSON 提供：`/api/summary`、`/api/runs`、`/api/flake`、`/api/quarantine`、`/api/locators`、`/api/schedule`、`/api/triage`、`/api/trend`。
+- 只用標準函式庫。每個頁面不靠 JavaScript 也能用；腳本與樣式表由同源提供，搭配嚴格的 Content-Security-Policy（`default-src 'self'`），所有值都經過 HTML 跳脫。
+
 ## 測試編排
 
 ```bash
@@ -1079,7 +1100,7 @@ python -m je_web_runner.action_lsp
 - **`mutation_testing`** —— 動作 JSON 變異測試（kill-rate /
   score）。
 - **`live_dashboard`** —— 聚合的 Web UI：runs + flake + quarantine +
-  locators。
+  locators + schedule + triage（見「可觀測性」）。
 - **`test_scheduler`** —— 在時間 + 雲預算約束下的價值密度
   排程器。
 

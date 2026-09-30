@@ -18,6 +18,7 @@ from je_web_runner.utils.flake_detector.detector import (
 )
 from je_web_runner.utils.live_dashboard._config import DashboardConfig
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+from je_web_runner.utils.trend_dashboard.trend import compute_trend_from_runs
 
 
 def _read_ledger_runs(ledger_path: Path | None) -> list[dict[str, Any]]:
@@ -103,9 +104,7 @@ def _load_triage(path: Path | None) -> dict[str, Any]:
         return {}
 
 
-def build_summary(config: DashboardConfig) -> dict[str, Any]:
-    """One-shot snapshot used by ``/`` and ``/api/summary``."""
-    all_runs = _read_ledger_runs(config.ledger_path)
+def _summarise(all_runs: list[dict[str, Any]], config: DashboardConfig) -> dict[str, Any]:
     runs = _recent(all_runs, 10_000)
     total = len(runs)
     passed = sum(1 for r in runs if r.get("passed"))
@@ -128,3 +127,29 @@ def build_summary(config: DashboardConfig) -> dict[str, Any]:
             if isinstance(locator_report, dict) else 0
         ),
     }
+
+
+def build_summary(config: DashboardConfig) -> dict[str, Any]:
+    """One-shot snapshot used by ``/`` and ``/api/summary``."""
+    return _summarise(_read_ledger_runs(config.ledger_path), config)
+
+
+def load_trend(ledger_path: Path | None) -> dict[str, Any]:
+    """Per-day pass / fail counts (``{daily, totals}``) for ``/api/trend`` and the overview chart."""
+    return compute_trend_from_runs(_read_ledger_runs(ledger_path))
+
+
+def load_overview(config: DashboardConfig) -> dict[str, Any]:
+    """The overview page's data from one read of the ledger: summary, daily trend, latest runs."""
+    all_runs = _read_ledger_runs(config.ledger_path)
+    return {
+        "summary": _summarise(all_runs, config),
+        "daily": compute_trend_from_runs(all_runs)["daily"],
+        "recent": _recent(all_runs, 10),
+    }
+
+
+def load_runs_page(ledger_path: Path | None, limit: int) -> tuple[list[dict[str, Any]], int]:
+    """The newest ``limit`` runs, newest first, and how many runs the ledger holds."""
+    all_runs = _read_ledger_runs(ledger_path)
+    return _recent(all_runs, limit), len(all_runs)

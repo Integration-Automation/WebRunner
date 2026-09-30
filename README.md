@@ -623,6 +623,27 @@ notify_run_summary("https://hooks.slack.com/services/...")
 
 Failure screenshot, OpenTelemetry tracing, retry policy, and the live dashboard all hook into the same `Executor.event_dict` so they compose without coupling.
 
+There are two dashboards. `start_dashboard` above follows the current run live. `DashboardServer` (`utils/live_dashboard`) aggregates history from files other modules write:
+
+```python
+from je_web_runner import DashboardConfig, DashboardServer
+
+server = DashboardServer(DashboardConfig(
+    ledger_path="ledger.json",                 # runs, pass-rate chart, flake scores
+    quarantine_path="quarantine.json",
+    locator_findings_path="locator_health.json",
+    schedule_path="schedule.json",             # test_scheduler output
+    triage_report_path="triage.json",          # failure_triage output
+    bind_port=8765,                            # 127.0.0.1 unless bind_host says otherwise
+))
+print(server.start())                          # http://127.0.0.1:8765, served from a daemon thread
+```
+
+- Pages: Overview (summary cards coloured by status, a daily pass-rate chart with failure bars, the latest runs), Runs (`?limit=`, "Show more"), Flake, Quarantine (with links to triage tickets), Locators (weakest locators and self-healing fallback offenders), Schedule and Triage. Any source left as `None` shows an empty state saying which `DashboardConfig` field to set.
+- Tables sort by clicking a header and filter as you type (Runs also by result); times show in the browser's time zone. The page refreshes its data every 15 seconds, keeping your filter, and the Pause button stops it. Light and dark follow the system setting.
+- The same data is JSON under `/api/summary`, `/api/runs`, `/api/flake`, `/api/quarantine`, `/api/locators`, `/api/schedule`, `/api/triage` and `/api/trend`.
+- Standard library only. Every page works without JavaScript; the script and stylesheet are served from the same origin under a strict Content-Security-Policy (`default-src 'self'`), and every value is HTML-escaped.
+
 ## Test Orchestration
 
 ```bash
@@ -1089,7 +1110,7 @@ only what you use).
 - **`mutation_testing`** — Action JSON mutation testing (kill-rate /
   score).
 - **`live_dashboard`** — Aggregated web UI: runs + flake + quarantine +
-  locators.
+  locators + schedule + triage (see Observability).
 - **`test_scheduler`** — Value-density scheduler under time + cloud
   budget.
 

@@ -8,11 +8,13 @@ failure_triage / test_scheduler / quarantine registry 的資料整合在一個
 
 Routes:
 
-* ``GET /``               HTML overview with summary cards
-* ``GET /runs``           HTML table of recent ledger entries
-* ``GET /flake``          HTML flake leaderboard
-* ``GET /quarantine``     HTML quarantine list
-* ``GET /locators``       HTML locator health summary
+* ``GET /``               overview: summary cards, daily pass-rate chart, latest runs
+* ``GET /runs``           recent ledger entries (``?limit=N``, "Show more" adds 50)
+* ``GET /flake``          flake leaderboard
+* ``GET /quarantine``     quarantine registry, with triage links
+* ``GET /locators``       locator health: cards, weakest locators, fallback offenders
+* ``GET /schedule``       test-scheduler plan: selected and skipped tests
+* ``GET /triage``         failure-triage report(s)
 * ``GET /api/summary``    JSON aggregate counts
 * ``GET /api/runs``       JSON recent runs (``?limit=N``)
 * ``GET /api/flake``      JSON flake scores
@@ -20,9 +22,13 @@ Routes:
 * ``GET /api/locators``   JSON locator findings
 * ``GET /api/schedule``   JSON schedule report, passed through
 * ``GET /api/triage``     JSON triage report, passed through
-* ``GET /static/app.css`` the stylesheet (same origin, so the CSP allows it)
+* ``GET /api/trend``      JSON per-day pass / fail counts
+* ``GET /static/app.css``, ``/static/app.js``, ``/static/favicon.svg``: same-origin
+  assets, because the pages' CSP (``default-src 'self'``) blocks inline ones
 * ``GET /healthz``        ``ok``
 
+The pages work without JavaScript; the script adds local times, sortable and
+filterable tables and a refresh every 15 seconds (with a pause button).
 Every request re-reads the underlying files so the dashboard always
 reflects the latest state — no caching, no daemon process needed.
 """
@@ -34,7 +40,7 @@ import urllib.parse
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Any, Callable
 
-from je_web_runner.utils.live_dashboard._assets import BASE_CSS
+from je_web_runner.utils.live_dashboard._assets import FAVICON, SCRIPT, STYLESHEET
 from je_web_runner.utils.live_dashboard._config import DashboardConfig, LiveDashboardError
 from je_web_runner.utils.live_dashboard._data import (
     _load_flake_scores,
@@ -44,6 +50,9 @@ from je_web_runner.utils.live_dashboard._data import (
     _load_schedule,
     _load_triage,
     build_summary,
+    load_overview,
+    load_runs_page,
+    load_trend,
 )
 from je_web_runner.utils.live_dashboard._pages import (
     render_flake,
@@ -52,6 +61,8 @@ from je_web_runner.utils.live_dashboard._pages import (
     render_overview,
     render_quarantine,
     render_runs,
+    render_schedule,
+    render_triage,
 )
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
@@ -61,12 +72,14 @@ __all__ = ["DashboardConfig", "DashboardServer", "LiveDashboardError", "build_su
 def _make_handler(config: DashboardConfig) -> type[BaseHTTPRequestHandler]:
     """Bind ``config`` into a fresh handler class so each server is isolated."""
 
-    html_routes: dict[str, Callable[[], str]] = {
-        "/": lambda: render_overview(build_summary(config)),
-        "/runs": lambda: render_runs(_load_runs(config.ledger_path)),
-        "/flake": lambda: render_flake(_load_flake_scores(config.ledger_path)),
-        "/quarantine": lambda: render_quarantine(_load_quarantine(config.quarantine_path)),
-        "/locators": lambda: render_locators(_load_locator_report(config.locator_findings_path)),
+    html_routes: dict[str, Callable[[str], str]] = {
+        "/": lambda _query: render_overview(**load_overview(config)),
+        "/runs": lambda query: _runs_page(config, _query_limit(query)),
+        "/flake": lambda _query: render_flake(_load_flake_scores(config.ledger_path)),
+        "/quarantine": lambda _query: render_quarantine(_load_quarantine(config.quarantine_path)),
+        "/locators": lambda _query: render_locators(_load_locator_report(config.locator_findings_path)),
+        "/schedule": lambda _query: render_schedule(_load_schedule(config.schedule_path)),
+        "/triage": lambda _query: render_triage(_load_triage(config.triage_report_path)),
     }
     json_routes: dict[str, Callable[[Any], Any]] = {
         "/api/summary": lambda _query: build_summary(config),
@@ -76,9 +89,12 @@ def _make_handler(config: DashboardConfig) -> type[BaseHTTPRequestHandler]:
         "/api/locators": lambda _query: _load_locator_report(config.locator_findings_path),
         "/api/schedule": lambda _query: _load_schedule(config.schedule_path),
         "/api/triage": lambda _query: _load_triage(config.triage_report_path),
+        "/api/trend": lambda _query: load_trend(config.ledger_path),
     }
     text_routes: dict[str, tuple[str, bytes]] = {
-        "/static/app.css": ("text/css; charset=utf-8", BASE_CSS.encode("utf-8")),
+        "/static/app.css": ("text/css; charset=utf-8", STYLESHEET.encode("utf-8")),
+        "/static/app.js": ("text/javascript; charset=utf-8", SCRIPT.encode("utf-8")),
+        "/static/favicon.svg": ("image/svg+xml", FAVICON.encode("utf-8")),
         "/healthz": ("text/plain", b"ok"),
     }
 
@@ -114,7 +130,7 @@ def _make_handler(config: DashboardConfig) -> type[BaseHTTPRequestHandler]:
             path = parsed.path
             try:
                 if path in html_routes:
-                    self._send_html(html_routes[path]())
+                    self._send_html(html_routes[path](parsed.query))
                 elif path in json_routes:
                     self._send_json(json_routes[path](parsed.query))
                 elif path in text_routes:
@@ -126,6 +142,11 @@ def _make_handler(config: DashboardConfig) -> type[BaseHTTPRequestHandler]:
                 self._send_json({"error": repr(error)}, status=500)
 
     return DashboardHandler
+
+
+def _runs_page(config: DashboardConfig, limit: int) -> str:
+    runs, total = load_runs_page(config.ledger_path, limit)
+    return render_runs(runs, total, limit)
 
 
 def _query_limit(query: str) -> int:
