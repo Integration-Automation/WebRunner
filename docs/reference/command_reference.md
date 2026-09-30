@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (493 commands).
+Auto-generated from the executor's event_dict (512 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -11,6 +11,9 @@ Auto-generated from the executor's event_dict (493 commands).
 | `WR_add_package_to_callback_executor` | `(package)` | 將套件的成員加入到 callback_executor 的 event_dict |
 | `WR_add_package_to_executor` | `(package)` | 將套件的成員加入到 executor 的 event_dict |
 | `WR_add_script_to_evaluate_on_new_document` | `(source: 'str') -> 'str | None'` | 在每次新文件載入前注入一段 JavaScript (常用於 anti-bot / stealth)。 |
+| `WR_alert_accept` | `(prompt_text: 'str | None' = None) -> 'None'` | Accept the open alert / confirm / prompt, typing ``prompt_text`` into a prompt first. |
+| `WR_alert_dismiss` | `() -> 'None'` | Dismiss the open alert / confirm / prompt. |
+| `WR_alert_text` | `() -> 'str'` | The message of the open dialog. |
 | `WR_appium_android_caps` | `(app: 'str', device_name: 'str' = 'Android Emulator', platform_version: 'str' = '13', automation_name: 'str' = 'UiAutomator2', extra: 'dict[str, Any] | None' = None) -> 'dict[str, Any]'` | Convenience: build a capabilities dict for Android. |
 | `WR_appium_ios_caps` | `(app: 'str', device_name: 'str' = 'iPhone 15', platform_version: 'str' = '17', automation_name: 'str' = 'XCUITest', extra: 'dict[str, Any] | None' = None) -> 'dict[str, Any]'` |  |
 | `WR_appium_quit` | `() -> 'None'` | Quit whatever driver is currently registered on the WebRunner wrapper. |
@@ -39,8 +42,10 @@ Auto-generated from the executor's event_dict (493 commands).
 | `WR_clear_fallback_locators` | `() -> 'None'` |  |
 | `WR_clear_geolocation_override` | `() -> 'None'` | 清除 ``set_geolocation`` 設定。 |
 | `WR_clear_origin_storage` | `(origin: 'str') -> 'None'` | 透過 CDP ``Storage.clearDataForOrigin`` 一次清掉指定 origin 的所有儲存 |
+| `WR_clear_permissions` | `() -> 'None'` | Reset every granted permission. |
 | `WR_clear_test_objects` | `() -> None` | 清空所有測試物件紀錄 |
 | `WR_click_element` | `() -> 'None'` | 點擊 WebElement |
+| `WR_clock_freeze` | `(moment: 'str | int | float', advance_ms_per_real_second: 'float' = 0.0) -> 'None'` | 凍結頁面時間 |
 | `WR_close_window` | `() -> 'None'` | 關閉當前 tab / window (不會結束整個 driver；要結束請用 ``quit``) |
 | `WR_connect_browserstack` | `(username: 'str', access_key: 'str', capabilities: 'dict[str, Any] | None' = None, hub_url: 'str | None' = None) -> 'WebDriver'` |  |
 | `WR_connect_lambdatest` | `(username: 'str', access_key: 'str', capabilities: 'dict[str, Any] | None' = None, hub_url: 'str | None' = None) -> 'WebDriver'` |  |
@@ -63,6 +68,7 @@ Auto-generated from the executor's event_dict (493 commands).
 | `WR_drag_and_drop_offset` | `(element_name: 'str', offset_x: 'int', offset_y: 'int') -> 'None'` | 使用 TestObjectRecord 中的元素名稱，拖曳元素到指定偏移位置 |
 | `WR_element_assert` | `(check_dict: 'dict') -> 'None'` | 檢查當前 WebElement 是否符合指定條件 |
 | `WR_element_change_web_element` | `(element_index: 'int') -> 'None'` | 切換當前 WebElement |
+| `WR_element_check` | `() -> 'None'` | Tick the current checkbox or radio button; nothing happens if it is already selected. |
 | `WR_element_check_current_web_element` | `(check_dict: 'dict') -> 'None'` | 檢查當前 WebElement 是否符合指定條件 |
 | `WR_element_clear` | `() -> 'None'` | 清除當前 WebElement 的內容 |
 | `WR_element_click` | `() -> 'None'` | 點擊 WebElement |
@@ -70,6 +76,9 @@ Auto-generated from the executor's event_dict (493 commands).
 | `WR_element_get_dom_attribute` | `(name: 'str') -> 'str | None'` | 取得 DOM 屬性 |
 | `WR_element_get_property` | `(name: 'str') -> 'None | str | bool | WebElement | dict'` | 取得 WebElement 的屬性 |
 | `WR_element_get_select` | `() -> 'Select | None'` | 取得 Select 物件 (用於操作下拉選單) |
+| `WR_element_hover` | `() -> 'None'` | Move the mouse over the current element now (``WR_move_to_element`` waits for ``WR_perform``). |
+| `WR_element_inner_html` | `() -> 'str | None'` | The HTML inside the current element. |
+| `WR_element_inner_text` | `() -> 'str'` | The rendered text of the current element. |
 | `WR_element_input` | `(input_value: 'str') -> 'None'` | 輸入文字到 WebElement |
 | `WR_element_is_displayed` | `() -> 'bool | None'` | 檢查 WebElement 是否顯示 |
 | `WR_element_is_enabled` | `() -> 'bool | None'` | 檢查 WebElement 是否可用 |
@@ -79,7 +88,9 @@ Auto-generated from the executor's event_dict (493 commands).
 | `WR_element_select_by_value` | `(value: 'str') -> 'None'` | 以 value 屬性選取 <select> 選項 |
 | `WR_element_select_by_visible_text` | `(text: 'str') -> 'None'` | 以可見文字選取 <select> 選項 |
 | `WR_element_submit` | `() -> 'None'` | 提交當前 WebElement |
+| `WR_element_uncheck` | `() -> 'None'` | Untick the current checkbox; nothing happens if it is not selected. |
 | `WR_element_value_of_css_property` | `(property_name: 'str') -> 'str | None'` | 取得 CSS 屬性值 |
+| `WR_emulate_device` | `(name: 'str') -> 'None'` | 套用具名裝置（``utils/device_emulation`` 預設） |
 | `WR_enable_fetch_interception` | `(patterns: 'list | None' = None, handle_auth: 'bool' = False) -> 'None'` | 啟動 CDP ``Fetch.enable`` 開始攔截請求。 |
 | `WR_execute` | `(driver_command: 'str', params: 'dict | None' = None) -> 'dict | None'` | 執行 Selenium WebDriver 的底層命令 |
 | `WR_execute_action` | `(action_list: list | dict) -> dict` | 執行一系列動作 |
@@ -113,7 +124,9 @@ Auto-generated from the executor's event_dict (493 commands).
 | `WR_fetch_fulfill_request` | `(request_id: 'str', response_code: 'int', body=None, response_headers=None, response_phrase: 'str | None' = None) -> 'None'` | 以指定 response 回應一個被攔截的請求 (不再送出到原伺服器)。 |
 | `WR_filter_paths` | `(paths: 'Iterable[str]', include: 'Sequence[str] | None' = None, exclude: 'Sequence[str] | None' = None) -> 'list[str]'` | 篩選 action 檔路徑清單 |
 | `WR_find_element` | `(element_name: 'str') -> 'WebElement | None'` | 使用已儲存的 TestObjectRecord 尋找單一元素 |
+| `WR_find_element_by` | `(selector: 'str', by: 'str' = 'css selector') -> 'Any'` | Find by a raw selector (no saved ``TestObject``) and make it the current element. |
 | `WR_find_elements` | `(element_name: 'str') -> 'list[WebElement] | None'` | 使用已儲存的 TestObjectRecord 尋找多個元素 |
+| `WR_find_elements_by` | `(selector: 'str', by: 'str' = 'css selector') -> 'list[Any]'` | Find every match of a raw selector; they become the current element list. |
 | `WR_find_recorded_element` | `(element_name: 'str') -> 'WebElement | None'` | 使用已儲存的 TestObjectRecord 尋找單一元素 |
 | `WR_find_recorded_elements` | `(element_name: 'str') -> 'list[WebElement] | None'` | 使用已儲存的 TestObjectRecord 尋找多個元素 |
 | `WR_find_with_healing` | `(name: 'str')` | 依序嘗試 primary + fallback locator，回傳第一個命中的 WebElement |
@@ -151,6 +164,7 @@ Auto-generated from the executor's event_dict (493 commands).
 | `WR_gh_emit_failures` | `(stream: 'IO[str] | None' = None, file: 'str | None' = None) -> 'list[str]'` | 對 ``test_record_instance`` 內每個失敗紀錄輸出一行 annotation |
 | `WR_gh_emit_from_junit_xml` | `(junit_path: 'str', stream: 'IO[str] | None' = None) -> 'list[str]'` | 讀取 JUnit XML 並對其中每個 ``<failure>`` 輸出一行 annotation |
 | `WR_gh_format_error` | `(message: 'str', file: 'str | None' = None, line: 'int | None' = None, col: 'int | None' = None, title: 'str | None' = None) -> 'str'` | 產出 ``::error file=...::message`` 行 |
+| `WR_grant_permissions` | `(permissions: 'list[str]', origin: 'str | None' = None) -> 'None'` | 授予瀏覽器權限（Chromium，CDP） |
 | `WR_http_assert_json_contains` | `(key: 'str', expected: 'Any') -> 'None'` | 斷言上一次 JSON 回應於 ``key`` 的值等於 ``expected`` |
 | `WR_http_assert_status` | `(expected: 'int') -> 'None'` | 斷言上一次回應的 HTTP 狀態碼 |
 | `WR_http_delete` | `(url: 'str', **kwargs: 'Any') -> 'dict[str, Any]'` |  |
@@ -180,6 +194,7 @@ Auto-generated from the executor's event_dict (493 commands).
 | `WR_lint_action_file` | `(path: 'str') -> 'list[dict[str, Any]]'` | Read ``path`` (UTF-8 JSON) and lint the contents. |
 | `WR_lint_severity_counts` | `(findings: 'list[dict[str, Any]]') -> 'dict[str, int]'` | Aggregate ``{warning: N, info: M}`` for reporting. |
 | `WR_list_commands` | `() -> 'list[str]'` | Just the command names (handy for shell completion). |
+| `WR_list_devices` | `() -> 'list[str]'` | The device preset names :meth:`emulate_device` accepts. |
 | `WR_list_new_downloads` | `(directory: 'str', before: 'list[str]') -> 'list[str]'` | 回傳 ``directory`` 內目前存在但不在 ``before`` 清單中的檔案 |
 | `WR_llm_generate_actions` | `(request: 'str', context: 'str | None' = None) -> 'list[Any]'` | 把自然語言敘述轉成 WR_* action JSON 草稿 |
 | `WR_llm_has_callable` | `() -> 'bool'` |  |
@@ -493,7 +508,11 @@ Auto-generated from the executor's event_dict (493 commands).
 | `WR_user_factory` | `(prefix: 'str' = 'user') -> 'Factory'` | Default user shape: id / name / email / password. |
 | `WR_validate_action_file` | `(json_file_path: 'str') -> 'bool'` | 讀取並驗證動作 JSON 檔案 |
 | `WR_validate_action_json` | `(data: 'list | dict') -> 'bool'` | 驗證動作 JSON 是否符合執行器格式 |
-| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x00000143258F8F40>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
-| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x00000143258F8F40>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
+| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002BCA0C811C0>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
+| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002BCA0C811C0>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
 | `WR_wait_for_download` | `(directory: 'str', timeout: 'float' = 60.0, suffix: 'str | None' = None, poll_seconds: 'float' = 0.5) -> 'str'` | 等待 ``directory`` 內出現新檔案（會跳過 ``.crdownload`` / ``.part``） |
+| `WR_wait_for_element` | `(selector: 'str', by: 'str' = 'css selector', timeout: 'float' = 10.0, state: 'str' = 'visible') -> 'Any'` | 等元素出現（``present`` / ``visible`` / ``clickable``）或消失（``hidden``） |
+| `WR_wait_for_ready_state` | `(timeout: 'float' = 30.0) -> 'bool'` | Wait until ``document.readyState`` is ``complete``. |
+| `WR_wait_for_title` | `(pattern: 'str', timeout: 'float' = 10.0) -> 'bool'` | Wait until the page title contains ``pattern``. |
+| `WR_wait_for_url` | `(pattern: 'str', timeout: 'float' = 10.0) -> 'bool'` | Wait until the current URL contains ``pattern``. |
 | `WR_write_pom_to_file` | `(source: 'str', output_path: 'str') -> 'str'` | Write generated source to ``output_path``; returns the path written. |

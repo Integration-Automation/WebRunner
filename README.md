@@ -513,6 +513,8 @@ executor.set_allow_arbitrary_packages(False)                   # and refuses eve
 
 Selenium is the original backend. Every legacy command (and its modern alias) routes here unless an explicit `WR_pw_*` / `WR_appium_*` prefix is used.
 
+The Selenium backend has the twins of the Playwright element and page helpers: JSON-usable waits (`WR_wait_for_element` with `present` / `visible` / `clickable` / `hidden`, `WR_wait_for_url`, `WR_wait_for_title`, `WR_wait_for_ready_state`), `WR_find_element_by` / `WR_find_elements_by` for a raw selector, `WR_element_check` / `_uncheck` / `_hover` / `_inner_text` / `_inner_html`, `WR_alert_accept` (with `prompt_text`) / `WR_alert_dismiss` / `WR_alert_text`, and on Chromium `WR_emulate_device` / `WR_list_devices`, `WR_grant_permissions` / `WR_clear_permissions` and `WR_clock_freeze`. Unlike the older Selenium commands these fail their action when they fail.
+
 ### Playwright
 
 The Playwright backend covers most everyday operations of the Selenium wrapper under `WR_pw_*`, but it is not a one-to-one copy. The comparison table in `docs/source/Eng/doc/backends/backends_doc.rst` lists the equivalent commands and how they differ (for example, timeouts in milliseconds instead of seconds, tabs switched by index only), what cannot exist on the other backend (Internet Explorer, Selenium Grid, Appium and OS window geometry on Selenium only; WebKit, the trace viewer and automatic actionability waits on Playwright only), and what is not on the other backend yet.
@@ -764,7 +766,7 @@ python -m je_web_runner.mcp_server
 The default tool list (22 tools) exposes:
 
 Live browser execution:
-- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 493 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
+- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 512 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
 - `webrunner_run_action_files` — batch-run JSON files on disk
 - `webrunner_list_commands` — discover the full `WR_*` surface
 

@@ -70,6 +70,35 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
      - ``WR_pw_find_element_with_test_object_record``、
        ``WR_pw_find_elements_with_test_object_record``
      - ``TestObject`` 會翻譯成 Playwright selector。
+   * - 用原始 selector 找
+     - ``WR_find_element_by`` / ``WR_find_elements_by``\ （``by``：``css
+       selector``、``xpath``、``id`` …）
+     - ``WR_pw_find_element`` / ``WR_pw_find_elements``
+     - Selenium 的會把找到的元素設為目前元素。
+   * - 勾選、懸停、元素文字
+     - ``WR_element_check``、``WR_element_uncheck``、``WR_element_hover``、
+       ``WR_element_inner_text``、``WR_element_inner_html``、
+       ``WR_element_is_selected``
+     - ``WR_pw_element_check``、``WR_pw_element_uncheck``、
+       ``WR_pw_element_hover``、``WR_pw_element_inner_text``、
+       ``WR_pw_element_inner_html``、``WR_pw_element_is_checked``
+     - ``WR_element_hover`` 立即移動滑鼠；``WR_move_to_element`` 要等
+       ``WR_perform``。
+   * - JavaScript 對話框
+     - ``WR_alert_accept``\ （``prompt_text``）、``WR_alert_dismiss``、
+       ``WR_alert_text``：回應已開啟的對話框
+     - ``WR_pw_set_dialog_policy``、``WR_pw_last_dialog``：在對話框出現前決定
+     - Playwright 會關閉沒人預先處理的對話框，所以回應要事先設定。
+   * - 具名裝置、權限、假時鐘
+     - ``WR_emulate_device`` / ``WR_list_devices``、
+       ``WR_grant_permissions`` / ``WR_clear_permissions``、
+       ``WR_clock_freeze``
+     - ``WR_pw_emulate`` / ``WR_pw_list_devices``、
+       ``WR_pw_grant_permissions`` / ``WR_pw_clear_permissions``、
+       ``WR_pw_clock_install`` / ``_set_time`` / ``_run_for``
+     - Selenium 的走 Chromium DevTools 與 WebRunner 自己的裝置預設；權限名稱
+       沿用 Playwright 的。``WR_clock_freeze`` 修補 ``Date`` 與
+       ``performance.now``；Playwright 的時鐘還控制計時器。
    * - 點擊、懸停
      - ``WR_element_click``；``WR_left_click`` / ``WR_move_to_element``
        再 ``WR_perform``
@@ -86,10 +115,12 @@ page-level 的動作會寫進測試紀錄，所以和 Selenium 的步驟一樣�
      - ``WR_pw_select_option``、``WR_pw_element_select_option``
      - Playwright 收值、``{"index": n}`` 或 ``{"label": text}``。
    * - 等待
-     - ``WR_implicitly_wait``
+     - ``WR_implicitly_wait``、``WR_wait_for_element``\ （``present`` /
+       ``visible`` / ``clickable`` / ``hidden``）、``WR_wait_for_url``、
+       ``WR_wait_for_title``、``WR_wait_for_ready_state``
      - ``WR_pw_wait_for_selector`` / ``_url`` / ``_load_state`` /
        ``_timeout``
-     - Playwright 在每個動作前還會自動等元素可操作。
+     - Playwright 在每個動作前還會自動等元素可操作。Selenium 的等待逾時用秒。
    * - 逾時
      - ``WR_set_page_load_timeout``、``WR_set_script_timeout``
      - ``WR_pw_set_default_timeout``、
@@ -236,19 +267,11 @@ Selenium 做不到：
 
 Selenium 還沒有：
 
-* ``WR_pw_check``、``WR_pw_uncheck``、``WR_pw_element_is_checked``、
-  ``WR_pw_element_inner_text``、``WR_pw_element_inner_html``，以及用原始
-  selector 找元素（``WR_pw_find_element``）；
 * ``WR_pw_route_mock`` / ``WR_pw_route_mock_json``。Selenium 有 CDP Fetch
   的基本命令（``WR_enable_fetch_interception`` …），但 action 檔永遠拿不到
   被暫停請求的 id，所以無法完成；
 * ``WR_pw_start_har_recording``、``WR_pw_event_capture_start``、
-  ``WR_pw_assert_no_console_errors``；
-* ``WR_pw_grant_permissions``、``WR_pw_clock_install``，以及具名裝置
-  （``WR_pw_emulate``）；
-* 回應 JavaScript 對話框：``WR_pw_set_dialog_policy``\ （``accept``，可附 prompt
-  文字；``dismiss``）與 ``WR_pw_last_dialog``。Selenium 可以用 ``WR_switch``
-  取得 alert，但沒有接受或關閉的命令。
+  ``WR_pw_assert_no_console_errors``。
 
 Selenium 只能近似：以使用者的角度找元素，``WR_pw_find_by``\ （``role``、
 ``text``、``label``、``placeholder``、``alt_text``、``title``、``test_id``）。

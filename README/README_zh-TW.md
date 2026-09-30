@@ -509,6 +509,8 @@ executor.set_allow_arbitrary_packages(False)                   # and refuses eve
 
 Selenium 是最初的後端。除非明確使用 `WR_pw_*` / `WR_appium_*` 前綴，否則每個舊式命令（及其現代別名）都路由到這裡。
 
+Selenium 後端也有對應 Playwright 元素與頁面輔助命令的版本：能在 JSON 裡用的等待（`WR_wait_for_element`，狀態 `present` / `visible` / `clickable` / `hidden`、`WR_wait_for_url`、`WR_wait_for_title`、`WR_wait_for_ready_state`）、用原始 selector 尋找的 `WR_find_element_by` / `WR_find_elements_by`、`WR_element_check` / `_uncheck` / `_hover` / `_inner_text` / `_inner_html`、`WR_alert_accept`（可帶 `prompt_text`）/ `WR_alert_dismiss` / `WR_alert_text`，以及 Chromium 上的 `WR_emulate_device` / `WR_list_devices`、`WR_grant_permissions` / `WR_clear_permissions` 與 `WR_clock_freeze`。與較早的 Selenium 命令不同，它們失敗時該動作就會失敗。
+
 ### Playwright
 
 Playwright 後端在 `WR_pw_*` 下涵蓋 Selenium 封裝的大部分日常操作，但不是一對一的複本。`docs/source/Zh/doc/backends/backends_doc.rst` 裡的對照表列出對應的命令與差異（例如逾時用毫秒而不是秒、分頁只能依索引切換）、另一個後端做不到的功能（只有 Selenium：Internet Explorer、Selenium Grid、Appium、作業系統視窗的位置與大小；只有 Playwright：WebKit、trace viewer、每個動作前自動等元素可操作），以及另一個後端還沒有的功能。
@@ -760,7 +762,7 @@ python -m je_web_runner.mcp_server
 預設工具清單（22 個工具）公開：
 
 即時瀏覽器執行：
-- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 493 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 512 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批次執行磁碟上的 JSON 檔案
 - `webrunner_list_commands` —— 探索完整的 `WR_*` 介面面
 

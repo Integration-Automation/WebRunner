@@ -74,6 +74,38 @@ Equivalent commands
      - ``WR_pw_find_element_with_test_object_record``,
        ``WR_pw_find_elements_with_test_object_record``
      - The ``TestObject`` is translated to a Playwright selector.
+   * - Find by a raw selector
+     - ``WR_find_element_by`` / ``WR_find_elements_by`` (``by``: ``css
+       selector``, ``xpath``, ``id`` …)
+     - ``WR_pw_find_element`` / ``WR_pw_find_elements``
+     - Selenium's make the match the current element.
+   * - Check, hover, element text
+     - ``WR_element_check``, ``WR_element_uncheck``, ``WR_element_hover``,
+       ``WR_element_inner_text``, ``WR_element_inner_html``,
+       ``WR_element_is_selected``
+     - ``WR_pw_element_check``, ``WR_pw_element_uncheck``,
+       ``WR_pw_element_hover``, ``WR_pw_element_inner_text``,
+       ``WR_pw_element_inner_html``, ``WR_pw_element_is_checked``
+     - ``WR_element_hover`` moves the mouse at once, where
+       ``WR_move_to_element`` waits for ``WR_perform``.
+   * - JavaScript dialogs
+     - ``WR_alert_accept`` (``prompt_text``), ``WR_alert_dismiss``,
+       ``WR_alert_text``: answer the dialog that is open
+     - ``WR_pw_set_dialog_policy``, ``WR_pw_last_dialog``: decide before the
+       dialog opens
+     - Playwright dismisses a dialog nobody planned for, so its answer has to
+       be set beforehand.
+   * - Named devices, permissions, fake clock
+     - ``WR_emulate_device`` / ``WR_list_devices``,
+       ``WR_grant_permissions`` / ``WR_clear_permissions``,
+       ``WR_clock_freeze``
+     - ``WR_pw_emulate`` / ``WR_pw_list_devices``,
+       ``WR_pw_grant_permissions`` / ``WR_pw_clear_permissions``,
+       ``WR_pw_clock_install`` / ``_set_time`` / ``_run_for``
+     - Selenium's use Chromium DevTools and WebRunner's own device presets;
+       permission names follow Playwright's. ``WR_clock_freeze`` patches
+       ``Date`` and ``performance.now``; Playwright's clock also controls
+       timers.
    * - Click, hover
      - ``WR_element_click``; ``WR_left_click`` / ``WR_move_to_element``
        then ``WR_perform``
@@ -91,11 +123,13 @@ Equivalent commands
      - ``WR_pw_select_option``, ``WR_pw_element_select_option``
      - Playwright takes a value, ``{"index": n}`` or ``{"label": text}``.
    * - Wait
-     - ``WR_implicitly_wait``
+     - ``WR_implicitly_wait``, ``WR_wait_for_element`` (``present`` /
+       ``visible`` / ``clickable`` / ``hidden``), ``WR_wait_for_url``,
+       ``WR_wait_for_title``, ``WR_wait_for_ready_state``
      - ``WR_pw_wait_for_selector`` / ``_url`` / ``_load_state`` /
        ``_timeout``
      - Playwright also waits for an element to be actionable before every
-       action.
+       action. Selenium's wait timeouts are in seconds.
    * - Timeouts
      - ``WR_set_page_load_timeout``, ``WR_set_script_timeout``
      - ``WR_pw_set_default_timeout``,
@@ -251,20 +285,11 @@ Not possible on Selenium:
 
 Not on Selenium yet:
 
-* ``WR_pw_check``, ``WR_pw_uncheck``, ``WR_pw_element_is_checked``,
-  ``WR_pw_element_inner_text``, ``WR_pw_element_inner_html``, and finding
-  by a raw selector (``WR_pw_find_element``);
 * ``WR_pw_route_mock`` / ``WR_pw_route_mock_json``. Selenium has the CDP
   Fetch primitives (``WR_enable_fetch_interception`` …), but an action file
   cannot complete them because it never learns the paused request's id;
 * ``WR_pw_start_har_recording``, ``WR_pw_event_capture_start``,
-  ``WR_pw_assert_no_console_errors``;
-* ``WR_pw_grant_permissions``, ``WR_pw_clock_install``, and named devices
-  (``WR_pw_emulate``);
-* answering JavaScript dialogs: ``WR_pw_set_dialog_policy`` (``accept`` with
-  an optional prompt text, ``dismiss``) and ``WR_pw_last_dialog``. Selenium
-  reaches an alert through ``WR_switch`` but has no accept or dismiss
-  command.
+  ``WR_pw_assert_no_console_errors``.
 
 Only approximated on Selenium: finding elements the way a user would,
 ``WR_pw_find_by`` (``role``, ``text``, ``label``, ``placeholder``,

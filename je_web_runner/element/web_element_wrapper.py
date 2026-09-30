@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import Select
 
 from je_web_runner.utils.assert_value.result_check import check_web_element_details
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+from je_web_runner.utils.test_record.recorded import recorded_calls
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+
+
+_recorded = recorded_calls("Web element")
 
 
 class WebElementWrapper:
@@ -310,6 +315,36 @@ class WebElementWrapper:
             # Handle and log error
             web_runner_logger.error(f"WebElementWrapper get_select, failed: {error!r}")
             record_action_to_list("Web element get_select", None, error)
+
+
+    # ----- twins of Playwright element commands; unlike the methods above they raise -----
+
+    @_recorded
+    def check(self) -> None:
+        """Tick the current checkbox or radio button; nothing happens if it is already selected."""
+        if not self.current_web_element.is_selected():
+            self.current_web_element.click()
+
+    @_recorded
+    def uncheck(self) -> None:
+        """Untick the current checkbox; nothing happens if it is not selected."""
+        if self.current_web_element.is_selected():
+            self.current_web_element.click()
+
+    @_recorded
+    def hover(self) -> None:
+        """Move the mouse over the current element now (``WR_move_to_element`` waits for ``WR_perform``)."""
+        ActionChains(self.current_web_element.parent).move_to_element(self.current_web_element).perform()
+
+    @_recorded
+    def inner_text(self) -> str:
+        """The rendered text of the current element."""
+        return self.current_web_element.text
+
+    @_recorded
+    def inner_html(self) -> str | None:
+        """The HTML inside the current element."""
+        return self.current_web_element.get_attribute("innerHTML")
 
 
 # 使用此包裝器來操作 WebElement

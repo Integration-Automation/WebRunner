@@ -46,6 +46,7 @@ from je_web_runner.webdriver._wrapper_mixins import (
     _CookieMixin,
     _MediaMixin,
     _NavigationMixin,
+    _ParityMixin,
     _ScriptingMixin,
 )
 from je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_capability_wrapper
@@ -150,6 +151,7 @@ class WebDriverWrapper(
     _CookieMixin,
     _ActionsMixin,
     _MediaMixin,
+    _ParityMixin,
 ):
     """
     WebDriver 包裝器

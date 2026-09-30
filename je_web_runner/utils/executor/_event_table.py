@@ -642,6 +642,27 @@ COMMANDS: dict[str, Any] = {
         "WR_element_select_by_value": web_runner.webdriver_element.select_by_value,
         "WR_element_select_by_index": web_runner.webdriver_element.select_by_index,
         "WR_element_select_by_visible_text": web_runner.webdriver_element.select_by_visible_text,
+
+        # ----- twins of Playwright commands (these raise on failure) -----
+        "WR_wait_for_element": webdriver_wrapper_instance.wait_for_element,
+        "WR_wait_for_url": webdriver_wrapper_instance.wait_for_url,
+        "WR_wait_for_title": webdriver_wrapper_instance.wait_for_title,
+        "WR_wait_for_ready_state": webdriver_wrapper_instance.wait_for_ready_state,
+        "WR_find_element_by": webdriver_wrapper_instance.find_element_by,
+        "WR_find_elements_by": webdriver_wrapper_instance.find_elements_by,
+        "WR_alert_accept": webdriver_wrapper_instance.alert_accept,
+        "WR_alert_dismiss": webdriver_wrapper_instance.alert_dismiss,
+        "WR_alert_text": webdriver_wrapper_instance.alert_text,
+        "WR_emulate_device": webdriver_wrapper_instance.emulate_device,
+        "WR_list_devices": webdriver_wrapper_instance.list_devices,
+        "WR_grant_permissions": webdriver_wrapper_instance.grant_permissions,
+        "WR_clear_permissions": webdriver_wrapper_instance.clear_permissions,
+        "WR_clock_freeze": webdriver_wrapper_instance.clock_freeze,
+        "WR_element_check": web_runner.webdriver_element.check,
+        "WR_element_uncheck": web_runner.webdriver_element.uncheck,
+        "WR_element_hover": web_runner.webdriver_element.hover,
+        "WR_element_inner_text": web_runner.webdriver_element.inner_text,
+        "WR_element_inner_html": web_runner.webdriver_element.inner_html,
 }
 
 
