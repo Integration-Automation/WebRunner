@@ -16,21 +16,25 @@ WebRunner 使用 Python 的 ``logging`` 模組搭配旋轉檔案處理器來記�
    * - 屬性
      - 值
    * - 日誌檔案
-     - ``WEBRunner.log``
+     - ``$WEBRUNNER_LOG_PATH``\ （完整檔案路徑），否則
+       ``$WEBRUNNER_LOG_DIR/WEBRunner.log``，都沒設就是
+       ``~/.je_web_runner/logs/WEBRunner.log``
    * - 日誌等級
      - ``WARNING`` 及以上
-   * - 最大檔案大小
-     - 1 GB（旋轉）
+   * - 輪替
+     - 行程開檔時若超過 10 MB，先改名成 ``<name>.1``
    * - 日誌格式
-     - ``%(asctime)s | %(name)s | %(levelname)s | %(message)s``
+     - ``%(asctime)s | %(process)d | %(name)s | %(levelname)s | %(message)s``
    * - 處理器
      - ``RotatingFileHandler``（自訂 ``WebRunnerLoggingHandler``）
 
 日誌輸出
 --------
 
-日誌檔案在當前工作目錄中建立為 ``WEBRunner.log``。
-當檔案達到 1 GB 時會進行旋轉。
+import ``je_web_runner`` 不寫任何檔案：第一筆紀錄才建立檔案與目錄，並以附加模式
+寫入，同一個帳號的行程可以共用。相對路徑以 import 當下的工作目錄為準；
+``os.devnull`` 會關掉檔案輸出。開不了的檔案會改寫到 ``os.devnull`` 並發出一次
+``RuntimeWarning``。
 
 日誌範例：
 

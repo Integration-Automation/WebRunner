@@ -1786,9 +1786,9 @@ WebRunner 提供一个自定义异常层次 —— 每个辅助函数都抛出 `
 
 ## 日志
 
-WebRunner 使用一个轮转文件处理器：
-
-- **日志文件：** `WEBRunner.log`
+- **日志文件：** `$WEBRUNNER_LOG_PATH`（完整文件路径），否则 `$WEBRUNNER_LOG_DIR/WEBRunner.log`，都没设就是 `~/.je_web_runner/logs/WEBRunner.log`。相对路径以 import 当下的工作目录为准；`os.devnull` 会关掉文件输出。
+- **何时创建：** 第一条记录才创建文件（连同目录）；import `je_web_runner` 不写任何文件。
+- **模式：** 追加；每行带进程编号；进程开文件时若超过 10 MB 就先改名成 `<name>.1`。
 - **级别：** WARNING+
 - **最大大小：** 1 GB
 - **格式：** `%(asctime)s | %(name)s | %(levelname)s | %(message)s`

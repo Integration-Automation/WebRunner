@@ -1797,9 +1797,9 @@ WebRunner provides a hierarchy of custom exceptions — every helper raises a do
 
 ## Logging
 
-WebRunner uses a rotating file handler:
-
-- **Log file:** `WEBRunner.log`
+- **Log file:** `$WEBRUNNER_LOG_PATH` (a full file path), else `$WEBRUNNER_LOG_DIR/WEBRunner.log`, else `~/.je_web_runner/logs/WEBRunner.log`. A relative path resolves against the cwd at import; `os.devnull` turns the file off.
+- **When:** the file (and its directory) is created on the first record; importing `je_web_runner` writes nothing.
+- **Mode:** append; each line carries the process id; a file over 10 MB is moved to `<name>.1` when a process opens it.
 - **Level:** WARNING+
 - **Max size:** 1 GB
 - **Format:** `%(asctime)s | %(name)s | %(levelname)s | %(message)s`

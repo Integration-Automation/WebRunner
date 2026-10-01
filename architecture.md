@@ -152,7 +152,10 @@ original CLI entry points (`-e`, `-d`, `--execute_str`) stay unchanged; README â
 policy; `test/unit_test/test_public_api.py` guards them.
 
 **Import-time side effects:** `utils/logging/loggin_instance.py` sets the root logger to DEBUG and attaches a
-`RotatingFileHandler` for the **relative** path `WEBRunner.log` (mode `"w"`), so the log lands in the caller's cwd.
+handler that opens nothing until the first record. The file is `$WEBRUNNER_LOG_PATH`, else
+`$WEBRUNNER_LOG_DIR/WEBRunner.log`, else `~/.je_web_runner/logs/WEBRunner.log` (append, process id per line; it
+used to be the relative `WEBRunner.log` in the caller's cwd, workspace X-6). Jeffrey_RPA points
+`WEBRUNNER_LOG_PATH` at its own `webrunner.log`, which its supervisor also writes.
 `webdriver_wrapper_instance`, `web_runner` and `executor` are module-level singletons: concurrent callers in one
 process share one driver (`--parallel-mode process` exists for isolation).
 

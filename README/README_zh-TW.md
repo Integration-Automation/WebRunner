@@ -1786,9 +1786,9 @@ WebRunner 提供一個自訂例外階層 —— 每個輔助函式都擲出 `Web
 
 ## 日誌
 
-WebRunner 使用一個輪替檔案處理器：
-
-- **日誌檔案：** `WEBRunner.log`
+- **日誌檔案：** `$WEBRUNNER_LOG_PATH`（完整檔案路徑），否則 `$WEBRUNNER_LOG_DIR/WEBRunner.log`，都沒設就是 `~/.je_web_runner/logs/WEBRunner.log`。相對路徑以 import 當下的工作目錄為準；`os.devnull` 會關掉檔案輸出。
+- **何時建立：** 第一筆紀錄才建立檔案（連同目錄）；import `je_web_runner` 不寫任何檔案。
+- **模式：** 附加；每行帶行程編號；行程開檔時若超過 10 MB 就先改名成 `<name>.1`。
 - **級別：** WARNING+
 - **最大大小：** 1 GB
 - **格式：** `%(asctime)s | %(name)s | %(levelname)s | %(message)s`
