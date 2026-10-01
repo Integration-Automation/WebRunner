@@ -8,6 +8,7 @@ import argparse
 import json
 import sys
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
@@ -196,23 +197,27 @@ def _run_with_dependencies(
             record_run(ledger_path, path, passed=passed)
 
 
-def _select_files(
-    directory: str,
-    include_tags,
-    exclude_tags,
-    rerun_only: Sequence[str] | None,
-    shard_spec: str | None,
-) -> list:
+@dataclass(frozen=True)
+class FileSelection:
+    """Which files under ``-d DIR`` run: tags, the failures to re-run, the shard."""
+
+    include_tags: Sequence[str] = ()
+    exclude_tags: Sequence[str] = ()
+    rerun_only: Sequence[str] | None = None
+    shard_spec: str | None = None
+
+
+def _select_files(directory: str, selection: FileSelection) -> list:
     """Apply rerun-only / tag / shard filters to the directory listing."""
     files = get_dir_files_as_list(directory)
-    if rerun_only is not None:
-        rerun_set = set(rerun_only)
+    if selection.rerun_only is not None:
+        rerun_set = set(selection.rerun_only)
         files = [path for path in files if path in rerun_set]
-    if include_tags or exclude_tags:
-        files = filter_paths(files, include=include_tags, exclude=exclude_tags)
-    if shard_spec:
+    if selection.include_tags or selection.exclude_tags:
+        files = filter_paths(files, include=list(selection.include_tags), exclude=list(selection.exclude_tags))
+    if selection.shard_spec:
         from je_web_runner.utils.sharding.shard import partition_with_spec
-        files = partition_with_spec(files, shard_spec)
+        files = partition_with_spec(files, selection.shard_spec)
     return files
 
 
@@ -254,14 +259,11 @@ def _run_with_thread_pool(files, parallel: int, ledger_path: str | None) -> None
 def _run_dir(
     directory: str,
     parallel: int,
-    include_tags=None,
-    exclude_tags=None,
+    selection: FileSelection,
     ledger_path: str | None = None,
-    rerun_only: Sequence[str] | None = None,
     parallel_mode: str = "thread",
-    shard_spec: str | None = None,
 ) -> None:
-    files = _select_files(directory, include_tags, exclude_tags, rerun_only, shard_spec)
+    files = _select_files(directory, selection)
     if any(build_dependency_graph(files).get(path) for path in files):
         _run_with_dependencies(files, ledger_path)
         return
@@ -307,19 +309,16 @@ def _dispatch(args: argparse.Namespace) -> None:
     if args.execute_file:
         execute_action(read_action_json(args.execute_file))
     if args.execute_dir:
-        rerun_only = failed_files(args.rerun_failed) if args.rerun_failed else None
+        selection = FileSelection(
+            include_tags=include_tags,
+            exclude_tags=exclude_tags,
+            rerun_only=failed_files(args.rerun_failed) if args.rerun_failed else None,
+            shard_spec=args.shard,
+        )
 
         def _do_run() -> None:
-            _run_dir(
-                args.execute_dir,
-                args.parallel,
-                include_tags=include_tags,
-                exclude_tags=exclude_tags,
-                ledger_path=args.ledger,
-                rerun_only=rerun_only,
-                parallel_mode=args.parallel_mode,
-                shard_spec=args.shard,
-            )
+            _run_dir(args.execute_dir, args.parallel, selection,
+                     ledger_path=args.ledger, parallel_mode=args.parallel_mode)
 
         if args.watch:
             from je_web_runner.utils.cli.watch_mode import watch_directory
