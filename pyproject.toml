@@ -34,6 +34,9 @@ dependencies = [
     # Floor set to the first release without the known Pillow advisories;
     # wheels cover cp310-cp315, so it excludes no supported interpreter.
     "Pillow>=12.3.0",
+    # The action executor is built on the workspace's shared executor core; 0.0.3 adds the hooks it uses
+    # (attempt, failure_record, numbered record keys, collect_action_results).
+    "je_action_core>=0.0.3",
 ]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",

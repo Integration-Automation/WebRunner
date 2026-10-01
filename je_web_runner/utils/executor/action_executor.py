@@ -1,10 +1,32 @@
-import builtins
+"""
+WebRunner 的動作執行器，建在 je_action_core 上
+The action executor, built on je_action_core's :class:`~je_action_core.ActionExecutor`.
+
+The core runs the list, keys the records (``execute: <action>``, repeats numbered ``#2`` …), prints them and
+holds the commands. WebRunner adds its dialect: ``[name, [args], {kwargs}]`` actions, refused commands and the
+arbitrary-script gate (checked before the name is looked up), the retry policy and the action span (around
+every action, through :meth:`Executor.attempt`), failure screenshots and traces in the failure record, and
+:meth:`Executor.execute_one`.
+"""
 import contextlib
 import time
-import types
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Iterable, Iterator
+
+from je_action_core import (
+    SAFE_BUILTINS,
+    ActionExecutor,
+    BoundAction,
+    CommandPolicy,
+    CommandRegistry,
+    DuplicateKeys,
+    ExecutorSettings,
+    PrintReporter,
+    safe_builtin_commands,
+    unique_record_key,
+)
 
 from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
 from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
@@ -21,21 +43,20 @@ from je_web_runner.utils.test_record.wrapper_failures import set_raise_wrapper_e
 from je_web_runner.webdriver import playwright_wrapper as _pw
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
-# 禁止暴露於 JSON 動作執行器的內建函式，避免任意程式碼執行
-# 只註冊允許清單，不再用黑名單：「除了危險的以外全部註冊」會讓 action JSON 拿到
-# 未來 Python 新增的任何內建函式，而且原本的黑名單仍放行 dir / hasattr / id /
-# isinstance / iter / next。這份清單與 MailThunder、LoadDensity 的相同，所以同一份
-# action list 在工作區各框架的行為一致（工作區 progress.md X-12）。
-# An allowlist, not a blocklist: "register everything except the dangerous ones"
-# hands action JSON whatever a future Python adds to builtins, and the previous
-# list still let dir / hasattr / id / isinstance / iter / next through. The names
-# match MailThunder's and LoadDensity's, so one action list behaves the same
-# across the workspace's frameworks (workspace progress.md X-12).
-SAFE_BUILTINS = frozenset({
-    "abs", "all", "any", "ascii", "bin", "callable", "chr", "divmod",
-    "format", "hash", "hex", "len", "max", "min", "oct", "ord", "pow",
-    "print", "repr", "round", "sorted", "sum",
-})
+# 只註冊允許清單裡的內建函式（je_action_core 的 SAFE_BUILTINS，與 MailThunder、LoadDensity 相同）
+# Only the allowlisted builtins are registered: je_action_core's SAFE_BUILTINS, the list MailThunder and
+# LoadDensity use too, so one action list behaves the same across the workspace's frameworks (workspace
+# progress.md X-12). An allowlist, because "everything except the dangerous ones" would hand action JSON
+# whatever a future Python adds to builtins. Re-exported here: ``SAFE_BUILTINS`` and ``unique_record_key``
+# keep their import path in this module.
+__all__ = [
+    "SAFE_BUILTINS", "Executor", "add_command_to_executor", "execute_action", "execute_files", "execute_one",
+    "executor", "unique_record_key",
+]
+
+_NAME_ONLY = 1
+_NAME_AND_PAYLOAD = 2
+_NAME_ARGS_AND_KWARGS = 3
 
 # WR_* 命令會把整段 JavaScript 字串送進瀏覽器執行；當 action JSON 來源不可信時
 # 必須能關閉。透過 ``set_allow_arbitrary_script(False)`` 切換。
@@ -72,25 +93,79 @@ def _try_playwright_screenshot() -> bytes | None:
         return None
 
 
-def unique_record_key(record: dict, key: str) -> str:
+@dataclass(frozen=True)
+class _ActionParser:
     """
-    重複動作的紀錄鍵加上序號
-    ``key``, or ``key #N`` when an identical action already has a slot in ``record``. Two
-    identical actions used to share one key, so the later result overwrote the earlier one
-    while ``failed`` still named it. The first occurrence keeps the bare key, as in
-    AutoControl's ``_unique_key``.
+    WebRunner 的動作格式
+    ``[name]``, ``[name, {kwargs}]``, ``[name, [args]]`` or ``[name, [args], {kwargs}]``. The name is looked
+    up first. An unknown name, a three-element action of any other shape and a longer action raise
+    :class:`WebRunnerExecuteException`; an empty action raises ``IndexError``.
     """
-    if key not in record:
-        return key
-    suffix = 2
-    while f"{key} #{suffix}" in record:
-        suffix += 1
-    return f"{key} #{suffix}"
+
+    def bind(self, action: Any, resolve: Callable[[Any], Callable[..., Any] | None]) -> BoundAction:
+        """Bind ``action`` to the command ``resolve`` finds for its name."""
+        name = action[0]
+        command = resolve(name)
+        if command is None:
+            raise WebRunnerExecuteException(f"{executor_data_error} unknown command: {name!s}")
+        if len(action) == _NAME_ONLY:
+            return BoundAction(name, command)
+        if len(action) == _NAME_AND_PAYLOAD:
+            if isinstance(action[1], dict):
+                return BoundAction(name, command, (), action[1])
+            return BoundAction(name, command, action[1], {})
+        if len(action) == _NAME_ARGS_AND_KWARGS:
+            positional, kwargs = action[1], action[2]
+            if not isinstance(positional, (list, tuple)) or not isinstance(kwargs, dict):
+                raise WebRunnerExecuteException(
+                    f"{executor_data_error}: 3-element action requires [cmd, [positional], {{kwargs}}]"
+                )
+            return BoundAction(name, command, positional, kwargs)
+        raise WebRunnerExecuteException(f"{executor_data_error} {action!s}")
 
 
-class Executor:
+class _ActionList:
+    """Finds the actions as :meth:`Executor.action_list_of` does: an empty list runs nothing."""
+
+    @staticmethod
+    def extract(action_list: Any) -> list:
+        """The list to run; raises for anything that is not a list or a dict holding one."""
+        return Executor.action_list_of(action_list)
+
+
+class _Reporter(PrintReporter):
+    """Logs the list and each failure; prints every record's key and value (as :class:`PrintReporter`)."""
+
+    def on_start(self, action_list: Any) -> None:
+        web_runner_logger.info(f"execute_action, action_list: {action_list}")
+
+    def on_failure(self, action: Any, error: Exception) -> None:
+        web_runner_logger.error(f"execute_action, action: {action}, failed: {error!r}")
+
+
+def _refuse_command(_name: str) -> WebRunnerAddCommandException:
+    return WebRunnerAddCommandException(add_command_exception_tag)
+
+
+class Executor(ActionExecutor):
+    """
+    執行 WebRunner 動作清單
+    Runs WebRunner action lists: je_action_core's executor with WebRunner's action format, gates, retries,
+    action spans and failure artifacts. ``event_dict`` is the live command table.
+    """
 
     def __init__(self):
+        super().__init__(
+            ExecutorSettings(
+                rules=_ActionList(),
+                parser=_ActionParser(),
+                reporter=_Reporter(),
+                read_json=read_action_json,
+                failure_record=self._failure_text,
+                duplicate_keys=DuplicateKeys.NUMBER,
+            ),
+            CommandRegistry(policy=CommandPolicy.FUNCTIONS_ONLY, rejection=_refuse_command),
+        )
         # 失敗時自動截圖目錄；None 代表停用
         # Output directory for auto-captured failure screenshots; None disables it.
         self.failure_screenshot_dir: str | None = None
@@ -115,8 +190,7 @@ class Executor:
 
         # 只把允許清單裡的內建函式加入事件字典
         # Register only the allowlisted builtins.
-        for name in sorted(SAFE_BUILTINS):
-            self.event_dict[name] = getattr(builtins, name)
+        self.event_dict.update(safe_builtin_commands())
 
     def set_retry_policy(self, retries: int = 0, backoff: float = 0.0) -> None:
         """
@@ -141,6 +215,13 @@ class Executor:
             with self._action_span_factory(str(action[0])):
                 return self._do_with_retry(action)
         return self._do_with_retry(action)
+
+    def attempt(self, action: Any) -> Any:
+        """
+        執行單一動作（含重試與 span），失敗時拋出
+        Run one action under the retry policy and the action span; what every action of a list passes.
+        """
+        return self._execute_with_retry(action)
 
     def _do_with_retry(self, action):
         retries = int(self.retry_policy.get("retries", 0))
@@ -290,66 +371,12 @@ class Executor:
 
     def _execute_event(self, action: list):
         """
-        執行事件字典中的函式
-        Execute a function from event_dict
-
-        :param action: 指令清單，例如 ["函式名稱", {參數}] 或 ["函式名稱"]
-                       Action list, e.g., ["function_name", {params}] or ["function_name"]
-        :return: 執行結果 / return value of the executed function
+        執行單一動作一次（不重試）
+        Refuse a denied or gated command, then bind ``action`` and run it once (no retry). Raises what the
+        refusal, the binding (see :class:`_ActionParser`) or the command raises.
         """
         self.check_allowed(action[0])
-        event = self.event_dict.get(action[0])
-        if event is None:
-            raise WebRunnerExecuteException(executor_data_error + " unknown command: " + str(action[0]))
-        if len(action) == 1:
-            # 無參數呼叫
-            # Call without arguments
-            return event()
-        if len(action) == 2:
-            if isinstance(action[1], dict):
-                # 關鍵字參數呼叫
-                # Call with keyword arguments
-                return event(**action[1])
-            # 位置參數呼叫
-            # Call with positional arguments
-            return event(*action[1])
-        if len(action) == 3:
-            # 同時帶位置 + 關鍵字參數
-            # Mixed positional + keyword arguments
-            positional, kwargs = action[1], action[2]
-            if not isinstance(positional, (list, tuple)) or not isinstance(kwargs, dict):
-                raise WebRunnerExecuteException(
-                    f"{executor_data_error}: 3-element action requires [cmd, [positional], {{kwargs}}]"
-                )
-            return event(*positional, **kwargs)
-        # 格式錯誤，拋出例外
-        # Invalid format, raise exception
-        raise WebRunnerExecuteException(executor_data_error + " " + str(action))
-
-    def execute_action(self, action_list: list | dict) -> dict:
-        """
-        執行一系列動作
-        Execute a list of actions
-
-        :param action_list: 動作清單，例如：
-           Action list, e.g.:
-           [
-               ["WR_get_webdriver_manager", {"webdriver_name": "firefox"}],
-               ["WR_to_url", {"url": "https://www.google.com"}],
-               ["WR_quit"]
-           ]
-        :return: 執行紀錄字典 {動作描述: 回傳值}
-                 Execution record dict {action: response}
-        """
-        execute_record_dict, _failed = self.collect_action_results(action_list)
-
-        # 輸出執行結果
-        # Print execution results
-        for key, value in execute_record_dict.items():
-            print(key)
-            print(value)
-
-        return execute_record_dict
+        return super()._execute_event(action)
 
     def execute_one(self, action: list) -> Any:
         """
@@ -371,32 +398,6 @@ class Executor:
         except Exception as error:  # every failure leaves as one exception type, with its cause
             web_runner_logger.error(f"execute_one, action: {action}, failed: {error!r}")
             raise WebRunnerExecuteException(self._failure_text(action, error)) from error
-
-    def collect_action_results(self, action_list: list | dict) -> tuple[dict, list[str]]:
-        """
-        執行動作清單但不印出；另外回傳失敗動作的紀錄鍵
-        Run ``action_list`` exactly like :meth:`execute_action` but print nothing.
-
-        :return: ``(record, failed)``: the record dict ``execute_action`` returns, and the record
-                 keys of the actions that raised (their record value is the error's ``repr``).
-        :raises WebRunnerExecuteException: when ``action_list`` is not a list, or a dict
-                 without a ``webdriver_wrapper`` list.
-        """
-        web_runner_logger.info(f"execute_action, action_list: {action_list}")
-        action_list = self.action_list_of(action_list)
-        execute_record_dict = {}
-        failed = []
-        for action in action_list:
-            execute_record = unique_record_key(execute_record_dict, "execute: " + str(action))
-            try:
-                execute_record_dict.update({execute_record: self._execute_with_retry(action)})
-            except Exception as error:  # every command's own failure is recorded, not raised
-                web_runner_logger.error(
-                    f"execute_action, action_list: {action_list}, "
-                    f"action: {action}, failed: {error!r}")
-                execute_record_dict.update({execute_record: self._failure_text(action, error)})
-                failed.append(execute_record)
-        return execute_record_dict, failed
 
     @staticmethod
     def action_list_of(action_list: list | dict) -> list:
@@ -427,18 +428,10 @@ class Executor:
     def execute_files(self, execute_files_list: list) -> list:
         """
         從檔案載入並執行動作
-        Execute actions from files
-
-        :param execute_files_list: 檔案路徑清單 / list of file paths
-        :return: 每個檔案的執行結果清單 / list of execution results
+        Run the action file at every path, in order, and return their records.
         """
         web_runner_logger.info(f"execute_files, execute_files_list: {execute_files_list}")
-        execute_detail_list = []
-        for file in execute_files_list:
-            # 讀取 JSON 檔案並執行
-            # Read JSON file and execute
-            execute_detail_list.append(self.execute_action(read_action_json(file)))
-        return execute_detail_list
+        return super().execute_files(execute_files_list)
 
 
 # 建立全域 Executor 實例
@@ -454,11 +447,7 @@ def add_command_to_executor(command_dict: dict):
 
     :param command_dict: {指令名稱: 函式} / {command_name: function}
     """
-    for command_name, command in command_dict.items():
-        if isinstance(command, (types.MethodType, types.FunctionType)):
-            executor.event_dict.update({command_name: command})
-        else:
-            raise WebRunnerAddCommandException(add_command_exception_tag)
+    executor.add_command_to_executor(command_dict)
 
 
 def execute_action(action_list: list) -> dict:

@@ -1,6 +1,8 @@
 # Test dependencies for test_dev.yml, test_stable.yml and e2e_browser.yml; ci.txt is generated from this file:
 # uv pip compile .github/requirements/ci.in --universal --python-version 3.10 --generate-hashes --only-binary :all: --exclude-newer <7 days ago> -o .github/requirements/ci.txt
-# (--exclude-newer keeps the same 7-day cooldown Dependabot uses: nothing uploaded in the last week.)
+# (--exclude-newer keeps the same 7-day cooldown Dependabot uses: nothing uploaded in the last week.
+# je_action_core is the workspace's own executor core, released together with the code that needs it, so it
+# is exempt: add --exclude-newer-package je_action_core=<tomorrow>.)
 # The tests import the checked-out source through PYTHONPATH, so this lists the package's runtime
 # dependencies (pyproject.toml) instead of the package itself, plus what the tests use.
 selenium>=4.0.0
@@ -9,6 +11,7 @@ python-dotenv>=1.0.0
 webdriver-manager>=4.0.0
 defusedxml>=0.7.1
 Pillow>=12.3.0
+je_action_core>=0.0.3
 faker
 sqlalchemy
 pytest

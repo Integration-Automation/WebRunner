@@ -7,7 +7,7 @@ Overview
 The Action Executor is a powerful engine that maps command strings to callable functions.
 It allows you to define automation scripts as JSON action lists, enabling data-driven automation workflows.
 
-The executor also includes all Python built-in functions, so you can call ``print``, ``len``, etc. from action lists.
+The executor also registers an allowlist of Python built-in functions (``SAFE_BUILTINS``: ``print``, ``len``, ``sorted``, ``sum`` …), so you can call them from action lists; ``eval``, ``exec``, ``open`` and the like are not registered.
 
 Action Format
 -------------

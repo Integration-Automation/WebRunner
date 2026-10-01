@@ -21,6 +21,7 @@ dependencies = [
     "webdriver-manager>=4.0.0",
     "defusedxml>=0.7.1",
     "Pillow>=12.3.0",
+    "je_action_core>=0.0.3",
 ]
 classifiers = [
     "Programming Language :: Python :: 3.10",

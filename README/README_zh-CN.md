@@ -107,7 +107,7 @@ pip install testcontainers       # Spin up Postgres / Redis (WR_tc_*)
 pip install locust               # Load testing (WR_locust_*)
 ```
 
-硬性要求：Python **3.10+**、`selenium>=4.0.0`、`requests`、`python-dotenv`、`webdriver-manager`、`defusedxml`、`Pillow`。
+硬性要求：Python **3.10+**、`selenium>=4.0.0`、`requests`、`python-dotenv`、`webdriver-manager`、`defusedxml`、`Pillow`、`je_action_core`（动作执行器共用的核心）。
 
 ## 架构
 

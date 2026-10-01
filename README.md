@@ -107,7 +107,7 @@ pip install testcontainers       # Spin up Postgres / Redis (WR_tc_*)
 pip install locust               # Load testing (WR_locust_*)
 ```
 
-Hard requirements: Python **3.10+**, `selenium>=4.0.0`, `requests`, `python-dotenv`, `webdriver-manager`, `defusedxml`, `Pillow`.
+Hard requirements: Python **3.10+**, `selenium>=4.0.0`, `requests`, `python-dotenv`, `webdriver-manager`, `defusedxml`, `Pillow`, `je_action_core` (the action executor's shared core).
 
 ## Architecture
 

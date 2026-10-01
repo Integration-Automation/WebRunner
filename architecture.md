@@ -23,7 +23,7 @@ wired into the executor as `WR_*` commands, others are reachable only from Pytho
 | `je_web_runner/webdriver/` | `webdriver_wrapper.py` (`WebDriverWrapper`, singleton `webdriver_wrapper_instance`) composed from `_wrapper_mixins/` (actions, cookies, media, navigation, scripting, parity: JSON waits / raw selectors / dialogs / CDP emulation; the Selenium event capture, HAR and response mocks live in `utils/bidi/selenium_events.py`, over W3C BiDi); `webdriver_with_options.py`; Playwright backend `playwright_wrapper.py` (`PlaywrightWrapper`: launch, context, quit, plus the `pw_*` module functions) composed from `_playwright_mixins/` (context, page, interaction, state, recording, scope: current frame / user-facing lookup / dialogs, connect: CDP attach / browser server / persistent profile, sessions: several browsers switched by index), `playwright_element_wrapper.py`, `playwright_locator.py`. |
 | `je_web_runner/element/` | `web_element_wrapper.py`: operations on the currently selected Selenium element. |
 | `je_web_runner/manager/` | `webrunner_manager.py`: `WebdriverManager` (singleton `web_runner`) for multiple live drivers. |
-| `je_web_runner/utils/executor/` | `action_executor.py`: `Executor` (dispatch, command gate, retry, failure screenshots) and the `executor` singleton; its `event_dict` is built by `_event_table.build_event_dict()` from `COMMANDS` plus `_playwright_commands.PLAYWRIGHT_COMMANDS`. |
+| `je_web_runner/utils/executor/` | `action_executor.py`: `Executor`, a `je_action_core.ActionExecutor` (WebRunner's action parser and list rules, command gate, retry and span through `attempt`, failure screenshots in the failure record), and the `executor` singleton; its `event_dict` is built by `_event_table.build_event_dict()` from `COMMANDS` plus `_playwright_commands.PLAYWRIGHT_COMMANDS`. |
 | `je_web_runner/mcp_server/` | MCP stdio server: `McpServer` and per-request era routing (`server.py`), versions and identity (`_protocol.py`), the stateless 2026-07-28 revision (`_stateless.py`), `Tool` / `ToolResult` / errors (`_types.py`), offline tools (`offline_tools.py`, `build_default_tools()`), live-browser tools (`browser_tools.py`) and the caller policy (`_policy.py`). |
 | `je_web_runner/action_lsp/` | Language server for action JSON files. |
 | `je_web_runner/utils/` | One flat level of subpackages; functional areas below. |
@@ -67,12 +67,12 @@ wired into the executor as `WR_*` commands, others are reachable only from Pytho
 
 ```
 action file → utils/json/json_file/json_file.read_action_json
-  → Executor.execute_action              (utils/executor/action_executor.py; dict input must carry "webdriver_wrapper")
-  → _execute_with_retry                  (optional span factory, global retry policy)
-  → _execute_event                       (arbitrary-script gate → event_dict[cmd]; shapes [cmd] | [cmd, {kw}] | [cmd, [args]] | [cmd, [args], {kw}])
+  → Executor.execute_action              (je_action_core's loop; logs the list, then action_list_of: dict input must carry "webdriver_wrapper")
+  → attempt → _execute_with_retry        (optional span factory, global retry policy)
+  → _execute_event                       (refused commands and the arbitrary-script gate → _ActionParser.bind looks up event_dict[cmd]; shapes [cmd] | [cmd, {kw}] | [cmd, [args]] | [cmd, [args], {kw}])
   → webdriver_wrapper_instance / web_element_wrapper / web_runner (WebdriverManager) | playwright_wrapper (WR_pw_*)
   → Selenium / Playwright; wrappers append to test_record_instance
-  → result dict {"execute: [...]": return value or repr(error)}; each entry is also printed to stdout
+  → result dict {"execute: [...]": return value or the error text}; a repeated key gets " #2" …; each entry is also printed to stdout
 ```
 
 A failing action is logged and recorded (with an optional auto-screenshot path), and the loop continues.
@@ -125,6 +125,15 @@ python -m je_web_runner -d DIR [--tag/--exclude-tag] [--rerun-failed LEDGER] [--
 | AutoControlGUI | Optional `utils/webrunner_bridge/bridge.py` (not a declared dependency; found with `importlib.util.find_spec`, imported lazily). | `je_web_runner.utils.executor.action_executor`: `execute_one` (one action through the gates, raising `WebRunnerExecuteException`), falling back to `executor.event_dict` on releases without it; `executor.event_dict` `WR_*` keys for listing; the commands `WR_get_webdriver_manager`, `WR_to_url`, `WR_quit`, `WR_save_screenshot`, `WR_get_current_url` (guarded by `test/unit_test/test_public_api.py`); `je_web_runner.utils.exception.exceptions.WebRunnerException` as the failure it wraps. |
 | TestPioneer | Declared dependency; `from je_web_runner import execute_action` in-process. | `execute_action`. |
 | PyBreeze | Subprocess `python -m je_web_runner --execute_str <json>` / `--execute_file <path>`, reading stdout. | Legacy CLI flags, Windows double-encoded `--execute_str`, results printed to stdout; guarded by `test/unit_test/test_legacy_cli_contract.py`. |
+
+**Outbound (required):** `je_action_core>=0.0.3` (PyPI), the executor core shared with APITestka, LoadDensity,
+MailThunder and FileAutomation. `utils/executor/action_executor.py` relies on `ActionExecutor` (its loop,
+`attempt`, `_execute_event`, `collect_action_results`, `execute_files`, `add_command_to_executor`), `ExecutorSettings`
+(`rules` as any object with `extract`, `parser`, `reporter`, `read_json`, `failure_record`, `duplicate_keys`
+`DuplicateKeys.NUMBER`), `BoundAction`, `PrintReporter` (with `on_start`), `CommandRegistry` with
+`CommandPolicy.FUNCTIONS_ONLY`, and `SAFE_BUILTINS` / `safe_builtin_commands` / `unique_record_key` (the last two
+names are re-exported from `action_executor`). ActionCore lists WebRunner in its own §6. An interpreter that
+imports a working tree through `sys.path` (Jeffrey_RPA) needs it installed: that import installs no dependencies.
 
 **Outbound (optional):** `utils/autocontrol_bridge/` (`WR_ac_*`) runs AutoControlGUI's `je_auto_control`, an optional
 extra (`je_web_runner[autocontrol]`) that is never imported at import time: importing `je_auto_control` makes the
