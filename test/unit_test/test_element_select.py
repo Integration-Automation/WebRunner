@@ -3,6 +3,7 @@ from typing import Any
 from unittest.mock import MagicMock, patch
 
 from je_web_runner.element.web_element_wrapper import WebElementWrapper
+from je_web_runner.utils.test_record.wrapper_failures import wrapper_failure_policy
 from je_web_runner.utils.executor.action_executor import executor
 
 
@@ -35,14 +36,15 @@ class TestWebElementSelectMethods(unittest.TestCase):
             wrapper.select_by_visible_text("Taiwan")
             select_cls.return_value.select_by_visible_text.assert_called_once_with("Taiwan")
 
-    def test_failure_does_not_raise(self):
+    def test_failure_raises_unless_wrapper_errors_are_off(self):
         wrapper = WebElementWrapper()
         wrapper.current_web_element = MagicMock()
         with patch("je_web_runner.element.web_element_wrapper.Select") as select_cls:
             select_cls.return_value.select_by_value.side_effect = RuntimeError("boom")
-            # Mirrors the existing element-wrapper convention: failures are
-            # logged and recorded, not re-raised.
-            wrapper.select_by_value("missing")
+            with self.assertRaises(RuntimeError):
+                wrapper.select_by_value("missing")
+            with patch.object(wrapper_failure_policy, "raise_errors", False):
+                wrapper.select_by_value("missing")  # recorded and logged, not raised
 
 
 class TestExecutorWiring(unittest.TestCase):

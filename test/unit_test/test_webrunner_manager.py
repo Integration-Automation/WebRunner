@@ -159,7 +159,8 @@ class TestCloseClearsCurrentDriver(unittest.TestCase):
         manager._current_webdriver_list = [driver]
         manager.current_webdriver = driver
 
-        manager.close_current_webdriver()
+        with self.assertRaises(RuntimeError):
+            manager.close_current_webdriver()
 
         # close() blew up, so the driver stays tracked and a later quit()
         # can still reclaim the process.

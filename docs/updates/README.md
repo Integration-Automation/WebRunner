@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-45 | 2026-10-01 | A failed Selenium wrapper call fails its action by default | #done #selenium | [2026-10](2026-10.md) |
 | U-20261001-44 | 2026-10-01 | The package gate refuses packages outside the allowlist by default | #done #security | [2026-10](2026-10.md) |
 | U-20261001-43 | 2026-10-01 | WEBRunner.log leaves the cwd: env var, env dir or home, opened on first record | #done #logging | [2026-10](2026-10.md) |
 | U-20261001-42 | 2026-10-01 | set_driver(install_driver=False): start a browser without webdriver-manager | #change #selenium #jeffrey-rpa | [2026-10](2026-10.md) |
@@ -133,5 +134,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 44 |
+| [2026-10.md](2026-10.md) | 2026-10 | 45 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

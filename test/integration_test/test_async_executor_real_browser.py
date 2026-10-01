@@ -9,7 +9,6 @@ import json
 import socket
 import tempfile
 import threading
-import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -102,19 +101,21 @@ class TestAsyncExecutorRealBrowser(unittest.TestCase):
 
     def _user(self, name):
         return [["WR_apw_goto", {"url": f"{self.url}/login?user={name}"}],
+                ["WR_apw_evaluate", {"script": "Date.now()"}],
                 ["WR_apw_sleep", [1]],
+                ["WR_apw_evaluate", {"script": "Date.now()"}],
                 ["WR_apw_goto", {"url": f"{self.url}/whoami"}],
                 ["WR_apw_assert_text", {"selector": "#out", "expected": f"user={name}"}]]
 
     def test_concurrent_users_are_kept_apart(self):
-        started = time.monotonic()
         results = self._run_many([self._user("alice"), self._user("bob"), self._user("carol")], concurrency=3)
-        elapsed = time.monotonic() - started
         for record, failed in results:
             self.assertEqual(failed, [], record)
         texts = [list(record.values())[-1] for record, _failed in results]
         self.assertEqual(texts, ["user=alice", "user=bob", "user=carol"])
-        self.assertLess(elapsed, 2.9)  # three 1 s sleeps, run at once (the browser starts in the same time)
+        # Each list timed its 1 s sleep in the page; run at once, the three windows overlap.
+        windows = [(list(record.values())[1], list(record.values())[3]) for record, _failed in results]
+        self.assertLess(max(start for start, _end in windows), min(end for _start, end in windows))
 
     def test_tabs_and_sync_commands_in_one_list(self):
         [(record, failed)] = self._run_many([[

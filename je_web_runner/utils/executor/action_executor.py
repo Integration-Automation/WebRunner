@@ -230,13 +230,12 @@ class Executor:
         self.allow_arbitrary_script = bool(enabled)
 
     @staticmethod
-    def set_raise_wrapper_errors(enabled: bool | None) -> None:
+    def set_raise_wrapper_errors(enabled: bool) -> None:
         """
         設定 Selenium wrapper 失敗時是否讓動作失敗
-        ``True``: a failed Selenium wrapper call (``WR_to_url``, ``WR_element_assert`` …) fails
-        its action, as the Playwright commands do. ``False``: it passes as it always did.
-        ``None``: the deprecated default, which passes with a ``DeprecationWarning``; a future
-        release raises by default (README › Public API & Deprecation Policy).
+        ``True`` (the default): a failed Selenium wrapper call (``WR_to_url``,
+        ``WR_element_assert`` …) fails its action, as the Playwright commands do. ``False``:
+        the call returns and the action passes, the behaviour before the default changed.
         """
         set_raise_wrapper_errors(enabled)
 

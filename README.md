@@ -532,7 +532,7 @@ Selenium is the original backend. Every legacy command (and its modern alias) ro
 
 The Selenium backend has the twins of the Playwright element and page helpers: JSON-usable waits (`WR_wait_for_element` with `present` / `visible` / `clickable` / `hidden`, `WR_wait_for_url`, `WR_wait_for_title`, `WR_wait_for_ready_state`), `WR_find_element_by` / `WR_find_elements_by` for a raw selector, `WR_element_check` / `_uncheck` / `_hover` / `_inner_text` / `_inner_html`, `WR_alert_accept` (with `prompt_text`) / `WR_alert_dismiss` / `WR_alert_text`, and on Chromium `WR_emulate_device` / `WR_list_devices`, `WR_grant_permissions` / `WR_clear_permissions` and `WR_clock_freeze`. Unlike the older Selenium commands these fail their action when they fail.
 
-**The older Selenium commands are moving to failing too (deprecated: they still pass).** Every Selenium wrapper call (`WR_to_url`, `WR_element_click`, `WR_element_assert`, `WR_check_current_webdriver` …) has always caught its error, recorded it in the test record and let its action pass, so a wrong `WR_element_assert` passed. It now also raises a `DeprecationWarning` and logs a WARNING (once per method), and a future release will fail the action. `executor.set_raise_wrapper_errors(True)`, or `["WR_set_raise_wrapper_errors", [true]]` first in an action file, gives the new behaviour now; `False` keeps the old one without the warning.
+**The older Selenium commands fail their action too.** Every Selenium wrapper call (`WR_to_url`, `WR_element_click`, `WR_element_assert`, `WR_check_current_webdriver` …) records its error in the test record and then raises it, so a wrong `WR_element_assert` fails. They used to let the action pass; `executor.set_raise_wrapper_errors(False)`, or `["WR_set_raise_wrapper_errors", [false]]` first in an action file, brings that back.
 
 With a driver started with `enable_bidi=True` (Chrome or Firefox) the Selenium backend also has the Playwright event capture, HAR and response mocks over W3C BiDi: `WR_event_capture_start` (`dom_mutations=True` also records DOM changes) / `_stop` / `_clear`, `WR_console_messages`, `WR_network_responses`, `WR_dom_mutations`, `WR_assert_no_console_errors` / `WR_assert_no_5xx` / `WR_assert_no_4xx_or_5xx`, `WR_start_har_recording` / `WR_stop_har_recording(har_path)` (headers, status and timings, no bodies), and `WR_route_mock` / `WR_route_mock_json` / `WR_route_unmock` / `WR_route_clear`. A mock pattern is an exact URL, `*/path` (that path on any host) or a dict of URL parts; mock what the page fetches, not the page itself, whose navigation a mock would block.
 
@@ -1801,8 +1801,7 @@ WebRunner provides a hierarchy of custom exceptions — every helper raises a do
 - **When:** the file (and its directory) is created on the first record; importing `je_web_runner` writes nothing.
 - **Mode:** append; each line carries the process id; a file over 10 MB is moved to `<name>.1` when a process opens it.
 - **Level:** WARNING+
-- **Max size:** 1 GB
-- **Format:** `%(asctime)s | %(name)s | %(levelname)s | %(message)s`
+- **Format:** `%(asctime)s | %(process)d | %(name)s | %(levelname)s | %(message)s`
 
 ## Supported Browsers
 

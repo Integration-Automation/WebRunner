@@ -37,7 +37,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper submit, failed: {error!r}")
             record_action_to_list("Web element submit", None, error)
-            settle_wrapper_failure(error, "Web element submit")
+            settle_wrapper_failure(error)
 
     def clear(self) -> None:
         """
@@ -51,7 +51,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper clear, failed: {error!r}")
             record_action_to_list("Web element clear", None, error)
-            settle_wrapper_failure(error, "Web element clear")
+            settle_wrapper_failure(error)
 
     def get_property(self, name: str) -> None | str | bool | WebElement | dict:
         """
@@ -68,7 +68,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper get_property, name: {name}, failed: {error!r}")
             record_action_to_list("Web element get_property", param, error)
-            settle_wrapper_failure(error, "Web element get_property")
+            settle_wrapper_failure(error)
 
     def get_dom_attribute(self, name: str) -> str | None:
         """
@@ -85,7 +85,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper get_dom_attribute, name: {name}, failed: {error!r}")
             record_action_to_list("Web element get_dom_attribute", param, error)
-            settle_wrapper_failure(error, "Web element get_dom_attribute")
+            settle_wrapper_failure(error)
 
     def get_attribute(self, name: str) -> str | None:
         """
@@ -102,7 +102,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper get_attribute, name: {name}, failed: {error!r}")
             record_action_to_list("Web element get_attribute", param, error)
-            settle_wrapper_failure(error, "Web element get_attribute")
+            settle_wrapper_failure(error)
 
     def is_selected(self) -> bool | None:
         """
@@ -117,7 +117,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper is_selected, failed: {error!r}")
             record_action_to_list("Web element is_selected", None, error)
-            settle_wrapper_failure(error, "Web element is_selected")
+            settle_wrapper_failure(error)
 
     def is_enabled(self) -> bool | None:
         """
@@ -132,7 +132,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper is_enabled, failed: {error!r}")
             record_action_to_list("Web element is_enabled", None, error)
-            settle_wrapper_failure(error, "Web element is_enabled")
+            settle_wrapper_failure(error)
 
     def input_to_element(self, input_value: str) -> None:
         """
@@ -149,7 +149,7 @@ class WebElementWrapper:
             web_runner_logger.error(
                 f"WebElementWrapper input_to_element, input_value: {input_value}, failed: {error!r}")
             record_action_to_list("Web element input_to_element", param, error)
-            settle_wrapper_failure(error, "Web element input_to_element")
+            settle_wrapper_failure(error)
 
     def click_element(self) -> None:
         """
@@ -163,7 +163,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper click_element, failed: {error!r}")
             record_action_to_list("Web element click_element", None, error)
-            settle_wrapper_failure(error, "Web element click_element")
+            settle_wrapper_failure(error)
 
     def is_displayed(self) -> bool | None:
         """
@@ -178,7 +178,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper is_displayed, failed: {error!r}")
             record_action_to_list("Web element is_displayed", None, error)
-            settle_wrapper_failure(error, "Web element is_displayed")
+            settle_wrapper_failure(error)
 
     def value_of_css_property(self, property_name: str) -> str | None:
         """
@@ -196,7 +196,7 @@ class WebElementWrapper:
             web_runner_logger.error(
                 f"WebElementWrapper value_of_css_property, property_name: {property_name}, failed: {error!r}")
             record_action_to_list("Web element value_of_css_property", param, error)
-            settle_wrapper_failure(error, "Web element value_of_css_property")
+            settle_wrapper_failure(error)
 
     def screenshot(self, filename: str) -> bool | None:
         """
@@ -213,7 +213,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.info(f"WebElementWrapper screenshot, filename: {filename}, failed: {error!r}")
             record_action_to_list("Web element screenshot", param, error)
-            settle_wrapper_failure(error, "Web element screenshot")
+            settle_wrapper_failure(error)
 
     def change_web_element(self, element_index: int) -> None:
         """
@@ -230,7 +230,7 @@ class WebElementWrapper:
             web_runner_logger.error(
                 f"WebElementWrapper change_web_element, element_index: {element_index}, failed: {error!r}")
             record_action_to_list("Web element change_web_element", param, error)
-            settle_wrapper_failure(error, "Web element change_web_element")
+            settle_wrapper_failure(error)
 
     def check_current_web_element(self, check_dict: dict) -> None:
         """
@@ -258,7 +258,7 @@ class WebElementWrapper:
                 f"WebElementWrapper check_current_web_element, check_dict: {check_dict}, failed: {error!r}"
             )
             record_action_to_list("Web element check_current_web_element", param, error)
-            settle_wrapper_failure(error, "Web element check_current_web_element")
+            settle_wrapper_failure(error)
 
     def select_by_value(self, value: str) -> None:
         """
@@ -275,7 +275,7 @@ class WebElementWrapper:
                 f"WebElementWrapper select_by_value, value: {value}, failed: {error!r}"
             )
             record_action_to_list("Web element select_by_value", param, error)
-            settle_wrapper_failure(error, "Web element select_by_value")
+            settle_wrapper_failure(error)
 
     def select_by_index(self, index: int) -> None:
         """
@@ -292,7 +292,7 @@ class WebElementWrapper:
                 f"WebElementWrapper select_by_index, index: {index}, failed: {error!r}"
             )
             record_action_to_list("Web element select_by_index", param, error)
-            settle_wrapper_failure(error, "Web element select_by_index")
+            settle_wrapper_failure(error)
 
     def select_by_visible_text(self, text: str) -> None:
         """
@@ -309,7 +309,7 @@ class WebElementWrapper:
                 f"WebElementWrapper select_by_visible_text, text: {text}, failed: {error!r}"
             )
             record_action_to_list("Web element select_by_visible_text", param, error)
-            settle_wrapper_failure(error, "Web element select_by_visible_text")
+            settle_wrapper_failure(error)
 
     def get_select(self) -> Select | None:
         """
@@ -333,7 +333,7 @@ class WebElementWrapper:
             # Handle and log error
             web_runner_logger.error(f"WebElementWrapper get_select, failed: {error!r}")
             record_action_to_list("Web element get_select", None, error)
-            settle_wrapper_failure(error, "Web element get_select")
+            settle_wrapper_failure(error)
 
 
     # ----- twins of Playwright element commands; unlike the methods above they raise -----

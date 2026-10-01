@@ -528,7 +528,7 @@ Selenium 是最初的后端。除非显式使用 `WR_pw_*` / `WR_appium_*` 前�
 
 Selenium 后端也有对应 Playwright 元素与页面辅助命令的版本：能在 JSON 里用的等待（`WR_wait_for_element`，状态 `present` / `visible` / `clickable` / `hidden`、`WR_wait_for_url`、`WR_wait_for_title`、`WR_wait_for_ready_state`）、用原始 selector 查找的 `WR_find_element_by` / `WR_find_elements_by`、`WR_element_check` / `_uncheck` / `_hover` / `_inner_text` / `_inner_html`、`WR_alert_accept`（可带 `prompt_text`）/ `WR_alert_dismiss` / `WR_alert_text`，以及 Chromium 上的 `WR_emulate_device` / `WR_list_devices`、`WR_grant_permissions` / `WR_clear_permissions` 与 `WR_clock_freeze`。与较早的 Selenium 命令不同，它们失败时该动作就会失败。
 
-**较早的 Selenium 命令也将改成失败即失败（弃用中：目前仍会通过）。** 每个 Selenium wrapper 调用（`WR_to_url`、`WR_element_click`、`WR_element_assert`、`WR_check_current_webdriver`……）一向会拦下错误、记进测试记录，然后让动作通过，所以错误的 `WR_element_assert` 也会通过。现在它们另外发出 `DeprecationWarning` 并在 log 写一次 WARNING（每个方法一次），未来的版本会让动作失败。调用 `executor.set_raise_wrapper_errors(True)`，或在动作文件第一步放 `["WR_set_raise_wrapper_errors", [true]]`，就能现在改用新行为；设为 `False` 则保留旧行为且不再警告。
+**较早的 Selenium 命令也是失败即失败。** 每个 Selenium wrapper 调用（`WR_to_url`、`WR_element_click`、`WR_element_assert`、`WR_check_current_webdriver`……）会把错误记进测试记录后再抛出，所以错误的 `WR_element_assert` 会失败。以前它们会让动作通过；调用 `executor.set_raise_wrapper_errors(False)`，或在动作文件第一步放 `["WR_set_raise_wrapper_errors", [false]]`，可以回到旧行为。
 
 以 `enable_bidi=True` 启动的 driver（Chrome 或 Firefox）上，Selenium 后端也通过 W3C BiDi 提供 Playwright 的事件收集、HAR 与响应模拟：`WR_event_capture_start`（`dom_mutations=True` 也记录 DOM 变动）/ `_stop` / `_clear`、`WR_console_messages`、`WR_network_responses`、`WR_dom_mutations`、`WR_assert_no_console_errors` / `WR_assert_no_5xx` / `WR_assert_no_4xx_or_5xx`、`WR_start_har_recording` / `WR_stop_har_recording(har_path)`（有 header、状态码与耗时，没有内容），以及 `WR_route_mock` / `WR_route_mock_json` / `WR_route_unmock` / `WR_route_clear`。模拟的 pattern 是完整 URL、`*/path`（任何主机上的这个路径）或 URL 各部分的 dict；只模拟页面去抓的资源，不要模拟页面本身，否则会卡住载入它的导航。
 
@@ -1790,8 +1790,7 @@ WebRunner 提供一个自定义异常层次 —— 每个辅助函数都抛出 `
 - **何时创建：** 第一条记录才创建文件（连同目录）；import `je_web_runner` 不写任何文件。
 - **模式：** 追加；每行带进程编号；进程开文件时若超过 10 MB 就先改名成 `<name>.1`。
 - **级别：** WARNING+
-- **最大大小：** 1 GB
-- **格式：** `%(asctime)s | %(name)s | %(levelname)s | %(message)s`
+- **格式：** `%(asctime)s | %(process)d | %(name)s | %(levelname)s | %(message)s`
 
 ## 支持的浏览器
 

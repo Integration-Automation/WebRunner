@@ -528,7 +528,7 @@ Selenium 是最初的後端。除非明確使用 `WR_pw_*` / `WR_appium_*` 前�
 
 Selenium 後端也有對應 Playwright 元素與頁面輔助命令的版本：能在 JSON 裡用的等待（`WR_wait_for_element`，狀態 `present` / `visible` / `clickable` / `hidden`、`WR_wait_for_url`、`WR_wait_for_title`、`WR_wait_for_ready_state`）、用原始 selector 尋找的 `WR_find_element_by` / `WR_find_elements_by`、`WR_element_check` / `_uncheck` / `_hover` / `_inner_text` / `_inner_html`、`WR_alert_accept`（可帶 `prompt_text`）/ `WR_alert_dismiss` / `WR_alert_text`，以及 Chromium 上的 `WR_emulate_device` / `WR_list_devices`、`WR_grant_permissions` / `WR_clear_permissions` 與 `WR_clock_freeze`。與較早的 Selenium 命令不同，它們失敗時該動作就會失敗。
 
-**較早的 Selenium 命令也將改成失敗即失敗（棄用中：目前仍會通過）。** 每個 Selenium wrapper 呼叫（`WR_to_url`、`WR_element_click`、`WR_element_assert`、`WR_check_current_webdriver`……）一向會攔下錯誤、記進測試紀錄，然後讓動作通過，所以錯誤的 `WR_element_assert` 也會通過。現在它們另外發出 `DeprecationWarning` 並在 log 寫一次 WARNING（每個方法一次），未來的版本會讓動作失敗。呼叫 `executor.set_raise_wrapper_errors(True)`，或在動作檔第一步放 `["WR_set_raise_wrapper_errors", [true]]`，就能現在改用新行為；設為 `False` 則保留舊行為且不再警告。
+**較早的 Selenium 命令也是失敗即失敗。** 每個 Selenium wrapper 呼叫（`WR_to_url`、`WR_element_click`、`WR_element_assert`、`WR_check_current_webdriver`……）會把錯誤記進測試紀錄後再拋出，所以錯誤的 `WR_element_assert` 會失敗。以前它們會讓動作通過；呼叫 `executor.set_raise_wrapper_errors(False)`，或在動作檔第一步放 `["WR_set_raise_wrapper_errors", [false]]`，可以回到舊行為。
 
 以 `enable_bidi=True` 啟動的 driver（Chrome 或 Firefox）上，Selenium 後端也透過 W3C BiDi 提供 Playwright 的事件收集、HAR 與回應模擬：`WR_event_capture_start`（`dom_mutations=True` 也記錄 DOM 變動）/ `_stop` / `_clear`、`WR_console_messages`、`WR_network_responses`、`WR_dom_mutations`、`WR_assert_no_console_errors` / `WR_assert_no_5xx` / `WR_assert_no_4xx_or_5xx`、`WR_start_har_recording` / `WR_stop_har_recording(har_path)`（有 header、狀態碼與耗時，沒有內容），以及 `WR_route_mock` / `WR_route_mock_json` / `WR_route_unmock` / `WR_route_clear`。模擬的 pattern 是完整 URL、`*/path`（任何主機上的這個路徑）或 URL 各部分的 dict；只模擬頁面去抓的資源，不要模擬頁面本身，否則會卡住載入它的導覽。
 
@@ -1790,8 +1790,7 @@ WebRunner 提供一個自訂例外階層 —— 每個輔助函式都擲出 `Web
 - **何時建立：** 第一筆紀錄才建立檔案（連同目錄）；import `je_web_runner` 不寫任何檔案。
 - **模式：** 附加；每行帶行程編號；行程開檔時若超過 10 MB 就先改名成 `<name>.1`。
 - **級別：** WARNING+
-- **最大大小：** 1 GB
-- **格式：** `%(asctime)s | %(name)s | %(levelname)s | %(message)s`
+- **格式：** `%(asctime)s | %(process)d | %(name)s | %(levelname)s | %(message)s`
 
 ## 支援的瀏覽器
 
