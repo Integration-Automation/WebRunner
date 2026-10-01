@@ -746,7 +746,7 @@ The `WR_apw_*` commands act in the file's own context: `WR_apw_goto`, `WR_apw_cl
 - **Network throttling** — `WR_throttle("slow_3g")` / `WR_pw_throttle("offline")`; presets cover Slow 3G, Fast 3G, Regular 4G, Wi-Fi, Offline, no-throttling.
 - **HAR diff** — `WR_diff_har` / `WR_diff_har_files` show added / removed / status-changed requests between two runs.
 - **Arbitrary-script gate** — `executor.set_allow_arbitrary_script(False)` blocks `WR_execute_script` / `WR_execute_async_script` / `WR_pw_evaluate` / `WR_cdp` / `WR_pw_cdp` for untrusted action JSON.
-- **Package gate** — `WR_add_package_to_executor` imports a Python package and registers its functions as commands, so an action file that can name `os` or `subprocess` can run anything. `executor.allow_packages("name", …)` lists the packages it may load (submodules included) and `executor.set_allow_arbitrary_packages(False)` refuses the rest before importing them; neither is an action command, so an action file cannot open its own gate. Until the host configures the gate, any package still loads but raises a `DeprecationWarning`: a future release will refuse unlisted packages by default.
+- **Package gate** — `WR_add_package_to_executor` imports a Python package and registers its functions as commands, so an action file that can name `os` or `subprocess` can run anything. `executor.allow_packages("name", …)` lists the packages it may load (submodules included) and every other package is refused before it is imported, unless the host calls `executor.set_allow_arbitrary_packages(True)`; neither is an action command, so an action file cannot open its own gate.
 
 ## Extended Capabilities
 

@@ -244,9 +244,9 @@ class Executor:
     def set_allow_arbitrary_packages(enabled: bool) -> None:
         """
         允許或拒絕載入允許清單以外的套件（``WR_add_package_to_executor``）
-        Allow (True) or refuse (False) ``WR_add_package_to_executor`` for packages outside
-        the allowlist. Python only, never an action command, so an action file cannot open
-        its own gate. Until it is called, any package loads with a ``DeprecationWarning``.
+        Allow (True) or refuse (False, the default) ``WR_add_package_to_executor`` for packages
+        outside the allowlist. Python only, never an action command, so an action file cannot
+        open its own gate.
         """
         package_manager.set_allow_arbitrary_packages(enabled)
 

@@ -46,9 +46,8 @@ and the action records the error. ``set_allow_arbitrary_packages(True)`` loads
 any package without a warning. Neither switch is an action command, so an
 action file cannot open its own gate.
 
-Until the host calls either one, any package still loads, but each unlisted
-package raises a ``DeprecationWarning``: a future release will refuse unlisted
-packages by default.
+Refusing is the default: until the host lists a package, or calls
+``set_allow_arbitrary_packages(True)``, ``WR_add_package_to_executor`` refuses it.
 
 Direct API Usage
 ----------------

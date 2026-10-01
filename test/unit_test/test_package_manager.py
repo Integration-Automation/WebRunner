@@ -29,6 +29,7 @@ class TestPackageManager(unittest.TestCase):
                 self.event_dict = {}
 
         self.pm.executor = MockExecutor()
+        self.pm.allow_packages("json")  # the gate refuses unlisted packages by default
         self.pm.add_package_to_executor("json")
         self.assertGreater(len(self.pm.executor.event_dict), 0)
 
@@ -38,6 +39,7 @@ class TestPackageManager(unittest.TestCase):
                 self.event_dict = {}
 
         self.pm.callback_executor = MockExecutor()
+        self.pm.allow_packages("os")
         self.pm.add_package_to_callback_executor("os")
         self.assertGreater(len(self.pm.callback_executor.event_dict), 0)
 

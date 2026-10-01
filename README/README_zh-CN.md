@@ -742,7 +742,7 @@ asyncio.run(main())
 - **网络限速** —— `WR_throttle("slow_3g")` / `WR_pw_throttle("offline")`；预设涵盖 Slow 3G、Fast 3G、Regular 4G、Wi-Fi、Offline、no-throttling。
 - **HAR 差异** —— `WR_diff_har` / `WR_diff_har_files` 显示两次运行之间新增 / 移除 / 状态变化的请求。
 - **任意脚本闸门** —— `executor.set_allow_arbitrary_script(False)` 为不可信的动作 JSON 阻止 `WR_execute_script` / `WR_execute_async_script` / `WR_pw_evaluate` / `WR_cdp` / `WR_pw_cdp`。
-- **套件闸门** —— `WR_add_package_to_executor` 会导入 Python 套件并把其函数注册成命令，所以能写出 `os` 或 `subprocess` 的动作文件就能执行任何东西。`executor.allow_packages("name", …)` 列出允许加载的套件（含子模块），`executor.set_allow_arbitrary_packages(False)` 在导入前拒绝其余套件；两者都不是动作命令，所以动作文件无法自行打开闸门。主程序设定闸门之前，任何套件仍会加载，但会发出 `DeprecationWarning`：未来的版本会默认拒绝不在清单上的套件。
+- **套件闸门** —— `WR_add_package_to_executor` 会导入 Python 套件并把其函数注册成命令，所以能写出 `os` 或 `subprocess` 的动作文件就能执行任何东西。`executor.allow_packages("name", …)` 列出允许加载的套件（含子模块），其余套件在导入前就会被拒绝，除非主程序调用 `executor.set_allow_arbitrary_packages(True)`；两者都不是动作命令，所以动作文件无法自行打开闸门。
 
 ## 扩展能力
 

@@ -41,8 +41,8 @@ action 檔就能執行任何東西。由主程式決定 action 檔可以載入�
 結果裡。``set_allow_arbitrary_packages(True)`` 則載入任何套件、不發警告。
 兩個開關都不是 action 命令，所以 action 檔無法自行打開閘門。
 
-主程式呼叫其中之一以前，任何套件仍會載入，但每個不在清單上的套件都會發出
-``DeprecationWarning``：未來的版本會預設拒絕不在清單上的套件。
+預設就是拒絕：主程式把套件列入清單，或呼叫 ``set_allow_arbitrary_packages(True)``
+以前，``WR_add_package_to_executor`` 都會拒絕它。
 
 直接 API 使用
 --------------

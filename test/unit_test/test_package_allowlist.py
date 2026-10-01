@@ -18,13 +18,13 @@ def _manager():
 
 class TestPackageGate(unittest.TestCase):
 
-    def test_unconfigured_gate_still_loads_but_warns(self):
+    def test_unconfigured_gate_refuses_unlisted_packages(self):
         manager = _manager()
-        with warnings.catch_warnings(record=True) as caught:
-            warnings.simplefilter("always")
-            manager.add_package_to_executor("json")
-        self.assertIn("json_dumps", manager.executor.event_dict)
-        self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in caught))
+        with patch.object(package_manager_class, "import_module") as importer:
+            with self.assertRaises(WebRunnerExecuteException):
+                manager.add_package_to_executor("json")
+            importer.assert_not_called()
+        self.assertEqual(manager.executor.event_dict, {})
 
     def test_closed_gate_refuses_before_importing(self):
         manager = _manager()

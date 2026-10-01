@@ -1,5 +1,4 @@
 import re
-import warnings
 from importlib import import_module
 from importlib.util import find_spec
 from inspect import getmembers, isfunction, isbuiltin, isclass
@@ -23,11 +22,9 @@ class PackageManager:
         self.executor = None
         self.callback_executor = None
 
-        # 套件閘門：None 表示未設定（沿用舊行為：任何套件都載入，但發出 DeprecationWarning）
-        # Package gate. None = not configured: any package still loads, with a
-        # DeprecationWarning (README › Public API & Deprecation Policy). False = only
-        # ``allowed_packages``; True = any package, silently.
-        self.allow_arbitrary_packages: bool | None = None
+        # 套件閘門：預設只載入允許清單上的套件；True 則任何套件都載入
+        # Package gate. False (the default) = only ``allowed_packages``; True = any package.
+        self.allow_arbitrary_packages: bool = False
         self.allowed_packages: set[str] = set()
 
     def set_allow_arbitrary_packages(self, enabled: bool) -> None:
@@ -52,19 +49,11 @@ class PackageManager:
         """Refuse ``package`` before it is imported, unless the gate lets it through."""
         if isinstance(package, str) and self._is_allowlisted(package):
             return
-        if self.allow_arbitrary_packages is True:
+        if self.allow_arbitrary_packages:
             return
-        if self.allow_arbitrary_packages is False:
-            raise WebRunnerExecuteException(
-                f"package {package!r} is not allowed; the host must call "
-                "executor.allow_packages(...) or executor.set_allow_arbitrary_packages(True)"
-            )
-        warnings.warn(
-            f"loading package {package!r} that is not on the allowlist; a future release will refuse "
-            "it by default. Call executor.allow_packages(...) for the packages you load, or "
-            "executor.set_allow_arbitrary_packages(True) to keep loading any package.",
-            DeprecationWarning,
-            stacklevel=3,
+        raise WebRunnerExecuteException(
+            f"package {package!r} is not allowed; the host must call "
+            "executor.allow_packages(...) or executor.set_allow_arbitrary_packages(True)"
         )
 
     def check_package(self, package: str) -> str | None:
