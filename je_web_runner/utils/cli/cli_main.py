@@ -30,6 +30,14 @@ from je_web_runner.utils.test_record.test_record_class import test_record_instan
 
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="webrunner")
+    _add_run_args(parser)
+    _add_dir_args(parser)
+    _add_impact_args(parser)
+    return parser
+
+
+def _add_run_args(parser: argparse.ArgumentParser) -> None:
+    """What to run or validate: a file, a directory, a JSON string; parallelism; reports."""
     parser.add_argument("-e", "--execute_file", type=str, help="execute a single action JSON file")
     parser.add_argument("-d", "--execute_dir", type=str, help="execute all JSON files in a directory")
     parser.add_argument("--execute_str", type=str, help="execute a JSON action string directly")
@@ -58,6 +66,10 @@ def _build_parser() -> argparse.ArgumentParser:
         type=str,
         help="after execution, generate JSON / HTML / XML / JUnit reports with this base name",
     )
+
+
+def _add_dir_args(parser: argparse.ArgumentParser) -> None:
+    """For ``--execute_dir``: tags, ledger and re-runs, watching, migration, sharding."""
     parser.add_argument(
         "--tag",
         type=str,
@@ -111,8 +123,6 @@ def _build_parser() -> argparse.ArgumentParser:
             "files are partitioned deterministically by SHA-1 path hash"
         ),
     )
-    _add_impact_args(parser)
-    return parser
 
 
 def _add_impact_args(parser: argparse.ArgumentParser) -> None:

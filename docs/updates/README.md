@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-39 | 2026-10-01 | Refactor: split the CLI parser into argument groups | #change #cli #refactor | [2026-10](2026-10.md) |
 | U-20261001-38 | 2026-10-01 | Every workflow job has a timeout | #ci #tests | [2026-10](2026-10.md) |
 | U-20261001-38 | 2026-10-01 | Impact-based selection on the command line: --affected-by, --changed-since | #done #cli #impact-analysis | [2026-10](2026-10.md) |
 | U-20261001-37 | 2026-10-01 | Selenium failures lost their message in records and failure text | #incident #selenium #reports | [2026-10](2026-10.md) |
@@ -127,5 +128,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 38 |
+| [2026-10.md](2026-10.md) | 2026-10 | 39 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
