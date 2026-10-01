@@ -40,7 +40,16 @@ CI 與整合
   ``selector`` 就是目前元素），是受信任的點擊而不是 WebDriver 的。元素先捲到
   viewport 中央，再用視窗的 ``screenX/Y``、外框與內部尺寸以及
   ``devicePixelRatio`` 把中心換算到螢幕；沒給 ``scale`` 時顯示縮放取
-  ``devicePixelRatio``，頁面縮放 100 % 時正確。視窗不能被遮住。
+  ``devicePixelRatio``，頁面縮放 100 % 時正確。視窗不能被遮住；
+* ``WR_ac_basic_auth(username_env, password_env, url=None, submit=True,
+  wait_seconds=1)``：用兩個環境變數裡的帳密（傳的是變數名稱，不是值）回答
+  瀏覽器的 HTTP 基本認證對話框。給 ``url`` 時先確認頁面握有鍵盤焦點
+  （AutoControl 打字會送到最前面的視窗），再開始開啟該頁、不等待，因為
+  對需要基本認證的頁面做傳統的 ``get`` 會在對話框開著時一直等；接著透過
+  AutoControl 的 ``AC_write_secret`` 輸入帳號、Tab、密碼與 Enter，字元一字
+  不差，也不會進入它的 log、紀錄或回傳值。需要有 ``AC_write_secret`` 的
+  ``je_auto_control``；Playwright 請用 ``WR_pw_set_context_options`` 的
+  ``http_credentials``。
 
 原生命令會拒絕視窗不在這台機器螢幕上的 Selenium driver：headless
 瀏覽器，或遠端的（grid 或裝置雲）。Playwright 瀏覽器不會被檢查，因為

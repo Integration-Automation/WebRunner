@@ -814,7 +814,7 @@ python -m je_web_runner.mcp_server
 預設工具清單（22 個工具）公開：
 
 即時瀏覽器執行：
-- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 555 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 556 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批次執行磁碟上的 JSON 檔案
 - `webrunner_list_commands` —— 探索完整的 `WR_*` 介面面
 
@@ -1681,10 +1681,13 @@ from je_web_runner.utils.ci_annotations.github_annotations import (
 | `WR_ac_fill_native_file_dialog` | 在作業系統的開啟或儲存對話框輸入路徑（轉成絕對路徑）後按 Enter（`submit=false` 則不按）；先等 `wait_seconds`（1）秒讓對話框出現 |
 | `WR_ac_assert_image_on_screen` | 螢幕上找不到範本圖片就失敗；回傳其中心 `[x, y]`（`detect_threshold` 是 AutoControl 的比對門檻） |
 | `WR_ac_click_element_native` | 用真正的滑鼠點擊元素（受信任的點擊，不是 WebDriver 的）：`selector` / `by` 找到的元素，否則是目前元素；可指定 `mouse_button`，`scale` 是螢幕的顯示縮放；回傳點擊的 `[x, y]` |
+| `WR_ac_basic_auth` | 用兩個環境變數裡的帳密回答瀏覽器的 HTTP 基本認證對話框（`username_env`、`password_env` 是變數名稱，不是值）；給 `url` 時先開啟該頁且不等待載入；等 `wait_seconds`（1）秒後輸入帳號、Tab、密碼並按 Enter（`submit=false` 則不按） |
 
 AutoControl 動作失敗時，它所在的 `WR_ac_*` 動作以 `AutoControlBridgeError` 失敗。橋接會拒絕超出桌面範圍的 AutoControl 命令：shell 命令與程式（`AC_shell_command`、`AC_execute_process`）、載入套件（`AC_add_package_*`）、動作清單與檔案（`AC_execute_action`、`AC_execute_files`）、`AC_run_agent`，以及回頭呼叫 WebRunner 的 `AC_web_*`。這些名稱出現在動作的任何位置都會被拒絕，包括迴圈本體與以 JSON 字串傳入的本體。除非設 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`，MCP server 會拒絕 `WR_ac_available`、`WR_ac_list_commands` 以外的每個 `WR_ac_*` 命令。
 
 `WR_ac_click_element_native` 先把元素捲到 viewport 中央，再用視窗的 `screenX/Y`、外框與內部尺寸以及 `devicePixelRatio` 把元素中心從頁面換算到螢幕。沒給 `scale` 時以 `devicePixelRatio` 當顯示縮放，頁面縮放為 100 % 時正確；頁面有縮放時請傳入螢幕的縮放（125 % 就是 `1.25`）。視窗不能被遮住。
+
+需要 `WR_ac_basic_auth` 是因為：對需要基本認證的頁面做傳統的 `get`，在瀏覽器對話框開著時會一直等到逾時，而 chromedriver 也不會透過 BiDi 回答這個對話框。所以請把頁面當 `url` 傳入：命令先確認頁面握有鍵盤焦點（`document.hasFocus()`；AutoControl 打字會送到最前面的視窗，所以沒有焦點就拒絕），再開始導覽、不等待，然後對對話框輸入。帳密經由 AutoControl 的 `AC_write_secret` 輸入，字元一字不差，也不會進入它的 log、紀錄或回傳值；動作檔、WebRunner 的 log 與兩邊的執行紀錄都只有變數名稱。需要有 `AC_write_secret` 的 `je_auto_control`。Playwright 請改用 `WR_pw_set_context_options` 設定 `http_credentials`。
 
 原生命令會拒絕視窗不在這台機器螢幕上的 Selenium driver：headless 瀏覽器，或遠端的（grid 或裝置雲）。Playwright 瀏覽器不會被檢查，因為 Playwright 不回報它是否以 headless 啟動：請以 `headless=False` 啟動。
 

@@ -51,7 +51,19 @@ WebRunner imports it only when one of these commands runs:
   centre mapped to the screen from the window's ``screenX/Y``, outer and
   inner size and ``devicePixelRatio``; without ``scale`` the display scale is
   ``devicePixelRatio``, right at 100 % page zoom. The window must not be
-  covered.
+  covered;
+* ``WR_ac_basic_auth(username_env, password_env, url=None, submit=True,
+  wait_seconds=1)``: answer the browser's HTTP basic-auth dialog with the
+  credentials in two environment variables (their names, never the values).
+  With ``url`` it checks that the page has the keyboard focus (AutoControl
+  types into whichever window is in front) and starts opening that page
+  without waiting, because a classic ``get`` of a page behind basic auth
+  waits while the dialog is open;
+  then it types the username, Tab, the password and Enter through
+  AutoControl's ``AC_write_secret``, which types them exactly and keeps them
+  out of its log, record and return value. It needs a ``je_auto_control``
+  with ``AC_write_secret``; for Playwright use ``http_credentials`` in
+  ``WR_pw_set_context_options``.
 
 The native commands refuse a Selenium driver whose window is not on
 this machine's screen: a headless browser, or a remote one (a grid or a

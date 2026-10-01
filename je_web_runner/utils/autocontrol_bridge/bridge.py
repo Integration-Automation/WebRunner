@@ -101,11 +101,20 @@ def ac_run_actions(actions: list) -> list[Any]:
     """
     if not isinstance(actions, list) or not actions:
         raise AutoControlBridgeError("actions must be a non-empty list of AutoControl actions")
-    checked = [_checked(action) for action in actions]
+    return execute_built_actions([_checked(action) for action in actions])
+
+
+def execute_built_actions(actions: list) -> list[Any]:
+    """
+    執行 WebRunner 自己組好的 AutoControl 動作（不再掃描拒絕清單）
+    Run ``actions`` that WebRunner code built itself (fixed command names, arguments that
+    are data) without :func:`ac_run_actions`' scan for refused names, and return each
+    value. Only the command names are logged. Never pass actions that came from a caller.
+    """
     executor = ac_executor()
-    web_runner_logger.info(f"autocontrol bridge: {[action[0] for action in checked]}")
+    web_runner_logger.info(f"autocontrol bridge: {[action[0] for action in actions]}")
     try:
-        record = executor.execute_action(checked, raise_on_error=True)
+        record = executor.execute_action(actions, raise_on_error=True)
     except Exception as error:  # AutoControl's own error types; re-raised as one WebRunner error
         raise AutoControlBridgeError(f"AutoControl action failed: {error!r}") from error
     return list(record.values())

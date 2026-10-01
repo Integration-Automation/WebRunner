@@ -15,11 +15,17 @@ import time
 from typing import Any
 
 from je_web_runner.element.web_element_wrapper import web_element_wrapper
-from je_web_runner.utils.autocontrol_bridge.bridge import AutoControlBridgeError, ac_run, ac_run_actions
+from je_web_runner.utils.autocontrol_bridge.bridge import (
+    AutoControlBridgeError, ac_executor, ac_run, ac_run_actions, execute_built_actions,
+)
 from je_web_runner.utils.autocontrol_bridge.screen_mapping import METRICS_SCRIPT, element_center_on_screen
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.webdriver._wrapper_mixins._parity_mixin import resolve_by
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
+
+
+_KEY_PRESSING_CHARACTERS = "\r\n\t"
+_URL_SCHEMES = ("http://", "https://")
 
 
 def _local_driver_classes() -> tuple[type, ...]:
@@ -72,7 +78,7 @@ def fill_native_file_dialog(file_path: str, submit: bool = True, wait_seconds: f
     """
     if not isinstance(file_path, str) or not file_path.strip():
         raise AutoControlBridgeError("file_path must be a non-empty path")
-    if any(char in file_path for char in "\r\n\t"):
+    if any(char in file_path for char in _KEY_PRESSING_CHARACTERS):
         raise AutoControlBridgeError("file_path must not contain line breaks or tabs; they would press keys")
     require_visible_browser()
     absolute = os.path.abspath(file_path)
@@ -83,6 +89,67 @@ def fill_native_file_dialog(file_path: str, submit: bool = True, wait_seconds: f
     web_runner_logger.info(f"fill_native_file_dialog: {absolute}")
     ac_run_actions(actions)
     return absolute
+
+
+def _credential(env_name: str) -> str:
+    """The value of environment variable ``env_name``; an error names the variable, never the value."""
+    if not isinstance(env_name, str) or not env_name.strip():
+        raise AutoControlBridgeError("pass the name of an environment variable that holds the credential")
+    value = os.environ.get(env_name)
+    if not value:
+        raise AutoControlBridgeError(f"environment variable {env_name} is not set or is empty")
+    if any(char in value for char in _KEY_PRESSING_CHARACTERS):
+        raise AutoControlBridgeError(f"environment variable {env_name} holds a line break or tab; it would press keys")
+    return value
+
+
+def _start_navigation(url: str) -> None:
+    """
+    Start navigating the current Selenium driver to ``url`` without waiting for the page,
+    after checking that its page has the keyboard focus: AutoControl types into whatever
+    window is in the foreground, so a covered browser would send the credentials elsewhere.
+    """
+    if not isinstance(url, str) or not url.startswith(_URL_SCHEMES):
+        raise AutoControlBridgeError(f"url must start with http:// or https://, got {url!r}")
+    driver = webdriver_wrapper_instance.current_webdriver
+    if driver is None:
+        raise AutoControlBridgeError("no Selenium driver is running to open the url")
+    if driver.execute_script("return document.hasFocus();") is not True:
+        raise AutoControlBridgeError("the browser window does not have the keyboard focus; "
+                                     "the credentials would be typed into another window")
+    driver.execute_script("window.location.assign(arguments[0]);", url)
+
+
+def basic_auth_native(username_env: str, password_env: str, url: str | None = None,
+                      submit: bool = True, wait_seconds: float = 1.0) -> None:
+    """
+    在瀏覽器的 HTTP 基本認證對話框輸入帳密（從環境變數讀取，不經過動作檔、log 或紀錄）
+    Answer the browser's HTTP basic-auth dialog through AutoControl with the credentials
+    in the environment variables ``username_env`` and ``password_env``: an action file
+    names the variables, so the values never reach it, a log or a record. With ``url``
+    the current Selenium driver first starts navigating there without waiting (a classic
+    ``get`` of a page behind basic auth waits while the dialog is open, until it times
+    out); without it the dialog must already be open. Waits ``wait_seconds`` for the
+    dialog, then types the username, Tab and the password through AutoControl's
+    ``AC_write_secret`` (exact characters; never logged, recorded or returned) and presses
+    Enter unless ``submit`` is False. The dialog's username field must have the focus.
+    """
+    username = _credential(username_env)
+    password = _credential(password_env)
+    require_visible_browser()
+    if "AC_write_secret" not in ac_executor().known_commands():
+        raise AutoControlBridgeError("this je_auto_control has no AC_write_secret, which keeps the "
+                                     "password out of its log and record; upgrade je_auto_control")
+    if url is not None:
+        _start_navigation(url)
+    time.sleep(max(0.0, float(wait_seconds)))  # a native dialog has no DOM to wait on
+    actions: list[list[Any]] = [["AC_write_secret", {"secret": username}],
+                                ["AC_type_keyboard", {"keycode": "tab"}],
+                                ["AC_write_secret", {"secret": password}]]
+    if submit:
+        actions.append(["AC_type_keyboard", {"keycode": _enter_key()}])
+    web_runner_logger.info(f"basic_auth_native: credentials from {username_env} and {password_env}")
+    execute_built_actions(actions)
 
 
 def assert_image_on_screen(image_path: str, detect_threshold: float | None = None) -> list[int]:

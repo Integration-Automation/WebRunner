@@ -4,7 +4,7 @@ from je_web_runner.utils.autocontrol_bridge.bridge import (
 )
 from je_web_runner.utils.autocontrol_bridge.native import (
     invisible_reason, require_visible_browser, fill_native_file_dialog, assert_image_on_screen,
-    click_element_native,
+    click_element_native, basic_auth_native,
 )
 from je_web_runner.utils.autocontrol_bridge.screen_mapping import (
     ScreenMappingError, element_center_on_screen,
@@ -72,7 +72,7 @@ from je_web_runner.utils.self_healing.healing_locator import (
 __all__ = [
     "AutoControlBridgeError", "ac_available", "ac_executor", "is_denied", "ac_list_commands", "ac_run_actions",
     "ac_run", "invisible_reason", "require_visible_browser", "fill_native_file_dialog", "assert_image_on_screen",
-    "click_element_native", "ScreenMappingError", "element_center_on_screen", "BidiNetworkError",
+    "click_element_native", "basic_auth_native", "ScreenMappingError", "element_center_on_screen", "BidiNetworkError",
     "add_request_handler", "add_response_handler", "add_auth_handler", "clear_network_handlers", "BidiEventsError",
     "SeleniumBidiEvents", "to_bidi_url_pattern", "CDPError", "selenium_cdp", "playwright_cdp",
     "reset_playwright_cdp_sessions", "CDPEventLoopError", "resolve_cdp_ws_url", "CDPEventListener", "TracingError",

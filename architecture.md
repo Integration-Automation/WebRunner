@@ -120,7 +120,7 @@ python -m je_web_runner -d DIR [--tag/--exclude-tag] [--rerun-failed LEDGER] [--
 
 | Consumer | How it uses this repo | What it relies on |
 | --- | --- | --- |
-| Jeffrey_RPA | `JeffreyRPA/webrunner_je_only.py` and `webrunner_novelai.py` insert `D:\Codes\WebRunner` (or `WEBRUNNER_PATH`) at `sys.path[0]`, so the **live working tree** is imported; `Jeffrey_RPA/requirements.txt` requires `je_web_runner>=0.0.88` because of the four wrapper methods listed here. | `TestObject`, `webdriver_wrapper_instance` and its methods `get_current_url`, `get_title`, `save_screenshot`, `add_script_to_evaluate_on_new_document`; for its je_web_runner variant, `set_driver(..., install_driver=False)` (start without webdriver-manager) and `executor.set_raise_wrapper_errors`; `test/test_je_facade.py` (in Jeffrey_RPA) imports `je_web_runner.webdriver.webdriver_wrapper` and checks `_webdriver_dict`. |
+| Jeffrey_RPA | `JeffreyRPA/webrunner_je_only.py` and `webrunner_novelai.py` insert a WebRunner working tree at `sys.path[0]`, so the **live working tree** is imported. The tree is `WEBRUNNER_PATH`, else `bot_config.json` `webrunner_path`, else the sibling `D:\Codes\WebRunner`, else the installed package (one rule, `JeffreyRPA/_webrunner_location.py`). Before importing it sets `WEBRUNNER_LOG_PATH` (if unset) to its own `webrunner.log`; `Jeffrey_RPA/requirements.txt` requires `je_web_runner>=0.0.88` because of the four wrapper methods listed here. | `TestObject`, `webdriver_wrapper_instance` and its methods `get_current_url`, `get_title`, `save_screenshot`, `add_script_to_evaluate_on_new_document`; for its je_web_runner variant, `set_driver(..., install_driver=False)` (start without webdriver-manager) and `executor.set_raise_wrapper_errors`; `test/test_je_facade.py` (in Jeffrey_RPA) imports `je_web_runner.webdriver.webdriver_wrapper` and checks `_webdriver_dict`. |
 | Jeffrey_RPA tests | `JeffreyRPA/conftest.py` hooks the import of `je_web_runner.utils.logging.loggin_instance` to park the log file outside the repo. | That exact, misspelled module path. **Do not rename it.** |
 | AutoControlGUI | Optional `utils/webrunner_bridge/bridge.py` (not a declared dependency; found with `importlib.util.find_spec`, imported lazily). | `je_web_runner.utils.executor.action_executor`: `execute_one` (one action through the gates, raising `WebRunnerExecuteException`), falling back to `executor.event_dict` on releases without it; `executor.event_dict` `WR_*` keys for listing; the commands `WR_get_webdriver_manager`, `WR_to_url`, `WR_quit`, `WR_save_screenshot`, `WR_get_current_url` (guarded by `test/unit_test/test_public_api.py`); `je_web_runner.utils.exception.exceptions.WebRunnerException` as the failure it wraps. |
 | TestPioneer | Declared dependency; `from je_web_runner import execute_action` in-process. | `execute_action`. |
@@ -131,7 +131,9 @@ extra (`je_web_runner[autocontrol]`) that is never imported at import time: impo
 process DPI-aware on Windows and takes about a second, and Jeffrey_RPA imports this tree. `ac_available` uses
 `importlib.util.find_spec`. It relies on `je_auto_control.utils.executor.action_executor.executor` with
 `execute_action(actions, raise_on_error=True)` (a record dict, one unique key per action, in order) and
-`known_commands()`, and on the `AC_*` commands the native ones send: `AC_write` (`write_string`),
+`known_commands()`, and on the `AC_*` commands the native ones send: `AC_write` (`write_string`), `AC_write_secret`
+(`secret`; `WR_ac_basic_auth` checks `known_commands()` for it and refuses without it, and skips the deny scan for
+the actions it builds, so a password is never echoed in a refusal),
 `AC_type_keyboard` (`keycode`), `AC_get_keyboard_keys_table` (its `enter` or `return` key) and
 `AC_locate_image_center` (`image`, `detect_threshold`; returns the centre, raises when not found) and
 `AC_click_mouse` (`mouse_keycode`, `x`, `y` in the coordinates of a DPI-aware process; `screen_mapping.py` maps a
@@ -153,9 +155,8 @@ policy; `test/unit_test/test_public_api.py` guards them.
 
 **Import-time side effects:** `utils/logging/loggin_instance.py` sets the root logger to DEBUG and attaches a
 handler that opens nothing until the first record. The file is `$WEBRUNNER_LOG_PATH`, else
-`$WEBRUNNER_LOG_DIR/WEBRunner.log`, else `~/.je_web_runner/logs/WEBRunner.log` (append, process id per line; it
-used to be the relative `WEBRunner.log` in the caller's cwd, workspace X-6). Jeffrey_RPA points
-`WEBRUNNER_LOG_PATH` at its own `webrunner.log`, which its supervisor also writes.
+`$WEBRUNNER_LOG_DIR/WEBRunner.log`, else `~/.je_web_runner/logs/WEBRunner.log` (append, process id per line).
+Jeffrey_RPA points `WEBRUNNER_LOG_PATH` at its own `webrunner.log`, which its supervisor also writes.
 `webdriver_wrapper_instance`, `web_runner` and `executor` are module-level singletons: concurrent callers in one
 process share one driver (`--parallel-mode process` exists for isolation).
 

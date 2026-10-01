@@ -712,6 +712,7 @@ COMMANDS: dict[str, Any] = {
         "WR_ac_fill_native_file_dialog": _autocontrol.fill_native_file_dialog,
         "WR_ac_assert_image_on_screen": _autocontrol.assert_image_on_screen,
         "WR_ac_click_element_native": _autocontrol.click_element_native,
+        "WR_ac_basic_auth": _autocontrol.basic_auth_native,
 
         # ----- async executor only (WR_apw_*): listed here so references, schema and validation know them -----
         **{name: _async_only(name, command) for name, command in _ASYNC_COMMANDS.items()},

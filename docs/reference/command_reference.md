@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (555 commands).
+Auto-generated from the executor's event_dict (556 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -9,6 +9,7 @@ Auto-generated from the executor's event_dict (555 commands).
 | `WR_a11y_summarise` | `(results: 'dict[str, Any]') -> 'list[dict[str, Any]]'` | 將 axe 結果壓縮成只含 ``id`` / ``impact`` / ``help`` / ``nodes`` 數量的清單 |
 | `WR_ac_assert_image_on_screen` | `(image_path: 'str', detect_threshold: 'float | None' = None) -> 'list[int]'` | 斷言螢幕上看得到指定圖片，回傳其中心座標 |
 | `WR_ac_available` | `() -> 'bool'` | AutoControl 是否已安裝（不 import） |
+| `WR_ac_basic_auth` | `(username_env: 'str', password_env: 'str', url: 'str | None' = None, submit: 'bool' = True, wait_seconds: 'float' = 1.0) -> 'None'` | 在瀏覽器的 HTTP 基本認證對話框輸入帳密（從環境變數讀取，不經過動作檔、log 或紀錄） |
 | `WR_ac_click_element_native` | `(selector: 'str | None' = None, by: 'str' = 'css selector', mouse_button: 'str' = 'mouse_left', scale: 'float | None' = None) -> 'list[int]'` | 用真正的滑鼠點擊元素（不是 WebDriver 的合成點擊） |
 | `WR_ac_fill_native_file_dialog` | `(file_path: 'str', submit: 'bool' = True, wait_seconds: 'float' = 1.0) -> 'str'` | 在已開啟的系統檔案對話框輸入路徑並按 Enter |
 | `WR_ac_list_commands` | `() -> 'list[str]'` | 列出可經橋接執行的 AutoControl 命令 |
@@ -498,14 +499,14 @@ Auto-generated from the executor's event_dict (555 commands).
 | `WR_set_cache_disabled` | `(disabled: 'bool' = True) -> 'None'` | 透過 CDP ``Network.setCacheDisabled`` 切換 HTTP 快取。 |
 | `WR_set_device_metrics` | `(width: 'int', height: 'int', device_scale_factor: 'float' = 1, mobile: 'bool' = False) -> 'None'` | 以 CDP ``Emulation.setDeviceMetricsOverride`` 覆寫裝置外觀 (viewport / DPR / mobile)。 |
 | `WR_set_download_directory` | `(download_path: 'str', behavior: 'str' = 'allow') -> 'None'` | 透過 CDP ``Browser.setDownloadBehavior`` 指定下載資料夾 (headless 必備)。 |
-| `WR_set_driver` | `(webdriver_name: 'str', webdriver_manager_option_dict: 'dict | None' = None, options: 'list[str] | None' = None, experimental_options: 'dict | None' = None, extension_paths: 'list[str] | None' = None, enable_bidi: 'bool' = False, **kwargs) -> 'webdriver.Chrome | webdriver.Firefox | webdriver.Edge | webdriver.Ie | webdriver.Safari'` | 啟動一個新的 WebDriver |
+| `WR_set_driver` | `(webdriver_name: 'str', webdriver_manager_option_dict: 'dict | None' = None, options: 'list[str] | None' = None, experimental_options: 'dict | None' = None, extension_paths: 'list[str] | None' = None, enable_bidi: 'bool' = False, install_driver: 'bool' = True, **kwargs) -> 'webdriver.Chrome | webdriver.Firefox | webdriver.Edge | webdriver.Ie | webdriver.Safari'` | 啟動一個新的 WebDriver |
 | `WR_set_extra_http_headers` | `(headers: 'dict') -> 'None'` | 以 CDP ``Network.setExtraHTTPHeaders`` 為所有後續請求附加 header。 |
 | `WR_set_failure_screenshot_dir` | `(path: str | None) -> None` | 設定 (或停用) 動作失敗時的自動截圖目錄 |
 | `WR_set_geolocation` | `(latitude: 'float', longitude: 'float', accuracy: 'float' = 100) -> 'None'` | 以 CDP ``Emulation.setGeolocationOverride`` 覆寫地理位置。 |
 | `WR_set_locale` | `(locale: 'str') -> 'None'` | 以 CDP ``Emulation.setLocaleOverride`` 覆寫語系。 |
 | `WR_set_network_conditions` | `(offline: 'bool' = False, latency: 'float' = 0, download_throughput: 'float' = -1, upload_throughput: 'float' = -1) -> 'None'` | 以 CDP ``Network.emulateNetworkConditions`` 模擬網路條件 (離線、節流)。 |
 | `WR_set_page_load_timeout` | `(time_to_wait: 'int') -> 'None'` | 設定頁面載入最大等待時間 / Set max page load wait time |
-| `WR_set_raise_wrapper_errors` | `(enabled: bool | None) -> None` | 設定 Selenium wrapper 失敗時是否讓動作失敗 |
+| `WR_set_raise_wrapper_errors` | `(enabled: bool) -> None` | 設定 Selenium wrapper 失敗時是否讓動作失敗 |
 | `WR_set_record_enable` | `(set_enable: bool = True)` | 開啟或關閉紀錄功能 |
 | `WR_set_retry_policy` | `(retries: int = 0, backoff: float = 0.0) -> None` | 設定全域重試策略 |
 | `WR_set_script_timeout` | `(time_to_wait: 'int') -> 'None'` | 設定 script 最大執行時間 / Set max script execution time |
@@ -551,8 +552,8 @@ Auto-generated from the executor's event_dict (555 commands).
 | `WR_user_factory` | `(prefix: 'str' = 'user') -> 'Factory'` | Default user shape: id / name / email / password. |
 | `WR_validate_action_file` | `(json_file_path: 'str') -> 'bool'` | 讀取並驗證動作 JSON 檔案 |
 | `WR_validate_action_json` | `(data: 'list | dict') -> 'bool'` | 驗證動作 JSON 是否符合執行器格式 |
-| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000021385A08C20>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
-| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000021385A08C20>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
+| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002232B775080>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
+| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002232B775080>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
 | `WR_wait_for_download` | `(directory: 'str', timeout: 'float' = 60.0, suffix: 'str | None' = None, poll_seconds: 'float' = 0.5) -> 'str'` | 等待 ``directory`` 內出現新檔案（會跳過 ``.crdownload`` / ``.part``） |
 | `WR_wait_for_element` | `(selector: 'str', by: 'str' = 'css selector', timeout: 'float' = 10.0, state: 'str' = 'visible') -> 'Any'` | 等元素出現（``present`` / ``visible`` / ``clickable``）或消失（``hidden``） |
 | `WR_wait_for_ready_state` | `(timeout: 'float' = 30.0) -> 'bool'` | Wait until ``document.readyState`` is ``complete``. |

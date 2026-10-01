@@ -18,6 +18,7 @@
             "WR_a11y_summarise",
             "WR_ac_assert_image_on_screen",
             "WR_ac_available",
+            "WR_ac_basic_auth",
             "WR_ac_click_element_native",
             "WR_ac_fill_native_file_dialog",
             "WR_ac_list_commands",
