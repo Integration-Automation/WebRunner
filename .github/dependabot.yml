@@ -6,7 +6,11 @@
 version: 2
 updates:
   - package-ecosystem: "pip" # See documentation for possible values
-    directory: "/" # Location of package manifests
+    # The project's own manifests at the root, and the hash-locked tool sets the workflows
+    # install: from the root Dependabot does not look as deep as .github/requirements.
+    directories:
+      - "/"
+      - "/.github/requirements"
     # Updates belong on dev: main is the released branch, and merging into it
     # publishes. A PR opened against main sat unmerged for that reason.
     target-branch: "dev"

@@ -122,3 +122,38 @@ def test_every_job_has_a_timeout(workflow):
     bad = [name for name, body in _jobs(workflow)
            if "runs-on:" in body and not re.search(r"^\s*timeout-minutes:", body, re.MULTILINE)]
     assert bad == []  # nosec B101 — assert is the test assertion
+
+
+_PIP_INSTALL = re.compile(r"\bpip3?\s+install\b[^\n]*")
+_LOCKED_INSTALL = re.compile(
+    r"^pip3? install --require-hashes --only-binary :all: -r \.github/requirements/[\w.-]+\.txt$")
+
+
+def _token_jobs() -> list[tuple[str, str]]:
+    """Return ``(workflow:job, job text)`` for each job that is handed the PyPI token."""
+    return [(f"{workflow.name}:{name}", body) for workflow in _WORKFLOWS
+            for name, body in _jobs(workflow) if "secrets.PYPI_API_TOKEN" in body]
+
+
+def test_the_pypi_token_reaches_only_the_publish_jobs():
+    expected = ['publish_stable.yml:publish', 'test_dev.yml:publish-dev']
+    assert [name for name, _body in _token_jobs()] == expected  # nosec B101 — assert is the test assertion
+
+
+@pytest.mark.parametrize("name, body", _token_jobs(), ids=[name for name, _body in _token_jobs()])
+def test_a_job_with_the_pypi_token_installs_only_hash_locked_tooling(name, body):
+    # A tool resolved when the job runs could change between two releases and read the token.
+    installs = [match.group(0).strip() for match in _PIP_INSTALL.finditer(body)]
+    assert installs, name  # nosec B101 — assert is the test assertion
+    unlocked = [command for command in installs if not _LOCKED_INSTALL.match(command)]
+    assert unlocked == [], name  # nosec B101 — assert is the test assertion
+
+
+def test_dependabot_watches_the_hash_locked_requirements():
+    # From "/" Dependabot does not look as deep as .github/requirements, so the
+    # files CI installs with --require-hashes would never be updated.
+    text = (_ROOT / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+    blocks = re.split(r"^\s*-\s*package-ecosystem:", text, flags=re.MULTILINE)[1:]
+    pip_block = next(block for block in blocks if block.split()[0].strip("\"'") == "pip")
+    watched = re.search(r'^\s*-\s*"/\.github/requirements"\s*$', pip_block, re.MULTILINE)
+    assert watched  # nosec B101 — assert is the test assertion
