@@ -93,6 +93,9 @@ pip install je_web_runner
 pip install je_web_runner_dev
 ```
 
+`je_web_runner_dev` follows the `dev` branch: CI publishes a new version each time a push to `dev`
+passes the tests and changes what the package ships.
+
 **Optional dependencies** (each enables a slice of features; install only what you use):
 
 ```bash

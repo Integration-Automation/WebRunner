@@ -93,6 +93,8 @@ pip install je_web_runner
 pip install je_web_runner_dev
 ```
 
+`je_web_runner_dev` 跟随 `dev` 分支：每次推送到 `dev` 通过测试、并且包内容有变化时，CI 就会发布一个新版本。
+
 **可选依赖**（每一项启用一部分功能；只安装你用到的）：
 
 ```bash

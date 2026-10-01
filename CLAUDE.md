@@ -349,6 +349,7 @@ Workspace rule shared by every repository under `D:\Codes` (full text: `D:\Codes
 
 - Branch model: `main` (stable) / `dev` (development)
 - PRs go from `dev` to `main`
+- Both branches publish to PyPI from CI: a push to `main` releases `je_web_runner` (`publish_stable.yml`), and a push to `dev` that passes the tests and changes what the package ships releases `je_web_runner_dev` (the `publish-dev` job of `test_dev.yml`, `scripts/dev_release.py`). Never bump a version by hand; the version in `dev.toml` is only a floor
 - Commit messages: concise, imperative mood (e.g., "Add element validation", "Fix driver cleanup on timeout")
 - **Do NOT mention any AI tools, assistants, or language models in commit messages** — commits must read as standard developer-authored messages
 - **Do NOT include `Co-Authored-By` lines referencing AI in commits**
