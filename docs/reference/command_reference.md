@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (536 commands).
+Auto-generated from the executor's event_dict (537 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -487,6 +487,7 @@ Auto-generated from the executor's event_dict (536 commands).
 | `WR_set_locale` | `(locale: 'str') -> 'None'` | 以 CDP ``Emulation.setLocaleOverride`` 覆寫語系。 |
 | `WR_set_network_conditions` | `(offline: 'bool' = False, latency: 'float' = 0, download_throughput: 'float' = -1, upload_throughput: 'float' = -1) -> 'None'` | 以 CDP ``Network.emulateNetworkConditions`` 模擬網路條件 (離線、節流)。 |
 | `WR_set_page_load_timeout` | `(time_to_wait: 'int') -> 'None'` | 設定頁面載入最大等待時間 / Set max page load wait time |
+| `WR_set_raise_wrapper_errors` | `(enabled: bool | None) -> None` | 設定 Selenium wrapper 失敗時是否讓動作失敗 |
 | `WR_set_record_enable` | `(set_enable: bool = True)` | 開啟或關閉紀錄功能 |
 | `WR_set_retry_policy` | `(retries: int = 0, backoff: float = 0.0) -> None` | 設定全域重試策略 |
 | `WR_set_script_timeout` | `(time_to_wait: 'int') -> 'None'` | 設定 script 最大執行時間 / Set max script execution time |
@@ -532,8 +533,8 @@ Auto-generated from the executor's event_dict (536 commands).
 | `WR_user_factory` | `(prefix: 'str' = 'user') -> 'Factory'` | Default user shape: id / name / email / password. |
 | `WR_validate_action_file` | `(json_file_path: 'str') -> 'bool'` | 讀取並驗證動作 JSON 檔案 |
 | `WR_validate_action_json` | `(data: 'list | dict') -> 'bool'` | 驗證動作 JSON 是否符合執行器格式 |
-| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000022CACA19620>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
-| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000022CACA19620>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
+| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002502E8F19E0>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
+| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002502E8F19E0>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
 | `WR_wait_for_download` | `(directory: 'str', timeout: 'float' = 60.0, suffix: 'str | None' = None, poll_seconds: 'float' = 0.5) -> 'str'` | 等待 ``directory`` 內出現新檔案（會跳過 ``.crdownload`` / ``.part``） |
 | `WR_wait_for_element` | `(selector: 'str', by: 'str' = 'css selector', timeout: 'float' = 10.0, state: 'str' = 'visible') -> 'Any'` | 等元素出現（``present`` / ``visible`` / ``clickable``）或消失（``hidden``） |
 | `WR_wait_for_ready_state` | `(timeout: 'float' = 30.0) -> 'bool'` | Wait until ``document.readyState`` is ``complete``. |

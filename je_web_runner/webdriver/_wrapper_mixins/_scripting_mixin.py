@@ -10,6 +10,7 @@ import base64
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.utils.test_record.wrapper_failures import settle_wrapper_failure
 
 
 class _ScriptingMixin:
@@ -39,6 +40,7 @@ class _ScriptingMixin:
                 f"WebDriverWrapper execute, driver_command: {driver_command}, params: {params}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper execute", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper execute")
 
     def execute_script(self, script: str, *args):
         """
@@ -59,6 +61,7 @@ class _ScriptingMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper execute_script, script: {script}, failed: {error!r}")
             record_action_to_list("webdriver wrapper execute_script", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper execute_script")
             return None
 
     def execute_cdp_cmd(self, cmd: str, cmd_args: dict | None = None):
@@ -95,6 +98,7 @@ class _ScriptingMixin:
                 f"WebDriverWrapper execute_cdp_cmd, cmd: {cmd}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper execute_cdp_cmd", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper execute_cdp_cmd")
             raise
 
     def add_script_to_evaluate_on_new_document(self, source: str) -> str | None:
@@ -291,6 +295,7 @@ class _ScriptingMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper add_console_listener failed: {error!r}")
             record_action_to_list("webdriver wrapper add_console_listener", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper add_console_listener")
             raise
 
     def add_js_error_listener(self, callback) -> int | None:
@@ -307,6 +312,7 @@ class _ScriptingMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper add_js_error_listener failed: {error!r}")
             record_action_to_list("webdriver wrapper add_js_error_listener", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper add_js_error_listener")
             raise
 
     def remove_console_listener(self, subscription_id: int) -> bool:
@@ -325,6 +331,7 @@ class _ScriptingMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper remove_console_listener failed: {error!r}")
             record_action_to_list("webdriver wrapper remove_console_listener", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper remove_console_listener")
             return False
 
     def remove_js_error_listener(self, subscription_id: int) -> bool:
@@ -341,6 +348,7 @@ class _ScriptingMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper remove_js_error_listener failed: {error!r}")
             record_action_to_list("webdriver wrapper remove_js_error_listener", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper remove_js_error_listener")
             return False
 
     def set_download_directory(self, download_path: str, behavior: str = "allow") -> None:
@@ -511,3 +519,4 @@ class _ScriptingMixin:
                 f"WebDriverWrapper execute_async_script, script: {script}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper execute_async_script", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper execute_async_script")

@@ -494,6 +494,7 @@
             "WR_set_locale",
             "WR_set_network_conditions",
             "WR_set_page_load_timeout",
+            "WR_set_raise_wrapper_errors",
             "WR_set_record_enable",
             "WR_set_retry_policy",
             "WR_set_script_timeout",

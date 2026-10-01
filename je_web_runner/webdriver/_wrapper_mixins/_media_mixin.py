@@ -5,6 +5,7 @@ import base64
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.utils.test_record.wrapper_failures import settle_wrapper_failure
 
 _FULL_PAGE_SCREENSHOT_LOG = "webdriver wrapper save_full_page_screenshot"
 _PRINT_PAGE_LOG = "webdriver wrapper print_page"
@@ -30,6 +31,7 @@ class _MediaMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper save_screenshot failed: {error!r}")
             record_action_to_list("webdriver wrapper save_screenshot", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper save_screenshot")
             return False
 
     def get_screenshot_as_png(self) -> bytes | None:
@@ -46,6 +48,7 @@ class _MediaMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_screenshot_as_png failed: {error!r}")
             record_action_to_list("webdriver wrapper get_screenshot_as_png", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_screenshot_as_png")
 
     def save_full_page_screenshot(self, file_path: str) -> bool:
         """
@@ -78,6 +81,7 @@ class _MediaMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper save_full_page_screenshot failed: {error!r}")
             record_action_to_list(_FULL_PAGE_SCREENSHOT_LOG, param, error)
+            settle_wrapper_failure(error, _FULL_PAGE_SCREENSHOT_LOG)
             return False
 
     def print_page(self, file_path: str, print_options=None) -> bool:
@@ -108,6 +112,7 @@ class _MediaMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper print_page failed: {error!r}")
             record_action_to_list(_PRINT_PAGE_LOG, param, error)
+            settle_wrapper_failure(error, _PRINT_PAGE_LOG)
             return False
 
     def get_screenshot_as_base64(self) -> str | None:
@@ -124,6 +129,7 @@ class _MediaMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_screenshot_as_base64 failed: {error!r}")
             record_action_to_list("webdriver wrapper get_screenshot_as_base64", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_screenshot_as_base64")
 
     def get_log(self, log_type: str):
         """
@@ -152,3 +158,4 @@ class _MediaMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_log failed: {error!r}")
             record_action_to_list("webdriver wrapper get_log", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_log")

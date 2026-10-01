@@ -54,6 +54,13 @@ fails:
 
     url = execute_one(["WR_get_current_url"])
 
+A failed Selenium wrapper call (``WR_to_url``, ``WR_element_click``,
+``WR_element_assert`` …) is recorded and, for now, still passes its action,
+with a ``DeprecationWarning``; a future release will fail it.
+``executor.set_raise_wrapper_errors(True)`` (or ``WR_set_raise_wrapper_errors``
+with ``[true]`` first in an action file) fails it now; ``False`` keeps the old
+behaviour without the warning.
+
 Available Commands
 ------------------
 

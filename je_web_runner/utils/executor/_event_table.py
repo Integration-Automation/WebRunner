@@ -326,6 +326,7 @@ COMMANDS: dict[str, Any] = {
 
         # security: arbitrary-script gate
         "WR_set_allow_arbitrary_script": _Bound(lambda executor: executor.set_allow_arbitrary_script),
+        "WR_set_raise_wrapper_errors": _Bound(lambda executor: executor.set_raise_wrapper_errors),
 
         # self-healing locators
         "WR_register_fallback_locator": _heal_register_fallback,

@@ -13,6 +13,7 @@ from je_web_runner.utils.executor._event_table import build_event_dict
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.package_manager.package_manager_class import package_manager
+from je_web_runner.utils.test_record.wrapper_failures import set_raise_wrapper_errors
 from je_web_runner.webdriver import playwright_wrapper as _pw
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
@@ -207,6 +208,17 @@ class Executor:
         JSON files are not fully trusted.
         """
         self.allow_arbitrary_script = bool(enabled)
+
+    @staticmethod
+    def set_raise_wrapper_errors(enabled: bool | None) -> None:
+        """
+        設定 Selenium wrapper 失敗時是否讓動作失敗
+        ``True``: a failed Selenium wrapper call (``WR_to_url``, ``WR_element_assert`` …) fails
+        its action, as the Playwright commands do. ``False``: it passes as it always did.
+        ``None``: the deprecated default, which passes with a ``DeprecationWarning``; a future
+        release raises by default (README › Public API & Deprecation Policy).
+        """
+        set_raise_wrapper_errors(enabled)
 
     @staticmethod
     def set_allow_arbitrary_packages(enabled: bool) -> None:

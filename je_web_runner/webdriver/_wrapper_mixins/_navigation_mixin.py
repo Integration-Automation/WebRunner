@@ -5,6 +5,7 @@ from selenium.common import NoAlertPresentException
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.utils.test_record.wrapper_failures import settle_wrapper_failure
 
 
 class _NavigationMixin:
@@ -27,6 +28,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper to_url failed: {error!r}")
             record_action_to_list("webdriver wrapper to_url", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper to_url")
 
     def forward(self) -> None:
         """前進到下一頁 / Navigate forward"""
@@ -37,6 +39,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper forward failed: {error!r}")
             record_action_to_list("webdriver wrapper forward", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper forward")
 
     def back(self) -> None:
         """返回上一頁 / Navigate back"""
@@ -47,6 +50,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper back failed: {error!r}")
             record_action_to_list("webdriver wrapper back", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper back")
 
     def refresh(self) -> None:
         """重新整理頁面 / Refresh current page"""
@@ -57,6 +61,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper refresh failed: {error!r}")
             record_action_to_list("webdriver wrapper refresh", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper refresh")
 
     def reload(self, ignore_cache: bool = False) -> None:
         """
@@ -86,6 +91,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper scroll_to_element failed: {error!r}")
             record_action_to_list("webdriver wrapper scroll_to_element", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper scroll_to_element")
 
     def scroll_to_top(self) -> None:
         """捲動到頁面最上方 / Scroll to the top of the page"""
@@ -96,6 +102,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper scroll_to_top failed: {error!r}")
             record_action_to_list("webdriver wrapper scroll_to_top", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper scroll_to_top")
 
     def scroll_to_bottom(self) -> None:
         """捲動到頁面最下方 / Scroll to the bottom of the page"""
@@ -108,6 +115,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper scroll_to_bottom failed: {error!r}")
             record_action_to_list("webdriver wrapper scroll_to_bottom", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper scroll_to_bottom")
 
     def bring_to_front(self) -> None:
         """
@@ -178,6 +186,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_current_url failed: {error!r}")
             record_action_to_list("webdriver wrapper get_current_url", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_current_url")
             return None
 
     def get_title(self) -> str | None:
@@ -192,6 +201,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_title failed: {error!r}")
             record_action_to_list("webdriver wrapper get_title", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_title")
             return None
 
     def get_page_source(self) -> str | None:
@@ -206,6 +216,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_page_source failed: {error!r}")
             record_action_to_list("webdriver wrapper get_page_source", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_page_source")
             return None
 
     def get_window_handles(self) -> list[str] | None:
@@ -220,6 +231,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_window_handles failed: {error!r}")
             record_action_to_list("webdriver wrapper get_window_handles", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_window_handles")
             return None
 
     def get_current_window_handle(self) -> str | None:
@@ -234,6 +246,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_current_window_handle failed: {error!r}")
             record_action_to_list("webdriver wrapper get_current_window_handle", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_current_window_handle")
             return None
 
     def new_window(self, type_hint: str = "tab") -> None:
@@ -251,6 +264,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper new_window failed: {error!r}")
             record_action_to_list("webdriver wrapper new_window", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper new_window")
 
     def close_window(self) -> None:
         """
@@ -264,6 +278,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper close_window failed: {error!r}")
             record_action_to_list("webdriver wrapper close_window", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper close_window")
 
     # webdriver new page
     def switch(self, switch_type: str, switch_target_name: str | None = None):
@@ -303,6 +318,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper switch failed: {error!r}")
             record_action_to_list("webdriver wrapper switch", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper switch")
 
     # window geometry
     def maximize_window(self) -> None:
@@ -317,6 +333,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper maximize_window failed: {error!r}")
             record_action_to_list("webdriver wrapper maximize_window", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper maximize_window")
 
     def fullscreen_window(self) -> None:
         """
@@ -330,6 +347,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper fullscreen_window failed: {error!r}")
             record_action_to_list("webdriver wrapper fullscreen_window", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper fullscreen_window")
 
     def minimize_window(self) -> None:
         """
@@ -343,6 +361,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper minimize_window failed: {error!r}")
             record_action_to_list("webdriver wrapper minimize_window", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper minimize_window")
 
     def set_window_size(self, width: int, height: int, window_handle: str = 'current') -> None:
         """
@@ -367,6 +386,7 @@ class _NavigationMixin:
                 f"WebDriverWrapper set_window_size failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_window_size", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper set_window_size")
 
     def set_window_position(self, x: int, y: int, window_handle: str = 'current') -> dict | None:
         """
@@ -391,6 +411,7 @@ class _NavigationMixin:
                 f"WebDriverWrapper set_window_position failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_window_position", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper set_window_position")
 
     def get_window_position(self, window_handle='current') -> dict | None:
         """
@@ -408,6 +429,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_window_position failed: {error!r}")
             record_action_to_list("webdriver wrapper get_window_position", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_window_position")
 
     def get_window_rect(self) -> dict | None:
         """
@@ -423,6 +445,7 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_window_rect failed: {error!r}")
             record_action_to_list("webdriver wrapper get_window_rect", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_window_rect")
 
     def set_window_rect(self, x: int | None = None, y: int | None = None, width: int | None = None, height: int | None = None) -> dict | None:
         """
@@ -444,3 +467,4 @@ class _NavigationMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper set_window_rect failed: {error!r}")
             record_action_to_list("webdriver wrapper set_window_rect", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper set_window_rect")

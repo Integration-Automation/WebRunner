@@ -5,6 +5,7 @@ import json
 
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.utils.test_record.wrapper_failures import settle_wrapper_failure
 
 
 class _CookieMixin:
@@ -25,6 +26,7 @@ class _CookieMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_cookies, failed: {error!r}")
             record_action_to_list("webdriver wrapper get_cookies", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_cookies")
 
     def get_cookie(self, name: str) -> dict | None:
         """
@@ -42,6 +44,7 @@ class _CookieMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper get_cookie, name: {name}, failed: {error!r}")
             record_action_to_list("webdriver wrapper get_cookie", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper get_cookie")
 
     def add_cookie(self, cookie_dict: dict) -> None:
         """
@@ -60,6 +63,7 @@ class _CookieMixin:
                 f"WebDriverWrapper add_cookie, cookie_dict: {cookie_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper add_cookie", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper add_cookie")
 
     def delete_cookie(self, name: str) -> None:
         """
@@ -76,6 +80,7 @@ class _CookieMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper delete_cookie, name: {name}, failed: {error!r}")
             record_action_to_list("webdriver wrapper delete_cookie", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper delete_cookie")
 
     def delete_all_cookies(self) -> None:
         """
@@ -89,6 +94,7 @@ class _CookieMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper delete_all_cookies, failed: {error!r}")
             record_action_to_list("webdriver wrapper delete_all_cookies", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper delete_all_cookies")
 
     def save_cookies(self, file_path: str) -> bool:
         """
@@ -114,6 +120,7 @@ class _CookieMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper save_cookies failed: {error!r}")
             record_action_to_list("webdriver wrapper save_cookies", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper save_cookies")
             return False
 
     def load_cookies(self, file_path: str) -> int:
@@ -148,6 +155,7 @@ class _CookieMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper load_cookies failed: {error!r}")
             record_action_to_list("webdriver wrapper load_cookies", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper load_cookies")
             return 0
 
     def clear_origin_storage(self, origin: str) -> None:

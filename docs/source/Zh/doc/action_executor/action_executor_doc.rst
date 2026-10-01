@@ -52,6 +52,13 @@
 
     url = execute_one(["WR_get_current_url"])
 
+Selenium wrapper 呼叫失敗時（``WR_to_url``、``WR_element_click``、
+``WR_element_assert``……）會被記錄，目前仍讓動作通過並發出
+``DeprecationWarning``；未來的版本會讓動作失敗。
+``executor.set_raise_wrapper_errors(True)``\ （或在動作檔第一步放
+``WR_set_raise_wrapper_errors`` 並帶 ``[true]``）可以現在就讓它失敗；設為
+``False`` 則保留舊行為且不再警告。
+
 可用指令
 --------
 

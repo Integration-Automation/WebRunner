@@ -8,6 +8,7 @@ from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.utils.test_record.wrapper_failures import settle_wrapper_failure
 
 
 class _ActionsMixin:
@@ -35,6 +36,7 @@ class _ActionsMixin:
                 f"WebDriverWrapper move_to_element, target_element: {target_element}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper move_to_element", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper move_to_element")
 
     def move_to_element_with_test_object(self, element_name: str):
         """
@@ -57,6 +59,7 @@ class _ActionsMixin:
                 f"WebDriverWrapper move_to_element_with_test_object, element_name: {element_name}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper move_to_element_with_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper move_to_element_with_test_object")
 
     def move_to_element_with_offset(self, target_element: WebElement, offset_x: int, offset_y: int) -> None:
         """
@@ -80,6 +83,7 @@ class _ActionsMixin:
                 f"WebDriverWrapper move_to_element_with_offset failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper move_to_element_with_offset", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper move_to_element_with_offset")
 
     def move_to_element_with_offset_and_test_object(self, element_name: str, offset_x: int, offset_y: int) -> None:
         """
@@ -107,6 +111,7 @@ class _ActionsMixin:
                 f"WebDriverWrapper move_to_element_with_offset_and_test_object failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper move_to_element_with_offset_and_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper move_to_element_with_offset_and_test_object")
 
     def drag_and_drop(self, web_element: WebElement, target_element: WebElement) -> None:
         """
@@ -128,6 +133,7 @@ class _ActionsMixin:
                 f"WebDriverWrapper drag_and_drop failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper drag_and_drop", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper drag_and_drop")
 
     def drag_and_drop_with_test_object(self, element_name: str, target_element_name: str) -> None:
         """
@@ -160,6 +166,7 @@ class _ActionsMixin:
                 f"WebDriverWrapper drag_and_drop_with_test_object failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper drag_and_drop_with_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper drag_and_drop_with_test_object")
 
     def drag_and_drop_offset(self, web_element: WebElement, target_x: int, target_y: int) -> None:
         """
@@ -183,6 +190,7 @@ class _ActionsMixin:
                 f"WebDriverWrapper drag_and_drop_offset failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper drag_and_drop_offset", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper drag_and_drop_offset")
 
     def drag_and_drop_offset_with_test_object(self, element_name: str, offset_x: int, offset_y: int) -> None:
         """
@@ -211,6 +219,7 @@ class _ActionsMixin:
                 f"WebDriverWrapper drag_and_drop_offset_with_test_object failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper drag_and_drop_offset_with_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper drag_and_drop_offset_with_test_object")
 
     def perform(self) -> None:
         """
@@ -240,6 +249,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper perform failed: {error!r}")
             record_action_to_list("webdriver wrapper perform", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper perform")
 
     def reset_actions(self) -> None:
         """
@@ -257,6 +267,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper reset_actions failed: {error!r}")
             record_action_to_list("webdriver wrapper reset_actions", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper reset_actions")
 
     def left_click(self, on_element: WebElement | None = None) -> None:
         """
@@ -273,6 +284,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper left_click failed: {error!r}")
             record_action_to_list("webdriver wrapper left_click", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper left_click")
 
     def left_click_with_test_object(self, element_name: str | None = None) -> None:
         """
@@ -296,6 +308,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper left_click_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper left_click_with_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper left_click_with_test_object")
 
     def left_click_and_hold(self, on_element: WebElement | None = None) -> None:
         """
@@ -310,6 +323,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper left_click_and_hold failed: {error!r}")
             record_action_to_list("webdriver wrapper left_click_and_hold", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper left_click_and_hold")
 
     def left_click_and_hold_with_test_object(self, element_name: str | None = None) -> None:
         """
@@ -331,6 +345,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper left_click_and_hold_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper left_click_and_hold_with_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper left_click_and_hold_with_test_object")
 
     def right_click(self, on_element: WebElement | None = None) -> None:
         """
@@ -345,6 +360,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper right_click failed: {error!r}")
             record_action_to_list("webdriver wrapper right_click", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper right_click")
 
     def right_click_with_test_object(self, element_name: str | None = None) -> None:
         """
@@ -366,6 +382,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper right_click_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper right_click_with_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper right_click_with_test_object")
 
     def left_double_click(self, on_element: WebElement | None = None) -> None:
         """
@@ -382,6 +399,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper left_double_click failed: {error!r}")
             record_action_to_list("webdriver wrapper left_double_click", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper left_double_click")
 
     def left_double_click_with_test_object(self, element_name: str | None = None) -> None:
         """
@@ -407,6 +425,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper left_double_click_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper left_double_click_with_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper left_double_click_with_test_object")
 
     def release(self, on_element: WebElement | None = None) -> None:
         """
@@ -421,6 +440,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper release failed: {error!r}")
             record_action_to_list("webdriver wrapper release", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper release")
 
     def release_with_test_object(self, element_name: str | None = None) -> None:
         """
@@ -444,6 +464,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper release_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper release_with_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper release_with_test_object")
 
     def press_key(self, keycode_on_key_class, on_element: WebElement | None = None) -> None:
         """
@@ -464,6 +485,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper press_key failed: {error!r}")
             record_action_to_list("webdriver wrapper press_key", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper press_key")
 
     def press_key_with_test_object(self, keycode_on_key_class, element_name: str | None = None) -> None:
         """
@@ -492,6 +514,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper press_key_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper press_key_with_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper press_key_with_test_object")
 
     def release_key(self, keycode_on_key_class, on_element: WebElement | None = None) -> None:
         """
@@ -511,6 +534,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper release_key failed: {error!r}")
             record_action_to_list("webdriver wrapper release_key", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper release_key")
 
     def release_key_with_test_object(self, keycode_on_key_class, element_name: str | None = None) -> None:
         """
@@ -539,6 +563,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper release_key_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper release_key_with_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper release_key_with_test_object")
 
     def move_by_offset(self, offset_x: int, offset_y: int) -> None:
         """
@@ -556,6 +581,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper move_by_offset failed: {error!r}")
             record_action_to_list("webdriver wrapper move_by_offset", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper move_by_offset")
 
     def pause(self, seconds: int) -> None:
         """
@@ -572,6 +598,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper pause failed: {error!r}")
             record_action_to_list("webdriver wrapper pause", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper pause")
 
     def send_keys(self, keys_to_send) -> None:
         """
@@ -588,6 +615,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper send_keys failed: {error!r}")
             record_action_to_list("webdriver wrapper send_keys", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper send_keys")
 
     def send_keys_to_element(self, element: WebElement, keys_to_send) -> None:
         """
@@ -606,6 +634,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper send_keys_to_element failed: {error!r}")
             record_action_to_list("webdriver wrapper send_keys_to_element", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper send_keys_to_element")
 
     def send_keys_to_element_with_test_object(self, element_name: str, keys_to_send) -> None:
         """
@@ -631,6 +660,7 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper send_keys_to_element_with_test_object failed: {error!r}")
             record_action_to_list("webdriver wrapper send_keys_to_element_with_test_object", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper send_keys_to_element_with_test_object")
 
     def scroll(self, scroll_x: int, scroll_y: int) -> None:
         """
@@ -650,3 +680,4 @@ class _ActionsMixin:
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper scroll failed: {error!r}")
             record_action_to_list("webdriver wrapper scroll", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper scroll")

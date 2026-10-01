@@ -8,6 +8,7 @@ from je_web_runner.utils.exception.exceptions import WebRunnerWebDriverIsNoneExc
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.utils.test_record.wrapper_failures import settle_wrapper_failure
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 
@@ -54,6 +55,7 @@ class WebdriverManager:
                 f"WebdriverManager new_driver, webdriver_name: {webdriver_name}, params: {kwargs}, failed: {error!r}"
             )
             record_action_to_list("web runner manager new_driver", param, error)
+            settle_wrapper_failure(error, "web runner manager new_driver")
             self.quit()
 
     def change_webdriver(self, index_of_webdriver: int) -> None:
@@ -75,6 +77,7 @@ class WebdriverManager:
             web_runner_logger.error(
                 f"WebdriverManager change_webdriver, index_of_webdriver: {index_of_webdriver}, failed: {error!r}")
             record_action_to_list("web runner manager change_webdriver", param, error)
+            settle_wrapper_failure(error, "web runner manager change_webdriver")
 
     def _detach_wrapper_if_active(self, driver: WebDriver) -> None:
         """
@@ -110,6 +113,7 @@ class WebdriverManager:
         except Exception as error:
             web_runner_logger.error(f"WebdriverManager close_current_webdriver, failed: {error!r}")
             record_action_to_list("web runner manager close_current_webdriver", None, error)
+            settle_wrapper_failure(error, "web runner manager close_current_webdriver")
 
     def close_choose_webdriver(self, webdriver_index: int) -> None:
         """
@@ -131,6 +135,7 @@ class WebdriverManager:
         except Exception as error:
             web_runner_logger.error(f"WebdriverManager close_choose_webdriver, failed: {error!r}")
             record_action_to_list("web runner manager close_choose_webdriver", param, error)
+            settle_wrapper_failure(error, "web runner manager close_choose_webdriver")
 
     def quit(self) -> None:
         """
@@ -172,6 +177,7 @@ class WebdriverManager:
         except Exception as error:
             web_runner_logger.error(f"WebdriverManager quit, failed: {error!r}")
             record_action_to_list("web runner manager quit", None, error)
+            settle_wrapper_failure(error, "web runner manager quit")
             raise WebDriverException(f"WebdriverManager quit failed: {error!r}") from error
 
 

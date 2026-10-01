@@ -41,6 +41,7 @@ from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.utils.test_record.wrapper_failures import settle_wrapper_failure
 from je_web_runner.webdriver._wrapper_mixins import (
     _ActionsMixin,
     _CookieMixin,
@@ -274,6 +275,7 @@ class WebDriverWrapper(
                 f"webdriver_manager_option_dict: {webdriver_manager_option_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_driver", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper set_driver")
             raise WebRunnerException(f"set_driver failed: {error!r}") from error
 
     def set_webdriver_options_capability(self, key_and_vale_dict: dict) -> Options | None:
@@ -301,6 +303,7 @@ class WebDriverWrapper(
                 f"key_and_vale_dict: {key_and_vale_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_webdriver_options_capability", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper set_webdriver_options_capability")
             raise WebRunnerException(
                 f"set_webdriver_options_capability failed: {error!r}") from error
 
@@ -369,6 +372,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper find_element, test_object: {test_object}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_element", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper find_element")
 
     def find_elements(self, test_object: TestObject) -> list[WebElement] | None:
         """
@@ -394,6 +398,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper find_elements, test_object: {test_object}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_elements", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper find_elements")
 
     def find_element_with_test_object_record(self, element_name: str) -> WebElement | None:
         """
@@ -423,6 +428,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper find_element_with_test_object_record, element_name: {element_name}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_element_with_test_object_record", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper find_element_with_test_object_record")
 
     def find_elements_with_test_object_record(self, element_name: str) -> list[WebElement] | None:
         """
@@ -452,6 +458,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper find_elements_with_test_object_record, element_name: {element_name}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_elements_with_test_object_record", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper find_elements_with_test_object_record")
 
     # wait
     def implicitly_wait(self, time_to_wait: int) -> None:
@@ -471,6 +478,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper implicitly_wait, time_to_wait: {time_to_wait}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper implicitly_wait", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper implicitly_wait")
 
     def explict_wait(self, wait_time: int, method: typing.Callable | None = None, until_type: bool = True):
         """
@@ -498,6 +506,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper explict_wait failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper explict_wait", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper explict_wait")
 
     # timeout
     def set_script_timeout(self, time_to_wait: int) -> None:
@@ -510,6 +519,7 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper set_script_timeout failed: {error!r}")
             record_action_to_list("webdriver wrapper set_script_timeout", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper set_script_timeout")
 
     def set_page_load_timeout(self, time_to_wait: int) -> None:
         """設定頁面載入最大等待時間 / Set max page load wait time"""
@@ -521,6 +531,7 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper set_page_load_timeout failed: {error!r}")
             record_action_to_list("webdriver wrapper set_page_load_timeout", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper set_page_load_timeout")
 
     # webdriver wrapper add function
     def check_current_webdriver(self, check_dict: dict) -> None:
@@ -538,6 +549,7 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper check_current_webdriver failed: {error!r}")
             record_action_to_list("webdriver wrapper check_current_webdriver", param, error)
+            settle_wrapper_failure(error, "webdriver wrapper check_current_webdriver")
 
     # close event
     def quit(self) -> None:
@@ -557,6 +569,7 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper quit failed: {error!r}")
             record_action_to_list("webdriver wrapper quit", None, error)
+            settle_wrapper_failure(error, "webdriver wrapper quit")
             raise WebRunnerException(f"quit failed: {error!r}") from error
         finally:
             # Forget the (now dead) driver so the ``is None`` guards in
