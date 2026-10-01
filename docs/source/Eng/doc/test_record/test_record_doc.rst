@@ -69,7 +69,9 @@ Each record is a dictionary with the following fields:
      - Timestamp of execution (e.g., ``"2025-01-01 12:00:00"``)
    * - ``program_exception``
      - ``str``
-     - Exception message or ``"None"`` if successful
+     - The exception as ``Type('message')`` (its ``repr``, or the message added when
+       the ``repr`` leaves it out, as Selenium's exceptions do), or ``"None"`` if
+       successful
 
 Example record:
 

@@ -8,7 +8,11 @@ from typing import Any, Callable, Iterable, Iterator
 
 from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
 from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
-from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException, WebRunnerAddCommandException
+from je_web_runner.utils.exception.exceptions import (
+    WebRunnerAddCommandException,
+    WebRunnerExecuteException,
+    describe_error,
+)
 from je_web_runner.utils.executor._event_table import build_event_dict
 from je_web_runner.utils.json.json_file.json_file import read_action_json
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -392,7 +396,8 @@ class Executor:
         trace_path = self._capture_failure_trace(action)
         if trace_path:
             artifacts.append(f"trace: {trace_path}")
-        return f"{error!r} ({'; '.join(artifacts)})" if artifacts else repr(error)
+        described = describe_error(error)
+        return f"{described} ({'; '.join(artifacts)})" if artifacts else described
 
     def execute_files(self, execute_files_list: list) -> list:
         """

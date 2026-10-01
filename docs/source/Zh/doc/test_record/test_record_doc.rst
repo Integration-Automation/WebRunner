@@ -61,7 +61,8 @@
      - 執行時間戳記
    * - ``program_exception``
      - ``str``
-     - 例外訊息或 ``"None"``
+     - 例外寫成 ``Type('message')``\ （它的 ``repr``；若 ``repr`` 不含訊息，例如
+       Selenium 的例外，則補上訊息），成功時為 ``"None"``
 
 清除記錄
 --------
