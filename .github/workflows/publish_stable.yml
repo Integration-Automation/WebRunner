@@ -15,6 +15,7 @@ jobs:
   publish:
     name: Bump version and publish je_web_runner to PyPI
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # about 3x the slowest recent run, at least 15
     if: "!contains(github.event.head_commit.message, '[skip-publish]')"
 
     steps:

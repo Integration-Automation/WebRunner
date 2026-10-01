@@ -21,6 +21,7 @@ jobs:
   e2e:
     name: E2E (Selenium Grid)
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # about 3x the slowest recent run, at least 15
 
     services:
       selenium-hub:

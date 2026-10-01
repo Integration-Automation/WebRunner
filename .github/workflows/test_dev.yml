@@ -19,6 +19,7 @@ jobs:
   unit-test:
     name: Unit Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    timeout-minutes: 15  # about 3x the slowest recent run, at least 15
     strategy:
       fail-fast: false
       matrix:
@@ -51,6 +52,7 @@ jobs:
     name: Integration Tests (Python ${{ matrix.python-version }})
     needs: unit-test
     runs-on: windows-latest
+    timeout-minutes: 50  # about 3x the slowest recent run, at least 15
     strategy:
       fail-fast: false
       matrix:
