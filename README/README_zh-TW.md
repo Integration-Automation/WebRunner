@@ -71,7 +71,7 @@ WebRunner（`je_web_runner`）最初只是一個 Selenium 封裝，如今已成�
 - **無須額外接線的可觀測性。** 失敗時自動截圖、重試策略、OpenTelemetry 掛鉤、即時 HTTP 儀表板、重播工作室（HTML 時間軸）、HAR 擷取 + 差異比對。
 - **品質與安全守衛。** 動作 linter、遷移小幫手、硬編碼密鑰掃描器、HTTP 安全回應標頭稽核、axe-core 無障礙稽核、Lighthouse 執行器、效能指標（FCP/LCP/CLS）、視覺回歸、快照測試、網路限速、任意腳本閘門。
 - **瀏覽器內部機制。** 原始 CDP、主控台 + 網路事件擷取、localStorage / sessionStorage / IndexedDB、service worker / 快取控制、穿透 Shadow DOM、多 iframe、檔案上傳 / 下載、瀏覽器擴充功能載入器。
-- **進階 WebDriverWrapper 介面。** `set_driver(experimental_options=, extension_paths=, enable_bidi=)`、`attach_to_existing_browser`、原生 CDP 快捷方法（`set_timezone` / `set_locale` / `set_device_metrics` / `set_user_agent` / `set_extra_http_headers` / `set_geolocation` / `set_network_conditions` / `block_urls` / `set_cache_disabled` / `set_download_directory`）、Fetch 攔截原語（`enable_fetch_interception` / `continue_request` / `fulfill_request` / `fail_request`）、W3C BiDi 監聽器（`add_console_listener` / `add_js_error_listener`）、用於工作階段重用的 `save_cookies` / `load_cookies`、`save_full_page_screenshot`、`print_page`（PDF）、`reload(ignore_cache)`、`bring_to_front`、`switch_to_window_by_url|title`、頁面中繼資料取值器（`get_current_url` / `get_title` / `get_page_source` / `get_window_handles` / `new_window` / `close_window`）。以上全部也透過 `WR_*` 別名公開。
+- **進階 WebDriverWrapper 介面。** `set_driver(experimental_options=, extension_paths=, enable_bidi=, install_driver=)`、`attach_to_existing_browser`、原生 CDP 快捷方法（`set_timezone` / `set_locale` / `set_device_metrics` / `set_user_agent` / `set_extra_http_headers` / `set_geolocation` / `set_network_conditions` / `block_urls` / `set_cache_disabled` / `set_download_directory`）、Fetch 攔截原語（`enable_fetch_interception` / `continue_request` / `fulfill_request` / `fail_request`）、W3C BiDi 監聽器（`add_console_listener` / `add_js_error_listener`）、用於工作階段重用的 `save_cookies` / `load_cookies`、`save_full_page_screenshot`、`print_page`（PDF）、`reload(ignore_cache)`、`bring_to_front`、`switch_to_window_by_url|title`、頁面中繼資料取值器（`get_current_url` / `get_title` / `get_page_source` / `get_window_handles` / `new_window` / `close_window`）。以上全部也透過 `WR_*` 別名公開。
 - **獨立的 CDP / BiDi 模組。** 背景 `CDPEventListener`（WebSocket 迴圈 + 同步的 `send` / `on` / 情境管理器）、用於產生 Chrome DevTools 可載入效能追蹤的 `record_trace(driver, path)`，以及封裝 `driver.network.add_request_handler` / `add_response_handler` / `add_auth_handler` 的 `bidi_network` 模組，用於跨瀏覽器請求攔截。
 - **測試資料與固件。** Faker 整合、工廠模式、testcontainers（Postgres / Redis / 通用）、帶 `${ENV.X}` 佔位符展開的按環境 `.env` 載入器、帶 `${ROW.x}` 的 CSV/JSON 資料驅動執行器。
 - **認證、API、資料庫。** 帶權杖快取的 OAuth2 / OIDC 用戶端憑證 / 密碼 / 更新權杖流程、帶 JSON 斷言的 HTTP API 測試命令、由 SQLAlchemy 支撐的資料庫驗證。
@@ -1405,6 +1405,7 @@ webdriver_wrapper_instance.set_driver(
     },
     extension_paths=["/path/to/extension.crx"],  # optional
     enable_bidi=True,                            # for add_console_listener etc.
+    install_driver=False,                        # 不經 webdriver-manager，交給 Selenium Manager 找 driver
 )
 webdriver_wrapper_instance.add_script_to_evaluate_on_new_document(
     "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"

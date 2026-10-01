@@ -88,3 +88,12 @@ AUTOCONTROL_BRIDGE_COMMANDS = (
 @pytest.mark.parametrize("command", AUTOCONTROL_BRIDGE_COMMANDS)
 def test_command_sent_by_the_autocontrol_bridge_is_registered(command):
     assert command in je_web_runner.executor.event_dict  # nosec B101
+
+
+def test_options_jeffrey_rpa_passes():
+    # Jeffrey_RPA's je_web_runner variant starts browsers without webdriver-manager and opts in to
+    # failing wrapper calls (architecture.md §6).
+    import inspect
+    parameters = inspect.signature(je_web_runner.webdriver_wrapper_instance.set_driver).parameters
+    assert "install_driver" in parameters  # nosec B101
+    assert callable(je_web_runner.executor.set_raise_wrapper_errors)  # nosec B101

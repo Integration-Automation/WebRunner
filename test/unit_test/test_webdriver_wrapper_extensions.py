@@ -15,6 +15,7 @@ from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.webdriver.webdriver_wrapper import (
     WebDriverWrapper,
     _options_dict,
+    _webdriver_dict,
     _webdriver_manager_dict,
 )
 
@@ -907,6 +908,33 @@ class TestFetchInterception(unittest.TestCase):
             "Fetch.failRequest",
             {"requestId": "req-10", "errorReason": "AccessDenied"},
         )
+
+
+class TestInstallDriver(unittest.TestCase):
+    """``install_driver=False`` skips webdriver-manager and leaves the driver to Selenium Manager."""
+
+    def _start(self, **kwargs):
+        manager, browser = MagicMock(name="ChromeDriverManager"), MagicMock(name="Chrome")
+        with patch.dict(_webdriver_manager_dict, {"chrome": manager}), \
+                patch.dict(_webdriver_dict, {"chrome": browser}):
+            WebDriverWrapper().set_driver("chrome", **kwargs)
+        return manager, browser
+
+    def test_installs_by_default(self):
+        manager, browser = self._start()
+        manager.return_value.install.assert_called_once()
+        browser.assert_called_once()
+
+    def test_skipped_when_asked(self):
+        manager, browser = self._start(install_driver=False)
+        manager.assert_not_called()
+        browser.assert_called_once()
+
+    def test_new_driver_forwards_it(self):
+        from je_web_runner.manager.webrunner_manager import WebdriverManager
+        with patch("je_web_runner.manager.webrunner_manager.webdriver_wrapper_instance") as wrapper:
+            WebdriverManager().new_driver("chrome", install_driver=False)
+        self.assertIs(wrapper.set_driver.call_args.kwargs["install_driver"], False)
 
 
 if __name__ == "__main__":

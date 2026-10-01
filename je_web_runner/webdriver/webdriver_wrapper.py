@@ -196,6 +196,7 @@ class WebDriverWrapper(
             experimental_options: dict | None = None,
             extension_paths: list[str] | None = None,
             enable_bidi: bool = False,
+            install_driver: bool = True,
             **kwargs
     ) -> webdriver.Chrome | webdriver.Firefox | webdriver.Edge | webdriver.Ie | webdriver.Safari:
         """
@@ -228,6 +229,11 @@ class WebDriverWrapper(
                             Enable W3C WebDriver BiDi (``webSocketUrl=True`` capability) so
                             ``add_console_listener`` / ``add_js_error_listener`` work.
                             Requires Selenium 4.16+.
+        :param install_driver: 是否先用 webdriver-manager 下載 driver（預設 True）。設 False 則跳過，
+                               交給 Selenium Manager 找 driver（不需連到 webdriver-manager 的下載來源）。
+                               Download the driver with webdriver-manager first (default True). False
+                               skips it and lets Selenium Manager resolve the driver, so a start does
+                               not depend on webdriver-manager's download host.
         :param kwargs: 額外傳給 WebDriver 的參數
                        Extra kwargs passed to WebDriver
         :return: 啟動後的 WebDriver 實例
@@ -252,7 +258,7 @@ class WebDriverWrapper(
             # 的瀏覽器(driver 內建於系統)直接跳過，避免 None().install() 崩潰。
             # 傳入 cache_manager 讓 driver 快取落在 cwd(原本建立後卻沒被使用)。
             webdriver_install_manager = _webdriver_manager_dict.get(webdriver_name)
-            if webdriver_install_manager is not None:
+            if install_driver and webdriver_install_manager is not None:
                 webdriver_install_manager(cache_manager=cache_manager).install()
 
             driver_options = _build_driver_options(

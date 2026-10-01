@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-42 | 2026-10-01 | set_driver(install_driver=False): start a browser without webdriver-manager | #change #selenium #jeffrey-rpa | [2026-10](2026-10.md) |
 | U-20261001-41 | 2026-10-01 | Repeated actions keep every result: record keys numbered #2, #3 | #done #executor | [2026-10](2026-10.md) |
 | U-20261001-40 | 2026-10-01 | Async execution engine: asyncio, one browser context per action list, WR_apw_* | #done #async #playwright | [2026-10](2026-10.md) |
 | U-20261001-39 | 2026-10-01 | Refactor: split the CLI parser into argument groups | #change #cli #refactor | [2026-10](2026-10.md) |
@@ -130,5 +131,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 41 |
+| [2026-10.md](2026-10.md) | 2026-10 | 42 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

@@ -208,7 +208,13 @@ WebDriver 驗證
         },
         extension_paths=["/path/to/extension.crx"],     # add_extension
         enable_bidi=True,                               # webSocketUrl capability
+        install_driver=False,                           # 不經 webdriver-manager
     )
+
+``install_driver``\ （預設 ``True``）會在啟動前用 webdriver-manager 下載 driver；
+設為 ``False`` 則跳過，交給 Selenium Manager 找 driver，啟動就不依賴
+webdriver-manager 的下載來源。``WR_new_driver`` / ``WR_get_webdriver_manager``
+會把它傳下去。
 
 附加到已啟動的瀏覽器（以 ``--remote-debugging-port=9222`` 開啟）：
 

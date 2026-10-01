@@ -214,7 +214,13 @@ Advanced Launch Options
         },
         extension_paths=["/path/to/extension.crx"],      # add_extension
         enable_bidi=True,                                # webSocketUrl capability
+        install_driver=False,                            # skip webdriver-manager
     )
+
+``install_driver`` (default ``True``) downloads the driver with webdriver-manager
+before the start; ``False`` skips that and leaves the driver to Selenium
+Manager, so a start does not depend on webdriver-manager's download host.
+``WR_new_driver`` / ``WR_get_webdriver_manager`` pass it through.
 
 Attaching to an already-running browser started with
 ``--remote-debugging-port=9222``:
