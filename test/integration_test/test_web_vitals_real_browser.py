@@ -4,10 +4,10 @@
 The page shifts its layout once and has a button whose click handler blocks for 250 ms,
 so CLS, INP and their diagnostics have something to report. The click waits for the shift:
 a shift within 500 ms of input does not count towards CLS, and LCP stops at the first
-input. Each backend skips when it cannot start.
+input, so the page flags when its observers have seen both and the click waits for that
+flag (a fixed sleep was too short under load). Each backend skips when it cannot start.
 """
 import threading
-import time
 import unittest
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -21,12 +21,18 @@ _PAGE = b"""<html><body style='margin:0;font:16px sans-serif'>
 <div id='spacer'></div>
 <p id='text'>Some text that moves when the banner appears.</p>
 <button id='slow' onclick='const end = performance.now() + 250; while (performance.now() < end) {}'>slow</button>
-<script>setTimeout(() => {
+<script>
+new PerformanceObserver(() => { window.__shifted = true; }).observe({type: 'layout-shift', buffered: true});
+new PerformanceObserver(() => { window.__painted = true; }).observe({type: 'largest-contentful-paint', buffered: true});
+setTimeout(() => {
   const banner = document.getElementById('spacer');
   banner.className = 'banner';
   banner.style.height = '200px';
 }, 150);</script>
 </body></html>"""
+
+
+_REPORTED = "return Boolean(window.__shifted && window.__painted);"
 
 
 class _Handler(BaseHTTPRequestHandler):
@@ -67,8 +73,8 @@ class _VitalsCases:
 
     def test_measures_all_four_with_diagnostics(self):
         self._open_and_click()
-        result, failed = _run(["WR_assert_web_vitals", {"budgets": {"lcp": 60000, "cls": 5, "inp": 60000,
-                                                                     "fcp": 60000}, "observe_ms": 500}])
+        budgets = {"lcp": 60000, "cls": 5, "inp": 60000, "fcp": 60000}
+        result, failed = _run(["WR_assert_web_vitals", {"budgets": budgets, "observe_ms": 500}])
         self.assertFalse(failed, result)
         values = {row["metric"]: row["value"] for row in result["metrics"]}
         self.assertGreater(values["lcp"], 0)
@@ -103,8 +109,7 @@ class TestWebVitalsSelenium(_VitalsCases, unittest.TestCase):
     def _open_and_click(self):
         driver = webdriver_wrapper_instance.current_webdriver
         driver.get(self.url)
-        WebDriverWait(driver, 10).until(lambda d: d.find_elements("css selector", ".banner"))
-        time.sleep(0.3)  # let the shift and the LCP entry be reported before the input
+        WebDriverWait(driver, 10).until(lambda d: d.execute_script(_REPORTED))
         driver.find_element("id", "slow").click()
 
 
@@ -122,8 +127,7 @@ class TestWebVitalsPlaywright(_VitalsCases, unittest.TestCase):
 
     def _open_and_click(self):
         self.playwright.page.goto(self.url)
-        self.playwright.page.wait_for_selector(".banner")
-        time.sleep(0.3)  # let the shift and the LCP entry be reported before the input
+        self.playwright.page.wait_for_function(f"() => {{ {_REPORTED} }}")
         self.playwright.page.click("#slow")
 
 
