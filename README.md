@@ -710,6 +710,27 @@ python -m je_web_runner --execute_dir ./actions --shard 4/4
 
 Companion APIs — `WR_run_for_users` (multi-user matrix), `WR_run_ab` (A/B mode), `WR_flakiness_stats`, `WR_classify_failure`, `WR_schedule` + `WR_run_scheduler_for`.
 
+### Async execution
+
+`--parallel-mode async` (or `AsyncExecutor` from Python) runs action files on asyncio: one headless Chromium, and for each file a fresh browser context, so concurrent files act as separate users with their own cookies, storage and tabs. `--parallel N` caps how many run at once. It needs Playwright.
+
+```bash
+python -m je_web_runner -d ./user_journeys --parallel 8 --parallel-mode async --ledger ledger.json
+```
+
+```python
+import asyncio
+from je_web_runner.utils.async_executor import AsyncExecutor
+
+async def main():
+    async with AsyncExecutor(browser="chromium", headless=True) as runner:
+        results = await runner.run_many([alice_actions, bob_actions], concurrency=2)  # [(record, failed), ...]
+
+asyncio.run(main())
+```
+
+The `WR_apw_*` commands act in the file's own context: `WR_apw_goto`, `WR_apw_click`, `WR_apw_fill`, `WR_apw_press`, `WR_apw_text`, `WR_apw_title`, `WR_apw_url`, `WR_apw_wait_for_selector`, `WR_apw_assert_text`, `WR_apw_assert_title`, `WR_apw_new_page` / `WR_apw_switch_to_page` / `WR_apw_close_page` (tabs of the same user), `WR_apw_screenshot`, `WR_apw_evaluate` (behind the arbitrary-script gate), `WR_apw_sleep` (pauses that file only), and `WR_apw_websocket_messages` / `WR_apw_wait_for_websocket_message` for streaming pages. Any other `WR_*` command runs in a worker thread with the usual gates, retries and failure screenshots, but it shares the process-wide Selenium and Playwright singletons, as in `--parallel-mode thread`. Outside the async executor a `WR_apw_*` command fails with a message saying where it runs.
+
 ## Quality & Security
 
 - **Action linter** — `WR_lint_action` / `WR_lint_action_file` flag legacy command names, hard-coded URLs, dangerous scripts, missing tags, duplicate consecutive actions.
@@ -797,7 +818,7 @@ python -m je_web_runner.mcp_server
 The default tool list (22 tools) exposes:
 
 Live browser execution:
-- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 537 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
+- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 555 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
 - `webrunner_run_action_files` — batch-run JSON files on disk
 - `webrunner_list_commands` — discover the full `WR_*` surface
 

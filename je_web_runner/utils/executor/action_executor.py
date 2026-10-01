@@ -258,6 +258,21 @@ class Executor:
         finally:
             self._denied_commands = previous
 
+    def check_allowed(self, command: str, script_commands: Iterable[str] = ()) -> None:
+        """
+        檢查命令是否被拒絕或被任意腳本閘門擋下
+        Raise :class:`WebRunnerExecuteException` when ``command`` is refused here
+        (:meth:`restricted`) or ships a script while the arbitrary-script gate is closed.
+        ``script_commands`` adds script commands of another command table (the async one).
+        """
+        if command in self._denied_commands:
+            raise WebRunnerExecuteException(f"command {command!r} is not allowed here")
+        if command in (_ARBITRARY_SCRIPT_COMMANDS | frozenset(script_commands)) and not self.allow_arbitrary_script:
+            raise WebRunnerExecuteException(
+                f"arbitrary-script command {command!r} is disabled; "
+                "call WR_set_allow_arbitrary_script(true) to enable"
+            )
+
     def _execute_event(self, action: list):
         """
         執行事件字典中的函式
@@ -267,13 +282,7 @@ class Executor:
                        Action list, e.g., ["function_name", {params}] or ["function_name"]
         :return: 執行結果 / return value of the executed function
         """
-        if action[0] in self._denied_commands:
-            raise WebRunnerExecuteException(f"command {action[0]!r} is not allowed here")
-        if action[0] in _ARBITRARY_SCRIPT_COMMANDS and not self.allow_arbitrary_script:
-            raise WebRunnerExecuteException(
-                f"arbitrary-script command {action[0]!r} is disabled; "
-                "call WR_set_allow_arbitrary_script(true) to enable"
-            )
+        self.check_allowed(action[0])
         event = self.event_dict.get(action[0])
         if event is None:
             raise WebRunnerExecuteException(executor_data_error + " unknown command: " + str(action[0]))
@@ -359,7 +368,7 @@ class Executor:
                  without a ``webdriver_wrapper`` list.
         """
         web_runner_logger.info(f"execute_action, action_list: {action_list}")
-        action_list = self._action_list_of(action_list)
+        action_list = self.action_list_of(action_list)
         execute_record_dict = {}
         failed = []
         for action in action_list:
@@ -375,7 +384,8 @@ class Executor:
         return execute_record_dict, failed
 
     @staticmethod
-    def _action_list_of(action_list: list | dict) -> list:
+    def action_list_of(action_list: list | dict) -> list:
+        """The action list itself, or a dict's ``webdriver_wrapper`` list; raises for anything else."""
         # 如果傳入的是 dict，則嘗試取出 "webdriver_wrapper" 的動作清單；結果必須是 list
         # A dict must carry its actions under "webdriver_wrapper"; the result must be a list
         # (a string would otherwise be iterated character by character).

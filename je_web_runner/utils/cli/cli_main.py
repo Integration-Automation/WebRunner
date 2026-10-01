@@ -53,12 +53,14 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
         "--parallel-mode",
         type=str,
         default="thread",
-        choices=("thread", "process"),
+        choices=("thread", "process", "async"),
         dest="parallel_mode",
         help=(
             "thread: shares the WebRunner globals (FAST, but UNSAFE for browser "
             "actions because webdriver wrappers are module-level singletons). "
-            "process: each file runs in its own process for true isolation"
+            "process: each file runs in its own process for true isolation. "
+            "async: files run concurrently on asyncio in one headless Chromium, each in its own "
+            "browser context for the WR_apw_* commands (needs Playwright)"
         ),
     )
     parser.add_argument(
@@ -292,6 +294,18 @@ def _run_with_process_pool(files, parallel: int, ledger_path: str | None) -> Non
                 record_run(ledger_path, path, passed=passed)
 
 
+def _run_with_asyncio(files, parallel: int, ledger_path: str | None) -> None:
+    """asyncio branch: one browser, one context per file, at most ``parallel`` files at a time."""
+    from je_web_runner.utils.async_executor.executor import run_action_lists
+    results = run_action_lists([read_action_json(path) for path in files], concurrency=max(1, parallel))
+    for path, (record, failed) in zip(files, results):
+        for key, value in record.items():
+            print(key)
+            print(value)
+        if ledger_path:
+            record_run(ledger_path, path, passed=not failed)
+
+
 def _run_with_thread_pool(files, parallel: int, ledger_path: str | None) -> None:
     """ThreadPool branch — shares singletons, only safe for non-browser flows."""
     web_runner_logger.warning(
@@ -318,6 +332,9 @@ def _run_dir(
     files = _select_files(directory, selection)
     if any(build_dependency_graph(files).get(path) for path in files):
         _run_with_dependencies(files, ledger_path)
+        return
+    if parallel_mode == "async":
+        _run_with_asyncio(files, parallel, ledger_path)
         return
     if parallel <= 1:
         _run_sequential(files, ledger_path)

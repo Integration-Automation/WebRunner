@@ -10,6 +10,24 @@
 * Multi-user matrix
 * A/B run 模式
 * Watch mode（``--watch``）
+
+非同步執行
+==========
+
+``--parallel-mode async``\ （或在 Python 用 ``AsyncExecutor``）以 asyncio 執行動作檔：
+只開一個 headless Chromium，每個檔案各有一個全新的 browser context，同時執行的
+檔案就是彼此獨立的使用者（cookie、storage、分頁）。``--parallel N`` 限制同時
+執行的數量；需要 Playwright。
+
+* ``WR_apw_*`` 命令在該檔案自己的 context 裡執行：導覽、點擊、輸入、讀取與斷言
+  文字和標題、等待、分頁（``WR_apw_new_page`` / ``WR_apw_switch_to_page`` /
+  ``WR_apw_close_page``）、截圖、``WR_apw_evaluate``\ （受任意腳本閘門管制）、
+  ``WR_apw_sleep`` 與 WebSocket 訊框（``WR_apw_websocket_messages`` /
+  ``WR_apw_wait_for_websocket_message``）。
+* 其他 ``WR_*`` 命令在工作執行緒中執行，照樣套用閘門、重試與失敗截圖，並像
+  ``--parallel-mode thread`` 一樣共用整個行程的單例。
+* ``AsyncExecutor.run(actions)`` 回傳 ``(record, failed)``；
+  ``run_many(lists, concurrency)`` 以 ``asyncio.gather`` 同時執行多份清單。
 * 排程 runner
 
 編排 / 開發者體驗

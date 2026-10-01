@@ -706,6 +706,27 @@ python -m je_web_runner --execute_dir ./actions --shard 4/4
 
 配套 API —— `WR_run_for_users`（多使用者矩陣）、`WR_run_ab`（A/B 模式）、`WR_flakiness_stats`、`WR_classify_failure`、`WR_schedule` + `WR_run_scheduler_for`。
 
+### 非同步執行
+
+`--parallel-mode async`（或在 Python 用 `AsyncExecutor`）以 asyncio 執行動作檔：只開一個 headless Chromium，每個檔案各有一個全新的 browser context，所以同時執行的檔案就像不同的使用者，cookie、storage 與分頁各自獨立。`--parallel N` 限制同時執行的數量。需要 Playwright。
+
+```bash
+python -m je_web_runner -d ./user_journeys --parallel 8 --parallel-mode async --ledger ledger.json
+```
+
+```python
+import asyncio
+from je_web_runner.utils.async_executor import AsyncExecutor
+
+async def main():
+    async with AsyncExecutor(browser="chromium", headless=True) as runner:
+        results = await runner.run_many([alice_actions, bob_actions], concurrency=2)  # [(record, failed), ...]
+
+asyncio.run(main())
+```
+
+`WR_apw_*` 命令在該檔案自己的 context 裡執行：`WR_apw_goto`、`WR_apw_click`、`WR_apw_fill`、`WR_apw_press`、`WR_apw_text`、`WR_apw_title`、`WR_apw_url`、`WR_apw_wait_for_selector`、`WR_apw_assert_text`、`WR_apw_assert_title`、`WR_apw_new_page` / `WR_apw_switch_to_page` / `WR_apw_close_page`（同一個使用者的分頁）、`WR_apw_screenshot`、`WR_apw_evaluate`（受任意腳本閘門管制）、`WR_apw_sleep`（只暫停該檔案），以及串流頁面用的 `WR_apw_websocket_messages` / `WR_apw_wait_for_websocket_message`。其他 `WR_*` 命令在工作執行緒中執行，照樣套用閘門、重試與失敗截圖，但與 `--parallel-mode thread` 一樣共用整個行程的 Selenium 與 Playwright 單例。在非同步引擎以外執行 `WR_apw_*` 命令會失敗，訊息會說明它該在哪裡執行。
+
 ## 品質與安全
 
 - **動作 linter** —— `WR_lint_action` / `WR_lint_action_file` 標記舊式命令名、硬編碼 URL、危險腳本、缺失標籤、連續重複動作。
@@ -793,7 +814,7 @@ python -m je_web_runner.mcp_server
 預設工具清單（22 個工具）公開：
 
 即時瀏覽器執行：
-- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 537 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 555 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批次執行磁碟上的 JSON 檔案
 - `webrunner_list_commands` —— 探索完整的 `WR_*` 介面面
 

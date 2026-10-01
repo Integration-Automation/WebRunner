@@ -706,6 +706,27 @@ python -m je_web_runner --execute_dir ./actions --shard 4/4
 
 配套 API —— `WR_run_for_users`（多用户矩阵）、`WR_run_ab`（A/B 模式）、`WR_flakiness_stats`、`WR_classify_failure`、`WR_schedule` + `WR_run_scheduler_for`。
 
+### 异步执行
+
+`--parallel-mode async`（或在 Python 用 `AsyncExecutor`）以 asyncio 执行动作文件：只开一个 headless Chromium，每个文件各有一个全新的 browser context，所以同时执行的文件就像不同的用户，cookie、storage 与标签页各自独立。`--parallel N` 限制同时执行的数量。需要 Playwright。
+
+```bash
+python -m je_web_runner -d ./user_journeys --parallel 8 --parallel-mode async --ledger ledger.json
+```
+
+```python
+import asyncio
+from je_web_runner.utils.async_executor import AsyncExecutor
+
+async def main():
+    async with AsyncExecutor(browser="chromium", headless=True) as runner:
+        results = await runner.run_many([alice_actions, bob_actions], concurrency=2)  # [(record, failed), ...]
+
+asyncio.run(main())
+```
+
+`WR_apw_*` 命令在该文件自己的 context 里执行：`WR_apw_goto`、`WR_apw_click`、`WR_apw_fill`、`WR_apw_press`、`WR_apw_text`、`WR_apw_title`、`WR_apw_url`、`WR_apw_wait_for_selector`、`WR_apw_assert_text`、`WR_apw_assert_title`、`WR_apw_new_page` / `WR_apw_switch_to_page` / `WR_apw_close_page`（同一个用户的标签页）、`WR_apw_screenshot`、`WR_apw_evaluate`（受任意脚本闸门管制）、`WR_apw_sleep`（只暂停该文件），以及流式页面用的 `WR_apw_websocket_messages` / `WR_apw_wait_for_websocket_message`。其他 `WR_*` 命令在工作线程中执行，照样应用闸门、重试与失败截图，但与 `--parallel-mode thread` 一样共用整个进程的 Selenium 与 Playwright 单例。在异步引擎以外执行 `WR_apw_*` 命令会失败，信息会说明它该在哪里执行。
+
 ## 质量与安全
 
 - **动作 linter** —— `WR_lint_action` / `WR_lint_action_file` 标记旧式命令名、硬编码 URL、危险脚本、缺失标签、连续重复动作。
@@ -793,7 +814,7 @@ python -m je_web_runner.mcp_server
 默认工具列表（22 个工具）暴露：
 
 实时浏览器执行：
-- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 537 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 555 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批量运行磁盘上的 JSON 文件
 - `webrunner_list_commands` —— 发现完整的 `WR_*` 接口面
 

@@ -8,6 +8,7 @@ wrapped in :class:`_Bound` and resolved by :func:`build_event_dict`.
 """
 from __future__ import annotations
 
+import inspect
 import time
 from typing import Any, Callable
 
@@ -116,6 +117,8 @@ from je_web_runner.utils.self_healing.healing_locator import (
 )
 from je_web_runner.utils.bidi.selenium_events import selenium_bidi_events as _bidi_events
 from je_web_runner.utils import autocontrol_bridge as _autocontrol
+from je_web_runner.utils.async_executor.commands import ASYNC_COMMANDS as _ASYNC_COMMANDS
+from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
 from je_web_runner.utils.executor._playwright_commands import PLAYWRIGHT_COMMANDS
 from je_web_runner.utils.json.json_validator import validate_action_file, validate_action_json
 from je_web_runner.utils.package_manager.package_manager_class import package_manager
@@ -143,6 +146,19 @@ def _sleep_seconds(seconds: int | float = 1) -> float:
         raise ValueError(f"WR_sleep seconds must be >= 0, got {seconds}")
     time.sleep(float(seconds))
     return float(seconds)
+
+
+def _async_only(name: str, command: Callable[..., Any]) -> Callable[..., Any]:
+    """A sync-table stand-in for an async-only ``WR_apw_*`` command: same signature and doc, refuses to run."""
+    def refuse(*_args: Any, **_kwargs: Any) -> None:
+        raise WebRunnerExecuteException(
+            f"{name} runs only in the async executor: python -m je_web_runner -d DIR --parallel-mode async, "
+            "or je_web_runner.utils.async_executor.AsyncExecutor")
+    parameters = list(inspect.signature(command).parameters.values())[1:]  # the executor passes the session
+    refuse.__signature__ = inspect.signature(command).replace(parameters=parameters)
+    refuse.__doc__ = f"{(command.__doc__ or '').strip()}\n\nAsync executor only (``--parallel-mode async``)."
+    refuse.__name__ = command.__name__
+    return refuse
 
 
 class _Bound:
@@ -696,6 +712,9 @@ COMMANDS: dict[str, Any] = {
         "WR_ac_fill_native_file_dialog": _autocontrol.fill_native_file_dialog,
         "WR_ac_assert_image_on_screen": _autocontrol.assert_image_on_screen,
         "WR_ac_click_element_native": _autocontrol.click_element_native,
+
+        # ----- async executor only (WR_apw_*): listed here so references, schema and validation know them -----
+        **{name: _async_only(name, command) for name, command in _ASYNC_COMMANDS.items()},
 }
 
 

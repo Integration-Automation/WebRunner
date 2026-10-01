@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (537 commands).
+Auto-generated from the executor's event_dict (555 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -25,6 +25,24 @@ Auto-generated from the executor's event_dict (537 commands).
 | `WR_appium_ios_caps` | `(app: 'str', device_name: 'str' = 'iPhone 15', platform_version: 'str' = '17', automation_name: 'str' = 'XCUITest', extra: 'dict[str, Any] | None' = None) -> 'dict[str, Any]'` |  |
 | `WR_appium_quit` | `() -> 'None'` | Quit whatever driver is currently registered on the WebRunner wrapper. |
 | `WR_appium_start` | `(server_url: 'str', capabilities: 'dict[str, Any]', register: 'bool' = True) -> 'Any'` | 建立 Appium WebDriver 並註冊到 ``webdriver_wrapper_instance`` |
+| `WR_apw_assert_text` | `(selector: 'str', expected: 'str') -> 'str'` | Fail unless the element's text contains ``expected``; returns the text. |
+| `WR_apw_assert_title` | `(expected: 'str') -> 'str'` | Fail unless the page title contains ``expected``; returns the title. |
+| `WR_apw_click` | `(selector: 'str') -> 'None'` | Click the element ``selector`` matches (Playwright waits until it is actionable). |
+| `WR_apw_close_page` | `() -> 'int'` | Close the current page; returns how many stay open. |
+| `WR_apw_evaluate` | `(script: 'str', arg: 'Any' = None) -> 'Any'` | Evaluate JavaScript in the page (behind the arbitrary-script gate). |
+| `WR_apw_fill` | `(selector: 'str', value: 'str') -> 'None'` | Fill an input. |
+| `WR_apw_goto` | `(url: 'str', wait_until: 'str' = 'load') -> 'str'` | Navigate the current page (opening one first if none is open); returns the final URL. |
+| `WR_apw_new_page` | `(url: 'str | None' = None) -> 'int'` | Open a page (another tab of the same user), make it current, optionally load ``url``; returns its index. |
+| `WR_apw_press` | `(selector: 'str', key: 'str') -> 'None'` | Press ``key`` (``Enter``, ``Control+A`` …) in the element. |
+| `WR_apw_screenshot` | `(path: 'str', full_page: 'bool' = False) -> 'str'` | Save a PNG of the current page; returns the path. |
+| `WR_apw_sleep` | `(seconds: 'float') -> 'None'` | Pause this action list only; the others keep running. |
+| `WR_apw_switch_to_page` | `(index: 'int') -> 'str'` | Make page ``index`` current; returns its URL. |
+| `WR_apw_text` | `(selector: 'str') -> 'str'` | The element's inner text. |
+| `WR_apw_title` | `() -> 'str'` | The current page's title. |
+| `WR_apw_url` | `() -> 'str'` | The current page's URL. |
+| `WR_apw_wait_for_selector` | `(selector: 'str', state: 'str' = 'visible', timeout: 'float' = 10.0) -> 'None'` | Wait until ``selector`` is ``attached`` / ``detached`` / ``visible`` / ``hidden`` (``timeout`` in seconds). |
+| `WR_apw_wait_for_websocket_message` | `(contains: 'str', timeout: 'float' = 10.0) -> 'dict[str, Any]'` | Wait until a received WebSocket frame contains ``contains``; returns it. |
+| `WR_apw_websocket_messages` | `(direction: 'str | None' = None) -> 'list[dict[str, Any]]'` | Every WebSocket frame the session's pages sent or received: ``{url, direction, payload}``. |
 | `WR_assert_no_4xx_or_5xx` | `() -> 'None'` |  |
 | `WR_assert_no_5xx` | `() -> 'None'` |  |
 | `WR_assert_no_console_errors` | `() -> 'None'` |  |
@@ -533,8 +551,8 @@ Auto-generated from the executor's event_dict (537 commands).
 | `WR_user_factory` | `(prefix: 'str' = 'user') -> 'Factory'` | Default user shape: id / name / email / password. |
 | `WR_validate_action_file` | `(json_file_path: 'str') -> 'bool'` | 讀取並驗證動作 JSON 檔案 |
 | `WR_validate_action_json` | `(data: 'list | dict') -> 'bool'` | 驗證動作 JSON 是否符合執行器格式 |
-| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002502E8F19E0>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
-| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002502E8F19E0>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
+| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000021385A08C20>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
+| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x0000021385A08C20>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
 | `WR_wait_for_download` | `(directory: 'str', timeout: 'float' = 60.0, suffix: 'str | None' = None, poll_seconds: 'float' = 0.5) -> 'str'` | 等待 ``directory`` 內出現新檔案（會跳過 ``.crdownload`` / ``.part``） |
 | `WR_wait_for_element` | `(selector: 'str', by: 'str' = 'css selector', timeout: 'float' = 10.0, state: 'str' = 'visible') -> 'Any'` | 等元素出現（``present`` / ``visible`` / ``clickable``）或消失（``hidden``） |
 | `WR_wait_for_ready_state` | `(timeout: 'float' = 30.0) -> 'bool'` | Wait until ``document.readyState`` is ``complete``. |

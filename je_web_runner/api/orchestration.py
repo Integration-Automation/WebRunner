@@ -1,4 +1,9 @@
-"""Facade: Run matrices and test data: A/B, personas, users, flags, chaos, data-driven, DB, env."""
+"""Facade: Run matrices and test data: A/B, personas, users, flags, chaos, data-driven, DB, env, asyncio."""
+from je_web_runner.utils.async_executor.commands import AsyncCommandError
+from je_web_runner.utils.async_executor.executor import (
+    AsyncExecutor, async_execute_action, async_execute_many, run_action_lists,
+)
+from je_web_runner.utils.async_executor.session import AsyncBrowserPool, AsyncSession, AsyncSessionError
 from je_web_runner.utils.ab_run.ab_runner import (
     ABRunError, diff_records, run_ab,
 )
@@ -38,6 +43,8 @@ from je_web_runner.utils.testcontainers_integration.containers import (
 )
 
 __all__ = [
+    "AsyncCommandError", "AsyncExecutor", "async_execute_action", "async_execute_many", "run_action_lists",
+    "AsyncBrowserPool", "AsyncSession", "AsyncSessionError",
     "ABRunError", "diff_records", "run_ab", "ChaosHooksError", "ChaosFaultType", "ChaosEvent", "ChaosPlan",
     "plan_chaos", "ChaosRunner", "run_with_chaos", "DataDrivenError", "load_dataset_csv", "load_dataset_json",
     "expand_with_row", "run_with_dataset", "DbSnapshotError", "SnapshotBackend", "InMemoryBackend",
