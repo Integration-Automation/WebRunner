@@ -31,8 +31,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      # Hash-locked, wheels-only; regenerate with
-      #   uv pip compile .github/requirements/publish.in --generate-hashes --python-version 3.12       #     --python-platform x86_64-manylinux_2_28 --only-binary :all: -o .github/requirements/publish.txt
+      # Hash-locked, wheels-only; the command that regenerates it is at the top of
+      # .github/requirements/publish.in.
       - name: Install build tooling
         run: |
           pip install --require-hashes --only-binary :all: -r .github/requirements/publish.txt
@@ -77,8 +77,9 @@ jobs:
           git push origin HEAD:main
           git push origin "v${{ steps.bump.outputs.new_version }}"
 
+      # --no-isolation: the backend is the setuptools locked in publish.txt, not a fresh download.
       - name: Build distribution
-        run: python -m build
+        run: python -m build --no-isolation
 
       - name: Verify distribution metadata
         run: python -m twine check dist/*
