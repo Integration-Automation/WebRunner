@@ -111,7 +111,42 @@ def _build_parser() -> argparse.ArgumentParser:
             "files are partitioned deterministically by SHA-1 path hash"
         ),
     )
+    _add_impact_args(parser)
     return parser
+
+
+def _add_impact_args(parser: argparse.ArgumentParser) -> None:
+    """``--affected-by`` / ``--changed-since`` / ``--impact-cache``: run only what a change can affect."""
+    parser.add_argument(
+        "--affected-by",
+        action="append",
+        default=None,
+        dest="affected_by",
+        metavar="KIND:VALUE",
+        help=(
+            "with --execute_dir, run only the files that use this locator / url / template / command "
+            "(e.g. locator:login_button); repeatable; @file reads one KIND:VALUE per line"
+        ),
+    )
+    parser.add_argument(
+        "--changed-since",
+        type=str,
+        default=None,
+        dest="changed_since",
+        metavar="REF",
+        help=(
+            "with --execute_dir, run the action files changed in git since REF (REF...HEAD) and the files "
+            "sharing a locator or template with them"
+        ),
+    )
+    parser.add_argument(
+        "--impact-cache",
+        type=str,
+        default=None,
+        dest="impact_cache",
+        metavar="PATH",
+        help="cache file for the impact index of --affected-by / --changed-since; only changed files are parsed",
+    )
 
 
 def _split_csv(value: str | None) -> list:
@@ -199,17 +234,24 @@ def _run_with_dependencies(
 
 @dataclass(frozen=True)
 class FileSelection:
-    """Which files under ``-d DIR`` run: tags, the failures to re-run, the shard."""
+    """Which files under ``-d DIR`` run: impact, tags, the failures to re-run, the shard."""
 
     include_tags: Sequence[str] = ()
     exclude_tags: Sequence[str] = ()
     rerun_only: Sequence[str] | None = None
     shard_spec: str | None = None
+    affected_by: Sequence[str] = ()
+    changed_since: str | None = None
+    impact_cache: str | None = None
 
 
 def _select_files(directory: str, selection: FileSelection) -> list:
-    """Apply rerun-only / tag / shard filters to the directory listing."""
+    """Apply impact / rerun-only / tag / shard filters to the directory listing."""
     files = get_dir_files_as_list(directory)
+    if selection.affected_by or selection.changed_since:
+        from je_web_runner.utils.impact_analysis.selection import select_by_impact
+        files = select_by_impact(files, directory, affected_by=selection.affected_by,
+                                 changed_since=selection.changed_since, cache_path=selection.impact_cache)
     if selection.rerun_only is not None:
         rerun_set = set(selection.rerun_only)
         files = [path for path in files if path in rerun_set]
@@ -314,6 +356,9 @@ def _dispatch(args: argparse.Namespace) -> None:
             exclude_tags=exclude_tags,
             rerun_only=failed_files(args.rerun_failed) if args.rerun_failed else None,
             shard_spec=args.shard,
+            affected_by=args.affected_by or (),
+            changed_since=args.changed_since,
+            impact_cache=args.impact_cache,
         )
 
         def _do_run() -> None:

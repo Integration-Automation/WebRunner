@@ -35,7 +35,10 @@ locator / URL / template / command 反查表；
 參考此 locator 的測試檔，搭配 ``sharding.diff_shard`` 做精準測試選擇。
 ``build_index("./actions", cache_path=".webrunner_impact_cache.json")`` 只解析
 有變動的檔案：修改時間與大小相同就從快取沿用，時間變了（新 checkout）但
-SHA-256 相同也沿用。
+SHA-256 相同也沿用。命令列上可用 ``-d DIR --affected-by locator:NAME``\ （或
+``url:`` / ``template:`` / ``command:``，可重複，``@檔案`` 讀清單）與
+``--changed-since REF``\ （改到的動作檔，加上與它們共用 locator 或範本的檔案）
+依影響範圍挑選，``--impact-cache PATH`` 快取索引。
 
 Bootstrapper / driver pinner
 ============================

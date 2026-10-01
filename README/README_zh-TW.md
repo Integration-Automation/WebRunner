@@ -1708,11 +1708,15 @@ python -m je_web_runner -d ./actions --watch ./actions
 python -m je_web_runner --report run                          # JSON + HTML + XML + JUnit
 python -m je_web_runner --validate ./action_smoke.json
 python -m je_web_runner --migrate ./actions --migrate-dry-run
+python -m je_web_runner -d ./actions --affected-by locator:login_button --affected-by url:/checkout
+python -m je_web_runner -d ./actions --changed-since origin/main --impact-cache .webrunner_impact_cache.json
 ```
 
 安裝套件時也會裝上兩個主控台指令 `webrunner` 與 `web_runner`，旗標、輸出與結束碼都和 `python -m je_web_runner` 相同（`webrunner -e actions.json`、`pipx run --spec je_web_runner webrunner -d ./actions`）。
 
-可以組合上面任意旗標；分發器在把檔案交給執行器之前，先套用標籤過濾 → 帳本 / 重跑失敗項 → 分片 → 相依感知排序。
+可以組合上面任意旗標；分發器在把檔案交給執行器之前，先套用影響範圍挑選 → 標籤過濾 → 帳本 / 重跑失敗項 → 分片 → 相依感知排序。
+
+**依影響範圍挑選。** `--affected-by KIND:VALUE`（可重複；`KIND` 為 `locator`、`url`、`template` 或 `command`；`@檔案` 每行讀一個）只跑用到這些名稱的動作檔。`--changed-since REF` 跑 `git diff REF...HEAD` 改到的動作檔，以及與它們共用 locator 或範本的檔案，所以改了存放 `login_button` 的設定檔，用到它的測試也會跑（URL 與命令不追：幾乎每個檔都共用）。兩者可以並用；之後才套用 tag、`--rerun-failed` 與 `--shard`。`--impact-cache PATH` 在多次執行之間保留影響索引。
 
 ## 測試記錄
 

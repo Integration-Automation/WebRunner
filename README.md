@@ -1719,11 +1719,15 @@ python -m je_web_runner -d ./actions --watch ./actions
 python -m je_web_runner --report run                          # JSON + HTML + XML + JUnit
 python -m je_web_runner --validate ./action_smoke.json
 python -m je_web_runner --migrate ./actions --migrate-dry-run
+python -m je_web_runner -d ./actions --affected-by locator:login_button --affected-by url:/checkout
+python -m je_web_runner -d ./actions --changed-since origin/main --impact-cache .webrunner_impact_cache.json
 ```
 
 Installing the package also installs two console scripts, `webrunner` and `web_runner`, with the same flags, output and exit codes as `python -m je_web_runner` (`webrunner -e actions.json`, `pipx run --spec je_web_runner webrunner -d ./actions`).
 
-Compose any of the flags above; the dispatcher applies tag filters → ledger / re-run-failed → sharding → dependency-aware ordering before handing files to the runner.
+Compose any of the flags above; the dispatcher applies impact selection → tag filters → ledger / re-run-failed → sharding → dependency-aware ordering before handing files to the runner.
+
+**Impact-based selection.** `--affected-by KIND:VALUE` (repeatable; `KIND` is `locator`, `url`, `template` or `command`; `@file` reads one per line) runs only the action files that use one of those names. `--changed-since REF` runs the action files `git diff REF...HEAD` changed, plus every file sharing a locator or template with them, so changing a setup file that saves `login_button` also runs the tests that use it (URLs and commands are not followed: almost every file shares them). Both can be combined; tags, `--rerun-failed` and `--shard` then apply to what they selected. `--impact-cache PATH` keeps the impact index between runs.
 
 ## Test Record
 

@@ -24,7 +24,8 @@ GitRunner = Callable[[Sequence[str]], str]
 _GIT_TIMEOUT_SECONDS = 30.0
 
 
-def _default_git_runner(args: Sequence[str]) -> str:
+def run_git(args: Sequence[str]) -> str:
+    """Run ``git <args>`` (argv only, 30 s limit) and return its stdout."""
     cmd = ["git", *args]
     try:
         # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
@@ -45,7 +46,7 @@ def changed_paths(base_ref: str = "main", git_runner: GitRunner | None = None) -
     """
     Return the list of paths changed between ``base_ref`` and ``HEAD``.
     """
-    runner = git_runner or _default_git_runner
+    runner = git_runner or run_git
     raw = runner(["diff", "--name-only", f"{base_ref}...HEAD"])
     return [line.strip() for line in raw.splitlines() if line.strip()]
 
