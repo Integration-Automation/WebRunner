@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261001-48 | 2026-10-01 | Checking WebDriver details no longer fails on Selenium 4 (application_cache) | #fix #selenium #ci | [2026-10](2026-10.md) |
 | U-20261001-47 | 2026-10-01 | The action executor runs on je_action_core | #change #executor #refactor #L-6 | [2026-10](2026-10.md) |
 | U-20261001-46 | 2026-10-01 | WR_ac_basic_auth: answer the browser's basic-auth dialog from env-var names through AC_write_secret | #done #autocontrol #security | [2026-10](2026-10.md) |
 | U-20261001-45 | 2026-10-01 | A failed Selenium wrapper call fails its action by default | #done #selenium | [2026-10](2026-10.md) |
@@ -136,5 +137,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 47 |
+| [2026-10.md](2026-10.md) | 2026-10 | 48 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

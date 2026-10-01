@@ -28,7 +28,8 @@ def _make_webdriver_check_dict(webdriver_to_check: WebDriver) -> dict:
             "timeouts": webdriver_to_check.timeouts,
             "capabilities": webdriver_to_check.capabilities,
             "file_detector": webdriver_to_check.file_detector,
-            "application_cache": webdriver_to_check.application_cache,
+            # Selenium 4 removed application_cache; the key stays (None) for scripts that check it.
+            "application_cache": getattr(webdriver_to_check, "application_cache", None),
             "virtual_authenticator_id": webdriver_to_check.virtual_authenticator_id
         }
     )

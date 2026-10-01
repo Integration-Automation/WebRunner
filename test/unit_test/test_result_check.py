@@ -116,6 +116,13 @@ class TestWebDriverDetailCheck(unittest.TestCase):
         with self.assertRaises(WebRunnerAssertException):
             check_webdriver_details(fake_webdriver, {"title": "Nope"})
 
+    def test_a_webdriver_without_application_cache_still_checks(self):
+        """Selenium 4 removed WebDriver.application_cache; reading it raised AttributeError for every check."""
+        fake_webdriver = _fake_webdriver()
+        del fake_webdriver.application_cache
+        check_webdriver_value("name", "chrome", fake_webdriver)
+        check_webdriver_value("application_cache", None, fake_webdriver)
+
 
 class TestWebElementDetailCheck(unittest.TestCase):
 
