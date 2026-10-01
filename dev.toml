@@ -36,7 +36,8 @@ classifiers = [
 # Optional: the WR_ac_* commands drive the desktop through AutoControl, which is imported
 # only when one of them runs.
 [project.optional-dependencies]
-autocontrol = ["je_auto_control>=0.0.224"]
+# 0.0.225 is the first release with AC_write_secret, which WR_ac_basic_auth refuses to run without.
+autocontrol = ["je_auto_control>=0.0.225"]
 
 # Console scripts: the same entry point as ``python -m je_web_runner``.
 [project.scripts]
