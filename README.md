@@ -397,7 +397,7 @@ actions = [
 execute_action(actions)
 ```
 
-`execute_action` records a failed step and moves on. To run one action and get its value back, use `execute_one(["WR_get_current_url"])`: it goes through the same command gates, retry policy and failure screenshots, prints nothing, and raises `WebRunnerExecuteException` (with the original error as its cause) when the action fails.
+`execute_action` returns a dict keyed `execute: <action>`, one entry per step (a repeated identical action gets `#2`, `#3` … so every outcome is kept); it records a failed step and moves on. To run one action and get its value back, use `execute_one(["WR_get_current_url"])`: it goes through the same command gates, retry policy and failure screenshots, prints nothing, and raises `WebRunnerExecuteException` (with the original error as its cause) when the action fails.
 
 The legacy names (`WR_get_webdriver_manager`, `WR_SaveTestObject`, `WR_quit`, `WR_input_to_element`, …) still work — see [Quality & Security](#quality--security) for the one-shot migration helper.
 

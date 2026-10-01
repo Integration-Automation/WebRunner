@@ -25,7 +25,8 @@ from typing import Any, Sequence
 from je_web_runner.utils.async_executor.commands import ARBITRARY_SCRIPT_COMMANDS, ASYNC_COMMANDS
 from je_web_runner.utils.async_executor.session import AsyncBrowserPool, AsyncSession
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException, describe_error
-from je_web_runner.utils.executor.action_executor import Executor, executor as sync_executor
+from je_web_runner.utils.executor.action_executor import Executor, unique_record_key
+from je_web_runner.utils.executor.action_executor import executor as sync_executor
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
@@ -91,7 +92,7 @@ class AsyncExecutor:
         state: dict[str, AsyncSession | None] = {"session": None}
         try:
             for action in actions:
-                key = "execute: " + str(action)
+                key = unique_record_key(record, "execute: " + str(action))
                 try:
                     record[key] = await self._run_action(action, state, context_options or {})
                 except Exception as error:  # every action's own failure is recorded, not raised

@@ -40,7 +40,9 @@ Basic Usage
 
     result = execute_action(actions)
 
-The ``execute_action()`` function returns a dict mapping each action to its return value.
+The ``execute_action()`` function returns a dict mapping each action
+(``"execute: <action>"``) to its return value. A repeated identical action
+gets ``#2``, ``#3`` … appended to its key, so every step's outcome is kept.
 
 A failed action is recorded in that dict and the next one runs. To run one action and
 get its value back instead, use ``execute_one``: it goes through the same command gates,

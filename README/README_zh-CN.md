@@ -395,7 +395,7 @@ actions = [
 execute_action(actions)
 ```
 
-`execute_action` 会记下失败的步骤然后继续。要执行单一动作并拿回它的值，用 `execute_one(["WR_get_current_url"])`：它经过同样的命令闸门、重试策略与失败截图，不打印任何东西，动作失败时抛出 `WebRunnerExecuteException`（原本的错误是它的 cause）。
+`execute_action` 返回以 `execute: <action>` 为键的字典，每个步骤一条（完全相同的动作重复出现时加上 `#2`、`#3`……，每次的结果都保留）；它会记下失败的步骤然后继续。要执行单一动作并拿回它的值，用 `execute_one(["WR_get_current_url"])`：它经过同样的命令闸门、重试策略与失败截图，不打印任何东西，动作失败时抛出 `WebRunnerExecuteException`（原本的错误是它的 cause）。
 
 旧式名称（`WR_get_webdriver_manager`、`WR_SaveTestObject`、`WR_quit`、`WR_input_to_element`……）仍可使用 —— 关于一键迁移助手，请参见[质量与安全](#质量与安全)。
 

@@ -72,6 +72,22 @@ def _try_playwright_screenshot() -> bytes | None:
         return None
 
 
+def unique_record_key(record: dict, key: str) -> str:
+    """
+    重複動作的紀錄鍵加上序號
+    ``key``, or ``key #N`` when an identical action already has a slot in ``record``. Two
+    identical actions used to share one key, so the later result overwrote the earlier one
+    while ``failed`` still named it. The first occurrence keeps the bare key, as in
+    AutoControl's ``_unique_key``.
+    """
+    if key not in record:
+        return key
+    suffix = 2
+    while f"{key} #{suffix}" in record:
+        suffix += 1
+    return f"{key} #{suffix}"
+
+
 class Executor:
 
     def __init__(self):
@@ -372,7 +388,7 @@ class Executor:
         execute_record_dict = {}
         failed = []
         for action in action_list:
-            execute_record = "execute: " + str(action)
+            execute_record = unique_record_key(execute_record_dict, "execute: " + str(action))
             try:
                 execute_record_dict.update({execute_record: self._execute_with_retry(action)})
             except Exception as error:  # every command's own failure is recorded, not raised

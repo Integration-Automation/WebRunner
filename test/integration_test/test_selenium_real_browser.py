@@ -57,7 +57,6 @@ class TestSeleniumRealBrowser(unittest.TestCase):
             ["WR_find_element_by", {"selector": "late", "by": "id"}],
             ["WR_element_inner_html"],
         ])
-        # The record is keyed by the action's text, so each action above is written once.
         self.assertEqual(values[5], "ready")
         self.assertEqual(values[7], "<b>ready</b>")
         agree = webdriver_wrapper_instance.current_webdriver.find_element("id", "agree")
