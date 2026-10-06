@@ -14,4 +14,4 @@ pylint
 flake8
 bandit
 mypy
-mcp>=2.2.0,<3
+mcp>=2.3.0,<3
