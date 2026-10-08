@@ -40,36 +40,36 @@ def artifact_dir(tmp_path, monkeypatch):
 
 def test_a_name_is_returned_as_given_outside_testpioneer(monkeypatch):
     monkeypatch.delenv(ARTIFACT_DIR_VARIABLE, raising=False)
-    assert report_path("reports/web") == "reports/web"
+    assert report_path("reports/web") == "reports/web"  # nosec B101
 
 
 def test_an_empty_variable_counts_as_unset(monkeypatch):
     monkeypatch.setenv(ARTIFACT_DIR_VARIABLE, "  ")
-    assert report_path("reports/web") == "reports/web"
+    assert report_path("reports/web") == "reports/web"  # nosec B101
 
 
 def test_a_relative_name_goes_below_the_artifact_directory(artifact_dir):
     target = Path(report_path("reports/web_success.json"))
-    assert target == artifact_dir.resolve() / "reports" / "web_success.json"
-    assert target.parent.is_dir()
+    assert target == artifact_dir.resolve() / "reports" / "web_success.json"  # nosec B101
+    assert target.parent.is_dir()  # nosec B101
 
 
 def test_an_absolute_name_is_left_alone(artifact_dir, tmp_path):
     name = str(tmp_path / "elsewhere" / "web.json")
-    assert report_path(name) == name
-    assert not artifact_dir.exists()
+    assert report_path(name) == name  # nosec B101
+    assert not artifact_dir.exists()  # nosec B101
 
 
 def test_a_name_that_leaves_the_directory_is_left_alone(artifact_dir):
-    assert report_path("../outside.json") == "../outside.json"
-    assert not artifact_dir.exists()
+    assert report_path("../outside.json") == "../outside.json"  # nosec B101
+    assert not artifact_dir.exists()  # nosec B101
 
 
 def test_a_directory_that_cannot_be_created_falls_back_to_the_name(tmp_path, monkeypatch):
     not_a_directory = tmp_path / "file"
     not_a_directory.write_text("x", encoding="utf-8")
     monkeypatch.setenv(ARTIFACT_DIR_VARIABLE, str(not_a_directory))
-    assert report_path("reports/web.json") == "reports/web.json"
+    assert report_path("reports/web.json") == "reports/web.json"  # nosec B101
 
 
 @pytest.mark.parametrize("generate, written", [
@@ -81,30 +81,30 @@ def test_a_directory_that_cannot_be_created_falls_back_to_the_name(tmp_path, mon
 ], ids=["json", "xml", "html", "junit", "interactive-html"])
 def test_a_report_is_written_below_the_artifact_directory(artifact_dir, generate, written):
     generate("reports/web")
-    assert [(artifact_dir / path).is_file() for path in written] == [True] * len(written)
+    assert [(artifact_dir / path).is_file() for path in written] == [True] * len(written)  # nosec B101
     # Nothing is left in the working directory, where the name used to point.
-    assert not Path("reports").exists()
+    assert not Path("reports").exists()  # nosec B101
 
 
 def test_the_allure_results_are_written_below_the_artifact_directory(artifact_dir):
     results = generate_allure_report("allure-results")
-    assert results
-    assert {Path(result).parent for result in results} == {artifact_dir.resolve() / "allure-results"}
-    assert not Path("allure-results").exists()
+    assert results  # nosec B101
+    assert {Path(result).parent for result in results} == {artifact_dir.resolve() / "allure-results"}  # nosec B101
+    assert not Path("allure-results").exists()  # nosec B101
 
 
 def test_the_manifest_lists_the_files_where_they_are(artifact_dir):
     outcome = generate_all_reports("reports/web")
     manifest = Path(outcome["manifest_path"])
-    assert manifest == artifact_dir.resolve() / "reports" / "web.manifest.json"
+    assert manifest == artifact_dir.resolve() / "reports" / "web.manifest.json"  # nosec B101
     produced = json.loads(manifest.read_text(encoding="utf-8"))["produced"]
-    assert produced["json"]
-    assert all(Path(path).is_file() for paths in produced.values() for path in paths)
-    assert not Path("reports").exists()
+    assert produced["json"]  # nosec B101
+    assert all(Path(path).is_file() for paths in produced.values() for path in paths)  # nosec B101
+    assert not Path("reports").exists()  # nosec B101
 
 
 def test_outside_testpioneer_a_report_stays_in_the_working_directory(tmp_path, monkeypatch):
     monkeypatch.delenv(ARTIFACT_DIR_VARIABLE, raising=False)
     monkeypatch.chdir(tmp_path)
     generate_json_report("web")
-    assert (tmp_path / "web_success.json").is_file()
+    assert (tmp_path / "web_success.json").is_file()  # nosec B101
