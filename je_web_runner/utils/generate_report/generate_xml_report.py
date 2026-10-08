@@ -3,6 +3,7 @@ from threading import Lock
 from defusedxml.minidom import parseString
 
 from je_web_runner.utils.generate_report.generate_json_report import generate_json
+from je_web_runner.utils.generate_report.report_path import report_path
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.xml.change_xml_structure.change_xml_structure import dict_to_elements_tree
 
@@ -59,7 +60,7 @@ def generate_xml_report(xml_file_name: str = "default_name"):
     # 輸出失敗報告
     # Write failure report
     try:
-        with _lock, open(xml_file_name + "_failure.xml", "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
+        with _lock, open(report_path(xml_file_name + "_failure.xml"), "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             file_to_write.write(failure_xml)
     except OSError as error:
         web_runner_logger.error(f"generate_xml_report, xml_file_name: {xml_file_name}, failed: {error!r}")
@@ -67,7 +68,7 @@ def generate_xml_report(xml_file_name: str = "default_name"):
     # 輸出成功報告
     # Write success report
     try:
-        with _lock, open(xml_file_name + "_success.xml", "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
+        with _lock, open(report_path(xml_file_name + "_success.xml"), "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             file_to_write.write(success_xml)
     except OSError as error:
         web_runner_logger.error(f"generate_xml_report, xml_file_name: {xml_file_name}, failed: {error!r}")

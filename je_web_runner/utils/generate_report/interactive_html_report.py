@@ -28,6 +28,7 @@ from pathlib import Path
 from typing import Any
 
 from je_web_runner.utils.exception.exceptions import WebRunnerHTMLException
+from je_web_runner.utils.generate_report.report_path import report_path
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
@@ -218,7 +219,7 @@ def generate_interactive_html_report(html_name: str = "default_name", screenshot
     Write :func:`generate_interactive_html` to ``<html_name>.html`` and return that path.
     """
     web_runner_logger.info(f"generate_interactive_html_report, html_name: {html_name}")
-    target = Path(f"{html_name}.html")
+    target = Path(report_path(f"{html_name}.html"))
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(generate_interactive_html(screenshot_dir, har_path, a11y_results), encoding="utf-8")
     return str(target)

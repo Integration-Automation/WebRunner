@@ -3,6 +3,7 @@ from threading import Lock
 
 from je_web_runner.utils.exception.exception_tags import cant_generate_json_report
 from je_web_runner.utils.exception.exceptions import WebRunnerGenerateJsonReportException
+from je_web_runner.utils.generate_report.report_path import report_path
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
@@ -85,7 +86,7 @@ def generate_json_report(json_file_name: str = "default_name"):
     # 輸出成功紀錄
     # Write success records
     try:
-        with _lock, open(json_file_name + "_success.json", "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
+        with _lock, open(report_path(json_file_name + "_success.json"), "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             json.dump(dict(success_dict), file_to_write, indent=4)
     except (OSError, TypeError, ValueError) as error:
         web_runner_logger.error(f"generate_json_report, json_file_name: {json_file_name}, failed: {error!r}")
@@ -93,7 +94,7 @@ def generate_json_report(json_file_name: str = "default_name"):
     # 輸出失敗紀錄
     # Write failure records
     try:
-        with _lock, open(json_file_name + "_failure.json", "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
+        with _lock, open(report_path(json_file_name + "_failure.json"), "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             json.dump(dict(failure_dict), file_to_write, indent=4)
     except (OSError, TypeError, ValueError) as error:
         web_runner_logger.error(f"generate_json_report, json_file_name: {json_file_name}, failed: {error!r}")

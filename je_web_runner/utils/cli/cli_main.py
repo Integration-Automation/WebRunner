@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+from je_web_runner.utils.cli.failure_count import FailureCount, note_failed_file
 from je_web_runner.utils.exception.exception_tags import argparse_get_wrong_data
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
 from je_web_runner.utils.executor.action_executor import execute_action, execute_files
@@ -290,6 +291,8 @@ def _run_with_process_pool(files, parallel: int, ledger_path: str | None) -> Non
     with ProcessPoolExecutor(max_workers=parallel) as pool:
         for path, passed, records in pool.map(_run_one_file_isolated, files):
             test_record_instance.test_record_list.extend(records)
+            if not passed:
+                note_failed_file()
             if ledger_path:
                 record_run(ledger_path, path, passed=passed)
 
@@ -302,6 +305,8 @@ def _run_with_asyncio(files, parallel: int, ledger_path: str | None) -> None:
         for key, value in record.items():
             print(key)
             print(value)
+        if failed:
+            note_failed_file()
         if ledger_path:
             record_run(ledger_path, path, passed=not failed)
 
@@ -440,5 +445,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if not _has_any_action(args):
         raise WebRunnerExecuteException(argparse_get_wrong_data)
-    _dispatch(args)
+    # A failed action does not stop its list, so the run is judged once everything has run.
+    with FailureCount() as failures:
+        _dispatch(args)
+    if failures.failed:
+        print(f"error: {failures.failed} action(s) or file(s) failed", file=sys.stderr)
+        return 1
     return 0
