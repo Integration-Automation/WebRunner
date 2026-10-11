@@ -15,4 +15,4 @@ je_action_core>=0.0.3
 faker
 sqlalchemy
 pytest
-mcp>=2.2.0,<3  # official client for test/integration_test/test_mcp_official_client.py
+mcp>=2.3.0,<3  # official client for test/integration_test/test_mcp_official_client.py
