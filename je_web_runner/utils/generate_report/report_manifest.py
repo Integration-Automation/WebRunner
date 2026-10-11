@@ -77,8 +77,7 @@ def generate_all_reports(
     web_runner_logger.info(f"generate_all_reports base={base_name}")
     # Resolved once, so the generators, the expected paths and the manifest agree on where the files are.
     base_name = report_path(base_name)
-    if allure_dir:
-        allure_dir = report_path(allure_dir)
+    allure_dir = report_path(allure_dir) if allure_dir else None
     plan = expected_paths(base_name, allure_dir=allure_dir)
     errors: dict[str, str] = {}
 
