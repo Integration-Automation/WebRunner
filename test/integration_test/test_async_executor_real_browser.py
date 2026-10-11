@@ -58,6 +58,8 @@ def _serve_websocket(server: socket.socket) -> None:
         request = connection.recv(4096).decode("latin-1")
         key = next(line.split(":", 1)[1].strip() for line in request.split("\r\n")
                    if line.lower().startswith("sec-websocket-key:"))
+        # Fixed test command or protocol-mandated digest; no untrusted shell/security hash.
+        # nosemgrep: python.lang.security.insecure-hash-algorithms.insecure-hash-algorithm-sha1
         accept = base64.b64encode(hashlib.sha1((key + _WS_GUID).encode(), usedforsecurity=False).digest()).decode()
         connection.sendall(("HTTP/1.1 101 Switching Protocols\r\nUpgrade: websocket\r\nConnection: Upgrade\r\n"
                             f"Sec-WebSocket-Accept: {accept}\r\n\r\n").encode())

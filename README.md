@@ -1703,6 +1703,8 @@ A failed AutoControl action fails its `WR_ac_*` action with `AutoControlBridgeEr
 
 `WR_ac_basic_auth` exists because a classic `get` of a page behind basic auth waits, while the browser's dialog is open, until it times out, and chromedriver does not answer the dialog through BiDi. So pass the page as `url`: the command checks that the page has the keyboard focus (`document.hasFocus()`; AutoControl types into whichever window is in front, so it refuses otherwise), starts the navigation without waiting, then types into the dialog. The credentials go through AutoControl's `AC_write_secret`, which types them exactly and keeps them out of its log, its record and its return value; the action file, WebRunner's log and both run records hold only the variable names. It needs a `je_auto_control` that has `AC_write_secret`. For Playwright, set `http_credentials` with `WR_pw_set_context_options` instead.
 
+Native basic-auth navigation requires HTTPS. Plain HTTP is allowed only for localhost or a literal loopback address used by local test servers. URLs with embedded credentials are refused before navigation or typing.
+
 The native commands refuse a Selenium driver whose window is not on this machine's screen: a headless browser, or a remote one (a grid or a device cloud). A Playwright browser is not checked, because Playwright does not report whether it was launched headless: launch it with `headless=False`.
 
 The other direction, AutoControl's `AC_web_*` commands running `WR_*` commands, is part of AutoControl.

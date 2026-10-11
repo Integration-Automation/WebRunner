@@ -53,6 +53,8 @@ class TestAvailability(unittest.TestCase):
     def test_importing_webrunner_does_not_import_autocontrol(self):
         snippet = "import sys, je_web_runner; print('je_auto_control' in sys.modules)"
         with tempfile.TemporaryDirectory() as cwd:  # the import writes WEBRunner.log into the cwd
+            # Fixed test command or protocol-mandated digest; no untrusted shell/security hash.
+            # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
             result = subprocess.run([sys.executable, "-c", snippet], cwd=cwd, capture_output=True,  # nosec B603
                                     text=True, timeout=120, check=True,
                                     env={**os.environ, "PYTHONPATH": str(_REPO_ROOT)})

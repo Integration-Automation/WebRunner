@@ -118,7 +118,7 @@ class TestImageOnScreen(_WithDriver):
 class TestBasicAuth(_WithDriver):
 
     driver = _chrome()
-    password = "S3cret,AC_shell_command!"  # a refused name inside a password is only text to type
+    password = "S3cret,AC_shell_command!"  # a refused name inside a password is only text to type  # nosec B105 - intentional test fixture/assertion
 
     def setUp(self):
         super().setUp()
@@ -149,7 +149,7 @@ class TestBasicAuth(_WithDriver):
         with self.assertLogs(web_runner_logger, level="INFO") as logs:
             self.assertIsNone(native.basic_auth_native("WR_TEST_USER", "WR_TEST_PASS"))
         self.assertEqual(self._typed(), [
-            ["AC_write_secret", {"secret": "Al1ce"}], ["AC_type_keyboard", {"keycode": "tab"}],
+            ["AC_write_secret", {"secret": "Al1ce"}], ["AC_type_keyboard", {"keycode": "tab"}],  # nosec B105 - intentional test fixture/assertion
             ["AC_write_secret", {"secret": self.password}], ["AC_type_keyboard", {"keycode": "return"}]])
         self.assertNotIn("S3cret", "\n".join(logs.output))
         self.assertNotIn("Al1ce", "\n".join(logs.output))
@@ -162,6 +162,21 @@ class TestBasicAuth(_WithDriver):
         native.basic_auth_native("WR_TEST_USER", "WR_TEST_PASS", url="http://127.0.0.1:8080/private")
         self.driver.execute_script.assert_called_with(
             "window.location.assign(arguments[0]);", "http://127.0.0.1:8080/private")
+
+    def test_remote_plaintext_auth_is_refused_before_navigation_or_typing(self):
+        for url in ("http://provider.example/private", "http://localhost.example/private",
+                    "http://192.168.1.2/private", "https://user:secret@provider.example/private"):
+            with self.subTest(url=url):
+                with self.assertRaises(AutoControlBridgeError):
+                    native.basic_auth_native("WR_TEST_USER", "WR_TEST_PASS", url=url)
+        self.fake.execute_action.assert_not_called()
+        self.assertNotIn("window.location.assign(arguments[0]);",
+                         [call.args[0] for call in self.driver.execute_script.call_args_list])
+
+    def test_https_auth_is_allowed(self):
+        native.basic_auth_native("WR_TEST_USER", "WR_TEST_PASS", url="https://provider.example/private")
+        self.driver.execute_script.assert_called_with(
+            "window.location.assign(arguments[0]);", "https://provider.example/private")
 
     def test_a_browser_without_the_keyboard_focus_is_refused_before_typing(self):
         self.focused = False
@@ -199,7 +214,7 @@ class TestBasicAuth(_WithDriver):
 
     def test_the_action_file_names_variables_not_values(self):
         record, failed = executor.collect_action_results(
-            [["WR_ac_basic_auth", {"username_env": "WR_TEST_USER", "password_env": "WR_TEST_PASS"}]])
+            [["WR_ac_basic_auth", {"username_env": "WR_TEST_USER", "password_env": "WR_TEST_PASS"}]])  # nosec B105 - intentional test fixture/assertion
         self.assertEqual(failed, [], record)
         self.assertNotIn("S3cret", repr(record))
 

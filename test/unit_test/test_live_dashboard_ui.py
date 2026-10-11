@@ -165,8 +165,8 @@ class TestEmptyDashboard(unittest.TestCase):
 class TestChart(unittest.TestCase):
 
     def test_single_day_and_unknown_dates(self):
-        daily = [{"label": "unknown", "passed": 1, "failed": 0, "total": 1, "pass_rate": 1.0},
-                 {"label": "2026-09-01", "passed": 3, "failed": 1, "total": 4, "pass_rate": 0.75}]
+        daily = [{"label": "unknown", "passed": 1, "failed": 0, "total": 1, "pass_rate": 1.0},  # nosec B105 - intentional test fixture/assertion
+                 {"label": "2026-09-01", "passed": 3, "failed": 1, "total": 4, "pass_rate": 0.75}]  # nosec B105 - intentional test fixture/assertion
         svg = pass_rate_chart(daily)
         self.assertEqual(svg.count("<circle"), 1)
         self.assertIn("75.0% passed (3/4), 1 failed", svg)

@@ -9,6 +9,7 @@ from pathlib import Path
 from je_web_runner.utils.exception.exceptions import WebRunnerHTMLException
 from je_web_runner.utils.executor.action_executor import executor
 from je_web_runner.utils.generate_report.interactive_html_report import (
+    _comparison_diff,
     generate_interactive_html,
     generate_interactive_html_report,
 )
@@ -61,6 +62,22 @@ class TestInteractiveReport(unittest.TestCase):
         page = generate_interactive_html()
         self.assertIn("<span class='diff-del'>-&#x27;Home&#x27;</span>", page)
         self.assertIn("<span class='diff-add'>+&#x27;Hone&#x27;</span>", page)
+
+    def test_long_noncomparison_and_expected_message(self):
+        self.assertEqual(_comparison_diff("x " * 100_000), "")
+        self.assertIn("diff-del", _comparison_diff("expected one but got two"))
+        self.assertIn("diff-add", _comparison_diff("expected one but was two"))
+
+    def test_hostile_har_and_accessibility_values_are_escaped(self):
+        har = self.tmp / "hostile.har"
+        payload = "'\"><script>alert(1)</script>"
+        entry = dict(_HAR["log"]["entries"][0])
+        entry["request"] = {"method": payload, "url": payload}
+        har.write_text(json.dumps({"log": {"entries": [entry]}}), encoding="utf-8")
+        axe = {"violations": [{"impact": payload, "id": payload, "help": payload, "nodes": []}]}
+        page = generate_interactive_html(har_path=str(har), a11y_results=axe)
+        self.assertNotIn("<script", page.lower())
+        self.assertIn("&lt;script&gt;", page)
 
     def test_screenshots_are_embedded_under_the_step_they_follow(self):
         shots = self.tmp / "shots"

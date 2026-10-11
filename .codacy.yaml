@@ -1,0 +1,8 @@
+---
+engines:
+  bandit:
+    enabled: true
+    # Assertions and deliberately fake credentials are test fixtures, not runtime security checks.
+    exclude_paths:
+      - 'test/**'
+      - 'tests/**'

@@ -12,7 +12,8 @@ from je_web_runner.utils.async_executor.session import AsyncBrowserPool, AsyncSe
 
 _EXECUTOR_NAMES = ("AsyncExecutor", "async_execute_action", "async_execute_many", "run_action_lists")
 
-__all__ = [
+# PEP 562 exports are provided by __getattr__ below, without a circular eager import.
+__all__ = [  # pylint: disable=undefined-all-variable
     "ASYNC_COMMANDS", "AsyncBrowserPool", "AsyncCommandError", "AsyncExecutor", "AsyncSession",
     "AsyncSessionError", "async_execute_action", "async_execute_many", "run_action_lists",
 ]
@@ -21,5 +22,5 @@ __all__ = [
 def __getattr__(name: str) -> Any:
     """Load the executor names on first use (PEP 562)."""
     if name in _EXECUTOR_NAMES:
-        return getattr(importlib.import_module(f"{__name__}.executor"), name)
+        return getattr(importlib.import_module("je_web_runner.utils.async_executor.executor"), name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

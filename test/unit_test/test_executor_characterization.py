@@ -55,12 +55,12 @@ def _boom():
 
 def test_execute_action_prints_each_key_then_value_and_returns_the_records(runner, capsys):
     records = runner.execute_action([["WR_t_add", [1, 2]], ["WR_t_add", {"a": 5}], ["WR_t_boom"]])
-    assert records == {
+    assert records == {  # nosec B101 - intentional test fixture/assertion
         "execute: ['WR_t_add', [1, 2]]": 3,
         "execute: ['WR_t_add', {'a': 5}]": 5,
         "execute: ['WR_t_boom']": "RuntimeError('boom')",
     }
-    assert capsys.readouterr().out == (
+    assert capsys.readouterr().out == (  # nosec B101 - intentional test fixture/assertion
         "execute: ['WR_t_add', [1, 2]]\n3\n"
         "execute: ['WR_t_add', {'a': 5}]\n5\n"
         "execute: ['WR_t_boom']\nRuntimeError('boom')\n"
@@ -69,9 +69,9 @@ def test_execute_action_prints_each_key_then_value_and_returns_the_records(runne
 
 def test_collect_action_results_prints_nothing(runner, capsys):
     records, failed = runner.collect_action_results([["WR_t_boom"], ["WR_t_add", [1], {"b": 4}]])
-    assert records == {"execute: ['WR_t_boom']": "RuntimeError('boom')", "execute: ['WR_t_add', [1], {'b': 4}]": 5}
-    assert failed == ["execute: ['WR_t_boom']"]
-    assert capsys.readouterr().out == ""
+    assert records == {"execute: ['WR_t_boom']": "RuntimeError('boom')", "execute: ['WR_t_add', [1], {'b': 4}]": 5}  # nosec B101 - intentional test fixture/assertion
+    assert failed == ["execute: ['WR_t_boom']"]  # nosec B101 - intentional test fixture/assertion
+    assert capsys.readouterr().out == ""  # nosec B101 - intentional test fixture/assertion
 
 
 @pytest.mark.parametrize(("action", "message"), [
@@ -85,14 +85,14 @@ def test_collect_action_results_prints_nothing(runner, capsys):
 def test_a_bad_action_is_recorded_with_its_message(runner, action, message):
     with pytest.raises(WebRunnerExecuteException) as raised:
         runner._execute_event(action)
-    assert str(raised.value) == message
+    assert str(raised.value) == message  # nosec B101 - intentional test fixture/assertion
     records, failed = runner.collect_action_results([action])
-    assert records == {f"execute: {action}": f"WebRunnerExecuteException({message!r})"}
-    assert failed == [f"execute: {action}"]
+    assert records == {f"execute: {action}": f"WebRunnerExecuteException({message!r})"}  # nosec B101 - intentional test fixture/assertion
+    assert failed == [f"execute: {action}"]  # nosec B101 - intentional test fixture/assertion
 
 
 def test_a_tuple_payload_is_positional_in_a_three_element_action(runner):
-    assert runner._execute_event(["WR_t_add", (1,), {"b": 2}]) == 3
+    assert runner._execute_event(["WR_t_add", (1,), {"b": 2}]) == 3  # nosec B101 - intentional test fixture/assertion
 
 
 def test_an_empty_action_raises_index_error(runner):
@@ -104,7 +104,7 @@ def test_a_refused_command_is_refused_before_it_is_looked_up(runner):
     with runner.restricted(["WR_nope"]):
         with pytest.raises(WebRunnerExecuteException) as raised:
             runner._execute_event(["WR_nope"])
-    assert str(raised.value) == "command 'WR_nope' is not allowed here"
+    assert str(raised.value) == "command 'WR_nope' is not allowed here"  # nosec B101 - intentional test fixture/assertion
 
 
 def test_a_closed_script_gate_is_checked_before_the_lookup(runner):
@@ -112,17 +112,17 @@ def test_a_closed_script_gate_is_checked_before_the_lookup(runner):
     runner.set_allow_arbitrary_script(False)
     with pytest.raises(WebRunnerExecuteException) as raised:
         runner._execute_event(["WR_execute_script", ["return 1"]])
-    assert "arbitrary-script command 'WR_execute_script' is disabled" in str(raised.value)
+    assert "arbitrary-script command 'WR_execute_script' is disabled" in str(raised.value)  # nosec B101 - intentional test fixture/assertion
 
 
 def test_an_empty_list_runs_nothing_and_prints_nothing(runner, capsys):
-    assert runner.execute_action([]) == {}
-    assert runner.collect_action_results({"webdriver_wrapper": []}) == ({}, [])
-    assert capsys.readouterr().out == ""
+    assert runner.execute_action([]) == {}  # nosec B101 - intentional test fixture/assertion
+    assert runner.collect_action_results({"webdriver_wrapper": []}) == ({}, [])  # nosec B101 - intentional test fixture/assertion
+    assert capsys.readouterr().out == ""  # nosec B101 - intentional test fixture/assertion
 
 
 def test_a_document_keeps_its_list_under_webdriver_wrapper(runner):
-    assert runner.execute_action({"webdriver_wrapper": [["WR_t_add", [2]]]}) == {"execute: ['WR_t_add', [2]]": 2}
+    assert runner.execute_action({"webdriver_wrapper": [["WR_t_add", [2]]]}) == {"execute: ['WR_t_add', [2]]": 2}  # nosec B101 - intentional test fixture/assertion
 
 
 @pytest.mark.parametrize("action_list", [
@@ -136,19 +136,19 @@ def test_a_document_keeps_its_list_under_webdriver_wrapper(runner):
 def test_anything_else_raises_the_list_error_and_logs_it(runner, action_list, log_lines):
     with pytest.raises(WebRunnerExecuteException) as raised:
         runner.execute_action(action_list)
-    assert str(raised.value) == _LIST_ERROR
+    assert str(raised.value) == _LIST_ERROR  # nosec B101 - intentional test fixture/assertion
     # A plain dict logs what it holds under the key (None when it has none), anything else logs itself.
     found = action_list.get("webdriver_wrapper") if type(action_list) is dict else action_list
-    assert ("ERROR", f"execute_action, action_list: {found}, failed: {_LIST_ERROR}") in log_lines
+    assert ("ERROR", f"execute_action, action_list: {found}, failed: {_LIST_ERROR}") in log_lines  # nosec B101 - intentional test fixture/assertion
 
 
 def test_the_list_is_logged_first_and_each_failure_names_its_action(runner, log_lines):
     runner.collect_action_results([["WR_t_add", [1]], ["WR_t_boom"]])
-    assert log_lines[0] == ("INFO", "execute_action, action_list: [['WR_t_add', [1]], ['WR_t_boom']]")
+    assert log_lines[0] == ("INFO", "execute_action, action_list: [['WR_t_add', [1]], ['WR_t_boom']]")  # nosec B101 - intentional test fixture/assertion
     failures = [message for level, message in log_lines if level == "ERROR"]
-    assert len(failures) == 1
-    assert "action: ['WR_t_boom']" in failures[0]
-    assert failures[0].endswith("failed: RuntimeError('boom')")
+    assert len(failures) == 1  # nosec B101 - intentional test fixture/assertion
+    assert "action: ['WR_t_boom']" in failures[0]  # nosec B101 - intentional test fixture/assertion
+    assert failures[0].endswith("failed: RuntimeError('boom')")  # nosec B101 - intentional test fixture/assertion
 
 
 def test_execute_files_logs_the_paths_and_runs_each_file(runner, tmp_path, log_lines, capsys):
@@ -157,19 +157,19 @@ def test_execute_files_logs_the_paths_and_runs_each_file(runner, tmp_path, log_l
     first.write_text(json.dumps([["WR_t_add", [1, 1]]]), encoding="utf-8")
     second.write_text(json.dumps({"webdriver_wrapper": [["WR_t_add", [3]]]}), encoding="utf-8")
     paths = [str(first), str(second)]
-    assert runner.execute_files(paths) == [{"execute: ['WR_t_add', [1, 1]]": 2}, {"execute: ['WR_t_add', [3]]": 3}]
-    assert ("INFO", f"execute_files, execute_files_list: {paths}") in log_lines
-    assert "execute: ['WR_t_add', [1, 1]]\n2\n" in capsys.readouterr().out
+    assert runner.execute_files(paths) == [{"execute: ['WR_t_add', [1, 1]]": 2}, {"execute: ['WR_t_add', [3]]": 3}]  # nosec B101 - intentional test fixture/assertion
+    assert ("INFO", f"execute_files, execute_files_list: {paths}") in log_lines  # nosec B101 - intentional test fixture/assertion
+    assert "execute: ['WR_t_add', [1, 1]]\n2\n" in capsys.readouterr().out  # nosec B101 - intentional test fixture/assertion
 
 
 def test_an_unknown_command_is_retried_like_any_failure(runner, log_lines, monkeypatch):
     monkeypatch.setattr(action_executor.time, "sleep", lambda _seconds: None)
     runner.set_retry_policy(retries=2, backoff=0.0)
     records, failed = runner.collect_action_results([["WR_nope"]])
-    assert failed == ["execute: ['WR_nope']"]
+    assert failed == ["execute: ['WR_nope']"]  # nosec B101 - intentional test fixture/assertion
     retries = [message for level, message in log_lines if level == "WARNING"]
-    assert len(retries) == 2
-    assert retries[0].startswith("action ['WR_nope'] failed on attempt 1, retrying: ")
+    assert len(retries) == 2  # nosec B101 - intentional test fixture/assertion
+    assert retries[0].startswith("action ['WR_nope'] failed on attempt 1, retrying: ")  # nosec B101 - intentional test fixture/assertion
 
 
 def test_add_command_takes_functions_and_methods_and_stops_at_the_first_other(monkeypatch):
@@ -181,17 +181,17 @@ def test_add_command_takes_functions_and_methods_and_stops_at_the_first_other(mo
             return "method"
 
     action_executor.add_command_to_executor({"WR_t_fn": _boom, "WR_t_method": Holder().method})
-    assert fresh.event_dict["WR_t_fn"] is _boom
+    assert fresh.event_dict["WR_t_fn"] is _boom  # nosec B101 - intentional test fixture/assertion
     for refused in (len, Holder, "not callable"):
         with pytest.raises(WebRunnerAddCommandException) as raised:
             action_executor.add_command_to_executor({"WR_t_ok": _boom, "WR_t_bad": refused})
-        assert str(raised.value) == "command value type must be a method or function"
-        assert "WR_t_ok" in fresh.event_dict
-        assert "WR_t_bad" not in fresh.event_dict
+        assert str(raised.value) == "command value type must be a method or function"  # nosec B101 - intentional test fixture/assertion
+        assert "WR_t_ok" in fresh.event_dict  # nosec B101 - intentional test fixture/assertion
+        assert "WR_t_bad" not in fresh.event_dict  # nosec B101 - intentional test fixture/assertion
 
 
 def test_the_executor_registers_the_safe_builtins_only():
     commands = Executor().event_dict
-    assert commands["len"] is len
+    assert commands["len"] is len  # nosec B101 - intentional test fixture/assertion
     for name in ("eval", "exec", "open", "__import__", "getattr", "compile"):
-        assert name not in commands
+        assert name not in commands  # nosec B101 - intentional test fixture/assertion

@@ -114,3 +114,6 @@ Action JSON LSP
 標準 LSP 3.17 stdio server，``textDocument/completion`` 回傳所有已註冊
 ``WR_*`` 指令；``textDocument/didOpen`` / ``didChange`` 觸發
 ``publishDiagnostics`` 跑 action linter。
+
+
+原生基本認證導覽必須使用 HTTPS。只有本機測試伺服器的 localhost 或明確 loopback 位址可使用 HTTP。含內嵌帳密的 URL 會在導覽或輸入前被拒絕。

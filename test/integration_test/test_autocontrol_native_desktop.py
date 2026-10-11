@@ -115,7 +115,7 @@ class TestNativeDesktop(unittest.TestCase):
         self.addCleanup(server.shutdown)
         url = f"http://127.0.0.1:{server.server_address[1]}/private"  # NOSONAR S5332 — local test server
         with patch.dict(os.environ, {"WR_DESKTOP_USER": user, "WR_DESKTOP_PASS": password}):
-            _run(["WR_ac_basic_auth", {"username_env": "WR_DESKTOP_USER", "password_env": "WR_DESKTOP_PASS",
+            _run(["WR_ac_basic_auth", {"username_env": "WR_DESKTOP_USER", "password_env": "WR_DESKTOP_PASS",  # nosec B105 - intentional test fixture/assertion
                                        "url": url, "wait_seconds": 2}])
         WebDriverWait(self.driver, 15).until(lambda driver: driver.find_elements("id", "who"))
         self.assertEqual(self.driver.find_element("id", "who").text, "signed in")

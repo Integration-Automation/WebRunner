@@ -29,6 +29,8 @@ def _run(cwd: Path, env: dict) -> dict:
     environment = {key: value for key, value in os.environ.items()
                    if key not in ("WEBRUNNER_LOG_PATH", "WEBRUNNER_LOG_DIR")}
     environment.update(env, PYTHONPATH=str(_REPO))
+    # Fixed test command or protocol-mandated digest; no untrusted shell/security hash.
+    # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
     result = subprocess.run([sys.executable, "-c", _SNIPPET], cwd=cwd, env=environment,  # nosec B603
                             capture_output=True, text=True, encoding="utf-8", timeout=120, check=True)
     return json.loads(result.stdout.strip().splitlines()[-1])

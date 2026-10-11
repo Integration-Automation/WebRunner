@@ -1691,6 +1691,8 @@ AutoControl 动作失败时，它所在的 `WR_ac_*` 动作以 `AutoControlBridg
 
 需要 `WR_ac_basic_auth` 是因为：对需要基本认证的页面做传统的 `get`，在浏览器对话框开着时会一直等到超时，而 chromedriver 也不会通过 BiDi 回答这个对话框。所以请把页面作为 `url` 传入：命令先确认页面持有键盘焦点（`document.hasFocus()`；AutoControl 打字会送到最前面的窗口，所以没有焦点就拒绝），再开始导航、不等待，然后对对话框输入。账号密码经由 AutoControl 的 `AC_write_secret` 输入，字符一字不差，也不会进入它的 log、记录或返回值；动作文件、WebRunner 的 log 与两边的执行记录都只有变量名称。需要有 `AC_write_secret` 的 `je_auto_control`。Playwright 请改用 `WR_pw_set_context_options` 设定 `http_credentials`。
 
+原生基本认证导航必须使用 HTTPS。只有本机测试服务器的 localhost 或明确 loopback 地址可使用 HTTP。含内嵌账号密码的 URL 会在导航或输入前被拒绝。
+
 原生命令会拒绝窗口不在这台机器屏幕上的 Selenium driver：headless 浏览器，或远程的（grid 或设备云）。Playwright 浏览器不会被检查，因为 Playwright 不报告它是否以 headless 启动：请以 `headless=False` 启动。
 
 另一个方向，也就是 AutoControl 的 `AC_web_*` 命令执行 `WR_*` 命令，属于 AutoControl。

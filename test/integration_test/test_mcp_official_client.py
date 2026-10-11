@@ -38,15 +38,17 @@ async def _exercise(session: "mcp.ClientSession") -> dict:
 
 
 async def _handshake(cwd: Path) -> dict:
-    async with stdio_client(_server_params(cwd)) as (read, write), mcp.ClientSession(read, write) as session:
-        initialized = await session.initialize()
-        return {"version": initialized.protocol_version, **await _exercise(session)}
+    async with stdio_client(_server_params(cwd)) as (read, write):
+        async with mcp.ClientSession(read, write) as session:
+            initialized = await session.initialize()
+            return {"version": initialized.protocol_version, **await _exercise(session)}
 
 
 async def _stateless(cwd: Path) -> dict:
-    async with stdio_client(_server_params(cwd)) as (read, write), mcp.ClientSession(read, write) as session:
-        discovered = await session.discover()
-        return {"versions": discovered.supported_versions, **await _exercise(session)}
+    async with stdio_client(_server_params(cwd)) as (read, write):
+        async with mcp.ClientSession(read, write) as session:
+            discovered = await session.discover()
+            return {"versions": discovered.supported_versions, **await _exercise(session)}
 
 
 def _assert_tools_work(outcome: dict) -> None:

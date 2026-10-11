@@ -97,6 +97,8 @@ class TestMcpSubprocess(unittest.TestCase):
         }}
         env = {key: value for key, value in os.environ.items() if key != "PYTHONUTF8"}
         env["PYTHONIOENCODING"] = "latin-1"  # a non-UTF-8 console, reproducible on every OS
+        # Fixed test command or protocol-mandated digest; no untrusted shell/security hash.
+        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
         proc = subprocess.Popen(  # nosec B603 — argv list, no shell
             [sys.executable, "-m", "je_web_runner.mcp_server"],
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,

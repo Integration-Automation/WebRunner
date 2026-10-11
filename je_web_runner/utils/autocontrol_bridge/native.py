@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import os
 import time
+from ipaddress import ip_address
 from typing import Any
+from urllib.parse import urlsplit
 
 from je_web_runner.element.web_element_wrapper import web_element_wrapper
 from je_web_runner.utils.autocontrol_bridge.bridge import (
@@ -25,7 +27,6 @@ from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
 
 
 _KEY_PRESSING_CHARACTERS = "\r\n\t"
-_URL_SCHEMES = ("http://", "https://")
 
 
 def _local_driver_classes() -> tuple[type, ...]:
@@ -109,8 +110,7 @@ def _start_navigation(url: str) -> None:
     after checking that its page has the keyboard focus: AutoControl types into whatever
     window is in the foreground, so a covered browser would send the credentials elsewhere.
     """
-    if not isinstance(url, str) or not url.startswith(_URL_SCHEMES):
-        raise AutoControlBridgeError(f"url must start with http:// or https://, got {url!r}")
+    _require_secure_auth_url(url)
     driver = webdriver_wrapper_instance.current_webdriver
     if driver is None:
         raise AutoControlBridgeError("no Selenium driver is running to open the url")
@@ -118,6 +118,29 @@ def _start_navigation(url: str) -> None:
         raise AutoControlBridgeError("the browser window does not have the keyboard focus; "
                                      "the credentials would be typed into another window")
     driver.execute_script("window.location.assign(arguments[0]);", url)
+
+
+def _require_secure_auth_url(url: str) -> None:
+    """Credentials require HTTPS; plaintext is allowed only for local test servers."""
+    if not isinstance(url, str):
+        raise AutoControlBridgeError("basic auth url must use https")
+    try:
+        parsed = urlsplit(url)
+        if parsed.scheme not in ("http", "https"):
+            raise AutoControlBridgeError("basic auth url must use https except for loopback test servers")
+        host = parsed.hostname or ""
+        loopback = host.lower() == "localhost"
+        if not loopback:
+            try:
+                loopback = ip_address(host).is_loopback
+            except ValueError:
+                loopback = False
+        if not host or parsed.username is not None or parsed.password is not None:
+            raise AutoControlBridgeError("basic auth url must have a host and no embedded credentials")
+        if parsed.scheme != "https" and not (parsed.scheme == "http" and loopback):
+            raise AutoControlBridgeError("basic auth url must use https except for loopback test servers")
+    except ValueError as error:
+        raise AutoControlBridgeError("basic auth url is invalid") from error
 
 
 def basic_auth_native(username_env: str, password_env: str, url: str | None = None,

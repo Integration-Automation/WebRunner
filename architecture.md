@@ -1,7 +1,7 @@
 # WebRunner Architecture
 
 > Short overview for people and agents.
-> Last verified: 2026-10-01 against `25bc167` on `dev`.
+> Last verified: 2026-10-11 against the dev-to-main release review.
 
 ## 1. Purpose
 
@@ -169,6 +169,8 @@ handler that opens nothing until the first record. The file is `$WEBRUNNER_LOG_P
 Jeffrey_RPA points `WEBRUNNER_LOG_PATH` at its own `webrunner.log`, which its supervisor also writes.
 `webdriver_wrapper_instance`, `web_runner` and `executor` are module-level singletons: concurrent callers in one
 process share one driver (`--parallel-mode process` exists for isolation).
+
+- Native basic-auth navigation requires HTTPS. Plain HTTP is allowed only for localhost or a literal loopback address used by local test servers. URLs with embedded credentials are refused before navigation or typing.
 
 ## 7. Design constraints
 

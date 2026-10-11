@@ -78,7 +78,7 @@ class TestBuildSummary(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             summary = build_summary(_make_seeded_config(Path(tmpdir)))
         self.assertEqual(summary, {
-            "total_runs": 5, "passed": 3, "failed": 2, "pass_rate": 0.6, "flaky_tests": 1,
+            "total_runs": 5, "passed": 3, "failed": 2, "pass_rate": 0.6, "flaky_tests": 1,  # nosec B105 - intentional test fixture/assertion
             "quarantined_tests": 1, "weak_locators": 3, "average_locator_score": 75.5,
         })
 

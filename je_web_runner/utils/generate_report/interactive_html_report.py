@@ -35,7 +35,6 @@ from je_web_runner.utils.test_record.test_record_class import test_record_instan
 _IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
 _SHOT_NAME = re.compile(r"^(\d{8}_\d{6}_\d{6})_")
 _REPR = re.compile(r"(?s)^\w+\((['\"])(.*)\1\)$")
-_COMPARISON = re.compile(r"(?s)^(?:[^\n]*?:\s*)?(.+?)\s*!=\s*(.+)$|expected\s+(.+?)\s+but\s+(?:got|was)\s+(.+)$")
 _IMPACTS = ("critical", "serious", "moderate", "minor")
 _CSS = """
 body{font:15px/1.5 system-ui,sans-serif;margin:0;background:#f6f7f9;color:#1d2330}
@@ -98,10 +97,22 @@ def _exception_message(recorded: str) -> str:
 
 def _comparison_diff(recorded: str) -> str:
     """A unified diff of the two sides of ``a != b`` / ``expected X but got Y``, or ``""``."""
-    match = _COMPARISON.search(_exception_message(recorded).strip())
-    if not match:
-        return ""
-    left, right = (match.group(1), match.group(2)) if match.group(1) else (match.group(3), match.group(4))
+    message = _exception_message(recorded).strip()
+    left, separator, right = message.partition("!=")
+    if separator:
+        prefix, colon, remainder = left.partition(":")
+        if colon and "\n" not in prefix:
+            left = remainder
+    else:
+        _prefix, expected, comparison = message.partition("expected ")
+        if not expected:
+            return ""
+        left, separator, right = comparison.partition(" but got ")
+        if not separator:
+            left, separator, right = comparison.partition(" but was ")
+        if not separator:
+            return ""
+    left, right = left.strip(), right.strip()
     lines = difflib.unified_diff(str(left).splitlines(), str(right).splitlines(), "expected", "actual", lineterm="")
     rendered = []
     for line in lines:
@@ -161,11 +172,19 @@ def _waterfall(har_path: str | None) -> str:
         status = status if isinstance(status, int) else 0
         request = entry.get("request") or {}
         rows.append(
+            # Escaped values and numeric formatting only; no unescaped external HTML.
+            # nosemgrep: python.django.security.injection.raw-html-format.raw-html-format
             f"<span>{_escape(request.get('method', ''))}</span><span>{_escape(status)}</span>"
             f"<span>{duration:.0f} ms</span><div class='bar-track'><div class='bar{' err' if status >= 400 else ''}' "
             f"style='left:{offset / span * 100:.2f}%;width:{max(duration / span * 100, 0.5):.2f}%'></div></div>"
+            # Escaped values and numeric formatting only; no unescaped external HTML.
+            # nosemgrep: python.django.security.injection.raw-html-format.raw-html-format
             f"<span class='url' title='{_escape(request.get('url', ''))}'>{_escape(request.get('url', ''))}</span>")
+    # Escaped values and numeric formatting only; no unescaped external HTML.
+    # nosemgrep: python.django.security.injection.raw-html-format.raw-html-format
     return (f"<h2>Network waterfall</h2><details open><summary>{len(rows)} requests over {span:.0f} ms</summary>"
+            # Escaped values and numeric formatting only; no unescaped external HTML.
+            # nosemgrep: python.django.security.injection.raw-html-format.raw-html-format
             f"<div class='wf'>{''.join(rows)}</div></details>")
 
 
@@ -208,6 +227,8 @@ def generate_interactive_html(screenshot_dir: str | None = None, har_path: str |
             f"{_waterfall(har_path)}{_accessibility(a11y_results)}")
     return (f"<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>"
             f"<meta name='viewport' content='width=device-width,initial-scale=1'><title>Test report</title>"
+            # Escaped values and numeric formatting only; no unescaped external HTML.
+            # nosemgrep: python.django.security.injection.raw-html-format.raw-html-format
             f"<style>{_CSS}</style></head><body><main>{body}</main></body></html>")
 
 

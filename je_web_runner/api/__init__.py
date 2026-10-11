@@ -50,6 +50,8 @@ __all__ = [
 def __getattr__(name: str) -> ModuleType:
     """Import a theme on first use (PEP 562)."""
     if name in __all__:
+        # The module name comes only from the closed theme allowlist above, never external input.
+        # nosemgrep: python.lang.security.audit.non-literal-import.non-literal-import
         module = importlib.import_module(f"{__name__}.{name}")
         globals()[name] = module
         return module
