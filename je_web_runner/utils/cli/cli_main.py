@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
+from je_web_runner.utils.cli.failure_count import FailureCount, note_failed_file, thread_failure_count
 from je_web_runner.utils.exception.exception_tags import argparse_get_wrong_data
 from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
 from je_web_runner.utils.executor.action_executor import execute_action, execute_files
@@ -179,11 +180,15 @@ def _run_one_file(path: str) -> bool:
     """Execute one file; return True if no failures were recorded."""
     failure_marker = "program_exception"
     baseline = len(test_record_instance.test_record_list)
+    failure_baseline = thread_failure_count()
     failed = False
     try:
         execute_action(read_action_json(path))
     except Exception:
         failed = True
+        note_failed_file()
+    if failure_baseline is not None:
+        return not failed and thread_failure_count() == failure_baseline
     new_records = test_record_instance.test_record_list[baseline:]
     if any(record.get(failure_marker, "None") != "None" for record in new_records):
         failed = True
@@ -209,7 +214,9 @@ def _run_one_file_isolated(path: str) -> tuple[str, bool, list]:
     baseline = len(_records.test_record_list)
     failed = False
     try:
-        _execute(_read_json(path))
+        with FailureCount() as failures:
+            _execute(_read_json(path))
+        failed = bool(failures.failed)
     except Exception:  # pylint: disable=broad-except
         # Failure path — the tuple we return signals it to the parent.
         failed = True
@@ -224,7 +231,7 @@ def _run_with_dependencies(
     ledger_path: str | None,
 ) -> None:
     """Run files in topological order, skipping downstream when upstream fails."""
-    graph = build_dependency_graph(files)
+    graph = build_dependency_graph(files, allow_invalid=True)
     ordered = topological_order(graph)
     failed_set: set = set()
     for path in ordered:
@@ -278,7 +285,12 @@ def _select_files(directory: str, selection: FileSelection) -> list:
 def _run_sequential(files, ledger_path: str | None) -> None:
     """Sequential execution with optional ledger recording."""
     if not ledger_path:
-        execute_files(files)
+        for path in files:
+            try:
+                execute_files([path])
+            except Exception as error:
+                web_runner_logger.error(f"execute_file, path: {path}, failed: {error!r}")
+                note_failed_file()
         return
     for path in files:
         passed = _run_one_file(path)
@@ -290,6 +302,8 @@ def _run_with_process_pool(files, parallel: int, ledger_path: str | None) -> Non
     with ProcessPoolExecutor(max_workers=parallel) as pool:
         for path, passed, records in pool.map(_run_one_file_isolated, files):
             test_record_instance.test_record_list.extend(records)
+            if not passed:
+                note_failed_file()
             if ledger_path:
                 record_run(ledger_path, path, passed=passed)
 
@@ -297,11 +311,28 @@ def _run_with_process_pool(files, parallel: int, ledger_path: str | None) -> Non
 def _run_with_asyncio(files, parallel: int, ledger_path: str | None) -> None:
     """asyncio branch: one browser, one context per file, at most ``parallel`` files at a time."""
     from je_web_runner.utils.async_executor.executor import run_action_lists
-    results = run_action_lists([read_action_json(path) for path in files], concurrency=max(1, parallel))
-    for path, (record, failed) in zip(files, results):
+    loaded_files = []
+    action_lists = []
+    for path in files:
+        try:
+            actions = read_action_json(path)
+        except Exception as error:
+            web_runner_logger.error(f"execute_file, path: {path}, failed: {error!r}")
+            note_failed_file()
+            if ledger_path:
+                record_run(ledger_path, path, passed=False)
+            continue
+        loaded_files.append(path)
+        action_lists.append(actions)
+    if not loaded_files:
+        return
+    results = run_action_lists(action_lists, concurrency=max(1, parallel))
+    for path, (record, failed) in zip(loaded_files, results):
         for key, value in record.items():
             print(key)
             print(value)
+        if failed:
+            note_failed_file()
         if ledger_path:
             record_run(ledger_path, path, passed=not failed)
 
@@ -330,7 +361,7 @@ def _run_dir(
     parallel_mode: str = "thread",
 ) -> None:
     files = _select_files(directory, selection)
-    if any(build_dependency_graph(files).get(path) for path in files):
+    if any(build_dependency_graph(files, allow_invalid=True).values()):
         _run_with_dependencies(files, ledger_path)
         return
     if parallel_mode == "async":
@@ -440,5 +471,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if not _has_any_action(args):
         raise WebRunnerExecuteException(argparse_get_wrong_data)
-    _dispatch(args)
+    # A failed action does not stop its list, so the run is judged once everything has run.
+    with FailureCount() as failures:
+        _dispatch(args)
+    if failures.failed:
+        print(f"error: {failures.failed} action(s) or file(s) failed", file=sys.stderr)
+        return 1
     return 0

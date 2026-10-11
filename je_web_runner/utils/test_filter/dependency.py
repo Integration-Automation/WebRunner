@@ -12,7 +12,7 @@ from typing import Iterable, Sequence
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
-from je_web_runner.utils.test_filter.tag_filter import read_metadata
+from je_web_runner.utils.test_filter.tag_filter import TagFilterError, read_metadata
 
 
 class DependencyError(WebRunnerException):
@@ -30,7 +30,7 @@ def read_depends_on(path: str) -> list[str]:
     return [str(dep) for dep in deps if isinstance(dep, str)]
 
 
-def build_dependency_graph(paths: Sequence[str]) -> dict[str, list[str]]:
+def build_dependency_graph(paths: Sequence[str], *, allow_invalid: bool = False) -> dict[str, list[str]]:
     """
     依基本檔名建立 ``{path: [dep_path, ...]}`` 圖
     Build a ``{path: [dep_path, …]}`` graph by matching ``depends_on`` entries
@@ -38,11 +38,20 @@ def build_dependency_graph(paths: Sequence[str]) -> dict[str, list[str]]:
 
     無法對應到 ``paths`` 中任何檔案的依賴會被忽略並寫入 log（避免阻擋執行）。
     Dependencies that do not match any input path are dropped with a warning.
+
+    With ``allow_invalid``, an unreadable file remains a node with no declared dependencies
+    so the CLI can record its execution failure and continue the other files.
     """
     by_stem: dict[str, str] = {_basename_key(path): path for path in paths}
     graph: dict[str, list[str]] = {path: [] for path in paths}
     for path in paths:
-        for dep_name in read_depends_on(path):
+        try:
+            dependencies = read_depends_on(path)
+        except (TagFilterError, OSError):
+            if not allow_invalid:
+                raise
+            dependencies = []
+        for dep_name in dependencies:
             dep_path = by_stem.get(dep_name)
             if dep_path is None:
                 web_runner_logger.warning(

@@ -62,3 +62,14 @@ WebRunner 可以直接從命令列使用 ``je_web_runner`` 模組執行。安裝
 
 若未提供任何參數，WebRunner 會引發 ``WebRunnerExecuteException``。
 所有錯誤會輸出到 stderr，程序以代碼 1 退出。
+
+失敗的動作不會中止所在的清單：其餘動作會繼續執行，``-d`` 的其餘檔案也是。全部執行完之後，
+只要有任何失敗，程序就以代碼 1 退出並印出 ``error: N action(s) or file(s) failed``，否則以 0 退出。
+
+在 TestPioneer 之下執行
+-----------------------
+
+TestPioneer 啟動 runner 時會把 ``TEST_PIONEER_ARTIFACT_DIR`` 設為該次執行的輸出目錄。
+以相對名稱要求的報告（JSON、XML、HTML、JUnit、Allure、互動式 HTML，以及 ``generate_all_reports``）
+會寫到該目錄底下，所需的資料夾會自動建立。絕對路徑，以及會離開該目錄的名稱，則照原樣使用。
+沒有設定這個變數時，行為不變。

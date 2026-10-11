@@ -8,6 +8,7 @@ from xml.etree.ElementTree import Element, SubElement, tostring  # nosec B405 # 
 
 from je_web_runner.utils.exception.exception_tags import cant_generate_json_report
 from je_web_runner.utils.exception.exceptions import WebRunnerGenerateJsonReportException
+from je_web_runner.utils.generate_report.report_path import report_path
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
@@ -91,7 +92,7 @@ def generate_junit_xml_report(junit_file_name: str = "default_name") -> None:
     web_runner_logger.info(f"generate_junit_xml_report, junit_file_name: {junit_file_name}")
 
     junit_xml = generate_junit_xml()
-    target = junit_file_name + "_junit.xml"
+    target = report_path(junit_file_name + "_junit.xml")
     try:
         with _lock, open(target, "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             file_to_write.write('<?xml version="1.0" encoding="UTF-8"?>\n')

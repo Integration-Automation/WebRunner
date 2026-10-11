@@ -78,6 +78,45 @@ def test_execute_str_as_pybreeze_sends_it(tmp_path):
     _assert_ran(_run_cli(tmp_path, "--execute_str", _pybreeze_execute_str(_actions(target))), target)
 
 
+def _failing_actions() -> list:
+    """An action that fails (no command has that name), then one that prints MARKER."""
+    return [["WR_no_such_command"], ["print", [MARKER]]]
+
+
+@pytest.mark.parametrize("flag", ["-e", "--execute_file"])
+def test_a_failed_action_exits_1_after_the_rest_ran(tmp_path, flag):
+    action_file = tmp_path / "actions.json"
+    action_file.write_text(json.dumps(_failing_actions()), encoding="utf-8")
+    result = _run_cli(tmp_path, flag, str(action_file))
+    assert result.returncode == 1, result.stdout + result.stderr  # nosec B101
+    assert "error: 1 action(s) or file(s) failed" in result.stderr  # nosec B101
+    assert MARKER in result.stdout, result.stdout + result.stderr  # nosec B101
+
+
+def test_a_failed_action_in_a_directory_exits_1(tmp_path):
+    action_dir = tmp_path / "actions"
+    action_dir.mkdir()
+    (action_dir / "a_ok.json").write_text(json.dumps(_actions(tmp_path)), encoding="utf-8")
+    (action_dir / "b_bad.json").write_text(json.dumps(_failing_actions()), encoding="utf-8")
+    assert _run_cli(tmp_path, "--execute_dir", str(action_dir)).returncode == 1  # nosec B101
+
+
+def test_a_failed_action_in_execute_str_exits_1(tmp_path):
+    result = _run_cli(tmp_path, "--execute_str", _pybreeze_execute_str(_failing_actions()))
+    assert result.returncode == 1, result.stdout + result.stderr  # nosec B101
+
+
+def test_process_mode_detects_failure_without_action_recording(tmp_path):
+    action_dir = tmp_path / "actions"
+    action_dir.mkdir()
+    (action_dir / "a_bad.json").write_text(json.dumps(_failing_actions()), encoding="utf-8")
+    (action_dir / "b_ok.json").write_text(json.dumps(_actions(tmp_path)), encoding="utf-8")
+    result = _run_cli(tmp_path, "-d", str(action_dir), "--parallel", "2", "--parallel-mode", "process")
+    assert result.returncode == 1, result.stdout + result.stderr  # nosec B101
+    assert "error: 1 action(s) or file(s) failed" in result.stderr  # nosec B101
+    assert result.stdout.count(MARKER) >= 2, result.stdout + result.stderr  # nosec B101
+
+
 def test_no_flag_exits_non_zero(tmp_path):
     assert _run_cli(tmp_path).returncode != 0  # nosec B101
 

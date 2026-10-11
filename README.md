@@ -1757,6 +1757,8 @@ Compose any of the flags above; the dispatcher applies impact selection → tag 
 
 **Impact-based selection.** `--affected-by KIND:VALUE` (repeatable; `KIND` is `locator`, `url`, `template` or `command`; `@file` reads one per line) runs only the action files that use one of those names. `--changed-since REF` runs the action files `git diff REF...HEAD` changed, plus every file sharing a locator or template with them, so changing a setup file that saves `login_button` also runs the tests that use it (URLs and commands are not followed: almost every file shares them). Both can be combined; tags, `--rerun-failed` and `--shard` then apply to what they selected. `--impact-cache PATH` keeps the impact index between runs.
 
+`python -m je_web_runner` exits with status 1 when an action or a file of the run failed, after the rest has run, and prints `error: N action(s) or file(s) failed` on stderr. Under [TestPioneer](https://github.com/Integration-Automation/TestPioneer), which sets `TEST_PIONEER_ARTIFACT_DIR`, a report asked for under a relative name (JSON, XML, HTML, JUnit, Allure, interactive HTML, and `generate_all_reports`) is written below that directory.
+
 ## Test Record
 
 ```python

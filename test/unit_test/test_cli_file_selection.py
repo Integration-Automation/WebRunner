@@ -30,7 +30,7 @@ class TestFileSelection(unittest.TestCase):
     def _ran(self, *flags) -> list:
         with patch("je_web_runner.utils.cli.cli_main.execute_files") as run:
             main(["-d", self.dir, *flags])
-        return sorted(run.call_args.args[0]) if run.called else []
+        return sorted(path for call in run.call_args_list for path in call.args[0])
 
     def test_everything_without_filters(self):
         self.assertEqual(self._ran(), sorted([self.smoke, self.slow, self.plain]))

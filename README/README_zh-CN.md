@@ -1745,6 +1745,8 @@ python -m je_web_runner -d ./actions --changed-since origin/main --impact-cache 
 
 **按影响范围挑选。** `--affected-by KIND:VALUE`（可重复；`KIND` 为 `locator`、`url`、`template` 或 `command`；`@文件` 每行读一个）只跑用到这些名称的动作文件。`--changed-since REF` 跑 `git diff REF...HEAD` 改到的动作文件，以及与它们共用 locator 或模板的文件，所以改了存放 `login_button` 的设置文件，用到它的测试也会跑（URL 与命令不追：几乎每个文件都共用）。两者可以并用；之后才应用 tag、`--rerun-failed` 与 `--shard`。`--impact-cache PATH` 在多次执行之间保留影响索引。
 
+`python -m je_web_runner` 在该次执行有动作或文件失败时，会在其余部分执行完之后以状态 1 结束，并在 stderr 打印 `error: N action(s) or file(s) failed`。由 [TestPioneer](https://github.com/Integration-Automation/TestPioneer) 启动时（它会设置 `TEST_PIONEER_ARTIFACT_DIR`），以相对名称要求的报告（JSON、XML、HTML、JUnit、Allure、交互式 HTML，以及 `generate_all_reports`）会写到该目录底下。
+
 ## 测试记录
 
 ```python
