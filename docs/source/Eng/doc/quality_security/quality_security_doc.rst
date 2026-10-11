@@ -17,7 +17,15 @@ Quality & security
 * **Lighthouse runner** — shells out to the official ``lighthouse`` CLI;
   ``assert_scores`` enforces budgets.
 * **Page perf metrics** — ``selenium_collect_metrics`` /
-  ``playwright_collect_metrics`` (FCP / LCP / CLS / TTFB).
+  ``playwright_collect_metrics`` (FCP / LCP / CLS / TTFB, the LCP element and
+  the top layout-shift sources).
+* **Core Web Vitals budget** — ``WR_assert_web_vitals`` asserts LCP, CLS,
+  INP and FCP in one step, on the current page (Selenium or Playwright; INP
+  from the event-timing log) or through Lighthouse on a URL (``tbt`` in
+  place of INP). Budgets default to Google's "good" limits; each metric is
+  rated good / needs-improvement / poor, and a breach names the metric, its
+  rating and the diagnostics. ``json_path`` / ``html_path`` write the
+  breakdown.
 * **Visual regression** — ``capture_baseline`` / ``compare_with_baseline``
   (Pillow soft dependency).
 * **Snapshot testing** — ``match_snapshot`` / ``update_snapshot`` (text /

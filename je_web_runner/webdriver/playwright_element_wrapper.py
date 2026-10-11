@@ -14,6 +14,7 @@ from __future__ import annotations
 
 
 from je_web_runner.utils.exception.exceptions import WebRunnerException
+from je_web_runner.webdriver._playwright_mixins._common import check_fields
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
 
@@ -24,6 +25,14 @@ class PlaywrightElementError(WebRunnerException):
 
 def _record(name: str, params, error: Exception | None) -> None:
     record_action_to_list(f"Playwright element {name}", params, error)
+
+
+_SUBMIT_SCRIPT = (
+    "el => { const form = el.tagName === 'FORM' ? el : el.form;"
+    " if (!form) { throw new Error('element is not in a form'); }"
+    " if (form.requestSubmit) { form.requestSubmit(); } else { form.submit(); } }"
+)
+_CSS_VALUE_SCRIPT = "(el, name) => getComputedStyle(el).getPropertyValue(name)"
 
 
 class PlaywrightElementWrapper:
@@ -133,6 +142,59 @@ class PlaywrightElementWrapper:
             web_runner_logger.error(f"PlaywrightElementWrapper select_option failed: {error!r}")
             _record("select_option", params, error)
             return []
+
+    def submit(self) -> None:
+        """
+        送出目前元素所在的表單（元素本身是表單時送出它）
+        Submit the current element's form, or the element itself when it is a form,
+        through ``requestSubmit`` so the form's submit event and validation run.
+        """
+        web_runner_logger.info("PlaywrightElementWrapper submit")
+        try:
+            self._require_element().evaluate(_SUBMIT_SCRIPT)
+            _record("submit", None, None)
+        except Exception as error:
+            web_runner_logger.error(f"PlaywrightElementWrapper submit failed: {error!r}")
+            _record("submit", None, error)
+
+    def value_of_css_property(self, property_name: str) -> str | None:
+        """The computed value of CSS ``property_name`` on the current element."""
+        params = {"property_name": property_name}
+        try:
+            value = self._require_element().evaluate(_CSS_VALUE_SCRIPT, property_name)
+            _record("value_of_css_property", params, None)
+            return value
+        except Exception as error:
+            web_runner_logger.error(f"PlaywrightElementWrapper value_of_css_property failed: {error!r}")
+            _record("value_of_css_property", params, error)
+            return None
+
+    def check_current_element(self, check_dict: dict) -> None:
+        """
+        斷言目前元素的欄位；不符時拋出例外
+        Assert fields of the current element: ``tag_name``, ``text``, ``value``,
+        ``visible``, ``enabled``, ``checked``, ``size``, ``location``. Unlike the other
+        methods here it raises ``WebRunnerAssertException``, so a failed check fails its
+        action. The Playwright twin of ``WR_element_assert``.
+        """
+        element = self._require_element()
+        box = element.bounding_box
+        getters = {
+            "tag_name": lambda: element.evaluate("el => el.tagName.toLowerCase()"),
+            "text": element.inner_text,
+            "value": lambda: element.evaluate("el => el.value"),
+            "visible": element.is_visible,
+            "enabled": element.is_enabled,
+            "checked": element.is_checked,
+            "size": lambda: {key: (box() or {}).get(key) for key in ("width", "height")},
+            "location": lambda: {key: (box() or {}).get(key) for key in ("x", "y")},
+        }
+        try:
+            check_fields(getters, check_dict, "element")
+        except Exception as error:
+            _record("check_current_element", {"check_dict": check_dict}, error)
+            raise
+        _record("check_current_element", {"check_dict": check_dict}, None)
 
     def get_attribute(self, name: str) -> str | None:
         web_runner_logger.info(f"PlaywrightElementWrapper get_attribute: {name!r}")

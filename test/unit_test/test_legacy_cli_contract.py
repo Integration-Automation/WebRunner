@@ -78,9 +78,88 @@ def test_execute_str_as_pybreeze_sends_it(tmp_path):
     _assert_ran(_run_cli(tmp_path, "--execute_str", _pybreeze_execute_str(_actions(target))), target)
 
 
+def _failing_actions() -> list:
+    """An action that fails (no command has that name), then one that prints MARKER."""
+    return [["WR_no_such_command"], ["print", [MARKER]]]
+
+
+@pytest.mark.parametrize("flag", ["-e", "--execute_file"])
+def test_a_failed_action_exits_1_after_the_rest_ran(tmp_path, flag):
+    action_file = tmp_path / "actions.json"
+    action_file.write_text(json.dumps(_failing_actions()), encoding="utf-8")
+    result = _run_cli(tmp_path, flag, str(action_file))
+    assert result.returncode == 1, result.stdout + result.stderr  # nosec B101
+    assert "error: 1 action(s) or file(s) failed" in result.stderr  # nosec B101
+    assert MARKER in result.stdout, result.stdout + result.stderr  # nosec B101
+
+
+def test_a_failed_action_in_a_directory_exits_1(tmp_path):
+    action_dir = tmp_path / "actions"
+    action_dir.mkdir()
+    (action_dir / "a_ok.json").write_text(json.dumps(_actions(tmp_path)), encoding="utf-8")
+    (action_dir / "b_bad.json").write_text(json.dumps(_failing_actions()), encoding="utf-8")
+    assert _run_cli(tmp_path, "--execute_dir", str(action_dir)).returncode == 1  # nosec B101
+
+
+def test_a_failed_action_in_execute_str_exits_1(tmp_path):
+    result = _run_cli(tmp_path, "--execute_str", _pybreeze_execute_str(_failing_actions()))
+    assert result.returncode == 1, result.stdout + result.stderr  # nosec B101
+
+
+def test_process_mode_detects_failure_without_action_recording(tmp_path):
+    action_dir = tmp_path / "actions"
+    action_dir.mkdir()
+    (action_dir / "a_bad.json").write_text(json.dumps(_failing_actions()), encoding="utf-8")
+    (action_dir / "b_ok.json").write_text(json.dumps(_actions(tmp_path)), encoding="utf-8")
+    result = _run_cli(tmp_path, "-d", str(action_dir), "--parallel", "2", "--parallel-mode", "process")
+    assert result.returncode == 1, result.stdout + result.stderr  # nosec B101
+    assert "error: 1 action(s) or file(s) failed" in result.stderr  # nosec B101
+    assert result.stdout.count(MARKER) >= 2, result.stdout + result.stderr  # nosec B101
+
+
 def test_no_flag_exits_non_zero(tmp_path):
     assert _run_cli(tmp_path).returncode != 0  # nosec B101
 
 
 def test_create_project_dir_is_exported():
     assert callable(je_web_runner.create_project_dir)  # nosec B101
+
+
+# The console scripts ``webrunner`` / ``web_runner`` call ``je_web_runner.__main__:run``;
+# an installed script does ``sys.exit(run())`` with the script's name as ``argv[0]``.
+_CONSOLE_SCRIPT = "import sys; from je_web_runner.__main__ import run; sys.argv[0] = 'webrunner'; sys.exit(run())"
+
+
+def _run_console_script(cwd: Path, *args: str) -> subprocess.CompletedProcess:
+    env = dict(os.environ)
+    env["PYTHONPATH"] = os.pathsep.join(filter(None, [str(REPO_ROOT), env.get("PYTHONPATH")]))
+    env["PYTHONIOENCODING"] = "utf-8"
+    # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
+    return subprocess.run(  # nosec B603 - fixed interpreter, test-controlled arguments
+        [sys.executable, "-c", _CONSOLE_SCRIPT, *args],
+        cwd=cwd, env=env, capture_output=True, text=True, encoding="utf-8",
+        timeout=300, check=False,
+    )
+
+
+@pytest.mark.parametrize("toml_name", ["pyproject.toml", "dev.toml"])
+def test_console_scripts_point_at_the_module_entry(toml_name):
+    text = (REPO_ROOT / toml_name).read_text(encoding="utf-8")
+    section = text.split("[project.scripts]", 1)[1].split("\n[", 1)[0]
+    for script in ("webrunner", "web_runner"):
+        assert f'{script} = "je_web_runner.__main__:run"' in section, (toml_name, script)  # nosec B101
+
+
+def test_console_script_runs_like_python_dash_m(tmp_path):
+    target = tmp_path / "out"
+    payload = _pybreeze_execute_str(_actions(target))
+    _assert_ran(_run_console_script(tmp_path, "--execute_str", payload), target)
+    assert _run_console_script(tmp_path).returncode == _run_cli(tmp_path).returncode != 0  # nosec B101
+
+
+def test_console_script_reports_an_escaping_error_on_one_line(tmp_path):
+    missing = str(tmp_path / "no_such_actions.json")
+    by_script = _run_console_script(tmp_path, "-e", missing)
+    by_module = _run_cli(tmp_path, "-e", missing)
+    assert by_script.returncode == by_module.returncode  # nosec B101
+    assert by_script.stderr.strip().splitlines()[-1:] == by_module.stderr.strip().splitlines()[-1:]  # nosec B101

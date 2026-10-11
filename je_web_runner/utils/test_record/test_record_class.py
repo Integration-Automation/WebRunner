@@ -1,5 +1,6 @@
 import datetime
 
+from je_web_runner.utils.exception.exceptions import describe_error
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
 
@@ -64,5 +65,5 @@ def record_action_to_list(function_name: str,
         "function_name": function_name,
         "local_param": local_param,
         "time": str(datetime.datetime.now()),
-        "program_exception": repr(program_exception)
+        "program_exception": describe_error(program_exception)
     })

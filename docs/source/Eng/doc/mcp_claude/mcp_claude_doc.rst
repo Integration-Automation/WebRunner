@@ -19,8 +19,15 @@ What is MCP?
 
 The Model Context Protocol is a JSON-RPC 2.0 wire protocol Anthropic
 uses to give Claude controlled access to local tools. WebRunner
-implements protocol version ``2024-11-05`` over **newline-delimited
-JSON over stdio** — every line is one JSON-RPC message — so any client
+speaks the stateless ``2026-07-28`` revision (a request whose
+``params._meta`` names its protocol version is served without
+``initialize``; ``server/discover`` reports the versions and
+capabilities) and the handshake revisions ``2025-11-25``,
+``2025-06-18``, ``2025-03-26`` and ``2024-11-05`` (``initialize``
+answers with the client's version when it is one of these, otherwise
+with ``2025-11-25``) over
+**newline-delimited JSON over stdio** — every line is one JSON-RPC
+message — so any client
 that speaks MCP stdio can drive WebRunner without HTTP, sockets, or
 custom glue.
 
@@ -82,10 +89,7 @@ Add a ``webrunner`` entry under ``mcpServers``:
       "mcpServers": {
         "webrunner": {
           "command": "python",
-          "args": ["-m", "je_web_runner.mcp_server"],
-          "env": {
-            "WEBRUNNER_HEADLESS": "1"
-          }
+          "args": ["-m", "je_web_runner.mcp_server"]
         }
       }
     }
@@ -120,8 +124,10 @@ in ``.mcp.json`` next to your repo root:
       }
     }
 
-Or globally in ``~/.claude/mcp.json``. Restart Claude Code and run
-``/mcp`` to confirm the server connects.
+To use it in every project, add it at user scope instead:
+``claude mcp add --scope user webrunner -- python -m je_web_runner.mcp_server``
+(Claude Code stores user-scope servers in ``~/.claude.json``). Restart
+Claude Code and run ``/mcp`` to confirm the server connects.
 
 If a tool needs the action JSON to live somewhere Claude can read,
 keep your action files inside the project directory — Claude Code's
@@ -148,7 +154,7 @@ built-in tools. Practical examples:
   example.com in a Playwright session and fill the search box."*
   Claude composes the ``[command, params]`` payload, the executor
   runs against a real browser, and Claude reads back ``{stdout,
-  record}``.
+  record, failed}``.
 
 * **Extract a Page Object.** *"Run ``webrunner_pom_from_html`` on the
   attached login page HTML and produce a ``LoginPage`` Python module."*
@@ -165,7 +171,7 @@ Tool catalog
 
 The server registers 22 tools out of the box. Use
 ``webrunner_list_commands`` for the *full* runtime command list (every
-``WR_*`` registered in the action executor, 444 of them).
+``WR_*`` registered in the action executor, 556 of them).
 
 Authoring & lint
 ----------------
@@ -233,9 +239,12 @@ Browser execution
 -----------------
 
 * ``webrunner_run_actions`` — Execute an action list against a real
-  browser. Returns ``{stdout, record}``.
+  browser. Returns ``{stdout, record, failed}``; ``failed`` lists the
+  record keys of the actions that raised, and the result's ``isError``
+  is true when there is any.
 * ``webrunner_run_action_files`` — Read JSON action files from disk
-  and run them sequentially.
+  and run them sequentially. Returns ``{stdout, records, failed}`` with
+  one ``failed`` list per file.
 * ``webrunner_list_commands`` — Discover every ``WR_*`` command
   currently registered in the executor.
 
@@ -275,6 +284,45 @@ External code can extend the server by calling ``McpServer.register``:
 Save the script as ``my_mcp.py`` and point your client's ``command`` /
 ``args`` at it instead of ``python -m je_web_runner.mcp_server``.
 
+``Tool`` also takes ``title``, ``annotations`` (for example
+``je_web_runner.mcp_server._types.READ_ONLY``) and ``output_schema``;
+they are sent in ``tools/list`` only when set. Before a handler runs, the
+server checks the arguments against ``input_schema`` (``type``,
+``required``, ``properties``, ``additionalProperties: false``, one level
+of ``items.type``) and answers a mismatch with an ``isError`` result. A
+handler that returns a dict gets it sent as ``structuredContent`` as well
+as text; return ``ToolResult(value, is_error=True)`` to report a failure
+without raising.
+
+----
+
+Security
+========
+
+An MCP client is a model acting on text it has read, so the run tools refuse
+the commands that would widen its powers, including inside nested action
+lists (``WR_execute_action``, ``WR_execute_files``):
+
+* ``WR_add_package_to_executor`` and ``WR_add_package_to_callback_executor``,
+  which import any Python package and expose its functions (``os``,
+  ``subprocess`` …);
+* ``WR_set_allow_arbitrary_script``, which would re-open a script gate the
+  operator closed;
+* every ``WR_ac_*`` command but ``WR_ac_available`` and
+  ``WR_ac_list_commands``: they drive or read the real mouse, keyboard and
+  screen through AutoControl.
+
+A refused command is reported like any failed action: the result has
+``isError: true`` and the command under ``failed``.
+
+Two environment variables, set in the client's server entry (``env``):
+
+* ``WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`` lifts the refusal, for a trusted
+  client that needs to load its own helper package.
+* ``WEBRUNNER_MCP_ROOT=<dir>`` limits ``webrunner_run_action_files`` and
+  ``webrunner_compute_trend`` to files inside ``<dir>`` (``..`` and symlinks
+  are resolved first). Unset, they read any path the process can.
+
 ----
 
 Troubleshooting
@@ -284,18 +332,23 @@ Troubleshooting
   manually (``python -m je_web_runner.mcp_server`` should not exit
   immediately) and check the configured ``command`` / ``args`` resolve
   on the client's ``PATH``.
-* **Browser tools hang** — the browser tools use the WebRunner
-  executor, which prints to stdout. The server captures stdout and
-  surfaces it in the ``stdout`` field; if a callback writes directly
-  to ``sys.__stdout__`` it can corrupt the wire. Avoid raw prints in
-  callbacks.
+* **Stray output** — the server keeps the real stdout for protocol
+  messages only (UTF-8, ``\n`` line ends) and points the process's
+  stdout, including child processes, at stderr. Prints made during a
+  browser tool call are captured and returned in the ``stdout`` field.
+* **A tool call fails** — failures come back as a normal result with
+  ``isError: true`` and the error text, not as a JSON-RPC error. Only
+  an unknown tool name or non-object ``arguments`` is a protocol error
+  (``-32602``).
 * **JSON not serialisable** — browser tools convert
   ``WebDriver`` / ``WebElement`` instances to ``repr()`` strings via
   ``_serialize_value``. Custom return types must be JSON-friendly or
   reduce cleanly under that helper.
-* **Protocol mismatch** — WebRunner advertises
-  ``protocolVersion=2024-11-05``. Newer clients negotiate down; if
-  yours doesn't, pin the client to that version.
+* **Protocol mismatch** — WebRunner speaks ``2026-07-28`` and the
+  handshake revisions ``2025-11-25`` to ``2024-11-05``. A handshake
+  client that asks for another version gets ``2025-11-25`` back and
+  decides whether it can continue; a stateless request naming another
+  version gets error ``-32022`` with the supported versions in ``data``.
 
 ----
 

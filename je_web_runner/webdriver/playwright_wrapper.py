@@ -1,9 +1,9 @@
 """
-Playwright 同步 backend 完整版包裝器，與既有 Selenium 路徑並行。
-Full Playwright sync backend wrapper running side-by-side with the Selenium
-path. Mirrors the operational surface of ``WebDriverWrapper`` where it makes
-sense in Playwright (some Selenium-only concepts such as IE options or
-webdriver_manager bootstrap intentionally do not exist here).
+Playwright 同步 backend 包裝器，與既有 Selenium 路徑並行。
+Playwright sync backend wrapper running side-by-side with the Selenium path.
+It covers most everyday operations of ``WebDriverWrapper`` but is not a
+one-to-one copy; ``docs/source/Eng/doc/backends/backends_doc.rst`` lists the
+equivalent commands and what exists on one backend only.
 
 設計原則 / Design notes:
 - ``playwright`` 為軟相依，未安裝時呼叫才會丟出含安裝提示的錯誤。
@@ -19,24 +19,29 @@ from __future__ import annotations
 
 from typing import Any
 
-from je_web_runner.utils.exception.exceptions import WebRunnerException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import (
     test_object_record,
 )
-from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.webdriver._playwright_mixins import (
+    _ConnectMixin,
+    _ContextMixin,
+    _InteractionMixin,
+    _PageMixin,
+    _RecordingMixin,
+    _ScopeMixin,
+    _SessionsMixin,
+    _StateMixin,
+)
+from je_web_runner.webdriver._playwright_mixins._common import (
+    BROWSER_NOT_LAUNCHED,
+    PlaywrightBackendError,
+)
 from je_web_runner.webdriver.playwright_element_wrapper import (
     PlaywrightElementWrapper,
     playwright_element_wrapper,
 )
-from je_web_runner.webdriver.playwright_locator import (
-    selector_for_recorded_name,
-    test_object_to_selector,
-)
-
-
-class PlaywrightBackendError(WebRunnerException):
-    """Raised when the Playwright backend is misused or unavailable."""
+from je_web_runner.webdriver.playwright_locator import test_object_to_selector
 
 
 def _require_playwright():
@@ -53,16 +58,17 @@ def _require_playwright():
 
 _SUPPORTED_BROWSERS = frozenset({"chromium", "firefox", "webkit"})
 
-_BROWSER_NOT_LAUNCHED = "Playwright browser not launched; call launch() first"
-_RUNTIME_NOT_STARTED = "Playwright runtime not started"
-_CLOCK_API_UNAVAILABLE = "Playwright clock API unavailable; upgrade Playwright"
 
-
-def _record(name: str, params, error: Exception | None) -> None:
-    record_action_to_list(f"Playwright {name}", params, error)
-
-
-class PlaywrightWrapper:
+class PlaywrightWrapper(
+    _ContextMixin,
+    _PageMixin,
+    _InteractionMixin,
+    _StateMixin,
+    _RecordingMixin,
+    _ScopeMixin,
+    _ConnectMixin,
+    _SessionsMixin,
+):
     """
     Playwright 同步 API 的完整 backend 包裝
     Full sync-API wrapper for Playwright, organised around one browser /
@@ -71,11 +77,35 @@ class PlaywrightWrapper:
 
     def __init__(self, element_wrapper: PlaywrightElementWrapper | None = None) -> None:
         self._playwright = None
+        # One entry per open browser (see _SessionsMixin); the active one is None.
+        self._sessions: list[dict[str, Any] | None] = []
+        self._session_index = -1
+        self._reset_state()
+        self.element_wrapper = element_wrapper or playwright_element_wrapper
+
+    def _reset_state(self) -> None:
+        """Forget the browser, context, pages and every setting (start, and after quit)."""
         self._browser = None
         self._context = None
         self._pages: list[Any] = []
         self._page_index: int = -1
-        self.element_wrapper = element_wrapper or playwright_element_wrapper
+        # The merged options every new context gets (see _ContextMixin), and which
+        # of them came from the current device descriptor.
+        self._context_options: dict[str, Any] = {}
+        self._emulation_keys: set[str] = set()
+        # True for an adopted context (connect_over_cdp, launch_persistent): no rebuilds.
+        self._fixed_context = False
+        # Tracing options while a trace is being recorded (see _RecordingMixin), else None.
+        self._trace_options: dict[str, Any] | None = None
+        # Init scripts, URL blocks and the cache-off route, re-applied to every rebuilt context.
+        self._init_scripts: list[str] = []
+        self._blocked_urls: list[Any] = []
+        self._cache_route: Any = None
+        # The selected iframe (None: the page) and the dialog policy (see _ScopeMixin).
+        self._frame: Any = None
+        self._dialog_policy: tuple[str, str | None] | None = None
+        self._dialog_pages: list[Any] = []
+        self._last_dialog: dict[str, Any] | None = None
 
     # ----- lifecycle ---------------------------------------------------
 
@@ -94,7 +124,7 @@ class PlaywrightWrapper:
     @property
     def browser(self):
         if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
+            raise PlaywrightBackendError(BROWSER_NOT_LAUNCHED)
         return self._browser
 
     def launch(
@@ -103,490 +133,80 @@ class PlaywrightWrapper:
         headless: bool = True,
         record_har_path: str | None = None,
         record_har_content: str = "omit",
+        context_options: dict[str, Any] | None = None,
         **launch_options: Any,
     ) -> None:
         """
         啟動指定瀏覽器；可選擇於 context 開啟 HAR 錄製
-        Launch the requested browser; optionally enable HAR recording on the
-        context. ``record_har_content`` accepts ``"omit"`` / ``"embed"`` /
-        ``"attach"`` (Playwright defaults).
+        Launch the requested browser. ``context_options`` go to every context this
+        wrapper creates (``user_agent``, ``viewport``, ``locale``, ``storage_state``,
+        ``record_video_dir`` …); ``record_har_path`` starts HAR recording, with
+        ``record_har_content`` ``"omit"`` / ``"embed"`` / ``"attach"``. Other keyword
+        arguments go to ``browser_type.launch``.
         """
         web_runner_logger.info(f"playwright launch: browser={browser}, headless={headless}")
+        self._browser = self._browser_type(browser).launch(headless=headless, **launch_options)
+        self._context_options = dict(context_options or {})
+        self._emulation_keys = set()
+        if record_har_path:
+            self._context_options.update({"record_har_path": record_har_path, "record_har_content": record_har_content})
+        self._context = self._open_context()
+        self._reset_pages(self._context.new_page())
+        self._register_session()
+
+    def _register_session(self) -> None:
+        """Count the first browser as session 0 (``new_browser`` adds the next ones)."""
+        if not self._sessions:
+            self._sessions = [None]
+            self._session_index = 0
+
+    def _browser_type(self, browser: str) -> Any:
+        """Return the runtime's ``chromium`` / ``firefox`` / ``webkit``, starting the runtime once."""
         if browser not in _SUPPORTED_BROWSERS:
             raise PlaywrightBackendError(
                 f"unsupported playwright browser: {browser!r}; "
                 f"choose one of {sorted(_SUPPORTED_BROWSERS)}"
             )
-        sync_playwright = _require_playwright()
-        self._playwright = sync_playwright().start()
-        browser_type = getattr(self._playwright, browser)
-        self._browser = browser_type.launch(headless=headless, **launch_options)
-        self._context = self._build_context(record_har_path, record_har_content)
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
-    def _build_context(
-        self,
-        record_har_path: str | None = None,
-        record_har_content: str = "omit",
-        extra_options: dict | None = None,
-    ):
-        """Create a context, optionally configured with HAR recording / extras."""
-        kwargs = dict(extra_options or {})
-        if record_har_path:
-            kwargs["record_har_path"] = record_har_path
-            kwargs["record_har_content"] = record_har_content
-        return self._browser.new_context(**kwargs) if kwargs else self._browser.new_context()
-
-    def _device_options(self, device_name: str) -> dict:
-        """Look up Playwright's built-in device descriptor by name."""
         if self._playwright is None:
-            raise PlaywrightBackendError(_RUNTIME_NOT_STARTED)
-        devices = getattr(self._playwright, "devices", None)
-        if not devices or device_name not in devices:
-            available = sorted(devices.keys()) if devices else []
-            raise PlaywrightBackendError(
-                f"unknown device {device_name!r}; available examples: {available[:5]}"
-            )
-        return dict(devices[device_name])
+            sync_playwright = _require_playwright()
+            self._playwright = sync_playwright().start()
+        return getattr(self._playwright, browser)
 
-    def start_emulation(self, device_name: str) -> None:
-        """
-        套用 Playwright 內建裝置設定（重建 context 與 page）
-        Apply a Playwright device descriptor by name; the current context is
-        closed and replaced with one configured for the requested device.
-        """
-        web_runner_logger.info(f"playwright start_emulation: {device_name}")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(extra_options=self._device_options(device_name))
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
+    def _stop_runtime(self) -> None:
+        if self._playwright is not None:
+            self._playwright.stop()
+        self._playwright = None
 
-    def stop_emulation(self) -> None:
-        """Replace the device-emulating context with a plain one."""
-        web_runner_logger.info("playwright stop_emulation")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context()
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
-    # ----- geolocation / permissions / timezone / clock --------------
-
-    def set_geolocation(
-        self,
-        latitude: float,
-        longitude: float,
-        accuracy: float | None = None,
-    ) -> None:
-        """Set the page geolocation; remember to grant ``geolocation`` permission first."""
-        web_runner_logger.info(f"playwright set_geolocation: {latitude}, {longitude}")
-        coords: dict[str, float] = {"latitude": latitude, "longitude": longitude}
-        if accuracy is not None:
-            coords["accuracy"] = accuracy
-        self.context.set_geolocation(coords)
-
-    def grant_permissions(
-        self,
-        permissions: list[str],
-        origin: str | None = None,
-    ) -> None:
-        """Grant browser permissions (e.g. ``geolocation`` / ``clipboard-read``)."""
-        if origin is None:
-            self.context.grant_permissions(permissions)
-        else:
-            self.context.grant_permissions(permissions, origin=origin)
-
-    def clear_permissions(self) -> None:
-        self.context.clear_permissions()
-
-    def set_timezone(self, timezone_id: str) -> None:
-        """
-        重建 context 並指定時區（Playwright 不支援直接修改既有 context 的時區）
-        Recreate the context with ``timezoneId``; the existing page is closed.
-        """
-        web_runner_logger.info(f"playwright set_timezone: {timezone_id}")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(extra_options={"timezone_id": timezone_id})
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
-    def clock_install(self, fake_now_ms: float | None = None) -> None:
-        """Install Playwright's clock (requires Playwright 1.45+)."""
-        clock = getattr(self.context, "clock", None)
-        if clock is None:
-            raise PlaywrightBackendError(_CLOCK_API_UNAVAILABLE)
-        if fake_now_ms is None:
-            clock.install()
-        else:
-            clock.install(time=fake_now_ms)
-
-    def clock_set_time(self, time_ms: float) -> None:
-        clock = getattr(self.context, "clock", None)
-        if clock is None:
-            raise PlaywrightBackendError(_CLOCK_API_UNAVAILABLE)
-        clock.set_fixed_time(time_ms)
-
-    def clock_run_for(self, duration_ms: float) -> None:
-        clock = getattr(self.context, "clock", None)
-        if clock is None:
-            raise PlaywrightBackendError(_CLOCK_API_UNAVAILABLE)
-        clock.run_for(duration_ms)
-
-    def set_locale(
-        self,
-        locale: str,
-        accept_language: str | None = None,
-    ) -> None:
-        """
-        切換 ``locale`` 與 ``Accept-Language``（重建 context）
-        Recreate the context with the given ``locale`` (and optional
-        Accept-Language override). The current page is closed.
-        """
-        web_runner_logger.info(f"playwright set_locale: {locale}")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        options: dict[str, Any] = {"locale": locale}
-        if accept_language:
-            options["extra_http_headers"] = {"Accept-Language": accept_language}
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(extra_options=options)
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
-    def list_device_names(self) -> list[str]:
-        """Return all device names known to the active Playwright runtime."""
-        if self._playwright is None:
-            raise PlaywrightBackendError(_RUNTIME_NOT_STARTED)
-        devices = getattr(self._playwright, "devices", None) or {}
-        return sorted(devices.keys())
-
-    def start_har_recording(self, har_path: str, content: str = "omit") -> None:
-        """
-        於現有 browser 內重建 context 並開啟 HAR 錄製
-        Recreate the context with HAR recording enabled. Existing pages are
-        closed; a fresh page is opened on the new context.
-        """
-        web_runner_logger.info(f"playwright start_har_recording: {har_path}")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._build_context(har_path, content)
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
-
-    def stop_har_recording(self) -> None:
-        """
-        關閉並寫出當前 HAR，重建一個未錄製的 context
-        Close the recording context (which flushes the HAR file) and replace
-        it with a fresh non-recording context.
-        """
-        web_runner_logger.info("playwright stop_har_recording")
-        if self._browser is None:
-            raise PlaywrightBackendError(_BROWSER_NOT_LAUNCHED)
-        if self._context is not None:
-            self._context.close()
-        self._context = self._browser.new_context()
-        page = self._context.new_page()
-        self._pages = [page]
-        self._page_index = 0
+    def _open_context(self, storage_state: Any = None):
+        """Create a context with the merged options (plus ``storage_state`` carried from the last one)."""
+        kwargs = dict(self._context_options)
+        if storage_state is not None:
+            kwargs["storage_state"] = storage_state
+        context = self._browser.new_context(**kwargs)
+        context.on("page", self._track_page)
+        self._reapply_context_setup(context)
+        self._restart_tracing(context)
+        return context
 
     def quit(self) -> None:
-        """Close everything and stop the Playwright runtime."""
+        """
+        關閉所有瀏覽器並停止 Playwright
+        Close every browser this wrapper opened (for ``connect_over_cdp``: disconnect,
+        leaving it running; for a persistent profile: close its context), then stop
+        the runtime.
+        """
         web_runner_logger.info("playwright quit")
         try:
-            if self._browser is not None:
-                self._browser.close()
+            self._close_current()
+            for state in self._sessions:
+                if state is not None:
+                    self._restore(state)
+                    self._close_current()
         finally:
-            self._pages = []
-            self._page_index = -1
-            self._context = None
-            self._browser = None
-            if self._playwright is not None:
-                self._playwright.stop()
-            self._playwright = None
-
-    # ----- pages / tabs ------------------------------------------------
-
-    def new_page(self) -> int:
-        """Open a new page in the current context; returns its index."""
-        page = self.context.new_page()
-        self._pages.append(page)
-        self._page_index = len(self._pages) - 1
-        return self._page_index
-
-    def switch_to_page(self, index: int) -> None:
-        if index < 0 or index >= len(self._pages):
-            raise PlaywrightBackendError(f"page index {index} out of range")
-        self._page_index = index
-
-    def close_page(self, index: int | None = None) -> None:
-        target_index = self._page_index if index is None else index
-        if target_index < 0 or target_index >= len(self._pages):
-            raise PlaywrightBackendError(f"page index {target_index} out of range")
-        self._pages[target_index].close()
-        del self._pages[target_index]
-        if not self._pages:
-            self._page_index = -1
-        else:
-            self._page_index = min(self._page_index, len(self._pages) - 1)
-
-    def page_count(self) -> int:
-        return len(self._pages)
-
-    # ----- navigation --------------------------------------------------
-
-    def to_url(self, url: str, **goto_options: Any) -> None:
-        web_runner_logger.info(f"playwright to_url: {url}")
-        params = {"url": url}
-        try:
-            self.page.goto(url, **goto_options)
-            _record("to_url", params, None)
-        except Exception as error:
-            web_runner_logger.error(f"playwright to_url failed: {error!r}")
-            _record("to_url", params, error)
-
-    def forward(self) -> None:
-        self.page.go_forward()
-
-    def back(self) -> None:
-        self.page.go_back()
-
-    def refresh(self) -> None:
-        self.page.reload()
-
-    def url(self) -> str:
-        return self.page.url
-
-    def title(self) -> str:
-        return self.page.title()
-
-    def content(self) -> str:
-        return self.page.content()
-
-    def set_default_timeout(self, timeout_ms: float) -> None:
-        self.page.set_default_timeout(timeout_ms)
-
-    def set_default_navigation_timeout(self, timeout_ms: float) -> None:
-        self.page.set_default_navigation_timeout(timeout_ms)
-
-    # ----- finding -----------------------------------------------------
-
-    def find_element(self, selector: str):
-        web_runner_logger.info(f"playwright find_element: {selector}")
-        return self.page.query_selector(selector)
-
-    def find_elements(self, selector: str) -> list[Any]:
-        web_runner_logger.info(f"playwright find_elements: {selector}")
-        return self.page.query_selector_all(selector)
-
-    def find_element_with_test_object_record(self, element_name: str):
-        """
-        Resolve ``element_name`` from ``test_object_record`` and capture the
-        first matching element on ``element_wrapper``.
-        """
-        selector = selector_for_recorded_name(element_name)
-        element = self.page.query_selector(selector)
-        self.element_wrapper.current_element = element
-        return element
-
-    def find_elements_with_test_object_record(self, element_name: str):
-        selector = selector_for_recorded_name(element_name)
-        elements = self.page.query_selector_all(selector)
-        self.element_wrapper.current_element_list = list(elements)
-        if elements:
-            self.element_wrapper.current_element = elements[0]
-        return elements
-
-    # ----- direct page-level element shortcuts ------------------------
-
-    def click(self, selector: str, **options: Any) -> None:
-        web_runner_logger.info(f"playwright click: {selector}")
-        self.page.click(selector, **options)
-
-    def dblclick(self, selector: str, **options: Any) -> None:
-        self.page.dblclick(selector, **options)
-
-    def hover(self, selector: str, **options: Any) -> None:
-        self.page.hover(selector, **options)
-
-    def fill(self, selector: str, value: str, **options: Any) -> None:
-        web_runner_logger.info(f"playwright fill: {selector}")
-        self.page.fill(selector, value, **options)
-
-    def type_text(self, selector: str, value: str, delay: float = 0) -> None:
-        self.page.type(selector, value, delay=delay)
-
-    def press(self, selector: str, key: str) -> None:
-        self.page.press(selector, key)
-
-    def check(self, selector: str) -> None:
-        self.page.check(selector)
-
-    def uncheck(self, selector: str) -> None:
-        self.page.uncheck(selector)
-
-    def select_option(self, selector: str, value: Any) -> list[str]:
-        return self.page.select_option(selector, value)
-
-    def drag_and_drop(self, source_selector: str, target_selector: str, **options: Any) -> None:
-        self.page.drag_and_drop(source_selector, target_selector, **options)
-
-    # ----- script ------------------------------------------------------
-
-    def evaluate(self, expression: str, arg: Any = None):
-        return self.page.evaluate(expression, arg) if arg is not None else self.page.evaluate(expression)
-
-    def evaluate_handle(self, expression: str, arg: Any = None):
-        if arg is not None:
-            return self.page.evaluate_handle(expression, arg)
-        return self.page.evaluate_handle(expression)
-
-    # ----- cookies -----------------------------------------------------
-
-    def get_cookies(self) -> list[dict]:
-        return self.context.cookies()
-
-    def add_cookies(self, cookies: list[dict]) -> None:
-        self.context.add_cookies(cookies)
-
-    def clear_cookies(self) -> None:
-        self.context.clear_cookies()
-
-    # ----- screenshots -------------------------------------------------
-
-    def screenshot(self, path: str, full_page: bool = False) -> str:
-        self.page.screenshot(path=path, full_page=full_page)
-        return path
-
-    def screenshot_bytes(self, full_page: bool = False) -> bytes:
-        return self.page.screenshot(full_page=full_page)
-
-    # ----- waits -------------------------------------------------------
-
-    def wait_for_selector(self, selector: str, timeout: float | None = None, state: str = "visible"):
-        if timeout is None:
-            return self.page.wait_for_selector(selector, state=state)
-        return self.page.wait_for_selector(selector, timeout=timeout, state=state)
-
-    def wait_for_load_state(self, state: str = "load", timeout: float | None = None) -> None:
-        if timeout is None:
-            self.page.wait_for_load_state(state)
-        else:
-            self.page.wait_for_load_state(state, timeout=timeout)
-
-    def wait_for_timeout(self, timeout_ms: float) -> None:
-        self.page.wait_for_timeout(timeout_ms)
-
-    def wait_for_url(self, url: str, timeout: float | None = None) -> None:
-        if timeout is None:
-            self.page.wait_for_url(url)
-        else:
-            self.page.wait_for_url(url, timeout=timeout)
-
-    # ----- viewport / window ------------------------------------------
-
-    def set_viewport_size(self, width: int, height: int) -> None:
-        self.page.set_viewport_size({"width": width, "height": height})
-
-    def viewport_size(self) -> dict | None:
-        return self.page.viewport_size
-
-    # ----- mouse / keyboard -------------------------------------------
-
-    def mouse_click(self, x: float, y: float, button: str = "left", click_count: int = 1) -> None:
-        self.page.mouse.click(x, y, button=button, click_count=click_count)
-
-    def mouse_move(self, x: float, y: float, steps: int = 1) -> None:
-        self.page.mouse.move(x, y, steps=steps)
-
-    def mouse_down(self, button: str = "left", click_count: int = 1) -> None:
-        self.page.mouse.down(button=button, click_count=click_count)
-
-    def mouse_up(self, button: str = "left", click_count: int = 1) -> None:
-        self.page.mouse.up(button=button, click_count=click_count)
-
-    def keyboard_press(self, key: str) -> None:
-        self.page.keyboard.press(key)
-
-    def keyboard_type(self, text: str, delay: float = 0) -> None:
-        self.page.keyboard.type(text, delay=delay)
-
-    def keyboard_down(self, key: str) -> None:
-        self.page.keyboard.down(key)
-
-    def keyboard_up(self, key: str) -> None:
-        self.page.keyboard.up(key)
-
-    # ----- frames ------------------------------------------------------
-
-    def frames(self) -> list[Any]:
-        return list(self.page.frames)
-
-    def main_frame(self) -> Any:
-        return self.page.main_frame
-
-    # ----- network route mocking --------------------------------------
-
-    def route_mock(self, url_pattern: str, response: dict) -> None:
-        """
-        將符合 ``url_pattern`` 的請求以 stub 回應
-        Stub network requests matching ``url_pattern`` with a static response.
-
-        ``response`` 支援 keys: ``status`` (int), ``body`` (str/bytes),
-        ``headers`` (dict), ``content_type`` (str)。
-        """
-        web_runner_logger.info(f"playwright route_mock: {url_pattern}")
-        fulfill_kwargs = {
-            "status": response.get("status", 200),
-            "body": response.get("body", ""),
-            "headers": response.get("headers", {}),
-        }
-        if "content_type" in response:
-            fulfill_kwargs["content_type"] = response["content_type"]
-
-        def _handler(route, request):
-            route.fulfill(**fulfill_kwargs)
-
-        self.page.route(url_pattern, _handler)
-
-    def route_mock_json(self, url_pattern: str, json_data: Any, status: int = 200) -> None:
-        """JSON 便捷版本 / Convenience for JSON responses."""
-        import json as _json
-
-        self.route_mock(
-            url_pattern,
-            {
-                "status": status,
-                "body": _json.dumps(json_data),
-                "headers": {"Content-Type": "application/json"},
-                "content_type": "application/json",
-            },
-        )
-
-    def route_unmock(self, url_pattern: str) -> None:
-        """Remove a specific route handler (Playwright will fall through to network)."""
-        self.page.unroute(url_pattern)
-
-    def route_clear(self) -> None:
-        """Remove all route handlers on the current page."""
-        self.page.unroute_all()
+            self._sessions = []
+            self._session_index = -1
+            self._reset_state()
+            self._stop_runtime()
 
 
 playwright_wrapper_instance = PlaywrightWrapper()
@@ -666,12 +286,174 @@ def pw_set_locale(locale: str, accept_language: str | None = None) -> None:
     playwright_wrapper_instance.set_locale(locale, accept_language=accept_language)
 
 
+def pw_set_context_options(**options: Any) -> None:
+    playwright_wrapper_instance.set_context_options(**options)
+
+
+def pw_set_user_agent(user_agent: str) -> None:
+    playwright_wrapper_instance.set_user_agent(user_agent)
+
+
+def pw_set_extra_http_headers(headers: dict[str, str]) -> None:
+    playwright_wrapper_instance.set_extra_http_headers(headers)
+
+
+def pw_save_storage_state(path: str) -> str:
+    return playwright_wrapper_instance.save_storage_state(path)
+
+
+def pw_tracing_start(screenshots: bool = True, snapshots: bool = True, sources: bool = False) -> None:
+    playwright_wrapper_instance.start_tracing(screenshots=screenshots, snapshots=snapshots, sources=sources)
+
+
+def pw_tracing_save_chunk(path: str) -> str:
+    return playwright_wrapper_instance.save_trace_chunk(path)
+
+
+def pw_tracing_stop(path: str) -> str:
+    return playwright_wrapper_instance.stop_tracing(path)
+
+
+def pw_video_start(video_dir: str, width: int | None = None, height: int | None = None) -> None:
+    playwright_wrapper_instance.start_video_recording(video_dir, width=width, height=height)
+
+
+def pw_video_stop() -> list[str]:
+    return playwright_wrapper_instance.stop_video_recording()
+
+
+def pw_add_init_script(source: str) -> None:
+    playwright_wrapper_instance.add_init_script(source)
+
+
+def pw_block_urls(patterns: list[str]) -> None:
+    playwright_wrapper_instance.block_urls(patterns)
+
+
+def pw_unblock_urls() -> None:
+    playwright_wrapper_instance.unblock_urls()
+
+
+def pw_clear_geolocation() -> None:
+    playwright_wrapper_instance.clear_geolocation()
+
+
+def pw_bring_to_front() -> None:
+    playwright_wrapper_instance.bring_to_front()
+
+
+def pw_switch_to_page_by_url(pattern: str) -> bool:
+    return playwright_wrapper_instance.switch_to_page_by_url(pattern)
+
+
+def pw_switch_to_page_by_title(pattern: str) -> bool:
+    return playwright_wrapper_instance.switch_to_page_by_title(pattern)
+
+
+def pw_screenshot_base64(full_page: bool = False) -> str:
+    return playwright_wrapper_instance.screenshot_base64(full_page=full_page)
+
+
+def pw_print_page(file_path: str) -> str:
+    return playwright_wrapper_instance.print_page(file_path)
+
+
+def pw_scroll(scroll_x: float, scroll_y: float) -> None:
+    playwright_wrapper_instance.scroll(scroll_x, scroll_y)
+
+
+def pw_scroll_to_top() -> None:
+    playwright_wrapper_instance.scroll_to_top()
+
+
+def pw_scroll_to_bottom() -> None:
+    playwright_wrapper_instance.scroll_to_bottom()
+
+
+def pw_drag_and_drop_offset(selector: str, target_x: float, target_y: float) -> None:
+    playwright_wrapper_instance.drag_and_drop_offset(selector, target_x, target_y)
+
+
+def pw_get_cookie(name: str) -> dict | None:
+    return playwright_wrapper_instance.get_cookie(name)
+
+
+def pw_delete_cookie(name: str) -> None:
+    playwright_wrapper_instance.delete_cookie(name)
+
+
+def pw_check_current_page(check_dict: dict) -> None:
+    playwright_wrapper_instance.check_current_page(check_dict)
+
+
+def pw_switch_to_frame(selectors: str | list[str]) -> None:
+    playwright_wrapper_instance.switch_to_frame(selectors)
+
+
+def pw_switch_to_parent_frame() -> None:
+    playwright_wrapper_instance.switch_to_parent_frame()
+
+
+def pw_switch_to_main_frame() -> None:
+    playwright_wrapper_instance.switch_to_main_frame()
+
+
+def pw_find_by(by: str, value: str, wait: bool = True, **options: Any):
+    return playwright_wrapper_instance.find_by(by, value, wait=wait, **options)
+
+
+def pw_set_dialog_policy(action: str = "accept", prompt_text: str | None = None) -> None:
+    playwright_wrapper_instance.set_dialog_policy(action, prompt_text=prompt_text)
+
+
+def pw_last_dialog() -> dict | None:
+    return playwright_wrapper_instance.last_dialog()
+
+
+def pw_connect(ws_endpoint: str, browser: str = "chromium", context_options: dict | None = None) -> None:
+    playwright_wrapper_instance.connect(ws_endpoint, browser=browser, context_options=context_options)
+
+
+def pw_connect_over_cdp(endpoint_url: str) -> None:
+    playwright_wrapper_instance.connect_over_cdp(endpoint_url)
+
+
+def pw_launch_persistent(user_data_dir: str, browser: str = "chromium", headless: bool = True,
+                         extension_paths: list[str] | None = None, **context_options: Any) -> None:
+    playwright_wrapper_instance.launch_persistent(
+        user_data_dir, browser=browser, headless=headless, extension_paths=extension_paths, **context_options)
+
+
+def pw_download(selector: str, save_to: str) -> str:
+    return playwright_wrapper_instance.download(selector, save_to)
+
+
+def pw_set_cache_disabled(disabled: bool = True) -> None:
+    playwright_wrapper_instance.set_cache_disabled(disabled)
+
+
+def pw_new_browser(browser: str = "chromium", headless: bool = True, **launch_kwargs: Any) -> int:
+    return playwright_wrapper_instance.new_browser(browser=browser, headless=headless, **launch_kwargs)
+
+
+def pw_switch_browser(index: int) -> None:
+    playwright_wrapper_instance.switch_browser(index)
+
+
+def pw_close_browser() -> None:
+    playwright_wrapper_instance.close_browser()
+
+
+def pw_browser_count() -> int:
+    return playwright_wrapper_instance.browser_count()
+
+
 def pw_quit() -> None:
     playwright_wrapper_instance.quit()
 
 
-def pw_to_url(url: str) -> None:
-    playwright_wrapper_instance.to_url(url)
+def pw_to_url(url: str, **goto_options: Any) -> None:
+    playwright_wrapper_instance.to_url(url, **goto_options)
 
 
 def pw_forward() -> None:
@@ -738,44 +520,44 @@ def pw_find_elements_with_test_object_record(element_name: str):
     return playwright_wrapper_instance.find_elements_with_test_object_record(element_name)
 
 
-def pw_click(selector: str) -> None:
-    playwright_wrapper_instance.click(selector)
+def pw_click(selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.click(selector, **options)
 
 
-def pw_dblclick(selector: str) -> None:
-    playwright_wrapper_instance.dblclick(selector)
+def pw_dblclick(selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.dblclick(selector, **options)
 
 
-def pw_hover(selector: str) -> None:
-    playwright_wrapper_instance.hover(selector)
+def pw_hover(selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.hover(selector, **options)
 
 
-def pw_fill(selector: str, value: str) -> None:
-    playwright_wrapper_instance.fill(selector, value)
+def pw_fill(selector: str, value: str, **options: Any) -> None:
+    playwright_wrapper_instance.fill(selector, value, **options)
 
 
-def pw_type_text(selector: str, value: str, delay: float = 0) -> None:
-    playwright_wrapper_instance.type_text(selector, value, delay=delay)
+def pw_type_text(selector: str, value: str, delay: float = 0, **options: Any) -> None:
+    playwright_wrapper_instance.type_text(selector, value, delay=delay, **options)
 
 
-def pw_press(selector: str, key: str) -> None:
-    playwright_wrapper_instance.press(selector, key)
+def pw_press(selector: str, key: str, **options: Any) -> None:
+    playwright_wrapper_instance.press(selector, key, **options)
 
 
-def pw_check(selector: str) -> None:
-    playwright_wrapper_instance.check(selector)
+def pw_check(selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.check(selector, **options)
 
 
-def pw_uncheck(selector: str) -> None:
-    playwright_wrapper_instance.uncheck(selector)
+def pw_uncheck(selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.uncheck(selector, **options)
 
 
-def pw_select_option(selector: str, value: Any) -> list[str]:
-    return playwright_wrapper_instance.select_option(selector, value)
+def pw_select_option(selector: str, value: Any, **options: Any) -> list[str]:
+    return playwright_wrapper_instance.select_option(selector, value, **options)
 
 
-def pw_drag_and_drop(source_selector: str, target_selector: str) -> None:
-    playwright_wrapper_instance.drag_and_drop(source_selector, target_selector)
+def pw_drag_and_drop(source_selector: str, target_selector: str, **options: Any) -> None:
+    playwright_wrapper_instance.drag_and_drop(source_selector, target_selector, **options)
 
 
 def pw_evaluate(expression: str, arg: Any = None):

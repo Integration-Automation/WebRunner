@@ -25,6 +25,21 @@ class RecorderError(WebRunnerException):
     """Raised when the recorder cannot install or read events."""
 
 
+class PlaywrightScriptRunner:
+    """
+    讓錄製器以 Playwright 頁面執行腳本
+    Give the recorder the ``execute_script`` it expects, on the current Playwright
+    page: each constant script runs as the body of a function, as Selenium runs it.
+    """
+
+    def __init__(self, wrapper) -> None:
+        self._wrapper = wrapper
+
+    def execute_script(self, script: str):
+        """Run ``script`` as a function body in the current page and return its result."""
+        return self._wrapper.page.evaluate(f"() => {{ {script} }}")
+
+
 _RECORDER_JS = r"""
 (function() {
   if (window.__wr_recorder_installed) { return; }

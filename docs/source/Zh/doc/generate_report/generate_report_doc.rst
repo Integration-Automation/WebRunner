@@ -39,6 +39,28 @@ HTML 報告包含顏色編碼的表格：
     # 儲存為檔案（建立 test_results.html）
     generate_html_report("test_results")
 
+互動式 HTML 報告
+----------------
+
+``generate_interactive_html_report(html_name, screenshot_dir=None,
+har_path=None, a11y_results=None)``\ （``WR_generate_interactive_html_report``）
+寫出一個自給自足的 ``<html_name>.html``，沒有外部資源也沒有 script，每一段
+都以 ``<details>`` 展開：
+
+* 每個紀錄步驟的時間軸，失敗的預設展開，``screenshot_dir`` 的截圖內嵌在它
+  之後的步驟下（失敗截圖以時間命名，其他圖片依修改時間）；
+* 每個失敗的完整錯誤，斷言比較兩個值時（``a != b``、``expected X but got Y``）
+  再附上 unified diff；
+* 由 HAR 1.2 檔案畫出的網路瀑布圖；
+* axe-core 違規依嚴重度的徽章，來源可以是結果 dict 或它的 JSON 檔。
+
+.. code-block:: python
+
+    from je_web_runner import generate_interactive_html_report
+
+    generate_interactive_html_report("run", screenshot_dir="failures",
+                                     har_path="run.har", a11y_results="axe.json")
+
 JSON 報告
 ---------
 

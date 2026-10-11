@@ -17,21 +17,26 @@ Configuration
    * - Property
      - Value
    * - Log file
-     - ``WEBRunner.log``
+     - ``$WEBRUNNER_LOG_PATH`` (a full file path), else
+       ``$WEBRUNNER_LOG_DIR/WEBRunner.log``, else
+       ``~/.je_web_runner/logs/WEBRunner.log``
    * - Log level
      - ``WARNING`` and above
-   * - Max file size
-     - 1 GB (rotating)
+   * - Rotation
+     - when a process opens a file over 10 MB, it is moved to ``<name>.1``
    * - Log format
-     - ``%(asctime)s | %(name)s | %(levelname)s | %(message)s``
+     - ``%(asctime)s | %(process)d | %(name)s | %(levelname)s | %(message)s``
    * - Handler
      - ``RotatingFileHandler`` (custom ``WebRunnerLoggingHandler``)
 
 Log Output
 ----------
 
-The log file is created in the current working directory as ``WEBRunner.log``.
-When the file reaches 1 GB, it is rotated.
+Importing ``je_web_runner`` writes nothing: the file and its directory are
+created on the first record, and the file is appended to, so processes of one
+account can share it. A relative path resolves against the working directory at
+import time; ``os.devnull`` turns the file off. A file that cannot be opened is
+replaced by ``os.devnull`` with one ``RuntimeWarning``.
 
 Example log entries:
 

@@ -110,7 +110,26 @@ def compute_flake_scores(  # NOSONAR S3776 — cohesive logic; planned refactor 
     exceeds ``threshold``. Pass rate is the *unweighted* ratio so dashboards
     stay readable.
     """
-    runs = _load_runs(ledger_path)
+    return compute_flake_scores_from_runs(
+        _load_runs(ledger_path),
+        half_life_days=half_life_days, min_runs=min_runs, threshold=threshold, now_epoch=now_epoch,
+    )
+
+
+def compute_flake_scores_from_runs(  # NOSONAR S3776 — cohesive logic; planned refactor in follow-up
+    runs: list[dict[str, Any]],
+    *,
+    half_life_days: float = _DEFAULT_HALF_LIFE_DAYS,
+    min_runs: int = _DEFAULT_MIN_RUNS,
+    threshold: float = _DEFAULT_FLAKE_THRESHOLD,
+    now_epoch: float | None = None,
+) -> dict[str, FlakeScore]:
+    """
+    從已讀出的 run 紀錄計算 flake score
+    :func:`compute_flake_scores` for run records already read from a ledger
+    (``{"path", "passed", "time"}`` dicts), so a caller that has the runs does not
+    read the file twice.
+    """
     now = now_epoch if now_epoch is not None else time.time()
     buckets: dict[str, dict[str, Any]] = {}
     for run in runs:

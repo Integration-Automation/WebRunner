@@ -26,6 +26,7 @@ from je_web_runner.utils.generate_report.generate_html_report import generate_ht
 from je_web_runner.utils.generate_report.generate_json_report import generate_json_report
 from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml_report
 from je_web_runner.utils.generate_report.generate_xml_report import generate_xml_report
+from je_web_runner.utils.generate_report.report_path import report_path
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
 
@@ -74,6 +75,9 @@ def generate_all_reports(
              ``manifest_path``（manifest 檔位置或 None）
     """
     web_runner_logger.info(f"generate_all_reports base={base_name}")
+    # Resolved once, so the generators, the expected paths and the manifest agree on where the files are.
+    base_name = report_path(base_name)
+    allure_dir = report_path(allure_dir) if allure_dir else None
     plan = expected_paths(base_name, allure_dir=allure_dir)
     errors: dict[str, str] = {}
 

@@ -6,24 +6,40 @@ Executor API
 Class: Executor
 ---------------
 
-The action execution engine that maps command strings to callable functions.
+The action execution engine that maps command strings to callable functions. It is a
+``je_action_core.ActionExecutor``: the core runs the list, keys and prints the records and holds the
+commands; WebRunner adds its action format, the command gates, the retry policy, the action span and the
+failure screenshots and traces.
 
 .. code-block:: python
 
-    class Executor:
+    class Executor(ActionExecutor):
 
         event_dict: dict
             # Maps command names (str) to callable functions.
-            # Includes all WR_* commands and Python built-in functions.
+            # Includes all WR_* commands and the SAFE_BUILTINS allowlist of Python built-ins.
 
         def execute_action(self, action_list: Union[list, dict]) -> dict:
             """
-            Execute a sequence of actions.
+            Execute a sequence of actions and print each record's key and value.
 
             :param action_list: list of actions or dict with "webdriver_wrapper" key
-                Format: [["command", {params}], ["command"], ...]
-            :return: dict mapping each action description to its return value
-            :raises WebRunnerExecuteException: if action_list is empty or invalid
+                Format: [["command", {params}], ["command"], ...]; an empty list runs nothing
+            :return: dict mapping "execute: <action>" (repeats numbered " #2", " #3" ...) to the return
+                value, or to the error text (with any failure screenshot or trace) when the action failed
+            :raises WebRunnerExecuteException: if action_list is not a list or a dict holding one
+            """
+
+        def collect_action_results(self, action_list: Union[list, dict]) -> tuple[dict, list[str]]:
+            """
+            Like execute_action, but prints nothing; also returns the keys of the actions that failed.
+            """
+
+        def execute_one(self, action: list) -> Any:
+            """
+            Run one action through the same gates, retries and span and return its value.
+
+            :raises WebRunnerExecuteException: when it is malformed or fails (the original error is __cause__)
             """
 
         def execute_files(self, execute_files_list: list) -> list:
@@ -34,13 +50,19 @@ The action execution engine that maps command strings to callable functions.
             :return: list of execution result dicts (one per file)
             """
 
+        def attempt(self, action: list):
+            """
+            Run one action under the retry policy and the action span; every action of a list passes here.
+            """
+
         def _execute_event(self, action: list):
             """
-            Execute a single action from the event dictionary.
+            Execute a single action once: refused commands and the arbitrary-script gate first, then the lookup.
 
-            :param action: ["command_name"] or ["command_name", {kwargs}] or ["command_name", [args]]
+            :param action: ["command_name"], ["command_name", {kwargs}], ["command_name", [args]]
+                or ["command_name", [args], {kwargs}]
             :return: return value of the executed function
-            :raises WebRunnerExecuteException: if command not found or invalid format
+            :raises WebRunnerExecuteException: if the command is refused, not found, or the format is invalid
             """
 
 Registered Commands (event_dict)
@@ -115,7 +137,9 @@ Registered Commands (event_dict)
 ``WR_add_package_to_executor``, ``WR_add_package_to_callback_executor``
 
 **Python Built-ins:**
-All Python built-in functions (``print``, ``len``, ``type``, etc.)
+Only the ``SAFE_BUILTINS`` allowlist shared with the other frameworks: ``abs``, ``all``, ``any``, ``ascii``,
+``bin``, ``callable``, ``chr``, ``divmod``, ``format``, ``hash``, ``hex``, ``len``, ``max``, ``min``, ``oct``,
+``ord``, ``pow``, ``print``, ``repr``, ``round``, ``sorted``, ``sum``
 
 Module-level Functions
 ----------------------

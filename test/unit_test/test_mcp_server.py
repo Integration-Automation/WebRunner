@@ -30,6 +30,38 @@ class TestMcpServer(unittest.TestCase):
         info = result["result"]["serverInfo"]
         self.assertEqual(info["name"], "webrunner-mcp")
 
+    def test_initialize_echoes_a_supported_protocol_version(self):
+        for version in ("2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"):
+            result = McpServer().handle({"id": 1, "method": "initialize",
+                                         "params": {"protocolVersion": version}})
+            self.assertEqual(result["result"]["protocolVersion"], version)
+
+    def test_initialize_answers_an_unknown_version_with_the_newest(self):
+        result = McpServer().handle({"id": 1, "method": "initialize",
+                                     "params": {"protocolVersion": "1999-01-01"}})
+        self.assertEqual(result["result"]["protocolVersion"], "2025-11-25")
+
+    def test_initialize_reports_package_version_instructions_and_only_tools(self):
+        from je_web_runner.mcp_server.server import server_version
+        result = McpServer().handle({"id": 1, "method": "initialize",
+                                     "params": {"protocolVersion": "2025-11-25"}})["result"]
+        self.assertEqual(result["serverInfo"]["version"], server_version())
+        self.assertNotEqual(result["serverInfo"]["version"], "0.1.0")
+        self.assertIn("webrunner_list_commands", result["instructions"])
+        self.assertEqual(set(result["capabilities"]), {"tools"})
+        self.assertIn("description", result["serverInfo"])
+
+    def test_server_description_only_from_2025_11_25(self):
+        result = McpServer().handle({"id": 1, "method": "initialize",
+                                     "params": {"protocolVersion": "2024-11-05"}})["result"]
+        self.assertNotIn("description", result["serverInfo"])
+
+    def test_resources_and_shutdown_are_not_offered(self):
+        server = McpServer()
+        for method in ("resources/list", "shutdown"):
+            result = server.handle({"id": 7, "method": method})
+            self.assertEqual(result["error"]["code"], -32601, method)
+
     def test_tools_list(self):
         server = McpServer()
         server.register(_tool())
@@ -68,6 +100,37 @@ class TestMcpServer(unittest.TestCase):
         result = server.handle({"id": 9, "method": 42})
         self.assertEqual(result["error"]["code"], -32600)
 
+    def test_unknown_notification_gets_no_reply(self):
+        # JSON-RPC: a message without "id" is a notification and must never be answered.
+        server = McpServer()
+        self.assertIsNone(server.handle({"jsonrpc": "2.0", "method": "notifications/cancelled",
+                                         "params": {"requestId": 1}}))
+        self.assertIsNone(server.handle({"jsonrpc": "2.0", "method": 42}))
+
+    def test_unknown_tool_is_invalid_params(self):
+        server = McpServer()
+        result = server.handle({"id": 4, "method": "tools/call",
+                                "params": {"name": "ghost", "arguments": {}}})
+        self.assertEqual(result["error"]["code"], -32602)
+
+    def test_non_object_arguments_are_invalid_params(self):
+        server = McpServer()
+        server.register(_tool())
+        result = server.handle({"id": 4, "method": "tools/call",
+                                "params": {"name": "echo", "arguments": [1]}})
+        self.assertEqual(result["error"]["code"], -32602)
+
+    def test_handler_failure_is_a_tool_error_not_a_protocol_error(self):
+        def boom(_args):
+            raise ValueError("index must be an integer")
+        server = McpServer()
+        server.register(_tool(handler=boom))
+        result = server.handle({"id": 5, "method": "tools/call",
+                                "params": {"name": "echo", "arguments": {}}})
+        self.assertNotIn("error", result)
+        self.assertTrue(result["result"]["isError"])
+        self.assertIn("index must be an integer", result["result"]["content"][0]["text"])
+
 
 class TestStdioLoop(unittest.TestCase):
 
@@ -85,6 +148,31 @@ class TestStdioLoop(unittest.TestCase):
         self.assertEqual(len(lines), 2)
         self.assertEqual(lines[0]["id"], 1)
         self.assertEqual(lines[1]["id"], 2)
+
+    def test_batch_is_rejected_with_one_error(self):
+        # JSON-RPC batching was removed from MCP in 2025-06-18.
+        server = McpServer()
+        server.register(_tool())
+        stdin = io.StringIO(json.dumps([
+            {"jsonrpc": "2.0", "id": 1, "method": "tools/list"},
+            {"jsonrpc": "2.0", "id": 2, "method": "tools/list"},
+        ]) + "\n")
+        stdout = io.StringIO()
+        serve_stdio(stdin=stdin, stdout=stdout, server=server)
+        lines = [json.loads(line) for line in stdout.getvalue().splitlines() if line]
+        self.assertEqual(len(lines), 1)
+        self.assertIsNone(lines[0]["id"])
+        self.assertEqual(lines[0]["error"]["code"], -32600)
+
+
+class TestPackageExports(unittest.TestCase):
+
+    def test_package_exports_what_the_readme_imports(self):
+        # README › MCP Server: from je_web_runner.mcp_server import McpServer, Tool, ...
+        import je_web_runner.mcp_server as package
+        for name in ("McpServer", "Tool", "ToolResult", "build_default_tools", "serve_stdio"):
+            self.assertIn(name, package.__all__)
+            self.assertTrue(hasattr(package, name))
 
 
 class TestDefaultTools(unittest.TestCase):
@@ -281,6 +369,97 @@ class TestBrowserTools(unittest.TestCase):
         self.assertIn('"stdout"', body)
         self.assertIn('"record"', body)
         self.assertIn("WR_sleep", body)
+
+    def test_run_actions_reports_a_failed_action_as_tool_error(self):
+        result = self._call("webrunner_run_actions",
+                            {"actions": [["WR_sleep", {"seconds": 0}], ["WR_no_such_command"]]})
+        self.assertTrue(result["result"]["isError"])
+        payload = json.loads(result["result"]["content"][0]["text"])
+        self.assertEqual(payload["failed"], ["execute: ['WR_no_such_command']"])
+        self.assertEqual(len(payload["record"]), 2)
+
+    def test_run_actions_returns_structured_content(self):
+        result = self._call("webrunner_run_actions", {"actions": [["WR_sleep", {"seconds": 0}]]})["result"]
+        self.assertEqual(result["structuredContent"], json.loads(result["content"][0]["text"]))
+        self.assertEqual(result["structuredContent"]["failed"], [])
+
+
+class TestToolMetadata(unittest.TestCase):
+    """Every shipped tool carries what MCP 2025-06-18+ clients use to present and gate it."""
+
+    def setUp(self):
+        self.tools = make_default_server()._tools_list()["tools"]  # pylint: disable=protected-access
+
+    def test_every_tool_has_a_title_and_annotations(self):
+        for tool in self.tools:
+            self.assertTrue(tool.get("title"), tool["name"])
+            self.assertIn("readOnlyHint", tool["annotations"], tool["name"])
+
+    def test_only_the_browser_tools_have_side_effects(self):
+        browser = {"webrunner_run_actions", "webrunner_run_action_files"}
+        for tool in self.tools:
+            hints = tool["annotations"]
+            if tool["name"] in browser:
+                self.assertFalse(hints["readOnlyHint"], tool["name"])
+                self.assertTrue(hints["destructiveHint"], tool["name"])
+                self.assertTrue(hints["openWorldHint"], tool["name"])
+            else:
+                self.assertTrue(hints["readOnlyHint"], tool["name"])
+                self.assertFalse(hints["openWorldHint"], tool["name"])
+
+    def test_every_input_schema_is_closed_and_described(self):
+        for tool in self.tools:
+            schema = tool["inputSchema"]
+            self.assertIs(schema.get("additionalProperties"), False, tool["name"])
+            for name, spec in schema["properties"].items():
+                self.assertTrue(spec.get("description"), f"{tool['name']}.{name}")
+
+    def test_names_fit_the_convention(self):
+        import re
+        for tool in self.tools:
+            self.assertRegex(tool["name"], re.compile(r"^webrunner_[a-z0-9_]+$"))
+            self.assertLessEqual(len(tool["name"]), 48, tool["name"])
+
+    def test_browser_tools_declare_their_output(self):
+        by_name = {tool["name"]: tool for tool in self.tools}
+        for name in ("webrunner_run_actions", "webrunner_run_action_files"):
+            self.assertEqual(by_name[name]["outputSchema"]["type"], "object", name)
+
+
+class TestArgumentValidation(unittest.TestCase):
+    """Bad arguments come back as tool errors the model can read and fix (MCP 2025-11-25, SEP-1303)."""
+
+    def setUp(self):
+        self.server = make_default_server()
+
+    def _call(self, name, arguments):
+        return self.server.handle({"id": 1, "method": "tools/call", "params": {
+            "name": name, "arguments": arguments,
+        }})["result"]
+
+    def test_missing_required_argument(self):
+        result = self._call("webrunner_partition_shard", {"paths": ["a"], "index": 1})
+        self.assertTrue(result["isError"])
+        self.assertIn("'total'", result["content"][0]["text"])
+
+    def test_wrong_type(self):
+        result = self._call("webrunner_partition_shard", {"paths": ["a"], "index": "x", "total": 2})
+        self.assertTrue(result["isError"])
+        self.assertIn("'index'", result["content"][0]["text"])
+
+    def test_boolean_is_not_an_integer(self):
+        result = self._call("webrunner_partition_shard", {"paths": ["a"], "index": True, "total": 2})
+        self.assertTrue(result["isError"])
+
+    def test_unknown_argument(self):
+        result = self._call("webrunner_locator_strength", {"strategy": "ID", "value": "x", "extra": 1})
+        self.assertTrue(result["isError"])
+        self.assertIn("'extra'", result["content"][0]["text"])
+
+    def test_null_optional_argument_counts_as_omitted(self):
+        result = self._call("webrunner_summary_markdown",
+                            {"total": 1, "passed": 1, "failed": 0, "run_url": None})
+        self.assertFalse(result["isError"])
 
 
 if __name__ == "__main__":

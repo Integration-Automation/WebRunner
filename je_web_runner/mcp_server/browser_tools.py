@@ -7,10 +7,13 @@ payload through to ``execute_action`` / ``execute_files``.
 
 Two hazards are handled here so the rest of the protocol stays clean:
 
-* ``execute_action`` prints each record to stdout. The MCP server speaks
-  JSON-RPC over stdout, so stray prints corrupt the wire. We redirect stdout
-  into a buffer for the duration of the call and surface it as ``stdout`` in
-  the result.
+* The executor's ``execute_action`` prints each record to stdout, and some
+  commands print too. The tools call the quiet ``collect_action_results`` and
+  still redirect stdout into a buffer for the duration of the call, surfacing
+  it as ``stdout`` in the result.
+* A failed action does not raise: the executor records its error. The tools
+  list the failed record keys under ``failed`` and set the result's
+  ``isError`` when there is any.
 * Action return values may contain WebDriver / WebElement instances that
   ``json.dumps`` cannot serialise. ``_serialize_value`` reduces those to
   ``repr()`` strings before the server's encoder sees them.
@@ -21,7 +24,8 @@ import io
 from contextlib import redirect_stdout
 from typing import Any
 
-from je_web_runner.mcp_server.server import McpServerError, Tool
+from je_web_runner.mcp_server._policy import checked_path, denied_commands
+from je_web_runner.mcp_server._types import DRIVES_BROWSER, READ_ONLY, McpServerError, Tool, ToolResult
 
 
 def _serialize_value(value: Any) -> Any:
@@ -38,31 +42,40 @@ def _serialize_record(record: dict[Any, Any]) -> dict[str, Any]:
     return {str(key): _serialize_value(value) for key, value in record.items()}
 
 
-def _tool_run_actions(arguments: dict[str, Any]) -> Any:
-    from je_web_runner.utils.executor.action_executor import execute_action
+def _tool_run_actions(arguments: dict[str, Any]) -> ToolResult:
+    from je_web_runner.utils.executor.action_executor import executor
     actions = arguments.get("actions")
     if not isinstance(actions, list):
         raise McpServerError("'actions' must be a list of [name, params] entries")
     buffer = io.StringIO()
-    with redirect_stdout(buffer):
-        record = execute_action(actions)
-    return {"stdout": buffer.getvalue(), "record": _serialize_record(record)}
+    with redirect_stdout(buffer), executor.restricted(denied_commands()):
+        record, failed = executor.collect_action_results(actions)
+    return ToolResult(
+        {"stdout": buffer.getvalue(), "record": _serialize_record(record), "failed": failed},
+        is_error=bool(failed),
+    )
 
 
-def _tool_run_action_files(arguments: dict[str, Any]) -> Any:
-    from je_web_runner.utils.executor.action_executor import execute_files
+def _tool_run_action_files(arguments: dict[str, Any]) -> ToolResult:
+    from je_web_runner.utils.executor.action_executor import executor
+    from je_web_runner.utils.json.json_file.json_file import read_action_json
     files = arguments.get("files")
     if not isinstance(files, list):
         raise McpServerError("'files' must be a list of file paths")
     if not all(isinstance(path, str) for path in files):
         raise McpServerError("each entry in 'files' must be a string path")
+    paths = [checked_path(path) for path in files]
     buffer = io.StringIO()
-    with redirect_stdout(buffer):
-        results = execute_files(files)
-    return {
-        "stdout": buffer.getvalue(),
-        "records": [_serialize_record(record) for record in results],
-    }
+    records, failed = [], []
+    with redirect_stdout(buffer), executor.restricted(denied_commands()):
+        for path in paths:
+            record, file_failed = executor.collect_action_results(read_action_json(path))
+            records.append(_serialize_record(record))
+            failed.append(file_failed)
+    return ToolResult(
+        {"stdout": buffer.getvalue(), "records": records, "failed": failed},
+        is_error=any(failed),
+    )
 
 
 def _tool_list_commands(_arguments: dict[str, Any]) -> Any:
@@ -75,6 +88,7 @@ def build_browser_tools() -> list[Tool]:
     return [
         Tool(
             name="webrunner_run_actions",
+            title="Run actions in a browser",
             description=(
                 "Execute a WebRunner action list against a real browser. Each"
                 " entry is [command_name, params] where params is a dict of"
@@ -95,39 +109,73 @@ def build_browser_tools() -> list[Tool]:
                 " WR_enable_fetch_interception/disable_fetch_interception/"
                 "fetch_continue_request/fetch_fulfill_request/fetch_fail_request."
                 " Call webrunner_list_commands for the full list. Returns"
-                " {'stdout': str, 'record': {action_repr: result}}."
+                " {'stdout': str, 'record': {action_repr: result or error},"
+                " 'failed': [action_repr]}; isError is true when any action failed."
             ),
             input_schema={
                 "type": "object",
-                "properties": {"actions": {"type": "array"}},
+                "properties": {"actions": {
+                    "type": "array", "items": {"type": "array"},
+                    "description": "WebRunner action list: [command_name, params] entries.",
+                }},
                 "required": ["actions"],
+                "additionalProperties": False,
             },
             handler=_tool_run_actions,
+            annotations=DRIVES_BROWSER,
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "stdout": {"type": "string"},
+                    "record": {"type": "object"},
+                    "failed": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["stdout", "record", "failed"],
+            },
         ),
         Tool(
             name="webrunner_run_action_files",
+            title="Run action files in a browser",
             description=(
                 "Read one or more JSON action files from disk and execute"
                 " them sequentially against a real browser. Returns"
-                " {'stdout': str, 'records': [<per-file record>]}."
+                " {'stdout': str, 'records': [<per-file record>],"
+                " 'failed': [[<failed action_repr>] per file]}; isError is true"
+                " when any action failed."
             ),
             input_schema={
                 "type": "object",
                 "properties": {
-                    "files": {"type": "array", "items": {"type": "string"}},
+                    "files": {
+                        "type": "array", "items": {"type": "string"},
+                        "description": "Paths of action JSON files, run in order.",
+                    },
                 },
                 "required": ["files"],
+                "additionalProperties": False,
             },
             handler=_tool_run_action_files,
+            annotations=DRIVES_BROWSER,
+            output_schema={
+                "type": "object",
+                "properties": {
+                    "stdout": {"type": "string"},
+                    "records": {"type": "array", "items": {"type": "object"}},
+                    "failed": {"type": "array", "items": {"type": "array", "items": {"type": "string"}}},
+                },
+                "required": ["stdout", "records", "failed"],
+            },
         ),
         Tool(
             name="webrunner_list_commands",
+            title="List the WR_* commands",
             description=(
                 "Return every WR_* command currently registered in the"
                 " executor, so a caller can discover the action surface"
                 " before composing webrunner_run_actions payloads."
             ),
-            input_schema={"type": "object", "properties": {}},
+            input_schema={"type": "object", "properties": {}, "additionalProperties": False},
             handler=_tool_list_commands,
+            annotations=READ_ONLY,
         ),
     ]

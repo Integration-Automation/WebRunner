@@ -4,6 +4,7 @@ from importlib.util import find_spec
 from inspect import getmembers, isfunction, isbuiltin, isclass
 from sys import stderr
 
+from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
 _VALID_MODULE_NAME = re.compile(r"^[A-Za-z_]\w*(\.[A-Za-z_]\w*)*$", re.ASCII)
@@ -20,6 +21,40 @@ class PackageManager:
         # Target executors (Executor / CallbackExecutor)
         self.executor = None
         self.callback_executor = None
+
+        # 套件閘門：預設只載入允許清單上的套件；True 則任何套件都載入
+        # Package gate. False (the default) = only ``allowed_packages``; True = any package.
+        self.allow_arbitrary_packages: bool = False
+        self.allowed_packages: set[str] = set()
+
+    def set_allow_arbitrary_packages(self, enabled: bool) -> None:
+        """
+        設定是否允許載入允許清單以外的套件
+        Allow (True) or refuse (False) packages outside :attr:`allowed_packages`.
+        Deliberately not a ``WR_*`` command: an action file must not open its own gate.
+        """
+        self.allow_arbitrary_packages = bool(enabled)
+
+    def allow_packages(self, *packages: str) -> None:
+        """
+        把套件加入允許清單（連同其子模組）
+        Add packages to the allowlist; a listed package also allows its submodules.
+        """
+        self.allowed_packages.update(packages)
+
+    def _is_allowlisted(self, package: str) -> bool:
+        return any(package == allowed or package.startswith(allowed + ".") for allowed in self.allowed_packages)
+
+    def _check_allowed(self, package) -> None:
+        """Refuse ``package`` before it is imported, unless the gate lets it through."""
+        if isinstance(package, str) and self._is_allowlisted(package):
+            return
+        if self.allow_arbitrary_packages:
+            return
+        raise WebRunnerExecuteException(
+            f"package {package!r} is not allowed; the host must call "
+            "executor.allow_packages(...) or executor.set_allow_arbitrary_packages(True)"
+        )
 
     def check_package(self, package: str) -> str | None:
         """
@@ -53,6 +88,7 @@ class PackageManager:
         :param package: 套件名稱 / package name
         """
         web_runner_logger.info(f"add_package_to_executor, package: {package}")
+        self._check_allowed(package)
         self.add_package_to_target(
             package=package,
             target=self.executor
@@ -66,6 +102,7 @@ class PackageManager:
         :param package: 套件名稱 / package name
         """
         web_runner_logger.info(f"add_package_to_callback_executor, package: {package}")
+        self._check_allowed(package)
         self.add_package_to_target(
             package=package,
             target=self.callback_executor

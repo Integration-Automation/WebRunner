@@ -56,6 +56,15 @@ def compute_trend(ledger_path: str) -> dict[str, Any]:
     runs = data.get("runs")
     if not isinstance(runs, list):
         raise TrendDashboardError("ledger missing 'runs' list")
+    return compute_trend_from_runs(runs)
+
+
+def compute_trend_from_runs(runs: list[Any]) -> dict[str, Any]:
+    """
+    從已讀出的 run 紀錄計算趨勢
+    :func:`compute_trend` for run records already read from a ledger; entries that
+    are not dicts are skipped.
+    """
     buckets: dict[str, _Bucket] = defaultdict(lambda: _Bucket(label="?"))
     for entry in runs:
         if not isinstance(entry, dict):

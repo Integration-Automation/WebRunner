@@ -1,8 +1,8 @@
 import time
 import unittest
 
+from je_web_runner.utils.executor._event_table import _sleep_seconds
 from je_web_runner.utils.executor.action_executor import (
-    _sleep_seconds,
     execute_action,
     executor,
 )

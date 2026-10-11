@@ -6,6 +6,7 @@ sends an initialize → tools/list → tools/call sequence, and asserts the
 JSON-RPC envelopes round-trip the way an MCP client expects.
 """
 import json
+import os
 import subprocess  # nosec B404 — argv-only invocation, controlled args
 import sys
 import unittest
@@ -24,7 +25,7 @@ _LOCATOR_CALL = {
         "arguments": {"strategy": "ID", "value": "submit"},
     },
 }
-_SHUTDOWN = {"jsonrpc": "2.0", "id": 4, "method": "shutdown"}
+_PING = {"jsonrpc": "2.0", "id": 4, "method": "ping"}
 
 
 def _spawn():
@@ -63,16 +64,16 @@ def _parse_messages(stdout_data):
 
 class TestMcpSubprocess(unittest.TestCase):
 
-    def test_init_list_call_shutdown(self):
+    def test_init_list_call_ping(self):
         proc = _spawn()
         stdout_data, stderr_data = _drive(proc, [
-            _INIT, _INITIALIZED, _LIST, _LOCATOR_CALL, _SHUTDOWN,
+            _INIT, _INITIALIZED, _LIST, _LOCATOR_CALL, _PING,
         ])
         self.assertEqual(proc.returncode, 0,
                          msg=f"non-zero exit; stderr={stderr_data!r}")
         responses = _parse_messages(stdout_data)
         ids = sorted(msg["id"] for msg in responses if "id" in msg)
-        # initialize / tools/list / tools/call / shutdown all return responses;
+        # initialize / tools/list / tools/call / ping all return responses;
         # notifications/initialized doesn't.
         self.assertEqual(ids, [1, 2, 3, 4])
 
@@ -87,6 +88,28 @@ class TestMcpSubprocess(unittest.TestCase):
         call_response = next(m for m in responses if m.get("id") == 3)
         text = call_response["result"]["content"][0]["text"]
         self.assertIn("score", text)
+
+    def test_stdio_is_utf8_with_lf_line_ends_whatever_the_console_code_page(self):
+        # The client writes UTF-8 bytes; on a cp950/cp1252 console the server used
+        # to decode them with the locale code page and misplace every match.
+        call = {"jsonrpc": "2.0", "id": 8, "method": "tools/call", "params": {
+            "name": "webrunner_scan_pii", "arguments": {"text": "測試 alice@example.com"},
+        }}
+        env = {key: value for key, value in os.environ.items() if key != "PYTHONUTF8"}
+        env["PYTHONIOENCODING"] = "latin-1"  # a non-UTF-8 console, reproducible on every OS
+        # Fixed test command or protocol-mandated digest; no untrusted shell/security hash.
+        # nosemgrep: python.lang.security.audit.dangerous-subprocess-use-audit.dangerous-subprocess-use-audit
+        proc = subprocess.Popen(  # nosec B603 — argv list, no shell
+            [sys.executable, "-m", "je_web_runner.mcp_server"],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
+        )
+        payload = (json.dumps(call, ensure_ascii=False) + "\n").encode("utf-8")
+        stdout_data, stderr_data = proc.communicate(input=payload, timeout=30)
+        self.assertEqual(proc.returncode, 0, msg=stderr_data.decode("utf-8", "replace"))
+        self.assertNotIn(b"\r\n", stdout_data)
+        response = json.loads(stdout_data.decode("utf-8").splitlines()[0])
+        matches = json.loads(response["result"]["content"][0]["text"])
+        self.assertEqual(matches[0]["start"], 3)
 
     def test_unknown_method_returns_error(self):
         proc = _spawn()

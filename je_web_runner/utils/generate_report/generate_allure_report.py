@@ -21,6 +21,7 @@ from typing import Any
 
 from je_web_runner.utils.exception.exception_tags import cant_generate_json_report
 from je_web_runner.utils.exception.exceptions import WebRunnerGenerateJsonReportException
+from je_web_runner.utils.generate_report.report_path import report_path
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
@@ -105,7 +106,7 @@ def generate_allure_report(output_dir: str = "allure-results") -> list[str]:
     """
     web_runner_logger.info(f"generate_allure_report: {output_dir}")
     cases = generate_allure()
-    target_dir = Path(output_dir)
+    target_dir = Path(report_path(output_dir))
     target_dir.mkdir(parents=True, exist_ok=True)
     written: list[str] = []
     for case in cases:

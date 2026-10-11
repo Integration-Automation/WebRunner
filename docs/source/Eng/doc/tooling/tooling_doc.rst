@@ -42,7 +42,15 @@ Test impact analysis
 ``impact_analysis.build_index("./actions")`` walks every action JSON
 file and projects locator names, URLs, template names, and ``WR_*``
 command names into a reverse index. Combine with
-``sharding.diff_shard`` for a smarter test selection:
+``sharding.diff_shard`` for a smarter test selection.
+``build_index("./actions", cache_path=".webrunner_impact_cache.json")``
+parses only the files that changed: one with the same modification time and
+size is reused from the cache, and one whose time changed (a fresh checkout)
+is reused when its SHA-256 matches. On the command line,
+``-d DIR --affected-by locator:NAME`` (or ``url:`` / ``template:`` /
+``command:``, repeatable, ``@file`` for a list) and ``--changed-since REF``
+(the changed action files plus those sharing a locator or template with
+them) select with it, ``--impact-cache PATH`` caching the index:
 
 .. code-block:: python
 

@@ -5,7 +5,9 @@ Observability
 * **Failure auto-screenshot** — set
   ``executor.set_failure_screenshot_dir(path)``; failed actions write a PNG
   named ``<timestamp>_<command>.png`` and the path is appended to the
-  execution record.
+  execution record. While a Playwright trace is recording
+  (``WR_pw_tracing_start``), the trace so far is also saved as
+  ``<timestamp>_<command>.trace.zip`` beside it and named in the record.
 * **Retry policy** — ``executor.set_retry_policy(retries, backoff)``; linear
   backoff between attempts, propagates the original error after the final
   retry.
@@ -14,6 +16,21 @@ Observability
   dependency.
 * **Live progress dashboard** — ``start_dashboard("127.0.0.1", 8080)``
   serves a tiny stdlib HTTP page that polls the records every second.
+* **Aggregated dashboard** — ``DashboardServer(DashboardConfig(...)).start()``
+  (``utils/live_dashboard``) shows history from the files other modules
+  write: ``ledger_path`` (runs, daily pass-rate chart, flake scores),
+  ``quarantine_path``, ``locator_findings_path``, ``schedule_path``
+  (``test_scheduler``) and ``triage_report_path`` (``failure_triage``).
+  Pages: Overview, Runs, Flake, Quarantine, Locators, Schedule, Triage; each
+  source left as ``None`` shows an empty state naming the field to set.
+  Tables sort and filter, times show in the browser's time zone, and the
+  data refreshes every 15 seconds (with a Pause button); light and dark
+  follow the system. The same data is JSON under ``/api/summary``,
+  ``/api/runs``, ``/api/flake``, ``/api/quarantine``, ``/api/locators``,
+  ``/api/schedule``, ``/api/triage`` and ``/api/trend``. Standard library
+  only, bound to 127.0.0.1 by default; pages work without JavaScript and are
+  served under ``Content-Security-Policy: default-src 'self'`` with every
+  value HTML-escaped.
 * **Replay studio** — ``export_replay_studio(out, screenshot_dir=…)``
   composes records + matching failure screenshots into a single HTML
   timeline.

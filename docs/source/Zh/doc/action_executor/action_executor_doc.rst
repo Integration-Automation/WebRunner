@@ -7,7 +7,7 @@
 動作執行器是一個強大的引擎，將指令字串對應到可呼叫的函式。
 它允許您將自動化腳本定義為 JSON 動作列表，實現資料驅動的自動化工作流程。
 
-執行器還包含所有 Python 內建函式，因此可以在動作列表中呼叫 ``print``、``len`` 等。
+執行器還註冊了一份 Python 內建函式允許清單（``SAFE_BUILTINS``：``print``、``len``、``sorted``、``sum`` …），因此可以在動作列表中呼叫它們；``eval``、``exec``、``open`` 這類函式不會註冊。
 
 動作格式
 --------
@@ -40,7 +40,24 @@
 
     result = execute_action(actions)
 
-``execute_action()`` 回傳一個字典，將每個動作對應到其回傳值。
+``execute_action()`` 回傳一個字典，將每個動作（``"execute: <action>"``）對應到其回傳值。
+完全相同的動作重複出現時，鍵會加上 ``#2``、``#3``……，每個步驟的結果都會保留。
+
+失敗的動作會記在這個字典裡，然後繼續執行下一個。若要執行單一動作並拿回它的值，
+改用 ``execute_one``：它經過同樣的命令閘門、重試策略與失敗截圖，不印出任何東西，
+動作失敗時拋出 ``WebRunnerExecuteException``\ （原本的錯誤是它的 ``__cause__``）：
+
+.. code-block:: python
+
+    from je_web_runner import execute_one
+
+    url = execute_one(["WR_get_current_url"])
+
+Selenium wrapper 呼叫失敗時（``WR_to_url``、``WR_element_click``、
+``WR_element_assert``……）會被記錄，然後讓動作失敗，與 Playwright 命令相同。
+``executor.set_raise_wrapper_errors(False)``\ （或在動作檔第一步放
+``WR_set_raise_wrapper_errors`` 並帶 ``[false]``）會讓它再次通過，也就是預設
+改變之前的行為。
 
 可用指令
 --------

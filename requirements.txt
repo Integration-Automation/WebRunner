@@ -1,5 +1,6 @@
 je_web_runner
 defusedxml>=0.7.1
 Pillow>=12.3.0
+je_action_core>=0.0.3
 faker
 sqlalchemy

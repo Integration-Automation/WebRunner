@@ -20,7 +20,7 @@
 
 WebRunner（`je_web_runner`）最初只是一个 Selenium 封装，如今已成长为一个完整的自动化平台：一个 Selenium 后端与一个 Playwright 后端，统一由一个 JSON 驱动的动作执行器调度，再加上用于报告、可观测性、编排、安全与 AI 辅助的各类模块。每个执行器命令都有一个确定性的名称（`WR_*`）和单一的分发点，因此一份动作 JSON 可以在同一个脚本里混合浏览器、HTTP、数据库与 webhook 调用。
 
-> **自动生成的参考文档** —— 每个已注册的 `WR_*` 命令（签名 + 摘要）都导出在 [`docs/reference/command_reference.md`](docs/reference/command_reference.md)，动作 JSON 文件的 JSON Schema 则位于 [`docs/reference/webrunner-action-schema.json`](docs/reference/webrunner-action-schema.json)。
+> **自动生成的参考文档** —— 每个已注册的 `WR_*` 命令（签名 + 摘要）都导出在 [`docs/reference/command_reference.md`](../docs/reference/command_reference.md)，动作 JSON 文件的 JSON Schema 则位于 [`docs/reference/webrunner-action-schema.json`](../docs/reference/webrunner-action-schema.json)。
 
 ## 目录
 
@@ -37,7 +37,7 @@ WebRunner（`je_web_runner`）最初只是一个 Selenium 封装，如今已成�
 - [动作执行器](#动作执行器)
 - [后端](#后端)
   - [Selenium（默认）](#selenium默认)
-  - [Playwright（完整）](#playwright完整)
+  - [Playwright](#playwright)
   - [Cloud Grid（云端网格）](#cloud-grid云端网格)
   - [Appium（移动端）](#appium移动端)
 - [报告](#报告)
@@ -52,6 +52,7 @@ WebRunner（`je_web_runner`）最初只是一个 Selenium 封装，如今已成�
 - [认证与 API](#认证与-api)
 - [录制器](#录制器)
 - [CI / 集成](#ci--集成)
+- [桌面控制（AutoControl）](#桌面控制autocontrol)
 - [AI 辅助](#ai-辅助)
 - [CLI 用法](#cli-用法)
 - [测试记录](#测试记录)
@@ -63,14 +64,14 @@ WebRunner（`je_web_runner`）最初只是一个 Selenium 封装，如今已成�
 
 ## 亮点特性
 
-- **两个后端，一个执行器。** Selenium 为默认后端；Playwright 后端在 `WR_pw_*` 下镜像了相同的操作面，完全按需选用。
+- **两个后端，一个执行器。** Selenium 为默认后端；Playwright 后端在 `WR_pw_*` 下涵盖大部分相同的操作，完全按需选用。对照表列出对应的命令，以及只有其中一个后端才有的功能。
 - **动作 JSON 即契约。** 每个命令都通过 `Executor.event_dict` 解析；旧式别名与 snake_case 名称并存以保持向后兼容，并导出 JSON Schema 供 IDE 自动补全。
 - **五种格式的报告。** HTML、JSON、XML、JUnit XML（CI 原生）以及 Allure 结果文件；单一清单（manifest）将每个输出绑定起来，方便下游用通配符匹配。
 - **内建编排能力。** 标签过滤、带拓扑排序的依赖声明、由账本支撑的只重跑失败项、抖动检测、A/B 运行模式、多用户矩阵、确定性分片、监视模式，以及一个基于标准库的调度器。
 - **无需额外接线的可观测性。** 失败时自动截图、重试策略、OpenTelemetry 钩子、实时 HTTP 仪表盘、回放工作室（HTML 时间线）、HAR 捕获 + 差异比对。
 - **质量与安全守卫。** 动作 linter、迁移助手、硬编码密钥扫描器、HTTP 安全响应头审计、axe-core 无障碍审计、Lighthouse 运行器、性能指标（FCP/LCP/CLS）、视觉回归、快照测试、网络限速、任意脚本闸门。
 - **浏览器内部机制。** 原始 CDP、控制台 + 网络事件捕获、localStorage / sessionStorage / IndexedDB、service worker / 缓存控制、穿透 Shadow DOM、多 iframe、文件上传 / 下载、浏览器扩展加载器。
-- **高级 WebDriverWrapper 接口。** `set_driver(experimental_options=, extension_paths=, enable_bidi=)`、`attach_to_existing_browser`、原生 CDP 快捷方法（`set_timezone` / `set_locale` / `set_device_metrics` / `set_user_agent` / `set_extra_http_headers` / `set_geolocation` / `set_network_conditions` / `block_urls` / `set_cache_disabled` / `set_download_directory`）、Fetch 拦截原语（`enable_fetch_interception` / `continue_request` / `fulfill_request` / `fail_request`）、W3C BiDi 监听器（`add_console_listener` / `add_js_error_listener`）、用于会话复用的 `save_cookies` / `load_cookies`、`save_full_page_screenshot`、`print_page`（PDF）、`reload(ignore_cache)`、`bring_to_front`、`switch_to_window_by_url|title`、页面元数据取值器（`get_current_url` / `get_title` / `get_page_source` / `get_window_handles` / `new_window` / `close_window`）。以上全部也通过 `WR_*` 别名暴露。
+- **高级 WebDriverWrapper 接口。** `set_driver(experimental_options=, extension_paths=, enable_bidi=, install_driver=)`、`attach_to_existing_browser`、原生 CDP 快捷方法（`set_timezone` / `set_locale` / `set_device_metrics` / `set_user_agent` / `set_extra_http_headers` / `set_geolocation` / `set_network_conditions` / `block_urls` / `set_cache_disabled` / `set_download_directory`）、Fetch 拦截原语（`enable_fetch_interception` / `continue_request` / `fulfill_request` / `fail_request`）、W3C BiDi 监听器（`add_console_listener` / `add_js_error_listener`）、用于会话复用的 `save_cookies` / `load_cookies`、`save_full_page_screenshot`、`print_page`（PDF）、`reload(ignore_cache)`、`bring_to_front`、`switch_to_window_by_url|title`、页面元数据取值器（`get_current_url` / `get_title` / `get_page_source` / `get_window_handles` / `new_window` / `close_window`）。以上全部也通过 `WR_*` 别名暴露。
 - **独立的 CDP / BiDi 模块。** 后台 `CDPEventListener`（WebSocket 循环 + 同步的 `send` / `on` / 上下文管理器）、用于生成 Chrome DevTools 可加载性能追踪的 `record_trace(driver, path)`，以及封装 `driver.network.add_request_handler` / `add_response_handler` / `add_auth_handler` 的 `bidi_network` 模块，用于跨浏览器请求拦截。
 - **测试数据与固件。** Faker 集成、工厂模式、testcontainers（Postgres / Redis / 通用）、带 `${ENV.X}` 占位符展开的按环境 `.env` 加载器、带 `${ROW.x}` 的 CSV/JSON 数据驱动运行器。
 - **认证、API、数据库。** 带令牌缓存的 OAuth2 / OIDC 客户端凭据 / 密码 / 刷新令牌流程、带 JSON 断言的 HTTP API 测试命令、由 SQLAlchemy 支撑的数据库校验。
@@ -92,6 +93,8 @@ pip install je_web_runner
 pip install je_web_runner_dev
 ```
 
+`je_web_runner_dev` 跟随 `dev` 分支：每次推送到 `dev` 通过测试、并且包内容有变化时，CI 就会发布一个新版本。
+
 **可选依赖**（每一项启用一部分功能；只安装你用到的）：
 
 ```bash
@@ -106,7 +109,7 @@ pip install testcontainers       # Spin up Postgres / Redis (WR_tc_*)
 pip install locust               # Load testing (WR_locust_*)
 ```
 
-硬性要求：Python **3.10+**、`selenium>=4.0.0`、`requests`、`python-dotenv`、`webdriver-manager`、`defusedxml`、`Pillow`。
+硬性要求：Python **3.10+**、`selenium>=4.0.0`、`requests`、`python-dotenv`、`webdriver-manager`、`defusedxml`、`Pillow`、`je_action_core`（动作执行器共用的核心）。
 
 ## 架构
 
@@ -196,7 +199,7 @@ flowchart TB
 
 ### 模块地图
 
-每个 `utils/` 子包都附有一行摘要，并按核心引擎、`je_web_runner.api` 门面主题及其余部分分组：[`docs/reference/utils_index.md`](docs/reference/utils_index.md)
+每个 `utils/` 子包都附有一行摘要，并按核心引擎、`je_web_runner.api` 门面主题及其余部分分组：[`docs/reference/utils_index.md`](../docs/reference/utils_index.md)
 （由 `scripts/gen_utils_index.py` 生成）。
 
 ```
@@ -321,8 +324,9 @@ test/
 
 ## 主题化 API 门面
 
-80 多个工具辅助函数位于 `je_web_runner.utils.<area>` 下；为便于发现，
-它们同时也在 `je_web_runner.api` 下重新导出：
+工具辅助函数位于 `je_web_runner.utils.<area>` 下；核心引擎以外的每个子包，
+也都由 `je_web_runner.api` 下的一个主题重新导出（同一主题里两个包同名的名称会
+加上包前缀，例如 `cors_matrix_classify`）：
 
 ```python
 from je_web_runner.api import (
@@ -337,6 +341,19 @@ from je_web_runner.api import (
     reliability,    # adaptive retry, browser pool, smart wait, throttler, supervisor
     security,       # PII, license, CSP, cookie consent, header tampering
     test_data,      # DB fixtures, fixture record/replay, form auto-fill
+    accessibility_i18n,  # screen reader, forced colours, pseudo-localisation, RTL, OCR, visual AI
+    ai,             # LLM assist, auto-repair, edge cases, triage, RAG / tool-call / hallucination checks
+    api_testing,    # HTTP, auth, GraphQL N+1, gRPC, OpenAPI drift, rate limits, HAR tools
+    audit,          # clickjacking, CORS, cookies, CSP, XSS taint, open redirect, TLS, SRI, secrets, SBOM
+    diagnostics,    # OpenTelemetry bridge, backend log correlation, console error budget
+    governance,     # flakes, quarantine, owners, test debt, ROI, cost, PR risk, merge gates
+    messaging,      # email render / deliverability, push, OTP, webhooks, message queues, Slack digest
+    mobile_pwa,     # touch gestures, viewport, virtual keyboard, pull-to-refresh, real-device clouds
+    orchestration,  # A/B runs, personas, multi-user, flag matrix, chaos, data-driven, DB snapshots
+    performance,    # web vitals, INP, Lighthouse, bundle / third-party budgets, load tests
+    platform,       # CDP, BiDi, Chrome profiles, extensions, cloud grid, AutoControl bridge, CLI
+    tooling,        # recorder, action schema, command docs, POM generator, replay studio, dashboards
+    web_platform,   # WebSocket / SSE / WebRTC, storage, service workers, WebAuthn, WebUSB, payments…
 )
 ```
 
@@ -380,6 +397,8 @@ actions = [
 execute_action(actions)
 ```
 
+`execute_action` 返回以 `execute: <action>` 为键的字典，每个步骤一条（完全相同的动作重复出现时加上 `#2`、`#3`……，每次的结果都保留）；它会记下失败的步骤然后继续。要执行单一动作并拿回它的值，用 `execute_one(["WR_get_current_url"])`：它经过同样的命令闸门、重试策略与失败截图，不打印任何东西，动作失败时抛出 `WebRunnerExecuteException`（原本的错误是它的 cause）。
+
 旧式名称（`WR_get_webdriver_manager`、`WR_SaveTestObject`、`WR_quit`、`WR_input_to_element`……）仍可使用 —— 关于一键迁移助手，请参见[质量与安全](#质量与安全)。
 
 ### 混合位置参数与关键字参数
@@ -402,10 +421,10 @@ execute_action(actions)
 | CLI | `python -m je_web_runner` 的各标志，包括原有的 `-e/--execute_file`、`-d/--execute_dir` 和 `--execute_str`（含 Windows 双重编码的 JSON） |
 | 动作 JSON | 在 `executor.event_dict` 中注册的 `WR_*` 命令名，以及动作文件的 `webdriver_wrapper` / `meta` 顶层键 |
 | 套接字服务器 | `start_web_runner_socket_server`、`send_command`、`read_frame`、`encode_frame` 以及长度前缀的分帧 |
-| 受支持的模块路径 | `je_web_runner.utils.executor.action_executor`（`executor`）、`je_web_runner.utils.logging.loggin_instance`（`web_runner_logger`、`WebRunnerLoggingHandler`）、`je_web_runner.webdriver.webdriver_wrapper`（`WebDriverWrapper`、`webdriver_wrapper_instance`，以及 `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` 补丁目标） |
+| 受支持的模块路径 | `je_web_runner.utils.executor.action_executor`（`executor`、`execute_one`）、`je_web_runner.utils.logging.loggin_instance`（`web_runner_logger`、`WebRunnerLoggingHandler`）、`je_web_runner.webdriver.webdriver_wrapper`（`WebDriverWrapper`、`webdriver_wrapper_instance`，以及 `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` 补丁目标） |
 
 这三个模块路径之所以受支持，是因为其他仓库已经导入它们：AutoControlGUI 的
-WebRunner 桥接取用 `executor`，Jeffrey_RPA 以那个确切（拼写有误）的名称
+WebRunner 桥接取用 `executor` 与 `execute_one`，Jeffrey_RPA 以那个确切（拼写有误）的名称
 钩取 `loggin_instance` 并对封装字典打补丁。它们被视为公共，而不是被要求迁移。
 如果其中任何一个消失，`test/unit_test/test_public_api.py` 就会失败。
 
@@ -499,6 +518,8 @@ from je_web_runner.utils.executor.action_executor import executor
 executor.set_retry_policy(retries=2, backoff=0.5)             # global retry
 executor.set_failure_screenshot_dir("./failures")              # auto PNG on raise
 executor.set_allow_arbitrary_script(False)                     # gate WR_execute_script / WR_pw_evaluate / WR_cdp
+executor.allow_packages("my_helpers")                         # WR_add_package_to_executor may load these
+executor.set_allow_arbitrary_packages(False)                   # and refuses every other package
 ```
 
 ## 后端
@@ -507,9 +528,17 @@ executor.set_allow_arbitrary_script(False)                     # gate WR_execute
 
 Selenium 是最初的后端。除非显式使用 `WR_pw_*` / `WR_appium_*` 前缀，否则每个旧式命令（及其现代别名）都路由到这里。
 
-### Playwright（完整）
+Selenium 后端也有对应 Playwright 元素与页面辅助命令的版本：能在 JSON 里用的等待（`WR_wait_for_element`，状态 `present` / `visible` / `clickable` / `hidden`、`WR_wait_for_url`、`WR_wait_for_title`、`WR_wait_for_ready_state`）、用原始 selector 查找的 `WR_find_element_by` / `WR_find_elements_by`、`WR_element_check` / `_uncheck` / `_hover` / `_inner_text` / `_inner_html`、`WR_alert_accept`（可带 `prompt_text`）/ `WR_alert_dismiss` / `WR_alert_text`，以及 Chromium 上的 `WR_emulate_device` / `WR_list_devices`、`WR_grant_permissions` / `WR_clear_permissions` 与 `WR_clock_freeze`。与较早的 Selenium 命令不同，它们失败时该动作就会失败。
 
-Playwright 后端在 `WR_pw_*` 下镜像了 Selenium 封装的操作面：
+**较早的 Selenium 命令也是失败即失败。** 每个 Selenium wrapper 调用（`WR_to_url`、`WR_element_click`、`WR_element_assert`、`WR_check_current_webdriver`……）会把错误记进测试记录后再抛出，所以错误的 `WR_element_assert` 会失败。以前它们会让动作通过；调用 `executor.set_raise_wrapper_errors(False)`，或在动作文件第一步放 `["WR_set_raise_wrapper_errors", [false]]`，可以回到旧行为。
+
+以 `enable_bidi=True` 启动的 driver（Chrome 或 Firefox）上，Selenium 后端也通过 W3C BiDi 提供 Playwright 的事件收集、HAR 与响应模拟：`WR_event_capture_start`（`dom_mutations=True` 也记录 DOM 变动）/ `_stop` / `_clear`、`WR_console_messages`、`WR_network_responses`、`WR_dom_mutations`、`WR_assert_no_console_errors` / `WR_assert_no_5xx` / `WR_assert_no_4xx_or_5xx`、`WR_start_har_recording` / `WR_stop_har_recording(har_path)`（有 header、状态码与耗时，没有内容），以及 `WR_route_mock` / `WR_route_mock_json` / `WR_route_unmock` / `WR_route_clear`。模拟的 pattern 是完整 URL、`*/path`（任何主机上的这个路径）或 URL 各部分的 dict；只模拟页面去抓的资源，不要模拟页面本身，否则会卡住载入它的导航。
+
+### Playwright
+
+Playwright 后端在 `WR_pw_*` 下涵盖 Selenium 封装的大部分日常操作，但不是一对一的复本。`docs/source/Zh/doc/backends/backends_doc.rst` 里的对照表列出对应的命令与差异（例如超时用毫秒而不是秒、标签页只能按索引切换）、另一个后端做不到的功能（只有 Selenium：Internet Explorer、Selenium Grid、Appium、操作系统窗口的位置与大小；只有 Playwright：WebKit、trace viewer、每个动作前自动等待元素可操作），以及另一个后端还没有的功能。
+
+页面级快捷方法会把额外的 Playwright 选项原样传下去（`button`、`modifiers`、`timeout`、`force`、`wait_until` …），页面级动作会像 Selenium 的步骤一样写进测试记录，网站自己打开的页面（popup、`window.open`）也会被追踪，`WR_pw_switch_to_page` 可以切过去。命令如下：
 
 - **生命周期 / 页面 / 导航** —— `WR_pw_launch`、`WR_pw_quit`、`WR_pw_new_page`、`WR_pw_switch_to_page`、`WR_pw_close_page`、`WR_pw_to_url`、`WR_pw_forward`、`WR_pw_back`、`WR_pw_refresh`、`WR_pw_url`、`WR_pw_title`、`WR_pw_content`。
 - **查找** —— `WR_pw_find_element`、`WR_pw_find_elements`、`WR_pw_find_element_with_test_object_record`、`WR_pw_find_with_healing`。
@@ -517,7 +546,14 @@ Playwright 后端在 `WR_pw_*` 下镜像了 Selenium 封装的操作面：
 - **元素级（在 `WR_pw_find_element_with_test_object_record` 之后）** —— `WR_pw_element_click`、`WR_pw_element_dblclick`、`WR_pw_element_fill`、`WR_pw_element_type_text`、`WR_pw_element_press`、`WR_pw_element_check`、`WR_pw_element_uncheck`、`WR_pw_element_select_option`、`WR_pw_element_get_attribute`、`WR_pw_element_inner_text`、`WR_pw_element_inner_html`、`WR_pw_element_is_visible`、`WR_pw_element_is_enabled`、`WR_pw_element_is_checked`、`WR_pw_element_scroll_into_view`、`WR_pw_element_screenshot`、`WR_pw_element_change`。
 - **脚本 / cookies / 等待 / 视口 / 鼠标 / 键盘 / frames** —— `WR_pw_evaluate`、`WR_pw_get_cookies`、`WR_pw_add_cookies`、`WR_pw_clear_cookies`、`WR_pw_screenshot`、`WR_pw_wait_for_selector`、`WR_pw_wait_for_load_state`、`WR_pw_wait_for_timeout`、`WR_pw_wait_for_url`、`WR_pw_set_viewport_size`、`WR_pw_mouse_*`、`WR_pw_keyboard_*`。
 - **移动端模拟 / 区域 / 时钟** —— `WR_pw_emulate("iPhone 13")`、`WR_pw_set_locale`、`WR_pw_set_timezone`、`WR_pw_clock_install` / `_set_time` / `_run_for`、`WR_pw_set_geolocation`、`WR_pw_grant_permissions`。
+- **Context 选项** —— `WR_pw_launch(context_options={...})`、`WR_pw_set_context_options`（任何 `browser.new_context` 选项）、`WR_pw_set_user_agent`、`WR_pw_set_extra_http_headers`、`WR_pw_save_storage_state`。封装维持一份合并后的 context 选项，所以设备模拟、时区、语言与 HAR 录制不再互相覆盖；需要新 context 的设置会把 cookie、localStorage 与当前页面的网址带过去。
 - **HAR + 路由模拟** —— `WR_pw_start_har_recording`、`WR_pw_stop_har_recording`、`WR_pw_route_mock`、`WR_pw_route_mock_json`、`WR_pw_route_unmock`、`WR_pw_route_clear`。
+- **Trace viewer / 录像** —— `WR_pw_tracing_start`、`WR_pw_tracing_save_chunk(path)`、`WR_pw_tracing_stop(path)`（用 `playwright show-trace` 打开 zip）；`WR_pw_video_start(video_dir, width, height)` 与 `WR_pw_video_stop`（返回视频文件）。记录 trace 期间若已设 `executor.set_failure_screenshot_dir(...)`，每个失败的动作还会在截图旁存下 `<timestamp>_<command>.trace.zip`。
+- **对应 Selenium 的命令** —— `WR_pw_add_init_script`、`WR_pw_block_urls` / `WR_pw_unblock_urls`（`*` 通配符；两者都会带到重建的 context）、`WR_pw_clear_geolocation`、`WR_pw_bring_to_front`、`WR_pw_switch_to_page_by_url` / `_by_title`、`WR_pw_screenshot_base64`、`WR_pw_print_page`（headless Chromium）、`WR_pw_scroll` / `_to_top` / `_to_bottom`、`WR_pw_drag_and_drop_offset`。另有 `WR_pw_get_cookie` / `WR_pw_delete_cookie`、`WR_pw_element_submit`、`WR_pw_element_value_of_css_property`，以及断言 `WR_pw_check_current_page` / `WR_pw_element_assert`，不符时该动作会失败。
+- **Frame、面向用户的查找、对话框** —— `WR_pw_switch_to_frame`（嵌套时给列表）/ `_to_parent_frame` / `_to_main_frame`：selector 命令会作用在选定的 iframe，直到切回或导航。`WR_pw_find_by(by, value)` 以 `role`（配 `name`）、`text`、`label`、`placeholder`、`alt_text`、`title` 或 `test_id` 查找，并把第一个匹配设为当前元素。`WR_pw_set_dialog_policy("accept" | "dismiss", prompt_text)` 在每个页面回应 alert、confirm 与 prompt；`WR_pw_last_dialog` 返回最后一个。
+- **附加、配置文件、下载、缓存** —— `WR_pw_connect_over_cdp(endpoint_url)` 附加到以调试端口启动的 Chromium（结束时只断开连接）；`WR_pw_connect(ws_endpoint)` 连到 Playwright browser server；`WR_pw_launch_persistent(user_data_dir, extension_paths=[...])` 打开配置文件并加载未打包的扩展。`WR_pw_download(selector, save_to)` 点击并保存下载（存成该文件，或以网站建议的名称存进该目录）。`WR_pw_set_cache_disabled` 在每种浏览器开关 HTTP 缓存。
+- **视觉回归、录制器、callback** —— `WR_pw_visual_capture_baseline` / `WR_pw_visual_compare` 与 `WR_pw_recorder_start` / `_stop` / `_pull_events` / `_save` 在 Playwright 页面上做对应 `WR_*` 命令在 Selenium 上做的事，每个 `WR_pw_*` 命令也都能触发 callback。
+- **多个浏览器** —— `WR_pw_new_browser(browser, ...)` 再打开一个浏览器并切换过去（返回其索引）、`WR_pw_switch_browser(index)`、`WR_pw_close_browser`、`WR_pw_browser_count`；每个浏览器保有自己的页面与设置，`WR_pw_quit` 会全部关闭。
 
 现有脚本可以逐步迁移到 Playwright；`TestObject` 记录会自动翻译为 Playwright 选择器（`CSS_SELECTOR` → 原样，`XPATH` → `xpath=…`，`ID` → `#…`，`NAME` → `[name="…"]`，`LINK_TEXT` → `text=…`，`PARTIAL_LINK_TEXT` → `:has-text("…")`）。
 
@@ -589,6 +625,15 @@ print(result["manifest_path"])  # → run_2026_04_26.manifest.json
 
 清单会捕获实际产出的路径 —— CI 的通配符不再需要知道每种格式的约定。
 
+**交互式 HTML 报告。** `generate_interactive_html_report(html_name, screenshot_dir=None, har_path=None, a11y_results=None)`（`WR_generate_interactive_html_report`）写出一个自包含的 `<html_name>.html`，没有外部资源也没有 script；每一段都以 `<details>` 展开：
+
+- 每个记录步骤的时间轴，失败的步骤默认展开，`screenshot_dir` 里的截图内嵌在拍摄时所在的步骤下（executor 的失败截图以时间命名，其他图片按修改时间）；
+- 每个失败的完整错误，断言比较两个值时（`a != b`、`expected X but got Y`）再附上 unified diff；
+- 由 HAR 1.2 文件（`WR_pw_start_har_recording` / `WR_start_har_recording` 会写出）画出的网络瀑布图，每个请求列出方法、状态码、耗时与 URL；
+- axe-core 违规按严重度的徽章与违规列表，来源可以是结果 dict 或它的 JSON 文件。
+
+所有记录的值都会转义。
+
 ## 可观测性
 
 ```python
@@ -614,6 +659,27 @@ notify_run_summary("https://hooks.slack.com/services/...")
 ```
 
 失败截图、OpenTelemetry 追踪、重试策略以及实时仪表盘都挂接到同一个 `Executor.event_dict`，因此它们可以组合而不产生耦合。
+
+仪表盘有两个。上面的 `start_dashboard` 实时显示当前这次运行的进度；`DashboardServer`（`utils/live_dashboard`）则汇总其他模块写出的文件里的历史数据：
+
+```python
+from je_web_runner import DashboardConfig, DashboardServer
+
+server = DashboardServer(DashboardConfig(
+    ledger_path="ledger.json",                 # runs, pass-rate chart, flake scores
+    quarantine_path="quarantine.json",
+    locator_findings_path="locator_health.json",
+    schedule_path="schedule.json",             # test_scheduler output
+    triage_report_path="triage.json",          # failure_triage output
+    bind_port=8765,                            # 127.0.0.1 unless bind_host says otherwise
+))
+print(server.start())                          # http://127.0.0.1:8765, served from a daemon thread
+```
+
+- 页面：Overview（依状态上色的摘要卡片、每日通过率图表加失败长条、最新的运行）、Runs（`?limit=`、"Show more"）、Flake、Quarantine（附 triage 工单链接）、Locators（最弱的定位器与自我修复 fallback 最常触发者）、Schedule、Triage。设为 `None` 的来源会显示空状态，并说明该设定哪个 `DashboardConfig` 字段。
+- 表格点标题即可排序、输入即可筛选（Runs 另可按结果筛选）；时间以浏览器的时区显示。页面每 15 秒刷新数据并保留筛选条件，按 Pause 可停止。浅色与深色跟随系统设置。
+- 同样的数据也以 JSON 提供：`/api/summary`、`/api/runs`、`/api/flake`、`/api/quarantine`、`/api/locators`、`/api/schedule`、`/api/triage`、`/api/trend`。
+- 只用标准库。每个页面不靠 JavaScript 也能用；脚本与样式表由同源提供，搭配严格的 Content-Security-Policy（`default-src 'self'`），所有值都经过 HTML 转义。
 
 ## 测试编排
 
@@ -642,6 +708,27 @@ python -m je_web_runner --execute_dir ./actions --shard 4/4
 
 配套 API —— `WR_run_for_users`（多用户矩阵）、`WR_run_ab`（A/B 模式）、`WR_flakiness_stats`、`WR_classify_failure`、`WR_schedule` + `WR_run_scheduler_for`。
 
+### 异步执行
+
+`--parallel-mode async`（或在 Python 用 `AsyncExecutor`）以 asyncio 执行动作文件：只开一个 headless Chromium，每个文件各有一个全新的 browser context，所以同时执行的文件就像不同的用户，cookie、storage 与标签页各自独立。`--parallel N` 限制同时执行的数量。需要 Playwright。
+
+```bash
+python -m je_web_runner -d ./user_journeys --parallel 8 --parallel-mode async --ledger ledger.json
+```
+
+```python
+import asyncio
+from je_web_runner.utils.async_executor import AsyncExecutor
+
+async def main():
+    async with AsyncExecutor(browser="chromium", headless=True) as runner:
+        results = await runner.run_many([alice_actions, bob_actions], concurrency=2)  # [(record, failed), ...]
+
+asyncio.run(main())
+```
+
+`WR_apw_*` 命令在该文件自己的 context 里执行：`WR_apw_goto`、`WR_apw_click`、`WR_apw_fill`、`WR_apw_press`、`WR_apw_text`、`WR_apw_title`、`WR_apw_url`、`WR_apw_wait_for_selector`、`WR_apw_assert_text`、`WR_apw_assert_title`、`WR_apw_new_page` / `WR_apw_switch_to_page` / `WR_apw_close_page`（同一个用户的标签页）、`WR_apw_screenshot`、`WR_apw_evaluate`（受任意脚本闸门管制）、`WR_apw_sleep`（只暂停该文件），以及流式页面用的 `WR_apw_websocket_messages` / `WR_apw_wait_for_websocket_message`。其他 `WR_*` 命令在工作线程中执行，照样应用闸门、重试与失败截图，但与 `--parallel-mode thread` 一样共用整个进程的 Selenium 与 Playwright 单例。在异步引擎以外执行 `WR_apw_*` 命令会失败，信息会说明它该在哪里执行。
+
 ## 质量与安全
 
 - **动作 linter** —— `WR_lint_action` / `WR_lint_action_file` 标记旧式命令名、硬编码 URL、危险脚本、缺失标签、连续重复动作。
@@ -650,12 +737,14 @@ python -m je_web_runner --execute_dir ./actions --shard 4/4
 - **安全响应头审计** —— `WR_audit_security_headers_url` 检查 HSTS / CSP / X-Frame-Options / X-Content-Type-Options / Referrer-Policy / Permissions-Policy。
 - **无障碍审计** —— `WR_a11y_run_audit` 注入用户提供的 axe-core（`load_axe_source`）并针对活动会话运行；Playwright 变体为 `WR_pw_a11y_run_audit`。
 - **Lighthouse** —— `WR_lighthouse_run` 外壳调用官方的 `lighthouse` Node CLI；`WR_lighthouse_assert_scores` 强制执行预算。
-- **页面性能指标** —— `WR_perf_collect` / `WR_pw_perf_collect` 通过 `PerformanceObserver` 快照 FCP / LCP / CLS / TTFB / domContentLoaded / load；`WR_perf_assert_within` 检查阈值。
+- **页面性能指标** —— `WR_perf_collect` / `WR_pw_perf_collect` 通过 `PerformanceObserver` 快照 FCP / LCP / CLS / TTFB / domContentLoaded / load，并附上 LCP 元素（`lcp_element`、`lcp_url`）与位移最大的元素（`cls_sources`）；`WR_perf_assert_within` 检查阈值。
+- **Core Web Vitals 预算** —— `WR_assert_web_vitals(budgets=None, observe_ms=1000, source="page", url=None, json_path=None, html_path=None)` 一步断言 LCP、CLS、INP 与 FCP。`source="page"` 量执行中后端的当前页面（Selenium，否则 Playwright），INP 取自 event-timing 记录（调用前 104 ms 以上的交互也算；没有交互时 INP 不量）。`source="lighthouse"` 对 `url` 跑 Lighthouse 并读它的实验室审计，以 Total Blocking Time（`tbt`）取代 INP。预算默认为 Google 的「good」上限（LCP 2500 ms、CLS 0.1、INP 200 ms、FCP 1800 ms），每项指标评为 good / needs-improvement / poor。超出预算时动作失败，信息写出指标、评级与诊断（LCP 元素、位移的元素、最慢的交互）；`json_path` / `html_path` 不论成败都写出明细。
 - **视觉回归** —— `WR_visual_capture_baseline` + `WR_visual_compare`（Pillow 软依赖）。
 - **快照测试** —— `WR_match_snapshot` / `WR_update_snapshot`（文本/DOM，不匹配时输出统一差异）。
 - **网络限速** —— `WR_throttle("slow_3g")` / `WR_pw_throttle("offline")`；预设涵盖 Slow 3G、Fast 3G、Regular 4G、Wi-Fi、Offline、no-throttling。
 - **HAR 差异** —— `WR_diff_har` / `WR_diff_har_files` 显示两次运行之间新增 / 移除 / 状态变化的请求。
 - **任意脚本闸门** —— `executor.set_allow_arbitrary_script(False)` 为不可信的动作 JSON 阻止 `WR_execute_script` / `WR_execute_async_script` / `WR_pw_evaluate` / `WR_cdp` / `WR_pw_cdp`。
+- **套件闸门** —— `WR_add_package_to_executor` 会导入 Python 套件并把其函数注册成命令，所以能写出 `os` 或 `subprocess` 的动作文件就能执行任何东西。`executor.allow_packages("name", …)` 列出允许加载的套件（含子模块），其余套件在导入前就会被拒绝，除非主程序调用 `executor.set_allow_arbitrary_packages(True)`；两者都不是动作命令，所以动作文件无法自行打开闸门。
 
 ## 扩展能力
 
@@ -727,7 +816,7 @@ python -m je_web_runner.mcp_server
 默认工具列表（22 个工具）暴露：
 
 实时浏览器执行：
-- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 444 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 556 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批量运行磁盘上的 JSON 文件
 - `webrunner_list_commands` —— 发现完整的 `WR_*` 接口面
 
@@ -769,7 +858,16 @@ server.register(Tool(
 serve_stdio(server=server)
 ```
 
-该服务器讲的是 MCP `2024-11-05`：`initialize`、`tools/list`、`tools/call`、`resources/list`、`ping`、`shutdown`。
+该服务器同时支持 MCP 的两个时代，按每个请求判断：
+
+- `2026-07-28`（无状态）：`params._meta` 写明 `io.modelcontextprotocol/protocolVersion`（并带 `io.modelcontextprotocol/clientCapabilities`）的请求会单独处理，不需要 `initialize`。方法：`server/discover`（支持的版本、能力、`instructions`）、`tools/list`、`tools/call`。结果带 `resultType`、`_meta` 里的服务器身份，可缓存的结果另带 `ttlMs` / `cacheScope`；`_meta` 写其他版本时回错误 `-32022` 并列出支持的版本。
+- `2025-11-25`、`2025-06-18`、`2025-03-26` 与 `2024-11-05`（握手）：客户端的版本是其中之一时 `initialize` 就回该版本，否则回 `2025-11-25`，并附上套件版本与给模型的简短 `instructions`。方法：`initialize`、`notifications/initialized`、`tools/list`、`tools/call`、`ping`。
+
+- stdio 一律是 UTF-8、行尾 `\n`，与控制台代码页无关。进程写到 stdout 的其他内容（`print`、子进程）都改走 stderr，所以客户端只会收到协议消息。
+- 工具执行失败时回传 `isError: true` 与错误信息，让客户端能修正调用。`webrunner_run_actions` 与 `webrunner_run_action_files` 在有动作失败时也会设 `isError`，并把失败的记录键列在 `failed`。
+- 未知的工具或不是对象的 `arguments` 回 JSON-RPC `-32602` 错误。通知（notification）一律不回应，批量请求以 `-32600` 拒绝。
+- 执行工具会拒绝 `WR_add_package_to_executor`、`WR_add_package_to_callback_executor`、`WR_set_allow_arbitrary_script` 与操作或读取桌面的 `WR_ac_*` 命令（`WR_ac_available`、`WR_ac_list_commands` 以外的全部），嵌套的动作列表也一样：模型不应能加载 `os`、重新打开操作者关掉的脚本闸门，或通过 AutoControl 碰到桌面。设 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` 可解除。设了 `WEBRUNNER_MCP_ROOT` 时，`webrunner_run_action_files` 与 `webrunner_compute_trend` 只读取该目录内的文件。
+- 每个工具都有 `title` 与 `annotations`：离线工具与 `webrunner_list_commands` 是 `readOnlyHint: true`，两个执行工具是 `destructiveHint: true`、`openWorldHint: true`。输入 schema 说明每个参数并拒绝未知参数；参数不符时回传 `isError` 结果并指出问题。结果是 JSON 对象时也会以 `structuredContent` 送出，两个执行工具另外声明 `outputSchema`。
 
 ## 动作 JSON LSP
 
@@ -871,7 +969,7 @@ python -m je_web_runner.action_lsp
 
 ### 测试编排
 
-- **测试影响分析** —— `impact_analysis.build_index("./actions")` 遍历每个动作 JSON 文件，将定位器名、URL、模板名和 `WR_*` 命令投影到一个反向索引；`affected_action_files(index, locators=["primary_cta"])` 回答“哪些测试触及这个？”，使差异感知分片可以超越文件名匹配。
+- **测试影响分析** —— `impact_analysis.build_index("./actions")` 遍历每个动作 JSON 文件，将定位器名、URL、模板名和 `WR_*` 命令投影到一个反向索引；`affected_action_files(index, locators=["primary_cta"])` 回答“哪些测试触及这个？”，使差异感知分片可以超越文件名匹配。`build_index("./actions", cache_path=".webrunner_impact_cache.json")` 把每个文件的名称存进缓存，只解析有变动的文件：修改时间与大小相同就沿用，时间变了（新 checkout）但 SHA-256 相同也沿用。实测 3000 个各 30 个动作的文件：不用缓存 510 ms，用缓存 138 ms。
 
 ## 专项模块
 
@@ -1065,7 +1163,7 @@ python -m je_web_runner.action_lsp
 - **`mutation_testing`** —— 动作 JSON 变异测试（kill-rate /
   score）。
 - **`live_dashboard`** —— 聚合的 Web UI：runs + flake + quarantine +
-  locators。
+  locators + schedule + triage（见「可观测性」）。
 - **`test_scheduler`** —— 在时间 + 云预算约束下的价值密度
   调度器。
 
@@ -1278,8 +1376,8 @@ python -m je_web_runner.action_lsp
 - **`speech_api_assert`** —— `SpeechSynthesis` / `SpeechRecognition`
   模拟 + utterance / language / volume 断言。
 
-关于逐模块的参考，另见 [`CLAUDE.md`](CLAUDE.md)、
-自动生成的 [`docs/reference/command_reference.md`](docs/reference/command_reference.md)，
+关于逐模块的参考，另见 [`CLAUDE.md`](../CLAUDE.md)、
+自动生成的 [`docs/reference/command_reference.md`](../docs/reference/command_reference.md)，
 以及 `docs/source/Eng/doc/specialized_modules/` 下的
 Sphinx 章节。
 
@@ -1309,6 +1407,7 @@ webdriver_wrapper_instance.set_driver(
     },
     extension_paths=["/path/to/extension.crx"],  # optional
     enable_bidi=True,                            # for add_console_listener etc.
+    install_driver=False,                        # 不经 webdriver-manager，交给 Selenium Manager 找 driver
 )
 webdriver_wrapper_instance.add_script_to_evaluate_on_new_document(
     "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
@@ -1569,7 +1668,34 @@ from je_web_runner.utils.ci_annotations.github_annotations import (
 
 `docker/docker-compose.yml` 提供一个 Selenium Grid 4 栈（hub + Chrome + Firefox 节点）；`docker/.env.example` 暴露版本固定和并发设置。
 
-[`docs/ide/`](docs/ide/) 下的 IDE 配置示例将 VS Code 和 JetBrains 接线到由 `WR_export_action_schema` 产出的动作 JSON schema。
+[`docs/ide/`](../docs/ide/) 下的 IDE 配置示例将 VS Code 和 JetBrains 接线到由 `WR_export_action_schema` 产出的动作 JSON schema。
+
+## 桌面控制（AutoControl）
+
+`pip install je_web_runner[autocontrol]` 会加装 [AutoControl](https://github.com/Integration-Automation/AutoControlGUI)（`je_auto_control`），它操作真正的鼠标、键盘与屏幕。action 文件通过 `WR_ac_*` 命令使用它，WebRunner 只在其中一个命令执行时才 import 它。
+
+| 命令 | 作用 |
+| --- | --- |
+| `WR_ac_available` | `je_auto_control` 是否已安装（只查找，不 import） |
+| `WR_ac_list_commands` | 桥接会执行的 `AC_*` 命令 |
+| `WR_ac_run` | 执行一个 AutoControl 动作并返回它的值：`["WR_ac_run", [["AC_write", {"write_string": "hello"}]]]` |
+| `WR_ac_run_actions` | 依序执行一串 AutoControl 动作并返回各自的值；第一个失败就停止 |
+| `WR_ac_fill_native_file_dialog` | 在操作系统的打开或保存对话框输入路径（转成绝对路径）后按 Enter（`submit=false` 则不按）；先等 `wait_seconds`（1）秒让对话框出现 |
+| `WR_ac_assert_image_on_screen` | 屏幕上找不到模板图片就失败；返回其中心 `[x, y]`（`detect_threshold` 是 AutoControl 的比对阈值） |
+| `WR_ac_click_element_native` | 用真正的鼠标点击元素（受信任的点击，不是 WebDriver 的）：`selector` / `by` 找到的元素，否则是当前元素；可指定 `mouse_button`，`scale` 是屏幕的显示缩放；返回点击的 `[x, y]` |
+| `WR_ac_basic_auth` | 用两个环境变量里的账号密码回答浏览器的 HTTP 基本认证对话框（`username_env`、`password_env` 是变量名称，不是值）；给 `url` 时先打开该页且不等待加载；等 `wait_seconds`（1）秒后输入账号、Tab、密码并按 Enter（`submit=false` 则不按） |
+
+AutoControl 动作失败时，它所在的 `WR_ac_*` 动作以 `AutoControlBridgeError` 失败。桥接会拒绝超出桌面范围的 AutoControl 命令：shell 命令与程序（`AC_shell_command`、`AC_execute_process`）、加载包（`AC_add_package_*`）、动作列表与文件（`AC_execute_action`、`AC_execute_files`）、`AC_run_agent`，以及回头调用 WebRunner 的 `AC_web_*`。这些名称出现在动作的任何位置都会被拒绝，包括循环体与以 JSON 字符串传入的主体。除非设 `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`，MCP server 会拒绝 `WR_ac_available`、`WR_ac_list_commands` 以外的每个 `WR_ac_*` 命令。
+
+`WR_ac_click_element_native` 先把元素滚到 viewport 中央，再用窗口的 `screenX/Y`、外框与内部尺寸以及 `devicePixelRatio` 把元素中心从页面换算到屏幕。没给 `scale` 时以 `devicePixelRatio` 当显示缩放，页面缩放为 100 % 时正确；页面有缩放时请传入屏幕的缩放（125 % 就是 `1.25`）。窗口不能被遮住。
+
+需要 `WR_ac_basic_auth` 是因为：对需要基本认证的页面做传统的 `get`，在浏览器对话框开着时会一直等到超时，而 chromedriver 也不会通过 BiDi 回答这个对话框。所以请把页面作为 `url` 传入：命令先确认页面持有键盘焦点（`document.hasFocus()`；AutoControl 打字会送到最前面的窗口，所以没有焦点就拒绝），再开始导航、不等待，然后对对话框输入。账号密码经由 AutoControl 的 `AC_write_secret` 输入，字符一字不差，也不会进入它的 log、记录或返回值；动作文件、WebRunner 的 log 与两边的执行记录都只有变量名称。需要有 `AC_write_secret` 的 `je_auto_control`。Playwright 请改用 `WR_pw_set_context_options` 设定 `http_credentials`。
+
+原生基本认证导航必须使用 HTTPS。只有本机测试服务器的 localhost 或明确 loopback 地址可使用 HTTP。含内嵌账号密码的 URL 会在导航或输入前被拒绝。
+
+原生命令会拒绝窗口不在这台机器屏幕上的 Selenium driver：headless 浏览器，或远程的（grid 或设备云）。Playwright 浏览器不会被检查，因为 Playwright 不报告它是否以 headless 启动：请以 `headless=False` 启动。
+
+另一个方向，也就是 AutoControl 的 `AC_web_*` 命令执行 `WR_*` 命令，属于 AutoControl。
 
 ## AI 辅助
 
@@ -1611,9 +1737,17 @@ python -m je_web_runner -d ./actions --watch ./actions
 python -m je_web_runner --report run                          # JSON + HTML + XML + JUnit
 python -m je_web_runner --validate ./action_smoke.json
 python -m je_web_runner --migrate ./actions --migrate-dry-run
+python -m je_web_runner -d ./actions --affected-by locator:login_button --affected-by url:/checkout
+python -m je_web_runner -d ./actions --changed-since origin/main --impact-cache .webrunner_impact_cache.json
 ```
 
-可以组合上面任意标志；分发器在把文件交给运行器之前，先应用标签过滤 → 账本 / 重跑失败项 → 分片 → 依赖感知排序。
+安装包时也会装上两个控制台命令 `webrunner` 与 `web_runner`，参数、输出与退出码都和 `python -m je_web_runner` 相同（`webrunner -e actions.json`、`pipx run --spec je_web_runner webrunner -d ./actions`）。
+
+可以组合上面任意标志；分发器在把文件交给运行器之前，先应用影响范围挑选 → 标签过滤 → 账本 / 重跑失败项 → 分片 → 依赖感知排序。
+
+**按影响范围挑选。** `--affected-by KIND:VALUE`（可重复；`KIND` 为 `locator`、`url`、`template` 或 `command`；`@文件` 每行读一个）只跑用到这些名称的动作文件。`--changed-since REF` 跑 `git diff REF...HEAD` 改到的动作文件，以及与它们共用 locator 或模板的文件，所以改了存放 `login_button` 的设置文件，用到它的测试也会跑（URL 与命令不追：几乎每个文件都共用）。两者可以并用；之后才应用 tag、`--rerun-failed` 与 `--shard`。`--impact-cache PATH` 在多次执行之间保留影响索引。
+
+`python -m je_web_runner` 在该次执行有动作或文件失败时，会在其余部分执行完之后以状态 1 结束，并在 stderr 打印 `error: N action(s) or file(s) failed`。由 [TestPioneer](https://github.com/Integration-Automation/TestPioneer) 启动时（它会设置 `TEST_PIONEER_ARTIFACT_DIR`），以相对名称要求的报告（JSON、XML、HTML、JUnit、Allure、交互式 HTML，以及 `generate_all_reports`）会写到该目录底下。
 
 ## 测试记录
 
@@ -1661,12 +1795,11 @@ WebRunner 提供一个自定义异常层次 —— 每个辅助函数都抛出 `
 
 ## 日志
 
-WebRunner 使用一个轮转文件处理器：
-
-- **日志文件：** `WEBRunner.log`
+- **日志文件：** `$WEBRUNNER_LOG_PATH`（完整文件路径），否则 `$WEBRUNNER_LOG_DIR/WEBRunner.log`，都没设就是 `~/.je_web_runner/logs/WEBRunner.log`。相对路径以 import 当下的工作目录为准；`os.devnull` 会关掉文件输出。
+- **何时创建：** 第一条记录才创建文件（连同目录）；import `je_web_runner` 不写任何文件。
+- **模式：** 追加；每行带进程编号；进程开文件时若超过 10 MB 就先改名成 `<name>.1`。
 - **级别：** WARNING+
-- **最大大小：** 1 GB
-- **格式：** `%(asctime)s | %(name)s | %(levelname)s | %(message)s`
+- **格式：** `%(asctime)s | %(process)d | %(name)s | %(levelname)s | %(message)s`
 
 ## 支持的浏览器
 
@@ -1688,4 +1821,4 @@ WebRunner 使用一个轮转文件处理器：
 
 ## 许可证
 
-本项目基于 [MIT 许可证](LICENSE)授权。
+本项目基于 [MIT 许可证](../LICENSE)授权。

@@ -27,6 +27,28 @@ Usage via Action Executor
 
     execute_action(actions)
 
+Package gate
+------------
+
+Loading a package registers its functions as commands, so an action file that
+can name ``os`` or ``subprocess`` can run anything. The host program decides
+which packages an action file may load:
+
+.. code-block:: python
+
+    from je_web_runner.utils.executor.action_executor import executor
+
+    executor.allow_packages("my_helpers")          # these, and their submodules
+    executor.set_allow_arbitrary_packages(False)   # refuse every other package
+
+A refused package raises ``WebRunnerExecuteException`` before it is imported,
+and the action records the error. ``set_allow_arbitrary_packages(True)`` loads
+any package without a warning. Neither switch is an action command, so an
+action file cannot open its own gate.
+
+Refusing is the default: until the host lists a package, or calls
+``set_allow_arbitrary_packages(True)``, ``WR_add_package_to_executor`` refuses it.
+
 Direct API Usage
 ----------------
 

@@ -30,13 +30,11 @@ try:
     google_input = TestObject("q", "name")
     webdriver_wrapper_instance.implicitly_wait(3)
     webdriver_wrapper_instance.find_element(google_input)
+    # Only stable properties: live page layout can change size and location between reads.
     web_element_wrapper.check_current_web_element(
         {
             "tag_name": web_element_wrapper.current_web_element.tag_name,
             "text": web_element_wrapper.current_web_element.text,
-            "location_once_scrolled_into_view": web_element_wrapper.current_web_element.location_once_scrolled_into_view,
-            "size": web_element_wrapper.current_web_element.size,
-            "location": web_element_wrapper.current_web_element.location,
             "parent": web_element_wrapper.current_web_element.parent,
             "id": web_element_wrapper.current_web_element.id,
         }

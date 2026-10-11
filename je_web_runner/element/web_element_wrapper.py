@@ -1,12 +1,18 @@
 from __future__ import annotations
 
 
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
 from selenium.webdriver.support.ui import Select
 
 from je_web_runner.utils.assert_value.result_check import check_web_element_details
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+from je_web_runner.utils.test_record.recorded import recorded_calls
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.utils.test_record.wrapper_failures import settle_wrapper_failure
+
+
+_recorded = recorded_calls("Web element")
 
 
 class WebElementWrapper:
@@ -31,6 +37,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper submit, failed: {error!r}")
             record_action_to_list("Web element submit", None, error)
+            settle_wrapper_failure(error)
 
     def clear(self) -> None:
         """
@@ -44,6 +51,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper clear, failed: {error!r}")
             record_action_to_list("Web element clear", None, error)
+            settle_wrapper_failure(error)
 
     def get_property(self, name: str) -> None | str | bool | WebElement | dict:
         """
@@ -60,6 +68,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper get_property, name: {name}, failed: {error!r}")
             record_action_to_list("Web element get_property", param, error)
+            settle_wrapper_failure(error)
 
     def get_dom_attribute(self, name: str) -> str | None:
         """
@@ -76,6 +85,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper get_dom_attribute, name: {name}, failed: {error!r}")
             record_action_to_list("Web element get_dom_attribute", param, error)
+            settle_wrapper_failure(error)
 
     def get_attribute(self, name: str) -> str | None:
         """
@@ -92,6 +102,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper get_attribute, name: {name}, failed: {error!r}")
             record_action_to_list("Web element get_attribute", param, error)
+            settle_wrapper_failure(error)
 
     def is_selected(self) -> bool | None:
         """
@@ -106,6 +117,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper is_selected, failed: {error!r}")
             record_action_to_list("Web element is_selected", None, error)
+            settle_wrapper_failure(error)
 
     def is_enabled(self) -> bool | None:
         """
@@ -120,6 +132,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper is_enabled, failed: {error!r}")
             record_action_to_list("Web element is_enabled", None, error)
+            settle_wrapper_failure(error)
 
     def input_to_element(self, input_value: str) -> None:
         """
@@ -136,6 +149,7 @@ class WebElementWrapper:
             web_runner_logger.error(
                 f"WebElementWrapper input_to_element, input_value: {input_value}, failed: {error!r}")
             record_action_to_list("Web element input_to_element", param, error)
+            settle_wrapper_failure(error)
 
     def click_element(self) -> None:
         """
@@ -149,6 +163,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper click_element, failed: {error!r}")
             record_action_to_list("Web element click_element", None, error)
+            settle_wrapper_failure(error)
 
     def is_displayed(self) -> bool | None:
         """
@@ -163,6 +178,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.error(f"WebElementWrapper is_displayed, failed: {error!r}")
             record_action_to_list("Web element is_displayed", None, error)
+            settle_wrapper_failure(error)
 
     def value_of_css_property(self, property_name: str) -> str | None:
         """
@@ -180,6 +196,7 @@ class WebElementWrapper:
             web_runner_logger.error(
                 f"WebElementWrapper value_of_css_property, property_name: {property_name}, failed: {error!r}")
             record_action_to_list("Web element value_of_css_property", param, error)
+            settle_wrapper_failure(error)
 
     def screenshot(self, filename: str) -> bool | None:
         """
@@ -196,6 +213,7 @@ class WebElementWrapper:
         except Exception as error:
             web_runner_logger.info(f"WebElementWrapper screenshot, filename: {filename}, failed: {error!r}")
             record_action_to_list("Web element screenshot", param, error)
+            settle_wrapper_failure(error)
 
     def change_web_element(self, element_index: int) -> None:
         """
@@ -212,6 +230,7 @@ class WebElementWrapper:
             web_runner_logger.error(
                 f"WebElementWrapper change_web_element, element_index: {element_index}, failed: {error!r}")
             record_action_to_list("Web element change_web_element", param, error)
+            settle_wrapper_failure(error)
 
     def check_current_web_element(self, check_dict: dict) -> None:
         """
@@ -239,6 +258,7 @@ class WebElementWrapper:
                 f"WebElementWrapper check_current_web_element, check_dict: {check_dict}, failed: {error!r}"
             )
             record_action_to_list("Web element check_current_web_element", param, error)
+            settle_wrapper_failure(error)
 
     def select_by_value(self, value: str) -> None:
         """
@@ -255,6 +275,7 @@ class WebElementWrapper:
                 f"WebElementWrapper select_by_value, value: {value}, failed: {error!r}"
             )
             record_action_to_list("Web element select_by_value", param, error)
+            settle_wrapper_failure(error)
 
     def select_by_index(self, index: int) -> None:
         """
@@ -271,6 +292,7 @@ class WebElementWrapper:
                 f"WebElementWrapper select_by_index, index: {index}, failed: {error!r}"
             )
             record_action_to_list("Web element select_by_index", param, error)
+            settle_wrapper_failure(error)
 
     def select_by_visible_text(self, text: str) -> None:
         """
@@ -287,6 +309,7 @@ class WebElementWrapper:
                 f"WebElementWrapper select_by_visible_text, text: {text}, failed: {error!r}"
             )
             record_action_to_list("Web element select_by_visible_text", param, error)
+            settle_wrapper_failure(error)
 
     def get_select(self) -> Select | None:
         """
@@ -310,6 +333,37 @@ class WebElementWrapper:
             # Handle and log error
             web_runner_logger.error(f"WebElementWrapper get_select, failed: {error!r}")
             record_action_to_list("Web element get_select", None, error)
+            settle_wrapper_failure(error)
+
+
+    # ----- twins of Playwright element commands; unlike the methods above they raise -----
+
+    @_recorded
+    def check(self) -> None:
+        """Tick the current checkbox or radio button; nothing happens if it is already selected."""
+        if not self.current_web_element.is_selected():
+            self.current_web_element.click()
+
+    @_recorded
+    def uncheck(self) -> None:
+        """Untick the current checkbox; nothing happens if it is not selected."""
+        if self.current_web_element.is_selected():
+            self.current_web_element.click()
+
+    @_recorded
+    def hover(self) -> None:
+        """Move the mouse over the current element now (``WR_move_to_element`` waits for ``WR_perform``)."""
+        ActionChains(self.current_web_element.parent).move_to_element(self.current_web_element).perform()
+
+    @_recorded
+    def inner_text(self) -> str:
+        """The rendered text of the current element."""
+        return self.current_web_element.text
+
+    @_recorded
+    def inner_html(self) -> str | None:
+        """The HTML inside the current element."""
+        return self.current_web_element.get_attribute("innerHTML")
 
 
 # 使用此包裝器來操作 WebElement

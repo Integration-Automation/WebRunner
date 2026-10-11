@@ -110,17 +110,26 @@ def translate_python_source(source: str) -> list[Translation]:
     return translations
 
 
+# Every target must be a registered executor command with the same parameter
+# names (test_sel_to_pw checks the names exist).
 _ACTION_COMMAND_MAP = {
     "WR_to_url": "WR_pw_to_url",
-    "WR_element_click": "WR_pw_click",
-    "WR_element_input": "WR_pw_fill",
+    # The WR_element_* commands act on the current element, like WR_pw_element_*.
+    # send_keys appends, so input maps to type_text rather than fill (which replaces).
+    "WR_element_click": "WR_pw_element_click",
+    "WR_element_input": "WR_pw_element_type_text",
     "WR_implicitly_wait": None,  # drop entirely; Playwright auto-waits
-    "WR_refresh": "WR_pw_reload",
-    "WR_back": "WR_pw_go_back",
-    "WR_forward": "WR_pw_go_forward",
-    "WR_quit_all": "WR_pw_close_context",
-    "WR_get_screenshot_as_png": "WR_pw_screenshot_png",
+    "WR_refresh": "WR_pw_refresh",
+    "WR_back": "WR_pw_back",
+    "WR_forward": "WR_pw_forward",
+    "WR_quit_all": "WR_pw_quit",
+    "WR_get_screenshot_as_png": "WR_pw_screenshot_bytes",
     "WR_set_window_size": "WR_pw_set_viewport_size",
+}
+
+# Parameters the Selenium command takes and its Playwright target does not.
+_DROPPED_PARAMS = {
+    "WR_set_window_size": ("window_handle",),
 }
 
 
@@ -150,6 +159,9 @@ def translate_action_list(actions: list[Any]) -> list[list[Any]]:
             continue  # drop
         new_action = list(action)
         new_action[0] = new_command
+        dropped = _DROPPED_PARAMS.get(command, ())
+        if dropped and len(new_action) > 1 and isinstance(new_action[1], dict):
+            new_action[1] = {key: value for key, value in new_action[1].items() if key not in dropped}
         translated.append(new_action)
     return translated
 

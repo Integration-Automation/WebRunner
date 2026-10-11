@@ -1,5 +1,6 @@
-# Rename to build dev version
-# This is dev version
+# The dev channel, je_web_runner_dev. The publish-dev job of .github/workflows/test_dev.yml builds it by
+# writing this file to pyproject.toml (scripts/dev_release.py). The version below is a floor: CI publishes
+# one patch above the newest release on PyPI and commits nothing back.
 [build-system]
 requires = ["setuptools>=82.0.1"]
 build-backend = "setuptools.build_meta"
@@ -21,6 +22,7 @@ dependencies = [
     "webdriver-manager>=4.0.0",
     "defusedxml>=0.7.1",
     "Pillow>=12.3.0",
+    "je_action_core>=0.0.3",
 ]
 classifiers = [
     "Programming Language :: Python :: 3.10",
@@ -30,6 +32,17 @@ classifiers = [
     "Environment :: X11 Applications",
     "Operating System :: OS Independent"
 ]
+
+# Optional: the WR_ac_* commands drive the desktop through AutoControl, which is imported
+# only when one of them runs.
+[project.optional-dependencies]
+# 0.0.225 is the first release with AC_write_secret, which WR_ac_basic_auth refuses to run without.
+autocontrol = ["je_auto_control>=0.0.225"]
+
+# Console scripts: the same entry point as ``python -m je_web_runner``.
+[project.scripts]
+webrunner = "je_web_runner.__main__:run"
+web_runner = "je_web_runner.__main__:run"
 
 [project.urls]
 Homepage = "https://github.com/Integration-Automation/WebRunner"
@@ -43,3 +56,7 @@ content-type = "text/markdown"
 
 [tool.setuptools.packages]
 find = { namespaces = false }
+
+[tool.setuptools.package-data]
+# Ship the PEP 561 marker, as the stable package does.
+je_web_runner = ["py.typed"]

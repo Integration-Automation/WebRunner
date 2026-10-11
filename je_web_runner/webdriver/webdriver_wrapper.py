@@ -41,11 +41,13 @@ from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_object.test_object_class import TestObject
 from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
 from je_web_runner.utils.test_record.test_record_class import record_action_to_list
+from je_web_runner.utils.test_record.wrapper_failures import settle_wrapper_failure
 from je_web_runner.webdriver._wrapper_mixins import (
     _ActionsMixin,
     _CookieMixin,
     _MediaMixin,
     _NavigationMixin,
+    _ParityMixin,
     _ScriptingMixin,
 )
 from je_web_runner.webdriver.webdriver_with_options import set_webdriver_options_capability_wrapper
@@ -150,6 +152,7 @@ class WebDriverWrapper(
     _CookieMixin,
     _ActionsMixin,
     _MediaMixin,
+    _ParityMixin,
 ):
     """
     WebDriver 包裝器
@@ -193,6 +196,7 @@ class WebDriverWrapper(
             experimental_options: dict | None = None,
             extension_paths: list[str] | None = None,
             enable_bidi: bool = False,
+            install_driver: bool = True,
             **kwargs
     ) -> webdriver.Chrome | webdriver.Firefox | webdriver.Edge | webdriver.Ie | webdriver.Safari:
         """
@@ -225,6 +229,11 @@ class WebDriverWrapper(
                             Enable W3C WebDriver BiDi (``webSocketUrl=True`` capability) so
                             ``add_console_listener`` / ``add_js_error_listener`` work.
                             Requires Selenium 4.16+.
+        :param install_driver: 是否先用 webdriver-manager 下載 driver（預設 True）。設 False 則跳過，
+                               交給 Selenium Manager 找 driver（不需連到 webdriver-manager 的下載來源）。
+                               Download the driver with webdriver-manager first (default True). False
+                               skips it and lets Selenium Manager resolve the driver, so a start does
+                               not depend on webdriver-manager's download host.
         :param kwargs: 額外傳給 WebDriver 的參數
                        Extra kwargs passed to WebDriver
         :return: 啟動後的 WebDriver 實例
@@ -249,7 +258,7 @@ class WebDriverWrapper(
             # 的瀏覽器(driver 內建於系統)直接跳過，避免 None().install() 崩潰。
             # 傳入 cache_manager 讓 driver 快取落在 cwd(原本建立後卻沒被使用)。
             webdriver_install_manager = _webdriver_manager_dict.get(webdriver_name)
-            if webdriver_install_manager is not None:
+            if install_driver and webdriver_install_manager is not None:
                 webdriver_install_manager(cache_manager=cache_manager).install()
 
             driver_options = _build_driver_options(
@@ -272,6 +281,7 @@ class WebDriverWrapper(
                 f"webdriver_manager_option_dict: {webdriver_manager_option_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_driver", param, error)
+            settle_wrapper_failure(error)
             raise WebRunnerException(f"set_driver failed: {error!r}") from error
 
     def set_webdriver_options_capability(self, key_and_vale_dict: dict) -> Options | None:
@@ -299,6 +309,7 @@ class WebDriverWrapper(
                 f"key_and_vale_dict: {key_and_vale_dict}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper set_webdriver_options_capability", param, error)
+            settle_wrapper_failure(error)
             raise WebRunnerException(
                 f"set_webdriver_options_capability failed: {error!r}") from error
 
@@ -367,6 +378,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper find_element, test_object: {test_object}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_element", param, error)
+            settle_wrapper_failure(error)
 
     def find_elements(self, test_object: TestObject) -> list[WebElement] | None:
         """
@@ -392,6 +404,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper find_elements, test_object: {test_object}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_elements", param, error)
+            settle_wrapper_failure(error)
 
     def find_element_with_test_object_record(self, element_name: str) -> WebElement | None:
         """
@@ -421,6 +434,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper find_element_with_test_object_record, element_name: {element_name}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_element_with_test_object_record", param, error)
+            settle_wrapper_failure(error)
 
     def find_elements_with_test_object_record(self, element_name: str) -> list[WebElement] | None:
         """
@@ -450,6 +464,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper find_elements_with_test_object_record, element_name: {element_name}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper find_elements_with_test_object_record", param, error)
+            settle_wrapper_failure(error)
 
     # wait
     def implicitly_wait(self, time_to_wait: int) -> None:
@@ -469,6 +484,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper implicitly_wait, time_to_wait: {time_to_wait}, failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper implicitly_wait", param, error)
+            settle_wrapper_failure(error)
 
     def explict_wait(self, wait_time: int, method: typing.Callable | None = None, until_type: bool = True):
         """
@@ -496,6 +512,7 @@ class WebDriverWrapper(
                 f"WebDriverWrapper explict_wait failed: {error!r}"
             )
             record_action_to_list("webdriver wrapper explict_wait", param, error)
+            settle_wrapper_failure(error)
 
     # timeout
     def set_script_timeout(self, time_to_wait: int) -> None:
@@ -508,6 +525,7 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper set_script_timeout failed: {error!r}")
             record_action_to_list("webdriver wrapper set_script_timeout", param, error)
+            settle_wrapper_failure(error)
 
     def set_page_load_timeout(self, time_to_wait: int) -> None:
         """設定頁面載入最大等待時間 / Set max page load wait time"""
@@ -519,6 +537,7 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper set_page_load_timeout failed: {error!r}")
             record_action_to_list("webdriver wrapper set_page_load_timeout", param, error)
+            settle_wrapper_failure(error)
 
     # webdriver wrapper add function
     def check_current_webdriver(self, check_dict: dict) -> None:
@@ -536,6 +555,7 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper check_current_webdriver failed: {error!r}")
             record_action_to_list("webdriver wrapper check_current_webdriver", param, error)
+            settle_wrapper_failure(error)
 
     # close event
     def quit(self) -> None:
@@ -555,6 +575,7 @@ class WebDriverWrapper(
         except Exception as error:
             web_runner_logger.error(f"WebDriverWrapper quit failed: {error!r}")
             record_action_to_list("webdriver wrapper quit", None, error)
+            settle_wrapper_failure(error)
             raise WebRunnerException(f"quit failed: {error!r}") from error
         finally:
             # Forget the (now dead) driver so the ``is None`` guards in

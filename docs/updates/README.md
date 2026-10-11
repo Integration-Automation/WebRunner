@@ -58,6 +58,64 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261011-01 | 2026-10-11 | Repair stable release security and browser checks | #done #ci | [2026-10](2026-10.md) |
+| U-20261008-01 | 2026-10-08 | The CLI exits 1 when the run failed; reports go below TestPioneer's artifact directory | #feature #cli #report #testpioneer | [2026-10](2026-10.md) |
+| U-20261001-53 | 2026-10-01 | The publish jobs build with the locked setuptools instead of downloading the newest | #ci #security #X-13 | [2026-10](2026-10.md) |
+| U-20261001-52 | 2026-10-01 | Dependabot watches the hash-locked requirements; a guard keeps the publish jobs on them | #ci #security #X-13 | [2026-10](2026-10.md) |
+| U-20261001-51 | 2026-10-01 | The autocontrol extra asks for je_auto_control 0.0.225, the first release with AC_write_secret | #change #dependencies #autocontrol #X-27 | [2026-10](2026-10.md) |
+| U-20261001-50 | 2026-10-01 | CI publishes je_web_runner_dev from the dev branch | #release #ci #X-13 | [2026-10](2026-10.md) |
+| U-20261001-49 | 2026-10-01 | The integration check-value script stops comparing layout values that move when read | #fix #ci #tests | [2026-10](2026-10.md) |
+| U-20261001-48 | 2026-10-01 | Checking WebDriver details no longer fails on Selenium 4 (application_cache) | #fix #selenium #ci | [2026-10](2026-10.md) |
+| U-20261001-47 | 2026-10-01 | The action executor runs on je_action_core | #change #executor #refactor #L-6 | [2026-10](2026-10.md) |
+| U-20261001-46 | 2026-10-01 | WR_ac_basic_auth: answer the browser's basic-auth dialog from env-var names through AC_write_secret | #done #autocontrol #security | [2026-10](2026-10.md) |
+| U-20261001-45 | 2026-10-01 | A failed Selenium wrapper call fails its action by default | #done #selenium | [2026-10](2026-10.md) |
+| U-20261001-44 | 2026-10-01 | The package gate refuses packages outside the allowlist by default | #done #security | [2026-10](2026-10.md) |
+| U-20261001-43 | 2026-10-01 | WEBRunner.log leaves the cwd: env var, env dir or home, opened on first record | #done #logging | [2026-10](2026-10.md) |
+| U-20261001-42 | 2026-10-01 | set_driver(install_driver=False): start a browser without webdriver-manager | #change #selenium #jeffrey-rpa | [2026-10](2026-10.md) |
+| U-20261001-41 | 2026-10-01 | Repeated actions keep every result: record keys numbered #2, #3 | #done #executor | [2026-10](2026-10.md) |
+| U-20261001-40 | 2026-10-01 | Async execution engine: asyncio, one browser context per action list, WR_apw_* | #done #async #playwright | [2026-10](2026-10.md) |
+| U-20261001-39 | 2026-10-01 | Refactor: split the CLI parser into argument groups | #change #cli #refactor | [2026-10](2026-10.md) |
+| U-20261001-38 | 2026-10-01 | Every workflow job has a timeout | #ci #tests | [2026-10](2026-10.md) |
+| U-20261001-38 | 2026-10-01 | Impact-based selection on the command line: --affected-by, --changed-since | #done #cli #impact-analysis | [2026-10](2026-10.md) |
+| U-20261001-37 | 2026-10-01 | Selenium failures lost their message in records and failure text | #incident #selenium #reports | [2026-10](2026-10.md) |
+| U-20261001-36 | 2026-10-01 | Selenium wrapper failures: deprecation warning, opt-in raising | #done #selenium #deprecation | [2026-10](2026-10.md) |
+| U-20261001-35 | 2026-10-01 | Facade themes for every utils subpackage; the api package loads themes lazily | #done #api | [2026-10](2026-10.md) |
+| U-20261001-34 | 2026-10-01 | Interactive HTML report: timeline with screenshots, error diffs, waterfall, axe badges | #done #reports | [2026-10](2026-10.md) |
+| U-20261001-33 | 2026-10-01 | Impact index cache: parse only the action files that changed | #done #performance #impact-analysis | [2026-10](2026-10.md) |
+| U-20261001-32 | 2026-10-01 | WR_assert_web_vitals: one budget for LCP, CLS, INP and FCP | #done #performance | [2026-10](2026-10.md) |
+| U-20261001-31 | 2026-10-01 | webrunner / web_runner console scripts | #done #cli #packaging | [2026-10](2026-10.md) |
+| U-20261001-30 | 2026-10-01 | Selenium BiDi commands failed on Selenium 4.49: network.conn is gone | #incident #selenium #ci | [2026-10](2026-10.md) |
+| U-20261001-29 | 2026-10-01 | WR_ac_click_element_native: page-to-screen mapping and a real mouse click | #change #autocontrol | [2026-10](2026-10.md) |
+| U-20261001-28 | 2026-10-01 | Native file dialog and image-on-screen commands; basic auth blocked | #change #autocontrol | [2026-10](2026-10.md) |
+| U-20261001-27 | 2026-10-01 | WR_ac_*: run AutoControl actions from WebRunner, refusing escalation | #change #autocontrol #security | [2026-10](2026-10.md) |
+| U-20261001-26 | 2026-10-01 | execute_one: one action through the executor's gates, raising on failure | #change #api #autocontrol | [2026-10](2026-10.md) |
+| U-20261001-25 | 2026-10-01 | Selenium event capture, HAR and response mocks over W3C BiDi | #done #selenium #bidi | [2026-10](2026-10.md) |
+| U-20261001-24 | 2026-10-01 | Selenium twins: JSON waits, raw selectors, dialogs, check/hover/text, devices, permissions, clock | #change #selenium | [2026-10](2026-10.md) |
+| U-20261001-23 | 2026-10-01 | Several Playwright browsers at once; one runtime for all launches | #change #playwright | [2026-10](2026-10.md) |
+| U-20261001-22 | 2026-10-01 | Playwright callbacks, visual regression and recorder | #change #playwright | [2026-10](2026-10.md) |
+| U-20261001-21 | 2026-10-01 | Playwright connect over CDP, browser server, persistent profile, downloads, cache switch | #change #playwright | [2026-10](2026-10.md) |
+| U-20261001-20 | 2026-10-01 | Playwright frame scope, role/text lookup and dialog policy; real-browser check | #change #playwright | [2026-10](2026-10.md) |
+| U-20261001-19 | 2026-10-01 | Playwright twins: cookies by name, submit, CSS value, page and element assertions | #change #playwright | [2026-10](2026-10.md) |
+| U-20261001-18 | 2026-10-01 | Playwright twins: init script, URL blocking, page switching, PDF, scrolling, drag by offset | #change #playwright | [2026-10](2026-10.md) |
+| U-20261001-17 | 2026-10-01 | Playwright trace and video commands; failed actions save the running trace | #done #playwright #observability | [2026-10](2026-10.md) |
+| U-20261001-16 | 2026-10-01 | Playwright keeps one merged set of context options; rebuilds keep cookies and the page | #change #playwright | [2026-10](2026-10.md) |
+| U-20261001-15 | 2026-10-01 | Aggregated dashboard redesign: status cards, trend chart, schedule and triage pages, live refresh | #done #dashboard #ui | [2026-10](2026-10.md) |
+| U-20261001-14 | 2026-10-01 | Split the aggregated dashboard module; read the ledger once per summary | #refactor #dashboard | [2026-10](2026-10.md) |
+| U-20261001-13 | 2026-10-01 | MCP server passes the official client's round trip in both eras | #done #mcp #tests | [2026-10](2026-10.md) |
+| U-20261001-12 | 2026-10-01 | MCP server serves the stateless 2026-07-28 revision beside the handshake ones | #change #mcp | [2026-10](2026-10.md) |
+| U-20261001-11 | 2026-10-01 | MCP caller policy: no package loading or script re-enabling; optional file root | #change #mcp #security | [2026-10](2026-10.md) |
+| U-20261001-10 | 2026-10-01 | Package gate in front of WR_add_package_to_executor | #done #security #executor | [2026-10](2026-10.md) |
+| U-20261001-09 | 2026-10-01 | MCP tools: titles, annotations, described closed schemas, argument checks, structuredContent | #change #mcp | [2026-10](2026-10.md) |
+| U-20261001-08 | 2026-10-01 | Split the MCP server module; export Tool from the package | #refactor #mcp | [2026-10](2026-10.md) |
+| U-20261001-07 | 2026-10-01 | MCP server negotiates 2024-11-05 to 2025-11-25; real version and instructions | #change #mcp | [2026-10](2026-10.md) |
+| U-20261001-06 | 2026-10-01 | Playwright shortcuts take options, page steps reach reports, popups tracked; backend comparison table | #change #playwright #docs | [2026-10](2026-10.md) |
+| U-20261001-05 | 2026-10-01 | Move the WR_* command table out of action_executor.py | #done #refactor #executor | [2026-10](2026-10.md) |
+| U-20261001-04 | 2026-10-01 | Split PlaywrightWrapper into mixins under the 750-line limit | #refactor #playwright | [2026-10](2026-10.md) |
+| U-20261001-03 | 2026-10-01 | Selenium→Playwright translator targets only registered commands | #change #playwright | [2026-10](2026-10.md) |
+| U-20261001-02 | 2026-10-01 | MCP server: UTF-8 stdio, silent notifications, isError for tool failures | #change #mcp | [2026-10](2026-10.md) |
+| U-20261001-01 | 2026-10-01 | Dashboard stylesheet loads under its own CSP; escaping and 500 fixes | #change #dashboard #security | [2026-10](2026-10.md) |
+| U-20260925-02 | 2026-09-25 | Translated READMEs link back to the repository root | #docs #tests | [2026-09](2026-09.md) |
+| U-20260925-01 | 2026-09-25 | Dependabot waits 7 days before proposing a new release | #ci #security #deps | [2026-09](2026-09.md) |
 | U-20260924-01 | 2026-09-24 | Pin workflow actions by commit; keep checkout credentials only where a job pushes | #ci #security | [2026-09](2026-09.md) |
 | U-20260923-20 | 2026-09-23 | One possibly-raising call per exception-test block (S5778) | #done #tests #sonar | [2026-09](2026-09.md) |
 | U-20260923-19 | 2026-09-23 | Generated, layered index of the utils subpackages | #done #docs | [2026-09](2026-09.md) |
@@ -86,4 +144,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-09.md](2026-09.md) | 2026-09 | 22 |
+| [2026-10.md](2026-10.md) | 2026-10 | 56 |
+| [2026-09.md](2026-09.md) | 2026-09 | 25 |

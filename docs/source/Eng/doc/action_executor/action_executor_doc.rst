@@ -7,7 +7,7 @@ Overview
 The Action Executor is a powerful engine that maps command strings to callable functions.
 It allows you to define automation scripts as JSON action lists, enabling data-driven automation workflows.
 
-The executor also includes all Python built-in functions, so you can call ``print``, ``len``, etc. from action lists.
+The executor also registers an allowlist of Python built-in functions (``SAFE_BUILTINS``: ``print``, ``len``, ``sorted``, ``sum`` …), so you can call them from action lists; ``eval``, ``exec``, ``open`` and the like are not registered.
 
 Action Format
 -------------
@@ -40,7 +40,27 @@ Basic Usage
 
     result = execute_action(actions)
 
-The ``execute_action()`` function returns a dict mapping each action to its return value.
+The ``execute_action()`` function returns a dict mapping each action
+(``"execute: <action>"``) to its return value. A repeated identical action
+gets ``#2``, ``#3`` … appended to its key, so every step's outcome is kept.
+
+A failed action is recorded in that dict and the next one runs. To run one action and
+get its value back instead, use ``execute_one``: it goes through the same command gates,
+retry policy and failure screenshots, prints nothing, and raises
+``WebRunnerExecuteException`` (the original error is its ``__cause__``) when the action
+fails:
+
+.. code-block:: python
+
+    from je_web_runner import execute_one
+
+    url = execute_one(["WR_get_current_url"])
+
+A failed Selenium wrapper call (``WR_to_url``, ``WR_element_click``,
+``WR_element_assert`` …) is recorded and then fails its action, as the
+Playwright commands do. ``executor.set_raise_wrapper_errors(False)`` (or
+``WR_set_raise_wrapper_errors`` with ``[false]`` first in an action file) lets it
+pass again, the behaviour before the default changed.
 
 Available Commands
 ------------------

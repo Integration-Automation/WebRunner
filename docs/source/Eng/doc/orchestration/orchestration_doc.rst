@@ -21,6 +21,26 @@ Test orchestration
 * **Scheduler** — stdlib-sched-backed ``ScheduledRunner`` for simple
   intervals.
 
+Async execution
+===============
+
+``--parallel-mode async`` (or ``AsyncExecutor`` from Python) runs action
+files on asyncio: one headless Chromium and, per file, a fresh browser
+context, so concurrent files are separate users (cookies, storage, tabs).
+``--parallel N`` caps how many run at once; Playwright is required.
+
+* ``WR_apw_*`` commands act in the file's own context: navigation, clicks,
+  input, text and title reads and assertions, waits, tabs
+  (``WR_apw_new_page`` / ``WR_apw_switch_to_page`` / ``WR_apw_close_page``),
+  screenshots, ``WR_apw_evaluate`` (behind the arbitrary-script gate),
+  ``WR_apw_sleep`` and WebSocket frames
+  (``WR_apw_websocket_messages`` / ``WR_apw_wait_for_websocket_message``).
+* Any other ``WR_*`` command runs in a worker thread with the usual gates,
+  retries and failure screenshots, sharing the process-wide singletons as
+  ``--parallel-mode thread`` does.
+* ``AsyncExecutor.run(actions)`` returns ``(record, failed)``;
+  ``run_many(lists, concurrency)`` runs lists with ``asyncio.gather``.
+
 Orchestration & DX
 ==================
 

@@ -1,25 +1,62 @@
-import builtins
+"""
+WebRunner 的動作執行器，建在 je_action_core 上
+The action executor, built on je_action_core's :class:`~je_action_core.ActionExecutor`.
+
+The core runs the list, keys the records (``execute: <action>``, repeats numbered ``#2`` …), prints them and
+holds the commands. WebRunner adds its dialect: ``[name, [args], {kwargs}]`` actions, refused commands and the
+arbitrary-script gate (checked before the name is looked up), the retry policy and the action span (around
+every action, through :meth:`Executor.attempt`), failure screenshots and traces in the failure record, and
+:meth:`Executor.execute_one`.
+"""
+import contextlib
 import time
-import types
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any, Callable, Iterable, Iterator
 
-# 禁止暴露於 JSON 動作執行器的內建函式，避免任意程式碼執行
-# 只註冊允許清單，不再用黑名單：「除了危險的以外全部註冊」會讓 action JSON 拿到
-# 未來 Python 新增的任何內建函式，而且原本的黑名單仍放行 dir / hasattr / id /
-# isinstance / iter / next。這份清單與 MailThunder、LoadDensity 的相同，所以同一份
-# action list 在工作區各框架的行為一致（工作區 progress.md X-12）。
-# An allowlist, not a blocklist: "register everything except the dangerous ones"
-# hands action JSON whatever a future Python adds to builtins, and the previous
-# list still let dir / hasattr / id / isinstance / iter / next through. The names
-# match MailThunder's and LoadDensity's, so one action list behaves the same
-# across the workspace's frameworks (workspace progress.md X-12).
-SAFE_BUILTINS = frozenset({
-    "abs", "all", "any", "ascii", "bin", "callable", "chr", "divmod",
-    "format", "hash", "hex", "len", "max", "min", "oct", "ord", "pow",
-    "print", "repr", "round", "sorted", "sum",
-})
+from je_action_core import (
+    SAFE_BUILTINS,
+    ActionExecutor,
+    BoundAction,
+    CommandPolicy,
+    CommandRegistry,
+    DuplicateKeys,
+    ExecutorSettings,
+    PrintReporter,
+    safe_builtin_commands,
+    unique_record_key,
+)
+
+from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
+from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
+from je_web_runner.utils.exception.exceptions import (
+    WebRunnerAddCommandException,
+    WebRunnerExecuteException,
+    describe_error,
+)
+from je_web_runner.utils.executor._event_table import build_event_dict
+from je_web_runner.utils.json.json_file.json_file import read_action_json
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+from je_web_runner.utils.package_manager.package_manager_class import package_manager
+from je_web_runner.utils.test_record.wrapper_failures import set_raise_wrapper_errors
+from je_web_runner.webdriver import playwright_wrapper as _pw
+from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
+
+# 只註冊允許清單裡的內建函式（je_action_core 的 SAFE_BUILTINS，與 MailThunder、LoadDensity 相同）
+# Only the allowlisted builtins are registered: je_action_core's SAFE_BUILTINS, the list MailThunder and
+# LoadDensity use too, so one action list behaves the same across the workspace's frameworks (workspace
+# progress.md X-12). An allowlist, because "everything except the dangerous ones" would hand action JSON
+# whatever a future Python adds to builtins. Re-exported here: ``SAFE_BUILTINS`` and ``unique_record_key``
+# keep their import path in this module.
+__all__ = [
+    "SAFE_BUILTINS", "Executor", "add_command_to_executor", "execute_action", "execute_files", "execute_one",
+    "executor", "unique_record_key",
+]
+
+_NAME_ONLY = 1
+_NAME_AND_PAYLOAD = 2
+_NAME_ARGS_AND_KWARGS = 3
 
 # WR_* 命令會把整段 JavaScript 字串送進瀏覽器執行；當 action JSON 來源不可信時
 # 必須能關閉。透過 ``set_allow_arbitrary_script(False)`` 切換。
@@ -34,142 +71,8 @@ _ARBITRARY_SCRIPT_COMMANDS = frozenset({
     "WR_pw_cdp",
     "WR_execute_cdp_cmd",
     "WR_add_script_to_evaluate_on_new_document",
+    "WR_pw_add_init_script",
 })
-
-from je_web_runner.manager.webrunner_manager import web_runner
-from je_web_runner.utils.exception.exception_tags import add_command_exception_tag
-from je_web_runner.utils.exception.exception_tags import executor_data_error, executor_list_error
-from je_web_runner.utils.exception.exceptions import WebRunnerExecuteException, WebRunnerAddCommandException
-from je_web_runner.utils.generate_report.generate_html_report import generate_html
-from je_web_runner.utils.generate_report.generate_html_report import generate_html_report
-from je_web_runner.utils.generate_report.generate_json_report import generate_json
-from je_web_runner.utils.generate_report.generate_json_report import generate_json_report
-from je_web_runner.utils.generate_report.generate_xml_report import generate_xml
-from je_web_runner.utils.generate_report.generate_xml_report import generate_xml_report
-from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml
-from je_web_runner.utils.generate_report.generate_junit_xml_report import generate_junit_xml_report
-from je_web_runner.utils.generate_report.generate_allure_report import generate_allure
-from je_web_runner.utils.generate_report.generate_allure_report import generate_allure_report
-from je_web_runner.utils.generate_report.report_manifest import (
-    expected_paths as _report_expected_paths,
-    generate_all_reports as _report_generate_all,
-)
-from je_web_runner.utils.json.json_file.json_file import read_action_json
-from je_web_runner.utils.accessibility.axe_audit import (
-    load_axe_source as _axe_load_source,
-    playwright_run_audit as _axe_run_pw,
-    selenium_run_audit as _axe_run_selenium,
-    summarise_violations as _axe_summarise,
-)
-from je_web_runner.utils.observability import event_capture as _event_capture
-from je_web_runner.utils.secrets_scanner import scanner as _secrets
-from je_web_runner.utils.security_headers import headers_audit as _headers_audit
-from je_web_runner.utils.perf_metrics import page_metrics as _perf
-from je_web_runner.utils.snapshot import snapshot as _snapshot
-from je_web_runner.utils.har_diff import har_diff as _har_diff
-from je_web_runner.utils.test_filter import dependency as _dependency
-from je_web_runner.utils.test_filter import tag_filter as _tag_filter
-from je_web_runner.utils.ab_run import ab_runner as _ab
-from je_web_runner.utils.cloud_grid import cloud_drivers as _cloud
-from je_web_runner.utils.ci_annotations import github_annotations as _gh_annotations
-from je_web_runner.utils.lighthouse import lighthouse_runner as _lighthouse
-from je_web_runner.utils.load_test import locust_wrapper as _locust
-from je_web_runner.utils.test_management import jira_client as _jira
-from je_web_runner.utils.test_management import testrail_client as _testrail
-from je_web_runner.utils.run_ledger import flaky as _flaky
-from je_web_runner.utils.run_ledger import ledger as _ledger
-from je_web_runner.utils.run_ledger import classifier as _classifier
-from je_web_runner.utils.service_worker import sw_control as _sw
-from je_web_runner.utils.storage import browser_storage as _storage
-from je_web_runner.utils.cdp.cdp_commands import (
-    playwright_cdp as _cdp_playwright,
-    reset_playwright_cdp_sessions as _cdp_reset,
-    selenium_cdp as _cdp_selenium,
-)
-from je_web_runner.utils.network_emulation import throttling as _throttle
-from je_web_runner.utils.test_data import faker_integration as _fakerint
-from je_web_runner.utils.extensions import extension_loader as _ext
-from je_web_runner.utils.dom_traversal import shadow_iframe as _dom
-from je_web_runner.utils.file_transfer import file_helpers as _ft
-from je_web_runner.utils.linter import action_linter as _linter
-from je_web_runner.utils.linter import migration as _migration
-from je_web_runner.utils.schema import action_schema as _schema
-from je_web_runner.utils.docs import command_reference as _docs
-from je_web_runner.utils.database import db_validate as _db
-from je_web_runner.utils.scheduler import cron_runner as _scheduler
-from je_web_runner.utils.multi_user import matrix as _matrix
-from je_web_runner.utils.replay_studio import replay_studio as _replay
-from je_web_runner.utils.auth import oauth as _oauth
-from je_web_runner.utils.factories import factory as _factories
-from je_web_runner.utils.testcontainers_integration import containers as _tc
-from je_web_runner.utils.dashboard import live_dashboard as _dashboard
-from je_web_runner.utils.sharding import shard as _sharding
-from je_web_runner.utils.appium_integration import appium_driver as _appium
-from je_web_runner.utils.ai_assist import llm_assist as _llm
-from je_web_runner.utils.api.http_client import (
-    http_assert_json_contains,
-    http_assert_status,
-    http_delete,
-    http_get,
-    http_patch,
-    http_post,
-    http_put,
-    http_request,
-)
-from je_web_runner.utils.data_driven.data_runner import (
-    expand_with_row,
-    load_dataset_csv,
-    load_dataset_json,
-    run_with_dataset,
-)
-from je_web_runner.utils.env_config.env_loader import expand_in_action, get_env, load_env
-from je_web_runner.utils.pom_generator.pom_generator import (
-    generate_pom_from_html,
-    generate_pom_from_url,
-    write_pom_to_file,
-)
-from je_web_runner.utils.notifier.webhook_notifier import (
-    notify_run_summary,
-    notify_slack,
-    notify_webhook,
-    summarise_run,
-)
-from je_web_runner.utils.self_healing.healing_locator import (
-    clear_fallbacks as _heal_clear_fallbacks,
-    find_with_healing_playwright as _heal_find_pw,
-    find_with_healing_selenium as _heal_find_selenium,
-    register_fallback as _heal_register_fallback,
-    register_fallbacks as _heal_register_fallbacks,
-)
-from je_web_runner.utils.json.json_validator import validate_action_file, validate_action_json
-from je_web_runner.utils.logging.loggin_instance import web_runner_logger
-from je_web_runner.utils.package_manager.package_manager_class import package_manager
-from je_web_runner.utils.test_object.test_object_record.test_object_record_class import test_object_record
-from je_web_runner.utils.visual_regression.visual_diff import capture_baseline as _visual_capture_baseline
-from je_web_runner.utils.visual_regression.visual_diff import compare_with_baseline as _visual_compare
-from je_web_runner.webdriver import playwright_wrapper as _pw
-from je_web_runner.webdriver.playwright_element_wrapper import playwright_element_wrapper as _pw_element
-from je_web_runner.utils.recorder.browser_recorder import pull_events as _recorder_pull_events
-from je_web_runner.utils.recorder.browser_recorder import save_recording as _recorder_save_recording
-from je_web_runner.utils.recorder.browser_recorder import start_recording as _recorder_start
-from je_web_runner.utils.recorder.browser_recorder import stop_recording as _recorder_stop
-from je_web_runner.utils.test_record.test_record_class import test_record_instance
-from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
-
-
-def _sleep_seconds(seconds: int | float = 1) -> float:
-    """
-    阻塞當前執行緒指定秒數，回傳實際睡眠的秒數。
-    Block the calling thread for ``seconds`` (positive number). Negative
-    or non-numeric values raise :class:`ValueError` so a typo can't
-    silently no-op an action JSON pipeline.
-    """
-    if isinstance(seconds, bool) or not isinstance(seconds, (int, float)):
-        raise ValueError(f"WR_sleep seconds must be a number, got {type(seconds).__name__}")
-    if seconds < 0:
-        raise ValueError(f"WR_sleep seconds must be >= 0, got {seconds}")
-    time.sleep(float(seconds))
-    return float(seconds)
 
 
 def _try_selenium_screenshot() -> bytes | None:
@@ -190,9 +93,79 @@ def _try_playwright_screenshot() -> bytes | None:
         return None
 
 
-class Executor:
+@dataclass(frozen=True)
+class _ActionParser:
+    """
+    WebRunner 的動作格式
+    ``[name]``, ``[name, {kwargs}]``, ``[name, [args]]`` or ``[name, [args], {kwargs}]``. The name is looked
+    up first. An unknown name, a three-element action of any other shape and a longer action raise
+    :class:`WebRunnerExecuteException`; an empty action raises ``IndexError``.
+    """
+
+    def bind(self, action: Any, resolve: Callable[[Any], Callable[..., Any] | None]) -> BoundAction:
+        """Bind ``action`` to the command ``resolve`` finds for its name."""
+        name = action[0]
+        command = resolve(name)
+        if command is None:
+            raise WebRunnerExecuteException(f"{executor_data_error} unknown command: {name!s}")
+        if len(action) == _NAME_ONLY:
+            return BoundAction(name, command)
+        if len(action) == _NAME_AND_PAYLOAD:
+            if isinstance(action[1], dict):
+                return BoundAction(name, command, (), action[1])
+            return BoundAction(name, command, action[1], {})
+        if len(action) == _NAME_ARGS_AND_KWARGS:
+            positional, kwargs = action[1], action[2]
+            if not isinstance(positional, (list, tuple)) or not isinstance(kwargs, dict):
+                raise WebRunnerExecuteException(
+                    f"{executor_data_error}: 3-element action requires [cmd, [positional], {{kwargs}}]"
+                )
+            return BoundAction(name, command, positional, kwargs)
+        raise WebRunnerExecuteException(f"{executor_data_error} {action!s}")
+
+
+class _ActionList:
+    """Finds the actions as :meth:`Executor.action_list_of` does: an empty list runs nothing."""
+
+    @staticmethod
+    def extract(action_list: Any) -> list:
+        """The list to run; raises for anything that is not a list or a dict holding one."""
+        return Executor.action_list_of(action_list)
+
+
+class _Reporter(PrintReporter):
+    """Logs the list and each failure; prints every record's key and value (as :class:`PrintReporter`)."""
+
+    def on_start(self, action_list: Any) -> None:
+        web_runner_logger.info(f"execute_action, action_list: {action_list}")
+
+    def on_failure(self, action: Any, error: Exception) -> None:
+        web_runner_logger.error(f"execute_action, action: {action}, failed: {error!r}")
+
+
+def _refuse_command(_name: str) -> WebRunnerAddCommandException:
+    return WebRunnerAddCommandException(add_command_exception_tag)
+
+
+class Executor(ActionExecutor):
+    """
+    執行 WebRunner 動作清單
+    Runs WebRunner action lists: je_action_core's executor with WebRunner's action format, gates, retries,
+    action spans and failure artifacts. ``event_dict`` is the live command table.
+    """
 
     def __init__(self):
+        super().__init__(
+            ExecutorSettings(
+                rules=_ActionList(),
+                parser=_ActionParser(),
+                reporter=_Reporter(),
+                read_json=read_action_json,
+                failure_record=self._failure_text,
+                duplicate_keys=DuplicateKeys.NUMBER,
+            ),
+            CommandRegistry(policy=CommandPolicy.FUNCTIONS_ONLY, rejection=_refuse_command),
+        )
         # 失敗時自動截圖目錄；None 代表停用
         # Output directory for auto-captured failure screenshots; None disables it.
         self.failure_screenshot_dir: str | None = None
@@ -209,606 +182,15 @@ class Executor:
         # observability stack (OpenTelemetry, custom logging, …) can wrap
         # each call without the executor depending on the SDK directly.
         self._action_span_factory: Callable[[str], Any] | None = None
+        # 暫時拒絕的命令（見 restricted()）/ Commands refused for now; see restricted().
+        self._denied_commands: frozenset[str] = frozenset()
         # 事件字典：將字串名稱對應到實際可執行的函式
         # Event dictionary: map string keys to actual callable functions
-        self.event_dict = {
-            # webdriver manager
-            "WR_get_webdriver_manager": web_runner.new_driver,
-            "WR_change_index_of_webdriver": web_runner.change_webdriver,
-            "WR_quit": web_runner.quit,
-
-            # test object
-            "WR_SaveTestObject": test_object_record.save_test_object,
-            "WR_CleanTestObject": test_object_record.clean_record,
-
-            # webdriver wrapper
-            "WR_set_driver": webdriver_wrapper_instance.set_driver,
-            "WR_set_webdriver_options_capability": webdriver_wrapper_instance.set_webdriver_options_capability,
-            "WR_find_element": webdriver_wrapper_instance.find_element_with_test_object_record,
-            "WR_find_elements": webdriver_wrapper_instance.find_elements_with_test_object_record,
-            "WR_implicitly_wait": webdriver_wrapper_instance.implicitly_wait,
-            "WR_explict_wait": webdriver_wrapper_instance.explict_wait,
-            "WR_sleep": _sleep_seconds,
-            "WR_to_url": webdriver_wrapper_instance.to_url,
-            "WR_forward": webdriver_wrapper_instance.forward,
-            "WR_back": webdriver_wrapper_instance.back,
-            "WR_refresh": webdriver_wrapper_instance.refresh,
-            "WR_switch": webdriver_wrapper_instance.switch,
-            "WR_set_script_timeout": webdriver_wrapper_instance.set_script_timeout,
-            "WR_set_page_load_timeout": webdriver_wrapper_instance.set_page_load_timeout,
-            "WR_get_cookies": webdriver_wrapper_instance.get_cookies,
-            "WR_get_cookie": webdriver_wrapper_instance.get_cookie,
-            "WR_add_cookie": webdriver_wrapper_instance.add_cookie,
-            "WR_delete_cookie": webdriver_wrapper_instance.delete_cookie,
-            "WR_delete_all_cookies": webdriver_wrapper_instance.delete_all_cookies,
-            "WR_execute": webdriver_wrapper_instance.execute,
-            "WR_execute_script": webdriver_wrapper_instance.execute_script,
-            "WR_execute_async_script": webdriver_wrapper_instance.execute_async_script,
-            "WR_move_to_element": webdriver_wrapper_instance.move_to_element_with_test_object,
-            "WR_move_to_element_with_offset": webdriver_wrapper_instance.move_to_element_with_offset_and_test_object,
-            "WR_drag_and_drop": webdriver_wrapper_instance.drag_and_drop_with_test_object,
-            "WR_drag_and_drop_offset": webdriver_wrapper_instance.drag_and_drop_offset_with_test_object,
-            "WR_perform": webdriver_wrapper_instance.perform,
-            "WR_reset_actions": webdriver_wrapper_instance.reset_actions,
-            "WR_left_click": webdriver_wrapper_instance.left_click_with_test_object,
-            "WR_left_click_and_hold": webdriver_wrapper_instance.left_click_and_hold_with_test_object,
-            "WR_right_click": webdriver_wrapper_instance.right_click_with_test_object,
-            "WR_left_double_click": webdriver_wrapper_instance.left_double_click_with_test_object,
-            "WR_release": webdriver_wrapper_instance.release_with_test_object,
-            "WR_press_key": webdriver_wrapper_instance.press_key_with_test_object,
-            "WR_release_key": webdriver_wrapper_instance.release_key_with_test_object,
-            "WR_move_by_offset": webdriver_wrapper_instance.move_by_offset,
-            "WR_pause": webdriver_wrapper_instance.pause,
-            "WR_send_keys": webdriver_wrapper_instance.send_keys,
-            "WR_send_keys_to_element": webdriver_wrapper_instance.send_keys_to_element_with_test_object,
-            "WR_scroll": webdriver_wrapper_instance.scroll,
-            "WR_check_current_webdriver": webdriver_wrapper_instance.check_current_webdriver,
-            "WR_maximize_window": webdriver_wrapper_instance.maximize_window,
-            "WR_fullscreen_window": webdriver_wrapper_instance.fullscreen_window,
-            "WR_minimize_window": webdriver_wrapper_instance.minimize_window,
-            "WR_set_window_size": webdriver_wrapper_instance.set_window_size,
-            "WR_set_window_position": webdriver_wrapper_instance.set_window_position,
-            "WR_get_window_position": webdriver_wrapper_instance.get_window_position,
-            "WR_get_window_rect": webdriver_wrapper_instance.get_window_rect,
-            "WR_set_window_rect": webdriver_wrapper_instance.set_window_rect,
-            "WR_get_screenshot_as_png": webdriver_wrapper_instance.get_screenshot_as_png,
-            "WR_get_screenshot_as_base64": webdriver_wrapper_instance.get_screenshot_as_base64,
-            "WR_save_screenshot": webdriver_wrapper_instance.save_screenshot,
-            "WR_save_full_page_screenshot": webdriver_wrapper_instance.save_full_page_screenshot,
-            "WR_print_page": webdriver_wrapper_instance.print_page,
-            "WR_get_log": webdriver_wrapper_instance.get_log,
-            "WR_single_quit": webdriver_wrapper_instance.quit,
-
-            # webdriver wrapper — advanced (mixin additions)
-            "WR_attach_to_existing_browser": webdriver_wrapper_instance.attach_to_existing_browser,
-            "WR_execute_cdp_cmd": webdriver_wrapper_instance.execute_cdp_cmd,
-            "WR_reload": webdriver_wrapper_instance.reload,
-            "WR_bring_to_front": webdriver_wrapper_instance.bring_to_front,
-            "WR_scroll_to_top": webdriver_wrapper_instance.scroll_to_top,
-            "WR_scroll_to_bottom": webdriver_wrapper_instance.scroll_to_bottom,
-            "WR_switch_to_window_by_url": webdriver_wrapper_instance.switch_to_window_by_url,
-            "WR_switch_to_window_by_title": webdriver_wrapper_instance.switch_to_window_by_title,
-            "WR_get_current_url": webdriver_wrapper_instance.get_current_url,
-            "WR_get_title": webdriver_wrapper_instance.get_title,
-            "WR_get_page_source": webdriver_wrapper_instance.get_page_source,
-            "WR_get_window_handles": webdriver_wrapper_instance.get_window_handles,
-            "WR_get_current_window_handle": webdriver_wrapper_instance.get_current_window_handle,
-            "WR_new_window": webdriver_wrapper_instance.new_window,
-            "WR_close_window": webdriver_wrapper_instance.close_window,
-            "WR_save_cookies": webdriver_wrapper_instance.save_cookies,
-            "WR_load_cookies": webdriver_wrapper_instance.load_cookies,
-            "WR_clear_origin_storage": webdriver_wrapper_instance.clear_origin_storage,
-            "WR_add_script_to_evaluate_on_new_document":
-                webdriver_wrapper_instance.add_script_to_evaluate_on_new_document,
-            "WR_set_user_agent": webdriver_wrapper_instance.set_user_agent,
-            "WR_set_extra_http_headers": webdriver_wrapper_instance.set_extra_http_headers,
-            "WR_set_geolocation": webdriver_wrapper_instance.set_geolocation,
-            "WR_set_timezone": webdriver_wrapper_instance.set_timezone,
-            "WR_set_locale": webdriver_wrapper_instance.set_locale,
-            "WR_set_device_metrics": webdriver_wrapper_instance.set_device_metrics,
-            "WR_clear_device_metrics": webdriver_wrapper_instance.clear_device_metrics,
-            "WR_clear_geolocation_override": webdriver_wrapper_instance.clear_geolocation_override,
-            "WR_set_network_conditions": webdriver_wrapper_instance.set_network_conditions,
-            "WR_block_urls": webdriver_wrapper_instance.block_urls,
-            "WR_unblock_urls": webdriver_wrapper_instance.unblock_urls,
-            "WR_set_cache_disabled": webdriver_wrapper_instance.set_cache_disabled,
-            "WR_set_download_directory": webdriver_wrapper_instance.set_download_directory,
-            "WR_enable_fetch_interception": webdriver_wrapper_instance.enable_fetch_interception,
-            "WR_disable_fetch_interception": webdriver_wrapper_instance.disable_fetch_interception,
-            "WR_fetch_continue_request": webdriver_wrapper_instance.continue_request,
-            "WR_fetch_fulfill_request": webdriver_wrapper_instance.fulfill_request,
-            "WR_fetch_fail_request": webdriver_wrapper_instance.fail_request,
-
-            # web element
-            "WR_element_submit": web_runner.webdriver_element.submit,
-            "WR_element_clear": web_runner.webdriver_element.clear,
-            "WR_element_get_property": web_runner.webdriver_element.get_property,
-            "WR_element_get_dom_attribute": web_runner.webdriver_element.get_dom_attribute,
-            "WR_element_get_attribute": web_runner.webdriver_element.get_attribute,
-            "WR_element_is_selected": web_runner.webdriver_element.is_selected,
-            "WR_element_is_enabled": web_runner.webdriver_element.is_enabled,
-            "WR_input_to_element": web_runner.webdriver_element.input_to_element,
-            "WR_click_element": web_runner.webdriver_element.click_element,
-            "WR_element_is_displayed": web_runner.webdriver_element.is_displayed,
-            "WR_element_value_of_css_property": web_runner.webdriver_element.value_of_css_property,
-            "WR_element_screenshot": web_runner.webdriver_element.screenshot,
-            "WR_element_change_web_element": web_runner.webdriver_element.change_web_element,
-            "WR_element_check_current_web_element": web_runner.webdriver_element.check_current_web_element,
-            "WR_element_get_select": web_runner.webdriver_element.get_select,
-
-            # init test record
-            "WR_set_record_enable": test_record_instance.set_record_enable,
-
-            # generate report
-            "WR_generate_html": generate_html,
-            "WR_generate_html_report": generate_html_report,
-            "WR_generate_json": generate_json,
-            "WR_generate_json_report": generate_json_report,
-            "WR_generate_xml": generate_xml,
-            "WR_generate_xml_report": generate_xml_report,
-            "WR_generate_junit_xml": generate_junit_xml,
-            "WR_generate_junit_xml_report": generate_junit_xml_report,
-            "WR_generate_allure": generate_allure,
-            "WR_generate_allure_report": generate_allure_report,
-            "WR_generate_all_reports": _report_generate_all,
-            "WR_report_expected_paths": _report_expected_paths,
-
-            # execute
-            "WR_execute_action": self.execute_action,
-            "WR_execute_files": self.execute_files,
-
-            # validate
-            "WR_validate_action_json": validate_action_json,
-            "WR_validate_action_file": validate_action_file,
-
-            # environment configuration
-            "WR_load_env": load_env,
-            "WR_get_env": get_env,
-            "WR_expand_env_in_action": expand_in_action,
-
-            # data-driven testing
-            "WR_load_dataset_csv": load_dataset_csv,
-            "WR_load_dataset_json": load_dataset_json,
-            "WR_expand_with_row": expand_with_row,
-            "WR_run_with_dataset": lambda action_data, rows: run_with_dataset(
-                action_data, rows, self.execute_action
-            ),
-
-            # failure auto-screenshot
-            "WR_set_failure_screenshot_dir": self.set_failure_screenshot_dir,
-
-            # retry policy
-            "WR_set_retry_policy": self.set_retry_policy,
-
-            # security: arbitrary-script gate
-            "WR_set_allow_arbitrary_script": self.set_allow_arbitrary_script,
-
-            # self-healing locators
-            "WR_register_fallback_locator": _heal_register_fallback,
-            "WR_register_fallback_locators": _heal_register_fallbacks,
-            "WR_clear_fallback_locators": _heal_clear_fallbacks,
-            "WR_find_with_healing": _heal_find_selenium,
-            "WR_pw_find_with_healing": _heal_find_pw,
-
-            # HTTP API testing
-            "WR_http_request": http_request,
-            "WR_http_get": http_get,
-            "WR_http_post": http_post,
-            "WR_http_put": http_put,
-            "WR_http_patch": http_patch,
-            "WR_http_delete": http_delete,
-            "WR_http_assert_status": http_assert_status,
-            "WR_http_assert_json_contains": http_assert_json_contains,
-
-            # raw CDP
-            "WR_cdp": _cdp_selenium,
-            "WR_pw_cdp": _cdp_playwright,
-            "WR_pw_cdp_reset_sessions": _cdp_reset,
-
-            # network throttling presets
-            "WR_throttle": _throttle.selenium_emulate_network,
-            "WR_throttle_clear": _throttle.selenium_clear_throttling,
-            "WR_pw_throttle": _throttle.playwright_emulate_network,
-            "WR_pw_throttle_clear": _throttle.playwright_clear_throttling,
-            "WR_throttle_presets": _throttle.list_presets,
-
-            # faker (random test data)
-            "WR_faker_seed": _fakerint.seed_faker,
-            "WR_faker": _fakerint.fake_value,
-            "WR_faker_email": _fakerint.fake_email,
-            "WR_faker_name": _fakerint.fake_name,
-            "WR_faker_first_name": _fakerint.fake_first_name,
-            "WR_faker_last_name": _fakerint.fake_last_name,
-            "WR_faker_phone": _fakerint.fake_phone,
-            "WR_faker_address": _fakerint.fake_address,
-            "WR_faker_uuid": _fakerint.fake_uuid,
-            "WR_faker_credit_card": _fakerint.fake_credit_card,
-            "WR_faker_url": _fakerint.fake_url,
-            "WR_faker_user_agent": _fakerint.fake_user_agent,
-            "WR_faker_password": _fakerint.fake_password,
-            "WR_faker_text": _fakerint.fake_text,
-
-            # browser extension loaders
-            "WR_chrome_options_with_extension": _ext.selenium_chrome_options_with_extension,
-            "WR_pw_extension_args": _ext.playwright_extension_launch_args,
-
-            # shadow DOM / iframe traversal
-            "WR_shadow_query": _dom.selenium_query_in_shadow,
-            "WR_pw_shadow_query": _dom.playwright_query_in_shadow,
-            "WR_pw_shadow_selector": _dom.playwright_shadow_selector,
-            "WR_iframe_switch_chain": _dom.selenium_switch_iframe_chain,
-            "WR_iframe_back_to_default": _dom.selenium_back_to_default,
-            "WR_pw_frame_locator_chain": _dom.playwright_frame_locator_chain,
-
-            # file upload / download
-            "WR_upload_file": _ft.selenium_upload_file,
-            "WR_pw_upload_file": _ft.playwright_upload_file,
-            "WR_wait_for_download": _ft.wait_for_download,
-            "WR_list_new_downloads": _ft.list_new_downloads,
-            "WR_snapshot_directory": _ft.snapshot_directory,
-
-            # action linter
-            "WR_lint_action": _linter.lint_action,
-            "WR_lint_action_file": _linter.lint_action_file,
-            "WR_lint_severity_counts": _linter.severity_counts,
-
-            # migration helper
-            "WR_migrate_action": _migration.migrate_action,
-            "WR_migrate_action_file": _migration.migrate_action_file,
-            "WR_migrate_directory": _migration.migrate_directory,
-
-            # JSON Schema export
-            "WR_build_action_schema": _schema.build_action_schema,
-            "WR_export_action_schema": _schema.export_schema,
-
-            # auto-generated docs
-            "WR_build_command_reference": _docs.build_command_reference,
-            "WR_export_command_reference": _docs.export_command_reference,
-            "WR_list_commands": _docs.list_commands,
-
-            # OpenTelemetry tracing
-            "WR_set_action_span_factory": self.set_action_span_factory,
-
-            # database validation
-            "WR_db_query": _db.db_query,
-            "WR_db_assert_count": _db.db_assert_count,
-            "WR_db_assert_value": _db.db_assert_value,
-            "WR_db_assert_exists": _db.db_assert_exists,
-            "WR_db_assert_empty": _db.db_assert_empty,
-
-            # scheduler
-            "WR_schedule": _scheduler.schedule,
-            "WR_run_scheduler_for": _scheduler.run_scheduler_for,
-            "WR_run_scheduler_forever": _scheduler.run_scheduler_forever,
-            "WR_stop_scheduler": _scheduler.stop_scheduler,
-            "WR_scheduler_counts": _scheduler.scheduler_counts,
-            "WR_reset_scheduler": _scheduler.reset_scheduler,
-
-            # multi-user matrix runner
-            "WR_run_for_users": _matrix.run_for_users,
-
-            # failure classifier
-            "WR_classify_error": _classifier.classify_error,
-            "WR_classify_failure": _classifier.classify,
-            "WR_classify_failures": _classifier.classify_failures,
-
-            # replay studio (HTML timeline)
-            "WR_build_replay_html": _replay.build_replay_html,
-            "WR_export_replay_studio": _replay.export_replay_studio,
-
-            # OAuth2 / OIDC
-            "WR_oauth_client_credentials": _oauth.client_credentials_token,
-            "WR_oauth_password_grant": _oauth.password_grant_token,
-            "WR_oauth_refresh_token": _oauth.refresh_token_grant,
-            "WR_oauth_get_cached": _oauth.get_cached_token,
-            "WR_oauth_clear_cache": _oauth.clear_token_cache,
-            "WR_oauth_bearer_header": _oauth.bearer_header,
-
-            # factory pattern helpers
-            "WR_user_factory": _factories.user_factory,
-            "WR_order_factory": _factories.order_factory,
-            "WR_product_factory": _factories.product_factory,
-
-            # testcontainers
-            "WR_tc_postgres": _tc.start_postgres,
-            "WR_tc_redis": _tc.start_redis,
-            "WR_tc_generic": _tc.start_generic,
-            "WR_tc_stop": _tc.stop_container,
-            "WR_tc_cleanup_all": _tc.cleanup_all,
-            "WR_tc_started_count": _tc.started_count,
-
-            # live dashboard
-            "WR_dashboard_start": _dashboard.start_dashboard,
-            "WR_dashboard_stop": _dashboard.stop_dashboard,
-
-            # sharding
-            "WR_parse_shard_spec": _sharding.parse_shard_spec,
-            "WR_partition": _sharding.partition,
-            "WR_partition_with_spec": _sharding.partition_with_spec,
-
-            # Appium
-            "WR_appium_start": _appium.start_appium_session,
-            "WR_appium_quit": _appium.quit_appium_session,
-            "WR_appium_android_caps": _appium.build_android_caps,
-            "WR_appium_ios_caps": _appium.build_ios_caps,
-
-            # LLM scaffolds
-            "WR_llm_set_callable": _llm.set_llm_callable,
-            "WR_llm_has_callable": _llm.has_llm_callable,
-            "WR_llm_suggest_locator": _llm.suggest_locator,
-            "WR_llm_generate_actions": _llm.generate_actions_from_prompt,
-            "WR_llm_self_heal_locator": _llm.llm_self_heal_locator,
-
-            # storage (Selenium)
-            "WR_local_storage_set": _storage.selenium_local_storage_set,
-            "WR_local_storage_get": _storage.selenium_local_storage_get,
-            "WR_local_storage_remove": _storage.selenium_local_storage_remove,
-            "WR_local_storage_clear": _storage.selenium_local_storage_clear,
-            "WR_local_storage_all": _storage.selenium_local_storage_all,
-            "WR_session_storage_set": _storage.selenium_session_storage_set,
-            "WR_session_storage_get": _storage.selenium_session_storage_get,
-            "WR_session_storage_clear": _storage.selenium_session_storage_clear,
-            "WR_indexed_db_drop": _storage.selenium_indexed_db_drop,
-            # storage (Playwright)
-            "WR_pw_local_storage_set": _storage.playwright_local_storage_set,
-            "WR_pw_local_storage_get": _storage.playwright_local_storage_get,
-            "WR_pw_local_storage_remove": _storage.playwright_local_storage_remove,
-            "WR_pw_local_storage_clear": _storage.playwright_local_storage_clear,
-            "WR_pw_local_storage_all": _storage.playwright_local_storage_all,
-            "WR_pw_session_storage_set": _storage.playwright_session_storage_set,
-            "WR_pw_session_storage_get": _storage.playwright_session_storage_get,
-            "WR_pw_session_storage_clear": _storage.playwright_session_storage_clear,
-            "WR_pw_indexed_db_drop": _storage.playwright_indexed_db_drop,
-
-            # service worker / cache storage
-            "WR_sw_unregister": _sw.selenium_unregister_service_workers,
-            "WR_sw_clear_caches": _sw.selenium_clear_caches,
-            "WR_sw_bypass": _sw.selenium_bypass_service_worker,
-            "WR_pw_sw_unregister": _sw.playwright_unregister_service_workers,
-            "WR_pw_sw_clear_caches": _sw.playwright_clear_caches,
-            "WR_pw_sw_bypass": _sw.playwright_bypass_service_worker,
-
-            # console / network event capture
-            "WR_pw_event_capture_start": _event_capture.start_event_capture,
-            "WR_pw_event_capture_stop": _event_capture.stop_event_capture,
-            "WR_pw_event_capture_clear": _event_capture.clear_event_capture,
-            "WR_pw_console_messages": _event_capture.get_console_messages,
-            "WR_pw_network_responses": _event_capture.get_network_responses,
-            "WR_pw_assert_no_console_errors": _event_capture.assert_no_console_errors,
-            "WR_pw_assert_no_5xx": _event_capture.assert_no_5xx,
-            "WR_pw_assert_no_4xx_or_5xx": _event_capture.assert_no_4xx_or_5xx,
-
-            # secrets scanner
-            "WR_scan_secrets": _secrets.scan_action,
-            "WR_scan_secrets_file": _secrets.scan_action_file,
-            "WR_assert_no_secrets": _secrets.assert_no_secrets,
-
-            # security headers audit
-            "WR_audit_security_headers": _headers_audit.audit_headers,
-            "WR_audit_security_headers_url": _headers_audit.audit_url,
-
-            # page perf metrics
-            "WR_perf_collect": _perf.selenium_collect_metrics,
-            "WR_pw_perf_collect": _perf.playwright_collect_metrics,
-            "WR_perf_assert_within": _perf.assert_metrics_within,
-
-            # snapshot testing
-            "WR_match_snapshot": _snapshot.match_snapshot,
-            "WR_update_snapshot": _snapshot.update_snapshot,
-            "WR_delete_snapshot": _snapshot.delete_snapshot,
-
-            # HAR diff
-            "WR_diff_har": _har_diff.diff_har,
-            "WR_diff_har_files": _har_diff.diff_har_files,
-
-            # tag filter / dependencies
-            "WR_read_metadata": _tag_filter.read_metadata,
-            "WR_filter_paths": _tag_filter.filter_paths,
-            "WR_read_depends_on": _dependency.read_depends_on,
-            "WR_build_dependency_graph": _dependency.build_dependency_graph,
-            "WR_topological_order": _dependency.topological_order,
-            "WR_skip_dependents_of_failed": _dependency.skip_dependents_of_failed,
-
-            # run ledger
-            "WR_ledger_record_run": _ledger.record_run,
-            "WR_ledger_failed_files": _ledger.failed_files,
-            "WR_ledger_passed_files": _ledger.passed_files,
-            "WR_ledger_clear": _ledger.clear_ledger,
-            "WR_flakiness_stats": _flaky.flakiness_stats,
-            "WR_flaky_paths": _flaky.flaky_paths,
-
-            # A/B run mode
-            "WR_run_ab": _ab.run_ab,
-            "WR_diff_ab_records": _ab.diff_records,
-
-            # cloud grid (BrowserStack / Sauce Labs / LambdaTest)
-            "WR_browserstack_capabilities": _cloud.build_browserstack_capabilities,
-            "WR_saucelabs_capabilities": _cloud.build_saucelabs_capabilities,
-            "WR_lambdatest_capabilities": _cloud.build_lambdatest_capabilities,
-            "WR_connect_browserstack": _cloud.connect_browserstack,
-            "WR_connect_saucelabs": _cloud.connect_saucelabs,
-            "WR_connect_lambdatest": _cloud.connect_lambdatest,
-            "WR_start_remote_driver": _cloud.start_remote_driver,
-
-            # JIRA / TestRail integration
-            "WR_jira_create_issue": _jira.jira_create_issue,
-            "WR_jira_create_failure_issues": _jira.jira_create_failure_issues,
-            "WR_testrail_send_results": _testrail.testrail_send_results,
-            "WR_testrail_results_from_pairs": _testrail.testrail_results_from_pairs,
-            "WR_testrail_close_run": _testrail.testrail_close_run,
-
-            # GitHub Actions annotations
-            "WR_gh_format_error": _gh_annotations.format_error_annotation,
-            "WR_gh_emit_failures": _gh_annotations.emit_failure_annotations,
-            "WR_gh_emit_from_junit_xml": _gh_annotations.emit_from_junit_xml,
-
-            # Lighthouse
-            "WR_lighthouse_run": _lighthouse.run_lighthouse,
-            "WR_lighthouse_assert_scores": _lighthouse.assert_scores,
-
-            # Locust load testing
-            "WR_locust_run": _locust.run_locust,
-            "WR_locust_build_user_class": _locust.build_http_user_class,
-
-            # accessibility (axe-core)
-            "WR_a11y_load_axe": _axe_load_source,
-            "WR_a11y_run_audit": _axe_run_selenium,
-            "WR_pw_a11y_run_audit": _axe_run_pw,
-            "WR_a11y_summarise": _axe_summarise,
-
-            # webhook / Slack notifications
-            "WR_summarise_run": summarise_run,
-            "WR_notify_webhook": notify_webhook,
-            "WR_notify_slack": notify_slack,
-            "WR_notify_run_summary": notify_run_summary,
-
-            # page-object model generator
-            "WR_generate_pom_from_url": generate_pom_from_url,
-            "WR_generate_pom_from_html": generate_pom_from_html,
-            "WR_write_pom_to_file": write_pom_to_file,
-
-            # visual regression
-            "WR_visual_capture_baseline": _visual_capture_baseline,
-            "WR_visual_compare": _visual_compare,
-
-            # browser recorder (auto-binds to webdriver_wrapper_instance)
-            "WR_recorder_start": lambda: _recorder_start(webdriver_wrapper_instance),
-            "WR_recorder_stop": lambda: _recorder_stop(webdriver_wrapper_instance),
-            "WR_recorder_pull_events": lambda: _recorder_pull_events(webdriver_wrapper_instance),
-            "WR_recorder_save": lambda output_path, raw_events_path=None: _recorder_save_recording(
-                webdriver_wrapper_instance, output_path, raw_events_path
-            ),
-
-            # playwright backend — page-level operations
-            "WR_pw_launch": _pw.pw_launch,
-            "WR_pw_quit": _pw.pw_quit,
-            "WR_pw_start_har_recording": _pw.pw_start_har_recording,
-            "WR_pw_stop_har_recording": _pw.pw_stop_har_recording,
-            # network route mocking
-            "WR_pw_route_mock": _pw.pw_route_mock,
-            "WR_pw_route_mock_json": _pw.pw_route_mock_json,
-            "WR_pw_route_unmock": _pw.pw_route_unmock,
-            "WR_pw_route_clear": _pw.pw_route_clear,
-            # device emulation
-            "WR_pw_emulate": _pw.pw_emulate,
-            "WR_pw_stop_emulate": _pw.pw_stop_emulate,
-            "WR_pw_list_devices": _pw.pw_list_devices,
-            # geolocation / permissions / timezone / clock
-            "WR_pw_set_geolocation": _pw.pw_set_geolocation,
-            "WR_pw_grant_permissions": _pw.pw_grant_permissions,
-            "WR_pw_clear_permissions": _pw.pw_clear_permissions,
-            "WR_pw_set_timezone": _pw.pw_set_timezone,
-            "WR_pw_clock_install": _pw.pw_clock_install,
-            "WR_pw_clock_set_time": _pw.pw_clock_set_time,
-            "WR_pw_clock_run_for": _pw.pw_clock_run_for,
-            "WR_pw_set_locale": _pw.pw_set_locale,
-            "WR_pw_to_url": _pw.pw_to_url,
-            "WR_pw_forward": _pw.pw_forward,
-            "WR_pw_back": _pw.pw_back,
-            "WR_pw_refresh": _pw.pw_refresh,
-            "WR_pw_url": _pw.pw_url,
-            "WR_pw_title": _pw.pw_title,
-            "WR_pw_content": _pw.pw_content,
-            "WR_pw_set_default_timeout": _pw.pw_set_default_timeout,
-            "WR_pw_set_default_navigation_timeout": _pw.pw_set_default_navigation_timeout,
-            # pages / tabs
-            "WR_pw_new_page": _pw.pw_new_page,
-            "WR_pw_switch_to_page": _pw.pw_switch_to_page,
-            "WR_pw_close_page": _pw.pw_close_page,
-            "WR_pw_page_count": _pw.pw_page_count,
-            # finding
-            "WR_pw_find_element": _pw.pw_find_element,
-            "WR_pw_find_elements": _pw.pw_find_elements,
-            "WR_pw_find_element_with_test_object_record": _pw.pw_find_element_with_test_object_record,
-            "WR_pw_find_elements_with_test_object_record": _pw.pw_find_elements_with_test_object_record,
-            "WR_pw_save_test_object_to_selector": _pw.pw_save_test_object_to_selector,
-            # direct page-level shortcuts
-            "WR_pw_click": _pw.pw_click,
-            "WR_pw_dblclick": _pw.pw_dblclick,
-            "WR_pw_hover": _pw.pw_hover,
-            "WR_pw_fill": _pw.pw_fill,
-            "WR_pw_type_text": _pw.pw_type_text,
-            "WR_pw_press": _pw.pw_press,
-            "WR_pw_check": _pw.pw_check,
-            "WR_pw_uncheck": _pw.pw_uncheck,
-            "WR_pw_select_option": _pw.pw_select_option,
-            "WR_pw_drag_and_drop": _pw.pw_drag_and_drop,
-            # script
-            "WR_pw_evaluate": _pw.pw_evaluate,
-            # cookies
-            "WR_pw_get_cookies": _pw.pw_get_cookies,
-            "WR_pw_add_cookies": _pw.pw_add_cookies,
-            "WR_pw_clear_cookies": _pw.pw_clear_cookies,
-            # screenshots
-            "WR_pw_screenshot": _pw.pw_screenshot,
-            "WR_pw_screenshot_bytes": _pw.pw_screenshot_bytes,
-            # waits
-            "WR_pw_wait_for_selector": _pw.pw_wait_for_selector,
-            "WR_pw_wait_for_load_state": _pw.pw_wait_for_load_state,
-            "WR_pw_wait_for_timeout": _pw.pw_wait_for_timeout,
-            "WR_pw_wait_for_url": _pw.pw_wait_for_url,
-            # viewport
-            "WR_pw_set_viewport_size": _pw.pw_set_viewport_size,
-            "WR_pw_viewport_size": _pw.pw_viewport_size,
-            # mouse / keyboard
-            "WR_pw_mouse_click": _pw.pw_mouse_click,
-            "WR_pw_mouse_move": _pw.pw_mouse_move,
-            "WR_pw_mouse_down": _pw.pw_mouse_down,
-            "WR_pw_mouse_up": _pw.pw_mouse_up,
-            "WR_pw_keyboard_press": _pw.pw_keyboard_press,
-            "WR_pw_keyboard_type": _pw.pw_keyboard_type,
-            "WR_pw_keyboard_down": _pw.pw_keyboard_down,
-            "WR_pw_keyboard_up": _pw.pw_keyboard_up,
-            # element-level (operates on captured current element)
-            "WR_pw_element_click": _pw_element.click,
-            "WR_pw_element_dblclick": _pw_element.dblclick,
-            "WR_pw_element_hover": _pw_element.hover,
-            "WR_pw_element_fill": _pw_element.fill,
-            "WR_pw_element_type_text": _pw_element.type_text,
-            "WR_pw_element_press": _pw_element.press,
-            "WR_pw_element_clear": _pw_element.clear,
-            "WR_pw_element_check": _pw_element.check,
-            "WR_pw_element_uncheck": _pw_element.uncheck,
-            "WR_pw_element_select_option": _pw_element.select_option,
-            "WR_pw_element_get_attribute": _pw_element.get_attribute,
-            "WR_pw_element_get_property": _pw_element.get_property,
-            "WR_pw_element_inner_text": _pw_element.inner_text,
-            "WR_pw_element_inner_html": _pw_element.inner_html,
-            "WR_pw_element_is_visible": _pw_element.is_visible,
-            "WR_pw_element_is_enabled": _pw_element.is_enabled,
-            "WR_pw_element_is_checked": _pw_element.is_checked,
-            "WR_pw_element_scroll_into_view": _pw_element.scroll_into_view,
-            "WR_pw_element_screenshot": _pw_element.screenshot,
-            "WR_pw_element_change": _pw_element.change_element,
-
-            # Add package
-            "WR_add_package_to_executor": package_manager.add_package_to_executor,
-            "WR_add_package_to_callback_executor": package_manager.add_package_to_callback_executor,
-
-            # ----- naming aliases (clearer / consistent names) ------------
-            # Legacy names above are kept for back-compat; prefer these.
-            "WR_new_driver": web_runner.new_driver,                              # alias of WR_get_webdriver_manager
-            "WR_quit_all": web_runner.quit,                                       # alias of WR_quit
-            "WR_quit_current": webdriver_wrapper_instance.quit,                   # alias of WR_single_quit
-            "WR_explicit_wait": webdriver_wrapper_instance.explict_wait,          # fixes "explict" typo
-            "WR_save_test_object": test_object_record.save_test_object,           # snake_case form of WR_SaveTestObject
-            "WR_clear_test_objects": test_object_record.clean_record,             # accurate verb vs "Clean"
-            "WR_find_recorded_element": webdriver_wrapper_instance.find_element_with_test_object_record,
-            "WR_find_recorded_elements": webdriver_wrapper_instance.find_elements_with_test_object_record,
-            "WR_element_input": web_runner.webdriver_element.input_to_element,    # WR_element_* prefix
-            "WR_element_click": web_runner.webdriver_element.click_element,       # WR_element_* prefix
-            "WR_element_assert": web_runner.webdriver_element.check_current_web_element,
-
-            # ----- usable Select wrappers (replaces unreachable WR_element_get_select) -----
-            "WR_element_select_by_value": web_runner.webdriver_element.select_by_value,
-            "WR_element_select_by_index": web_runner.webdriver_element.select_by_index,
-            "WR_element_select_by_visible_text": web_runner.webdriver_element.select_by_visible_text,
-        }
+        self.event_dict = build_event_dict(self)
 
         # 只把允許清單裡的內建函式加入事件字典
         # Register only the allowlisted builtins.
-        for name in sorted(SAFE_BUILTINS):
-            self.event_dict[name] = getattr(builtins, name)
+        self.event_dict.update(safe_builtin_commands())
 
     def set_retry_policy(self, retries: int = 0, backoff: float = 0.0) -> None:
         """
@@ -833,6 +215,13 @@ class Executor:
             with self._action_span_factory(str(action[0])):
                 return self._do_with_retry(action)
         return self._do_with_retry(action)
+
+    def attempt(self, action: Any) -> Any:
+        """
+        執行單一動作（含重試與 span），失敗時拋出
+        Run one action under the retry policy and the action span; what every action of a list passes.
+        """
+        return self._execute_with_retry(action)
 
     def _do_with_retry(self, action):
         retries = int(self.retry_policy.get("retries", 0))
@@ -868,22 +257,8 @@ class Executor:
         png = _try_selenium_screenshot() or _try_playwright_screenshot()
         if not png:
             return None
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-        raw_name = str(action[0] if isinstance(action, list) and action else "unknown")
-        # Strip any path separators and limit to safe characters; otherwise an
-        # action JSON could ship a command name like ``../../etc/passwd`` and
-        # cause a path traversal write (SonarCloud S2083).
-        safe_name = "".join(ch for ch in raw_name if ch.isalnum() or ch in "-_")[:64] or "unknown"
-        base_dir = Path(self.failure_screenshot_dir).resolve()
-        target = (base_dir / f"{timestamp}_{safe_name}.png").resolve()
-        # Belt-and-braces: confirm the resolved path stays inside the
-        # configured directory before writing.
-        try:
-            target.relative_to(base_dir)
-        except ValueError:
-            web_runner_logger.error(
-                f"failure screenshot path escapes configured dir: {target!r}"
-            )
+        target = self._failure_artifact_path(action, ".png")
+        if target is None:
             return None
         try:
             target.write_bytes(png)
@@ -891,6 +266,41 @@ class Executor:
         except OSError as error:
             web_runner_logger.error(f"failure screenshot write failed: {error!r}")
             return None
+
+    def _capture_failure_trace(self, action) -> str | None:
+        """Save the running Playwright trace beside the failure screenshot. Returns path or None."""
+        wrapper = _pw.playwright_wrapper_instance
+        if not self.failure_screenshot_dir or not getattr(wrapper, "tracing_active", False):
+            return None
+        target = self._failure_artifact_path(action, ".trace.zip")
+        if target is None:
+            return None
+        try:
+            return wrapper.save_trace_chunk(str(target))
+        except Exception as error:  # the action already failed; its trace is best effort
+            web_runner_logger.error(f"failure trace save failed: {error!r}")
+            return None
+
+    def _failure_artifact_path(self, action, suffix: str) -> Path | None:
+        """``<failure dir>/<timestamp>_<command><suffix>``, or None if it would leave the directory."""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        raw_name = str(action[0] if isinstance(action, list) and action else "unknown")
+        # Strip any path separators and limit to safe characters; otherwise an
+        # action JSON could ship a command name like ``../../etc/passwd`` and
+        # cause a path traversal write (SonarCloud S2083).
+        safe_name = "".join(ch for ch in raw_name if ch.isalnum() or ch in "-_")[:64] or "unknown"
+        base_dir = Path(self.failure_screenshot_dir).resolve()
+        target = (base_dir / f"{timestamp}_{safe_name}{suffix}").resolve()
+        # Belt-and-braces: confirm the resolved path stays inside the
+        # configured directory before writing.
+        try:
+            target.relative_to(base_dir)
+        except ValueError:
+            web_runner_logger.error(
+                f"failure artifact path escapes configured dir: {target!r}"
+            )
+            return None
+        return target
 
     def set_allow_arbitrary_script(self, enabled: bool) -> None:
         """
@@ -900,136 +310,135 @@ class Executor:
         """
         self.allow_arbitrary_script = bool(enabled)
 
-    def _execute_event(self, action: list):
+    @staticmethod
+    def set_raise_wrapper_errors(enabled: bool) -> None:
         """
-        執行事件字典中的函式
-        Execute a function from event_dict
+        設定 Selenium wrapper 失敗時是否讓動作失敗
+        ``True`` (the default): a failed Selenium wrapper call (``WR_to_url``,
+        ``WR_element_assert`` …) fails its action, as the Playwright commands do. ``False``:
+        the call returns and the action passes, the behaviour before the default changed.
+        """
+        set_raise_wrapper_errors(enabled)
 
-        :param action: 指令清單，例如 ["函式名稱", {參數}] 或 ["函式名稱"]
-                       Action list, e.g., ["function_name", {params}] or ["function_name"]
-        :return: 執行結果 / return value of the executed function
+    @staticmethod
+    def set_allow_arbitrary_packages(enabled: bool) -> None:
         """
-        if action[0] in _ARBITRARY_SCRIPT_COMMANDS and not self.allow_arbitrary_script:
+        允許或拒絕載入允許清單以外的套件（``WR_add_package_to_executor``）
+        Allow (True) or refuse (False, the default) ``WR_add_package_to_executor`` for packages
+        outside the allowlist. Python only, never an action command, so an action file cannot
+        open its own gate.
+        """
+        package_manager.set_allow_arbitrary_packages(enabled)
+
+    @staticmethod
+    def allow_packages(*packages: str) -> None:
+        """
+        把套件（連同子模組）加入 ``WR_add_package_to_executor`` 的允許清單
+        Add packages, and their submodules, to the allowlist of ``WR_add_package_to_executor``.
+        """
+        package_manager.allow_packages(*packages)
+
+    @contextlib.contextmanager
+    def restricted(self, denied_commands: Iterable[str]) -> Iterator[None]:
+        """
+        在區塊內拒絕指定命令（包含巢狀的動作清單）
+        Refuse ``denied_commands`` for the duration of the ``with`` block, including in
+        action lists run from inside it (``WR_execute_action``, ``WR_execute_files`` …),
+        because every action passes :meth:`_execute_event`. Blocks nest; each adds to the
+        commands already refused.
+        """
+        previous = self._denied_commands
+        self._denied_commands = previous | frozenset(denied_commands)
+        try:
+            yield
+        finally:
+            self._denied_commands = previous
+
+    def check_allowed(self, command: str, script_commands: Iterable[str] = ()) -> None:
+        """
+        檢查命令是否被拒絕或被任意腳本閘門擋下
+        Raise :class:`WebRunnerExecuteException` when ``command`` is refused here
+        (:meth:`restricted`) or ships a script while the arbitrary-script gate is closed.
+        ``script_commands`` adds script commands of another command table (the async one).
+        """
+        if command in self._denied_commands:
+            raise WebRunnerExecuteException(f"command {command!r} is not allowed here")
+        if command in (_ARBITRARY_SCRIPT_COMMANDS | frozenset(script_commands)) and not self.allow_arbitrary_script:
             raise WebRunnerExecuteException(
-                f"arbitrary-script command {action[0]!r} is disabled; "
+                f"arbitrary-script command {command!r} is disabled; "
                 "call WR_set_allow_arbitrary_script(true) to enable"
             )
-        event = self.event_dict.get(action[0])
-        if event is None:
-            raise WebRunnerExecuteException(executor_data_error + " unknown command: " + str(action[0]))
-        if len(action) == 1:
-            # 無參數呼叫
-            # Call without arguments
-            return event()
-        if len(action) == 2:
-            if isinstance(action[1], dict):
-                # 關鍵字參數呼叫
-                # Call with keyword arguments
-                return event(**action[1])
-            # 位置參數呼叫
-            # Call with positional arguments
-            return event(*action[1])
-        if len(action) == 3:
-            # 同時帶位置 + 關鍵字參數
-            # Mixed positional + keyword arguments
-            positional, kwargs = action[1], action[2]
-            if not isinstance(positional, (list, tuple)) or not isinstance(kwargs, dict):
-                raise WebRunnerExecuteException(
-                    f"{executor_data_error}: 3-element action requires [cmd, [positional], {{kwargs}}]"
-                )
-            return event(*positional, **kwargs)
-        # 格式錯誤，拋出例外
-        # Invalid format, raise exception
-        raise WebRunnerExecuteException(executor_data_error + " " + str(action))
 
-    def execute_action(self, action_list: list | dict) -> dict:
+    def _execute_event(self, action: list):
         """
-        執行一系列動作
-        Execute a list of actions
-
-        :param action_list: 動作清單，例如：
-           Action list, e.g.:
-           [
-               ["WR_get_webdriver_manager", {"webdriver_name": "firefox"}],
-               ["WR_to_url", {"url": "https://www.google.com"}],
-               ["WR_quit"]
-           ]
-        :return: 執行紀錄字典 {動作描述: 回傳值}
-                 Execution record dict {action: response}
+        執行單一動作一次（不重試）
+        Refuse a denied or gated command, then bind ``action`` and run it once (no retry). Raises what the
+        refusal, the binding (see :class:`_ActionParser`) or the command raises.
         """
-        web_runner_logger.info(f"execute_action, action_list: {action_list}")
+        self.check_allowed(action[0])
+        return super()._execute_event(action)
 
-        # 如果傳入的是 dict，則嘗試取出 "webdriver_wrapper" 的動作清單
-        # If input is dict, extract "webdriver_wrapper" action list
+    def execute_one(self, action: list) -> Any:
+        """
+        執行單一動作並回傳結果；失敗時拋出例外，不印出任何東西
+        Run one action (``["WR_name"]``, ``["WR_name", {kwargs}]``, ``["WR_name", [args]]``
+        or ``["WR_name", [args], {kwargs}]``) the way :meth:`execute_action` runs each step
+        (refused commands, the arbitrary-script gate, the retry policy, the action span, the
+        failure screenshot and trace) and return what the command returned. Prints nothing.
+
+        :raises WebRunnerExecuteException: when the action is malformed or fails; the message
+                 names any failure screenshot or trace, and the original error is ``__cause__``.
+        """
+        if not isinstance(action, list) or not action or not isinstance(action[0], str):
+            raise WebRunnerExecuteException(
+                f"{executor_data_error}: an action is a list that starts with a command name, got {action!r}")
+        web_runner_logger.info(f"execute_one, action: {action}")
+        try:
+            return self._execute_with_retry(action)
+        except Exception as error:  # every failure leaves as one exception type, with its cause
+            web_runner_logger.error(f"execute_one, action: {action}, failed: {error!r}")
+            raise WebRunnerExecuteException(self._failure_text(action, error)) from error
+
+    @staticmethod
+    def action_list_of(action_list: list | dict) -> list:
+        """The action list itself, or a dict's ``webdriver_wrapper`` list; raises for anything else."""
+        # 如果傳入的是 dict，則嘗試取出 "webdriver_wrapper" 的動作清單；結果必須是 list
+        # A dict must carry its actions under "webdriver_wrapper"; the result must be a list
+        # (a string would otherwise be iterated character by character).
         if type(action_list) is dict:
             action_list = action_list.get("webdriver_wrapper", None)
-            if action_list is None:
-                web_runner_logger.error(
-                    f"execute_action, action_list: {action_list}, "
-                    f"failed: {WebRunnerExecuteException(executor_list_error)}")
-                raise WebRunnerExecuteException(executor_list_error)
-
-        execute_record_dict = {}
-
-        # action_list 必須是 list（空 list 會自然回傳空結果，迴圈不執行）。
-        # 先前這裡的 raise 被同層 except 立即吞掉，等同沒驗證，導致非 list
-        # (例如字串) 會被逐字元迭代。改為直接拒絕非 list。
-        # action_list must be a list; an empty list yields an empty result.
         if not isinstance(action_list, list):
             web_runner_logger.error(
                 f"execute_action, action_list: {action_list}, "
                 f"failed: {WebRunnerExecuteException(executor_list_error)}")
             raise WebRunnerExecuteException(executor_list_error)
+        return action_list
 
-        # 逐一執行動作
-        # Execute each action in the list
-        for action in action_list:
-            try:
-                event_response = self._execute_with_retry(action)
-                execute_record = "execute: " + str(action)
-                execute_record_dict.update({execute_record: event_response})
-            except Exception as error:
-                web_runner_logger.error(
-                    f"execute_action, action_list: {action_list}, "
-                    f"action: {action}, failed: {error!r}")
-                execute_record = "execute: " + str(action)
-                screenshot_path = self._capture_failure_screenshot(action)
-                if screenshot_path:
-                    execute_record_dict.update({
-                        execute_record: f"{error!r} (failure screenshot: {screenshot_path})"
-                    })
-                else:
-                    execute_record_dict.update({execute_record: repr(error)})
-
-        # 輸出執行結果
-        # Print execution results
-        for key, value in execute_record_dict.items():
-            print(key)
-            print(value)
-
-        return execute_record_dict
+    def _failure_text(self, action, error: Exception) -> str:
+        artifacts = []
+        screenshot_path = self._capture_failure_screenshot(action)
+        if screenshot_path:
+            artifacts.append(f"failure screenshot: {screenshot_path}")
+        trace_path = self._capture_failure_trace(action)
+        if trace_path:
+            artifacts.append(f"trace: {trace_path}")
+        described = describe_error(error)
+        return f"{described} ({'; '.join(artifacts)})" if artifacts else described
 
     def execute_files(self, execute_files_list: list) -> list:
         """
         從檔案載入並執行動作
-        Execute actions from files
-
-        :param execute_files_list: 檔案路徑清單 / list of file paths
-        :return: 每個檔案的執行結果清單 / list of execution results
+        Run the action file at every path, in order, and return their records.
         """
         web_runner_logger.info(f"execute_files, execute_files_list: {execute_files_list}")
-        execute_detail_list = []
-        for file in execute_files_list:
-            # 讀取 JSON 檔案並執行
-            # Read JSON file and execute
-            execute_detail_list.append(self.execute_action(read_action_json(file)))
-        return execute_detail_list
+        return super().execute_files(execute_files_list)
 
 
 # 建立全域 Executor 實例
 # Create global Executor instance
 executor = Executor()
 package_manager.executor = executor
+
 
 def add_command_to_executor(command_dict: dict):
     """
@@ -1038,11 +447,8 @@ def add_command_to_executor(command_dict: dict):
 
     :param command_dict: {指令名稱: 函式} / {command_name: function}
     """
-    for command_name, command in command_dict.items():
-        if isinstance(command, (types.MethodType, types.FunctionType)):
-            executor.event_dict.update({command_name: command})
-        else:
-            raise WebRunnerAddCommandException(add_command_exception_tag)
+    executor.add_command_to_executor(command_dict)
+
 
 def execute_action(action_list: list) -> dict:
     """
@@ -1050,6 +456,15 @@ def execute_action(action_list: list) -> dict:
     Global method: execute action list
     """
     return executor.execute_action(action_list)
+
+
+def execute_one(action: list) -> Any:
+    """
+    全域方法：執行單一動作，失敗時拋出
+    Global method: run one action and return its value; see :meth:`Executor.execute_one`.
+    """
+    return executor.execute_one(action)
+
 
 def execute_files(execute_files_list: list) -> list:
     """

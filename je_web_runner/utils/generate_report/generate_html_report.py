@@ -3,6 +3,7 @@ from threading import Lock
 
 from je_web_runner.utils.exception.exception_tags import html_generate_no_data_tag
 from je_web_runner.utils.exception.exceptions import WebRunnerHTMLException
+from je_web_runner.utils.generate_report.report_path import report_path
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.utils.test_record.test_record_class import test_record_instance
 
@@ -173,7 +174,7 @@ def generate_html_report(html_name: str = "default_name"):
     new_html_string = generate_html()
     try:
         # ``_lock`` serialises concurrent writers; ``with`` guarantees release.
-        with _lock, open(html_name + ".html", "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
+        with _lock, open(report_path(html_name + ".html"), "w", encoding="utf-8") as file_to_write:  # NOSONAR S8707 — developer-supplied path (own report/config file), not untrusted input
             file_to_write.write(new_html_string)
     except OSError as error:
         web_runner_logger.error(f"generate_html_report write failed: {error!r}")

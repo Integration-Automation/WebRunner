@@ -8,7 +8,9 @@
 * HTTP 安全 headers 稽核
 * axe-core 可訪問性
 * Lighthouse 跑分
-* Core Web Vitals
+* Core Web Vitals 預算（``WR_assert_web_vitals``：一步斷言 LCP / CLS / INP / FCP，量目前頁面或對 URL
+  跑 Lighthouse；預設為 Google 的 good 上限，超出時寫出評等與診斷，``json_path`` / ``html_path``
+  寫出明細）
 * Visual regression
 * 文字 / DOM snapshot
 * 網路節流預設集

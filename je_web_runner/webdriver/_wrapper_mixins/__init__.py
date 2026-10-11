@@ -7,6 +7,7 @@ from je_web_runner.webdriver._wrapper_mixins._actions_mixin import _ActionsMixin
 from je_web_runner.webdriver._wrapper_mixins._cookie_mixin import _CookieMixin
 from je_web_runner.webdriver._wrapper_mixins._media_mixin import _MediaMixin
 from je_web_runner.webdriver._wrapper_mixins._navigation_mixin import _NavigationMixin
+from je_web_runner.webdriver._wrapper_mixins._parity_mixin import _ParityMixin
 from je_web_runner.webdriver._wrapper_mixins._scripting_mixin import _ScriptingMixin
 
 __all__ = [
@@ -14,5 +15,6 @@ __all__ = [
     "_CookieMixin",
     "_MediaMixin",
     "_NavigationMixin",
+    "_ParityMixin",
     "_ScriptingMixin",
 ]

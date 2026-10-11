@@ -34,6 +34,9 @@ dependencies = [
     # Floor set to the first release without the known Pillow advisories;
     # wheels cover cp310-cp315, so it excludes no supported interpreter.
     "Pillow>=12.3.0",
+    # The action executor is built on the workspace's shared executor core; 0.0.3 adds the hooks it uses
+    # (attempt, failure_record, numbered record keys, collect_action_results).
+    "je_action_core>=0.0.3",
 ]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -52,6 +55,17 @@ classifiers = [
     "Topic :: Software Development :: Testing",
     "Topic :: Software Development :: Quality Assurance",
 ]
+
+# Optional: the WR_ac_* commands drive the desktop through AutoControl, which is imported
+# only when one of them runs.
+[project.optional-dependencies]
+# 0.0.225 is the first release with AC_write_secret, which WR_ac_basic_auth refuses to run without.
+autocontrol = ["je_auto_control>=0.0.225"]
+
+# Console scripts: the same entry point as ``python -m je_web_runner``.
+[project.scripts]
+webrunner = "je_web_runner.__main__:run"
+web_runner = "je_web_runner.__main__:run"
 
 [project.urls]
 Homepage = "https://github.com/Integration-Automation/WebRunner"

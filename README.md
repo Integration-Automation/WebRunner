@@ -37,7 +37,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - [Action Executor](#action-executor)
 - [Backends](#backends)
   - [Selenium (default)](#selenium-default)
-  - [Playwright (full)](#playwright-full)
+  - [Playwright](#playwright)
   - [Cloud Grid](#cloud-grid)
   - [Appium (mobile)](#appium-mobile)
 - [Reports](#reports)
@@ -52,6 +52,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - [Auth & APIs](#auth--apis)
 - [Recorder](#recorder)
 - [CI / Integrations](#ci--integrations)
+- [Desktop control (AutoControl)](#desktop-control-autocontrol)
 - [AI Assistance](#ai-assistance)
 - [CLI Usage](#cli-usage)
 - [Test Record](#test-record)
@@ -63,14 +64,14 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 
 ## Highlights
 
-- **Two backends, one executor.** Selenium is the default; the Playwright backend mirrors the same operational surface under `WR_pw_*` and is fully opt-in.
+- **Two backends, one executor.** Selenium is the default; the Playwright backend covers most of the same operations under `WR_pw_*` and is fully opt-in. A comparison table lists the equivalent commands and what exists on one backend only.
 - **Action JSON as a contract.** Every command resolves through `Executor.event_dict`; legacy aliases stay alongside snake_case names for back-compat, and a JSON Schema is exported for IDE autocomplete.
 - **Reports in five formats.** HTML, JSON, XML, JUnit XML (CI-native), and Allure result files; a single manifest binds every output for downstream globs.
 - **Orchestration built in.** Tag filters, dependency declarations with topological order, ledger-backed re-run-only-failed, flaky detection, A/B run mode, multi-user matrix, deterministic sharding, watch mode, and a stdlib scheduler.
 - **Observability without extra plumbing.** Auto-screenshot on failure, retry policy, OpenTelemetry hook, live HTTP dashboard, replay studio (HTML timeline), HAR capture + diff.
 - **Quality & security guards.** Action linter, migration helper, hard-coded secrets scanner, HTTP security headers audit, axe-core accessibility audit, Lighthouse runner, perf metrics (FCP/LCP/CLS), visual regression, snapshot testing, network throttling, arbitrary-script gate.
 - **Browser internals.** Raw CDP, console + network event capture, localStorage / sessionStorage / IndexedDB, service worker / cache control, Shadow DOM piercing, multi-iframe, file upload / download, browser extension loaders.
-- **Advanced WebDriverWrapper surface.** `set_driver(experimental_options=, extension_paths=, enable_bidi=)`, `attach_to_existing_browser`, native CDP shortcuts (`set_timezone` / `set_locale` / `set_device_metrics` / `set_user_agent` / `set_extra_http_headers` / `set_geolocation` / `set_network_conditions` / `block_urls` / `set_cache_disabled` / `set_download_directory`), Fetch interception primitives (`enable_fetch_interception` / `continue_request` / `fulfill_request` / `fail_request`), W3C BiDi listeners (`add_console_listener` / `add_js_error_listener`), `save_cookies` / `load_cookies` for session reuse, `save_full_page_screenshot`, `print_page` (PDF), `reload(ignore_cache)`, `bring_to_front`, `switch_to_window_by_url|title`, page metadata getters (`get_current_url` / `get_title` / `get_page_source` / `get_window_handles` / `new_window` / `close_window`). All exposed via `WR_*` aliases too.
+- **Advanced WebDriverWrapper surface.** `set_driver(experimental_options=, extension_paths=, enable_bidi=, install_driver=)`, `attach_to_existing_browser`, native CDP shortcuts (`set_timezone` / `set_locale` / `set_device_metrics` / `set_user_agent` / `set_extra_http_headers` / `set_geolocation` / `set_network_conditions` / `block_urls` / `set_cache_disabled` / `set_download_directory`), Fetch interception primitives (`enable_fetch_interception` / `continue_request` / `fulfill_request` / `fail_request`), W3C BiDi listeners (`add_console_listener` / `add_js_error_listener`), `save_cookies` / `load_cookies` for session reuse, `save_full_page_screenshot`, `print_page` (PDF), `reload(ignore_cache)`, `bring_to_front`, `switch_to_window_by_url|title`, page metadata getters (`get_current_url` / `get_title` / `get_page_source` / `get_window_handles` / `new_window` / `close_window`). All exposed via `WR_*` aliases too.
 - **Standalone CDP / BiDi modules.** Background `CDPEventListener` (WebSocket loop + sync `send` / `on` / context manager), `record_trace(driver, path)` for Chrome DevTools-loadable performance traces, and a `bidi_network` module wrapping `driver.network.add_request_handler` / `add_response_handler` / `add_auth_handler` for cross-browser request interception.
 - **Test data & fixtures.** Faker integration, factory pattern, testcontainers (Postgres / Redis / generic), per-environment `.env` loader with `${ENV.X}` placeholder expansion, CSV/JSON data-driven runner with `${ROW.x}`.
 - **Auth, API, DB.** OAuth2 / OIDC client-credentials / password / refresh-token flows with token cache, HTTP API testing commands with JSON assertions, SQLAlchemy-backed database validation.
@@ -92,6 +93,9 @@ pip install je_web_runner
 pip install je_web_runner_dev
 ```
 
+`je_web_runner_dev` follows the `dev` branch: CI publishes a new version each time a push to `dev`
+passes the tests and changes what the package ships.
+
 **Optional dependencies** (each enables a slice of features; install only what you use):
 
 ```bash
@@ -106,7 +110,7 @@ pip install testcontainers       # Spin up Postgres / Redis (WR_tc_*)
 pip install locust               # Load testing (WR_locust_*)
 ```
 
-Hard requirements: Python **3.10+**, `selenium>=4.0.0`, `requests`, `python-dotenv`, `webdriver-manager`, `defusedxml`, `Pillow`.
+Hard requirements: Python **3.10+**, `selenium>=4.0.0`, `requests`, `python-dotenv`, `webdriver-manager`, `defusedxml`, `Pillow`, `je_action_core` (the action executor's shared core).
 
 ## Architecture
 
@@ -323,8 +327,9 @@ test/
 
 ## Thematic API Façade
 
-The 80+ utility helpers live under `je_web_runner.utils.<area>`; for
-discoverability they are also re-exported under `je_web_runner.api`:
+The utility helpers live under `je_web_runner.utils.<area>`; every subpackage outside the core
+engine is also re-exported by exactly one theme under `je_web_runner.api` (a name two packages of
+one theme share is prefixed with its package, e.g. `cors_matrix_classify`):
 
 ```python
 from je_web_runner.api import (
@@ -339,6 +344,19 @@ from je_web_runner.api import (
     reliability,    # adaptive retry, browser pool, smart wait, throttler, supervisor
     security,       # PII, license, CSP, cookie consent, header tampering
     test_data,      # DB fixtures, fixture record/replay, form auto-fill
+    accessibility_i18n,  # screen reader, forced colours, pseudo-localisation, RTL, OCR, visual AI
+    ai,             # LLM assist, auto-repair, edge cases, triage, RAG / tool-call / hallucination checks
+    api_testing,    # HTTP, auth, GraphQL N+1, gRPC, OpenAPI drift, rate limits, HAR tools
+    audit,          # clickjacking, CORS, cookies, CSP, XSS taint, open redirect, TLS, SRI, secrets, SBOM
+    diagnostics,    # OpenTelemetry bridge, backend log correlation, console error budget
+    governance,     # flakes, quarantine, owners, test debt, ROI, cost, PR risk, merge gates
+    messaging,      # email render / deliverability, push, OTP, webhooks, message queues, Slack digest
+    mobile_pwa,     # touch gestures, viewport, virtual keyboard, pull-to-refresh, real-device clouds
+    orchestration,  # A/B runs, personas, multi-user, flag matrix, chaos, data-driven, DB snapshots
+    performance,    # web vitals, INP, Lighthouse, bundle / third-party budgets, load tests
+    platform,       # CDP, BiDi, Chrome profiles, extensions, cloud grid, AutoControl bridge, CLI
+    tooling,        # recorder, action schema, command docs, POM generator, replay studio, dashboards
+    web_platform,   # WebSocket / SSE / WebRTC, storage, service workers, WebAuthn, WebUSB, payments…
 )
 ```
 
@@ -382,6 +400,8 @@ actions = [
 execute_action(actions)
 ```
 
+`execute_action` returns a dict keyed `execute: <action>`, one entry per step (a repeated identical action gets `#2`, `#3` … so every outcome is kept); it records a failed step and moves on. To run one action and get its value back, use `execute_one(["WR_get_current_url"])`: it goes through the same command gates, retry policy and failure screenshots, prints nothing, and raises `WebRunnerExecuteException` (with the original error as its cause) when the action fails.
+
 The legacy names (`WR_get_webdriver_manager`, `WR_SaveTestObject`, `WR_quit`, `WR_input_to_element`, …) still work — see [Quality & Security](#quality--security) for the one-shot migration helper.
 
 ### Mixed positional + keyword arguments
@@ -405,10 +425,10 @@ policy protects:
 | CLI | `python -m je_web_runner` flags, including the original `-e/--execute_file`, `-d/--execute_dir` and `--execute_str` (Windows double-encoded JSON included) |
 | Action JSON | The `WR_*` command names registered in `executor.event_dict`, and the `webdriver_wrapper` / `meta` top-level keys of an action file |
 | Socket server | `start_web_runner_socket_server`, `send_command`, `read_frame`, `encode_frame` and the length-prefixed framing |
-| Supported module paths | `je_web_runner.utils.executor.action_executor` (`executor`), `je_web_runner.utils.logging.loggin_instance` (`web_runner_logger`, `WebRunnerLoggingHandler`), `je_web_runner.webdriver.webdriver_wrapper` (`WebDriverWrapper`, `webdriver_wrapper_instance`, the `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` patch targets) |
+| Supported module paths | `je_web_runner.utils.executor.action_executor` (`executor`, `execute_one`), `je_web_runner.utils.logging.loggin_instance` (`web_runner_logger`, `WebRunnerLoggingHandler`), `je_web_runner.webdriver.webdriver_wrapper` (`WebDriverWrapper`, `webdriver_wrapper_instance`, the `_options_dict` / `_webdriver_dict` / `_webdriver_manager_dict` patch targets) |
 
 The three module paths are supported because other repositories already import them: AutoControlGUI's
-WebRunner bridge takes `executor`, Jeffrey_RPA hooks `loggin_instance` by that exact (misspelled)
+WebRunner bridge takes `executor` and `execute_one`, Jeffrey_RPA hooks `loggin_instance` by that exact (misspelled)
 name and patches the wrapper dictionaries. They are treated as public rather than asked to move.
 `test/unit_test/test_public_api.py` fails if any of them disappears.
 
@@ -503,6 +523,8 @@ from je_web_runner.utils.executor.action_executor import executor
 executor.set_retry_policy(retries=2, backoff=0.5)             # global retry
 executor.set_failure_screenshot_dir("./failures")              # auto PNG on raise
 executor.set_allow_arbitrary_script(False)                     # gate WR_execute_script / WR_pw_evaluate / WR_cdp
+executor.allow_packages("my_helpers")                         # WR_add_package_to_executor may load these
+executor.set_allow_arbitrary_packages(False)                   # and refuses every other package
 ```
 
 ## Backends
@@ -511,9 +533,17 @@ executor.set_allow_arbitrary_script(False)                     # gate WR_execute
 
 Selenium is the original backend. Every legacy command (and its modern alias) routes here unless an explicit `WR_pw_*` / `WR_appium_*` prefix is used.
 
-### Playwright (full)
+The Selenium backend has the twins of the Playwright element and page helpers: JSON-usable waits (`WR_wait_for_element` with `present` / `visible` / `clickable` / `hidden`, `WR_wait_for_url`, `WR_wait_for_title`, `WR_wait_for_ready_state`), `WR_find_element_by` / `WR_find_elements_by` for a raw selector, `WR_element_check` / `_uncheck` / `_hover` / `_inner_text` / `_inner_html`, `WR_alert_accept` (with `prompt_text`) / `WR_alert_dismiss` / `WR_alert_text`, and on Chromium `WR_emulate_device` / `WR_list_devices`, `WR_grant_permissions` / `WR_clear_permissions` and `WR_clock_freeze`. Unlike the older Selenium commands these fail their action when they fail.
 
-The Playwright backend mirrors the operational surface of the Selenium wrapper under `WR_pw_*`:
+**The older Selenium commands fail their action too.** Every Selenium wrapper call (`WR_to_url`, `WR_element_click`, `WR_element_assert`, `WR_check_current_webdriver` …) records its error in the test record and then raises it, so a wrong `WR_element_assert` fails. They used to let the action pass; `executor.set_raise_wrapper_errors(False)`, or `["WR_set_raise_wrapper_errors", [false]]` first in an action file, brings that back.
+
+With a driver started with `enable_bidi=True` (Chrome or Firefox) the Selenium backend also has the Playwright event capture, HAR and response mocks over W3C BiDi: `WR_event_capture_start` (`dom_mutations=True` also records DOM changes) / `_stop` / `_clear`, `WR_console_messages`, `WR_network_responses`, `WR_dom_mutations`, `WR_assert_no_console_errors` / `WR_assert_no_5xx` / `WR_assert_no_4xx_or_5xx`, `WR_start_har_recording` / `WR_stop_har_recording(har_path)` (headers, status and timings, no bodies), and `WR_route_mock` / `WR_route_mock_json` / `WR_route_unmock` / `WR_route_clear`. A mock pattern is an exact URL, `*/path` (that path on any host) or a dict of URL parts; mock what the page fetches, not the page itself, whose navigation a mock would block.
+
+### Playwright
+
+The Playwright backend covers most everyday operations of the Selenium wrapper under `WR_pw_*`, but it is not a one-to-one copy. The comparison table in `docs/source/Eng/doc/backends/backends_doc.rst` lists the equivalent commands and how they differ (for example, timeouts in milliseconds instead of seconds, tabs switched by index only), what cannot exist on the other backend (Internet Explorer, Selenium Grid, Appium and OS window geometry on Selenium only; WebKit, the trace viewer and automatic actionability waits on Playwright only), and what is not on the other backend yet.
+
+The page-level shortcuts pass extra Playwright options through (`button`, `modifiers`, `timeout`, `force`, `wait_until` …), page-level actions are added to the test record like Selenium steps, and pages the site opens itself (popups, `window.open`) are tracked so `WR_pw_switch_to_page` can reach them. The commands:
 
 - **Lifecycle / pages / navigation** — `WR_pw_launch`, `WR_pw_quit`, `WR_pw_new_page`, `WR_pw_switch_to_page`, `WR_pw_close_page`, `WR_pw_to_url`, `WR_pw_forward`, `WR_pw_back`, `WR_pw_refresh`, `WR_pw_url`, `WR_pw_title`, `WR_pw_content`.
 - **Find** — `WR_pw_find_element`, `WR_pw_find_elements`, `WR_pw_find_element_with_test_object_record`, `WR_pw_find_with_healing`.
@@ -521,7 +551,14 @@ The Playwright backend mirrors the operational surface of the Selenium wrapper u
 - **Element-level (after `WR_pw_find_element_with_test_object_record`)** — `WR_pw_element_click`, `WR_pw_element_dblclick`, `WR_pw_element_fill`, `WR_pw_element_type_text`, `WR_pw_element_press`, `WR_pw_element_check`, `WR_pw_element_uncheck`, `WR_pw_element_select_option`, `WR_pw_element_get_attribute`, `WR_pw_element_inner_text`, `WR_pw_element_inner_html`, `WR_pw_element_is_visible`, `WR_pw_element_is_enabled`, `WR_pw_element_is_checked`, `WR_pw_element_scroll_into_view`, `WR_pw_element_screenshot`, `WR_pw_element_change`.
 - **Script / cookies / waits / viewport / mouse / keyboard / frames** — `WR_pw_evaluate`, `WR_pw_get_cookies`, `WR_pw_add_cookies`, `WR_pw_clear_cookies`, `WR_pw_screenshot`, `WR_pw_wait_for_selector`, `WR_pw_wait_for_load_state`, `WR_pw_wait_for_timeout`, `WR_pw_wait_for_url`, `WR_pw_set_viewport_size`, `WR_pw_mouse_*`, `WR_pw_keyboard_*`.
 - **Mobile emulation / locale / clock** — `WR_pw_emulate("iPhone 13")`, `WR_pw_set_locale`, `WR_pw_set_timezone`, `WR_pw_clock_install` / `_set_time` / `_run_for`, `WR_pw_set_geolocation`, `WR_pw_grant_permissions`.
+- **Context options** — `WR_pw_launch(context_options={...})`, `WR_pw_set_context_options` (any `browser.new_context` option), `WR_pw_set_user_agent`, `WR_pw_set_extra_http_headers`, `WR_pw_save_storage_state`. The wrapper keeps one merged set of context options, so emulation, timezone, locale and HAR recording no longer replace each other; a setting that needs a new context carries cookies, localStorage and the current page's URL over.
 - **HAR + route mock** — `WR_pw_start_har_recording`, `WR_pw_stop_har_recording`, `WR_pw_route_mock`, `WR_pw_route_mock_json`, `WR_pw_route_unmock`, `WR_pw_route_clear`.
+- **Trace viewer / video** — `WR_pw_tracing_start`, `WR_pw_tracing_save_chunk(path)`, `WR_pw_tracing_stop(path)` (open the zip with `playwright show-trace`); `WR_pw_video_start(video_dir, width, height)` and `WR_pw_video_stop` (returns the video files). While a trace is recording and `executor.set_failure_screenshot_dir(...)` is set, each failed action also saves `<timestamp>_<command>.trace.zip` beside its screenshot.
+- **Selenium twins** — `WR_pw_add_init_script`, `WR_pw_block_urls` / `WR_pw_unblock_urls` (`*` wildcards; both survive context rebuilds), `WR_pw_clear_geolocation`, `WR_pw_bring_to_front`, `WR_pw_switch_to_page_by_url` / `_by_title`, `WR_pw_screenshot_base64`, `WR_pw_print_page` (headless Chromium), `WR_pw_scroll` / `_to_top` / `_to_bottom`, `WR_pw_drag_and_drop_offset`. Also `WR_pw_get_cookie` / `WR_pw_delete_cookie`, `WR_pw_element_submit`, `WR_pw_element_value_of_css_property`, and the assertions `WR_pw_check_current_page` / `WR_pw_element_assert`, which fail their action on a mismatch.
+- **Frames, user-facing lookup, dialogs** — `WR_pw_switch_to_frame` (nested with a list) / `_to_parent_frame` / `_to_main_frame`: selector commands act in the selected iframe until you switch back or navigate. `WR_pw_find_by(by, value)` finds by `role` (with `name`), `text`, `label`, `placeholder`, `alt_text`, `title` or `test_id` and makes the first match the current element. `WR_pw_set_dialog_policy("accept" | "dismiss", prompt_text)` answers alerts, confirms and prompts on every page; `WR_pw_last_dialog` returns the last one.
+- **Attach, profile, downloads, cache** — `WR_pw_connect_over_cdp(endpoint_url)` attaches to a Chromium started with a debugging port (quitting only disconnects); `WR_pw_connect(ws_endpoint)` reaches a Playwright browser server; `WR_pw_launch_persistent(user_data_dir, extension_paths=[...])` opens a profile and loads unpacked extensions. `WR_pw_download(selector, save_to)` clicks and saves the download (to a file, or into a directory under the suggested name). `WR_pw_set_cache_disabled` switches the HTTP cache off and on in every browser.
+- **Visual regression, recorder, callbacks** — `WR_pw_visual_capture_baseline` / `WR_pw_visual_compare` and `WR_pw_recorder_start` / `_stop` / `_pull_events` / `_save` do on the Playwright page what their `WR_*` twins do on Selenium, and every `WR_pw_*` command can trigger a callback.
+- **Several browsers** — `WR_pw_new_browser(browser, ...)` opens another browser and switches to it (returns its index), `WR_pw_switch_browser(index)`, `WR_pw_close_browser`, `WR_pw_browser_count`; each keeps its own pages and settings, and `WR_pw_quit` closes them all.
 
 Existing scripts can move to Playwright incrementally; `TestObject` records are translated to Playwright selectors automatically (`CSS_SELECTOR` → as-is, `XPATH` → `xpath=…`, `ID` → `#…`, `NAME` → `[name="…"]`, `LINK_TEXT` → `text=…`, `PARTIAL_LINK_TEXT` → `:has-text("…")`).
 
@@ -593,6 +630,15 @@ print(result["manifest_path"])  # → run_2026_04_26.manifest.json
 
 The manifest captures the actual paths produced — CI globs no longer need to know the per-format conventions.
 
+**Interactive HTML report.** `generate_interactive_html_report(html_name, screenshot_dir=None, har_path=None, a11y_results=None)` (`WR_generate_interactive_html_report`) writes one self-contained `<html_name>.html`, with no external resources and no script; each section expands with `<details>`:
+
+- a timeline of every recorded step, failures open, with the screenshots from `screenshot_dir` placed where they were taken and embedded (the executor's failure screenshots are named by time, other images go by their modification time);
+- each failure's full error, plus a unified diff when an assertion compares two values (`a != b`, `expected X but got Y`);
+- a network waterfall from a HAR 1.2 file (`WR_pw_start_har_recording` / `WR_start_har_recording` write one), with method, status, duration and URL per request;
+- axe-core violation badges by impact and the violations themselves, from the result dict or its JSON file.
+
+Every recorded value is escaped.
+
 ## Observability
 
 ```python
@@ -618,6 +664,27 @@ notify_run_summary("https://hooks.slack.com/services/...")
 ```
 
 Failure screenshot, OpenTelemetry tracing, retry policy, and the live dashboard all hook into the same `Executor.event_dict` so they compose without coupling.
+
+There are two dashboards. `start_dashboard` above follows the current run live. `DashboardServer` (`utils/live_dashboard`) aggregates history from files other modules write:
+
+```python
+from je_web_runner import DashboardConfig, DashboardServer
+
+server = DashboardServer(DashboardConfig(
+    ledger_path="ledger.json",                 # runs, pass-rate chart, flake scores
+    quarantine_path="quarantine.json",
+    locator_findings_path="locator_health.json",
+    schedule_path="schedule.json",             # test_scheduler output
+    triage_report_path="triage.json",          # failure_triage output
+    bind_port=8765,                            # 127.0.0.1 unless bind_host says otherwise
+))
+print(server.start())                          # http://127.0.0.1:8765, served from a daemon thread
+```
+
+- Pages: Overview (summary cards coloured by status, a daily pass-rate chart with failure bars, the latest runs), Runs (`?limit=`, "Show more"), Flake, Quarantine (with links to triage tickets), Locators (weakest locators and self-healing fallback offenders), Schedule and Triage. Any source left as `None` shows an empty state saying which `DashboardConfig` field to set.
+- Tables sort by clicking a header and filter as you type (Runs also by result); times show in the browser's time zone. The page refreshes its data every 15 seconds, keeping your filter, and the Pause button stops it. Light and dark follow the system setting.
+- The same data is JSON under `/api/summary`, `/api/runs`, `/api/flake`, `/api/quarantine`, `/api/locators`, `/api/schedule`, `/api/triage` and `/api/trend`.
+- Standard library only. Every page works without JavaScript; the script and stylesheet are served from the same origin under a strict Content-Security-Policy (`default-src 'self'`), and every value is HTML-escaped.
 
 ## Test Orchestration
 
@@ -646,6 +713,27 @@ python -m je_web_runner --execute_dir ./actions --shard 4/4
 
 Companion APIs — `WR_run_for_users` (multi-user matrix), `WR_run_ab` (A/B mode), `WR_flakiness_stats`, `WR_classify_failure`, `WR_schedule` + `WR_run_scheduler_for`.
 
+### Async execution
+
+`--parallel-mode async` (or `AsyncExecutor` from Python) runs action files on asyncio: one headless Chromium, and for each file a fresh browser context, so concurrent files act as separate users with their own cookies, storage and tabs. `--parallel N` caps how many run at once. It needs Playwright.
+
+```bash
+python -m je_web_runner -d ./user_journeys --parallel 8 --parallel-mode async --ledger ledger.json
+```
+
+```python
+import asyncio
+from je_web_runner.utils.async_executor import AsyncExecutor
+
+async def main():
+    async with AsyncExecutor(browser="chromium", headless=True) as runner:
+        results = await runner.run_many([alice_actions, bob_actions], concurrency=2)  # [(record, failed), ...]
+
+asyncio.run(main())
+```
+
+The `WR_apw_*` commands act in the file's own context: `WR_apw_goto`, `WR_apw_click`, `WR_apw_fill`, `WR_apw_press`, `WR_apw_text`, `WR_apw_title`, `WR_apw_url`, `WR_apw_wait_for_selector`, `WR_apw_assert_text`, `WR_apw_assert_title`, `WR_apw_new_page` / `WR_apw_switch_to_page` / `WR_apw_close_page` (tabs of the same user), `WR_apw_screenshot`, `WR_apw_evaluate` (behind the arbitrary-script gate), `WR_apw_sleep` (pauses that file only), and `WR_apw_websocket_messages` / `WR_apw_wait_for_websocket_message` for streaming pages. Any other `WR_*` command runs in a worker thread with the usual gates, retries and failure screenshots, but it shares the process-wide Selenium and Playwright singletons, as in `--parallel-mode thread`. Outside the async executor a `WR_apw_*` command fails with a message saying where it runs.
+
 ## Quality & Security
 
 - **Action linter** — `WR_lint_action` / `WR_lint_action_file` flag legacy command names, hard-coded URLs, dangerous scripts, missing tags, duplicate consecutive actions.
@@ -654,12 +742,14 @@ Companion APIs — `WR_run_for_users` (multi-user matrix), `WR_run_ab` (A/B mode
 - **Security headers audit** — `WR_audit_security_headers_url` checks HSTS / CSP / X-Frame-Options / X-Content-Type-Options / Referrer-Policy / Permissions-Policy.
 - **Accessibility audit** — `WR_a11y_run_audit` injects user-supplied axe-core (`load_axe_source`) and runs against the active session; Playwright variant `WR_pw_a11y_run_audit`.
 - **Lighthouse** — `WR_lighthouse_run` shells out to the official `lighthouse` Node CLI; `WR_lighthouse_assert_scores` enforces budgets.
-- **Page perf metrics** — `WR_perf_collect` / `WR_pw_perf_collect` snapshot FCP / LCP / CLS / TTFB / domContentLoaded / load via `PerformanceObserver`; `WR_perf_assert_within` checks thresholds.
+- **Page perf metrics** — `WR_perf_collect` / `WR_pw_perf_collect` snapshot FCP / LCP / CLS / TTFB / domContentLoaded / load via `PerformanceObserver`, with the LCP element (`lcp_element`, `lcp_url`) and the top layout-shift sources (`cls_sources`); `WR_perf_assert_within` checks thresholds.
+- **Core Web Vitals budget** — `WR_assert_web_vitals(budgets=None, observe_ms=1000, source="page", url=None, json_path=None, html_path=None)` asserts LCP, CLS, INP and FCP in one step. `source="page"` measures the running backend's current page (Selenium, else Playwright), with INP from the event-timing log (interactions of 104 ms or more before the call still count; INP is not measured when there were none). `source="lighthouse"` runs Lighthouse on `url` and reads its lab audits, with Total Blocking Time (`tbt`) instead of INP. Budgets default to Google's "good" limits (LCP 2500 ms, CLS 0.1, INP 200 ms, FCP 1800 ms); each metric is rated good / needs-improvement / poor. A breach fails the action naming the metric, its rating and the diagnostics (LCP element, shifting elements, slowest interaction); `json_path` / `html_path` write the breakdown, pass or fail.
 - **Visual regression** — `WR_visual_capture_baseline` + `WR_visual_compare` (Pillow soft-dep).
 - **Snapshot testing** — `WR_match_snapshot` / `WR_update_snapshot` (text/DOM, unified diff on mismatch).
 - **Network throttling** — `WR_throttle("slow_3g")` / `WR_pw_throttle("offline")`; presets cover Slow 3G, Fast 3G, Regular 4G, Wi-Fi, Offline, no-throttling.
 - **HAR diff** — `WR_diff_har` / `WR_diff_har_files` show added / removed / status-changed requests between two runs.
 - **Arbitrary-script gate** — `executor.set_allow_arbitrary_script(False)` blocks `WR_execute_script` / `WR_execute_async_script` / `WR_pw_evaluate` / `WR_cdp` / `WR_pw_cdp` for untrusted action JSON.
+- **Package gate** — `WR_add_package_to_executor` imports a Python package and registers its functions as commands, so an action file that can name `os` or `subprocess` can run anything. `executor.allow_packages("name", …)` lists the packages it may load (submodules included) and every other package is refused before it is imported, unless the host calls `executor.set_allow_arbitrary_packages(True)`; neither is an action command, so an action file cannot open its own gate.
 
 ## Extended Capabilities
 
@@ -731,7 +821,7 @@ python -m je_web_runner.mcp_server
 The default tool list (22 tools) exposes:
 
 Live browser execution:
-- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 444 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
+- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 556 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
 - `webrunner_run_action_files` — batch-run JSON files on disk
 - `webrunner_list_commands` — discover the full `WR_*` surface
 
@@ -773,7 +863,16 @@ server.register(Tool(
 serve_stdio(server=server)
 ```
 
-The server speaks MCP `2024-11-05`: `initialize`, `tools/list`, `tools/call`, `resources/list`, `ping`, `shutdown`.
+The server speaks both MCP eras, decided per request:
+
+- `2026-07-28` (stateless): a request whose `params._meta` names `io.modelcontextprotocol/protocolVersion` (and carries `io.modelcontextprotocol/clientCapabilities`) is served on its own, with no `initialize`. Methods: `server/discover` (supported versions, capabilities, `instructions`), `tools/list`, `tools/call`. Results carry `resultType`, the server's identity in `_meta`, and `ttlMs` / `cacheScope` where cacheable; another version in `_meta` gets error `-32022` listing the supported ones.
+- `2025-11-25`, `2025-06-18`, `2025-03-26` and `2024-11-05` (handshake): `initialize` answers with the client's version when it is one of these, otherwise with `2025-11-25`, and also returns the package version and short `instructions` for the model. Methods: `initialize`, `notifications/initialized`, `tools/list`, `tools/call`, `ping`.
+
+- stdio is UTF-8 with `\n` line ends whatever the console code page. Anything else the process writes to stdout (`print`, child processes) goes to stderr, so only protocol messages reach the client.
+- A tool that fails returns a result with `isError: true` and the error text, so the client can correct its call. `webrunner_run_actions` and `webrunner_run_action_files` also set `isError` when an action failed, and list the failed record keys under `failed`.
+- An unknown tool or non-object `arguments` is a JSON-RPC `-32602` error. Notifications are never answered, and batch requests are rejected with `-32600`.
+- The run tools refuse `WR_add_package_to_executor`, `WR_add_package_to_callback_executor`, `WR_set_allow_arbitrary_script` and the `WR_ac_*` commands that drive or read the desktop (all but `WR_ac_available` and `WR_ac_list_commands`), including inside nested action lists: a model must not load `os`, re-open a script gate the operator closed, or reach the desktop through AutoControl. `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1` lifts this. When `WEBRUNNER_MCP_ROOT` is set, `webrunner_run_action_files` and `webrunner_compute_trend` only read files inside that directory.
+- Every tool has a `title` and `annotations`: the offline tools and `webrunner_list_commands` are `readOnlyHint: true`, the two run tools `destructiveHint: true` and `openWorldHint: true`. Input schemas describe each argument and reject unknown ones; arguments that do not match come back as an `isError` result naming the problem. A result that is a JSON object is also sent as `structuredContent`, and the two run tools declare an `outputSchema`.
 
 ## Action JSON LSP
 
@@ -876,7 +975,7 @@ Smaller modules, grouped by what they help with. The larger areas have their own
 
 ### Test orchestration
 
-- **Test impact analysis** — `impact_analysis.build_index("./actions")` walks every action JSON file and projects locator names, URLs, template names, and `WR_*` commands into a reverse index; `affected_action_files(index, locators=["primary_cta"])` answers "which tests touch this?" so diff-aware shards can go beyond filename matching.
+- **Test impact analysis** — `impact_analysis.build_index("./actions")` walks every action JSON file and projects locator names, URLs, template names, and `WR_*` commands into a reverse index; `affected_action_files(index, locators=["primary_cta"])` answers "which tests touch this?" so diff-aware shards can go beyond filename matching. `build_index("./actions", cache_path=".webrunner_impact_cache.json")` keeps each file's names in a cache and parses only what changed: a file with the same modification time and size is reused, and one whose time changed (a fresh checkout) is reused when its SHA-256 matches. Measured on 3000 files of 30 actions: 510 ms uncached, 138 ms cached.
 
 ## Specialized Modules
 
@@ -1075,7 +1174,7 @@ only what you use).
 - **`mutation_testing`** — Action JSON mutation testing (kill-rate /
   score).
 - **`live_dashboard`** — Aggregated web UI: runs + flake + quarantine +
-  locators.
+  locators + schedule + triage (see Observability).
 - **`test_scheduler`** — Value-density scheduler under time + cloud
   budget.
 
@@ -1320,6 +1419,7 @@ webdriver_wrapper_instance.set_driver(
     },
     extension_paths=["/path/to/extension.crx"],  # optional
     enable_bidi=True,                            # for add_console_listener etc.
+    install_driver=False,                        # skip webdriver-manager; Selenium Manager finds the driver
 )
 webdriver_wrapper_instance.add_script_to_evaluate_on_new_document(
     "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
@@ -1582,6 +1682,33 @@ For GitHub Actions inline annotations, run `emit_from_junit_xml("run_junit.xml")
 
 The IDE config examples under [`docs/ide/`](docs/ide/) wire VS Code and JetBrains to the action JSON schema produced by `WR_export_action_schema`.
 
+## Desktop control (AutoControl)
+
+`pip install je_web_runner[autocontrol]` adds [AutoControl](https://github.com/Integration-Automation/AutoControlGUI) (`je_auto_control`), which drives the real mouse, keyboard and screen. The `WR_ac_*` commands reach it from an action file, and WebRunner imports it only when one of them runs.
+
+| Command | What it does |
+| --- | --- |
+| `WR_ac_available` | Whether `je_auto_control` is installed (looked up, not imported) |
+| `WR_ac_list_commands` | The `AC_*` commands the bridge will run |
+| `WR_ac_run` | Run one AutoControl action and return its value: `["WR_ac_run", [["AC_write", {"write_string": "hello"}]]]` |
+| `WR_ac_run_actions` | Run a list of AutoControl actions in order and return their values; the first failure stops it |
+| `WR_ac_fill_native_file_dialog` | Type a path (made absolute) into the operating system's open or save dialog, then press Enter (`submit=false` skips it); waits `wait_seconds` (1) for the dialog first |
+| `WR_ac_assert_image_on_screen` | Fail unless a template image is on the screen; returns its centre `[x, y]` (`detect_threshold` is AutoControl's match threshold) |
+| `WR_ac_click_element_native` | Click an element with the real mouse (a trusted click, not WebDriver's): the element `selector` / `by` finds, else the current element; `mouse_button`, and `scale` for the monitor's display scale; returns the clicked `[x, y]` |
+| `WR_ac_basic_auth` | Answer the browser's HTTP basic-auth dialog with the credentials in two environment variables (`username_env`, `password_env`: names, never values); with `url` it first opens that page without waiting; then types username, Tab, password and Enter (`submit=false` skips it) after `wait_seconds` (1) |
+
+A failed AutoControl action fails its `WR_ac_*` action with `AutoControlBridgeError`. The bridge refuses the AutoControl commands that reach beyond the desktop: shell commands and programs (`AC_shell_command`, `AC_execute_process`), package loading (`AC_add_package_*`), action lists and files (`AC_execute_action`, `AC_execute_files`), `AC_run_agent`, and calls back into WebRunner (`AC_web_*`). They are refused anywhere in the action, including loop bodies and bodies passed as JSON strings. The MCP server refuses every `WR_ac_*` command but `WR_ac_available` and `WR_ac_list_commands` unless `WEBRUNNER_MCP_ALLOW_UNSAFE_COMMANDS=1`.
+
+`WR_ac_click_element_native` scrolls the element to the middle of the viewport and maps its centre from the page to the screen with the window's `screenX/Y`, its outer and inner size and `devicePixelRatio`. Without `scale` it takes `devicePixelRatio` as the display scale, which is right at 100 % page zoom; on a zoomed page pass the monitor's scale (`1.25` for 125 %). The window must not be covered.
+
+`WR_ac_basic_auth` exists because a classic `get` of a page behind basic auth waits, while the browser's dialog is open, until it times out, and chromedriver does not answer the dialog through BiDi. So pass the page as `url`: the command checks that the page has the keyboard focus (`document.hasFocus()`; AutoControl types into whichever window is in front, so it refuses otherwise), starts the navigation without waiting, then types into the dialog. The credentials go through AutoControl's `AC_write_secret`, which types them exactly and keeps them out of its log, its record and its return value; the action file, WebRunner's log and both run records hold only the variable names. It needs a `je_auto_control` that has `AC_write_secret`. For Playwright, set `http_credentials` with `WR_pw_set_context_options` instead.
+
+Native basic-auth navigation requires HTTPS. Plain HTTP is allowed only for localhost or a literal loopback address used by local test servers. URLs with embedded credentials are refused before navigation or typing.
+
+The native commands refuse a Selenium driver whose window is not on this machine's screen: a headless browser, or a remote one (a grid or a device cloud). A Playwright browser is not checked, because Playwright does not report whether it was launched headless: launch it with `headless=False`.
+
+The other direction, AutoControl's `AC_web_*` commands running `WR_*` commands, is part of AutoControl.
+
 ## AI Assistance
 
 ```python
@@ -1622,9 +1749,17 @@ python -m je_web_runner -d ./actions --watch ./actions
 python -m je_web_runner --report run                          # JSON + HTML + XML + JUnit
 python -m je_web_runner --validate ./action_smoke.json
 python -m je_web_runner --migrate ./actions --migrate-dry-run
+python -m je_web_runner -d ./actions --affected-by locator:login_button --affected-by url:/checkout
+python -m je_web_runner -d ./actions --changed-since origin/main --impact-cache .webrunner_impact_cache.json
 ```
 
-Compose any of the flags above; the dispatcher applies tag filters → ledger / re-run-failed → sharding → dependency-aware ordering before handing files to the runner.
+Installing the package also installs two console scripts, `webrunner` and `web_runner`, with the same flags, output and exit codes as `python -m je_web_runner` (`webrunner -e actions.json`, `pipx run --spec je_web_runner webrunner -d ./actions`).
+
+Compose any of the flags above; the dispatcher applies impact selection → tag filters → ledger / re-run-failed → sharding → dependency-aware ordering before handing files to the runner.
+
+**Impact-based selection.** `--affected-by KIND:VALUE` (repeatable; `KIND` is `locator`, `url`, `template` or `command`; `@file` reads one per line) runs only the action files that use one of those names. `--changed-since REF` runs the action files `git diff REF...HEAD` changed, plus every file sharing a locator or template with them, so changing a setup file that saves `login_button` also runs the tests that use it (URLs and commands are not followed: almost every file shares them). Both can be combined; tags, `--rerun-failed` and `--shard` then apply to what they selected. `--impact-cache PATH` keeps the impact index between runs.
+
+`python -m je_web_runner` exits with status 1 when an action or a file of the run failed, after the rest has run, and prints `error: N action(s) or file(s) failed` on stderr. Under [TestPioneer](https://github.com/Integration-Automation/TestPioneer), which sets `TEST_PIONEER_ARTIFACT_DIR`, a report asked for under a relative name (JSON, XML, HTML, JUnit, Allure, interactive HTML, and `generate_all_reports`) is written below that directory.
 
 ## Test Record
 
@@ -1672,12 +1807,11 @@ WebRunner provides a hierarchy of custom exceptions — every helper raises a do
 
 ## Logging
 
-WebRunner uses a rotating file handler:
-
-- **Log file:** `WEBRunner.log`
+- **Log file:** `$WEBRUNNER_LOG_PATH` (a full file path), else `$WEBRUNNER_LOG_DIR/WEBRunner.log`, else `~/.je_web_runner/logs/WEBRunner.log`. A relative path resolves against the cwd at import; `os.devnull` turns the file off.
+- **When:** the file (and its directory) is created on the first record; importing `je_web_runner` writes nothing.
+- **Mode:** append; each line carries the process id; a file over 10 MB is moved to `<name>.1` when a process opens it.
 - **Level:** WARNING+
-- **Max size:** 1 GB
-- **Format:** `%(asctime)s | %(name)s | %(levelname)s | %(message)s`
+- **Format:** `%(asctime)s | %(process)d | %(name)s | %(levelname)s | %(message)s`
 
 ## Supported Browsers
 

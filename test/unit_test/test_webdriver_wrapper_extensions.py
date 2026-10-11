@@ -12,9 +12,11 @@ from unittest.mock import MagicMock, patch
 
 from je_web_runner.utils.cdp.cdp_commands import CDPError
 from je_web_runner.utils.exception.exceptions import WebRunnerException
+from je_web_runner.utils.test_record.wrapper_failures import wrapper_failure_policy
 from je_web_runner.webdriver.webdriver_wrapper import (
     WebDriverWrapper,
     _options_dict,
+    _webdriver_dict,
     _webdriver_manager_dict,
 )
 
@@ -212,7 +214,10 @@ class TestSaveScreenshot(unittest.TestCase):
         fake_driver.save_screenshot.side_effect = RuntimeError("disk full")
         wrapper.current_webdriver = fake_driver
 
-        self.assertFalse(wrapper.save_screenshot("/opt/out.png"))
+        with self.assertRaises(RuntimeError):
+            wrapper.save_screenshot("/opt/out.png")
+        with patch.object(wrapper_failure_policy, "raise_errors", False):
+            self.assertFalse(wrapper.save_screenshot("/opt/out.png"))
 
 
 # --- Group A: page / window metadata --------------------------------------
@@ -263,7 +268,10 @@ class TestPageWindowMetadata(unittest.TestCase):
             side_effect=RuntimeError("no session")
         )
         self.wrapper.current_webdriver = broken_driver
-        self.assertIsNone(self.wrapper.get_current_url())
+        with self.assertRaises(RuntimeError):
+            self.wrapper.get_current_url()
+        with patch.object(wrapper_failure_policy, "raise_errors", False):
+            self.assertIsNone(self.wrapper.get_current_url())
 
 
 # --- Group B: add_extension + attach_to_existing_browser ------------------
@@ -454,7 +462,10 @@ class TestPrintAndFullPageScreenshot(unittest.TestCase):
         self.fake_driver.print_page.side_effect = RuntimeError("boom")
         with tempfile.TemporaryDirectory() as tmpdir:
             target = os.path.join(tmpdir, "out.pdf")
-            self.assertFalse(self.wrapper.print_page(target))
+            with self.assertRaises(RuntimeError):
+                self.wrapper.print_page(target)
+            with patch.object(wrapper_failure_policy, "raise_errors", False):
+                self.assertFalse(self.wrapper.print_page(target))
 
 
 # --- Group E: CDP emulation overrides -------------------------------------
@@ -572,7 +583,10 @@ class TestCookiePersistence(unittest.TestCase):
         self.fake_driver.get_cookies.side_effect = RuntimeError("no driver")
         with tempfile.TemporaryDirectory() as tmpdir:
             path = os.path.join(tmpdir, "cookies.json")
-            self.assertFalse(self.wrapper.save_cookies(path))
+            with self.assertRaises(RuntimeError):
+                self.wrapper.save_cookies(path)
+            with patch.object(wrapper_failure_policy, "raise_errors", False):
+                self.assertFalse(self.wrapper.save_cookies(path))
 
     def test_clear_origin_storage(self):
         self.wrapper.clear_origin_storage("https://example.com")
@@ -754,7 +768,10 @@ class TestBidiListeners(unittest.TestCase):
 
     def test_remove_returns_false_when_underlying_fails(self):
         self.fake_script.remove_console_message_handler.side_effect = RuntimeError("gone")
-        self.assertFalse(self.wrapper.remove_console_listener(42))
+        with self.assertRaises(RuntimeError):
+            self.wrapper.remove_console_listener(42)
+        with patch.object(wrapper_failure_policy, "raise_errors", False):
+            self.assertFalse(self.wrapper.remove_console_listener(42))
 
     def test_listener_raises_without_bidi_support(self):
         # Driver 沒有 script 屬性，模擬 Selenium < 4.16 或未啟用 BiDi
@@ -907,6 +924,33 @@ class TestFetchInterception(unittest.TestCase):
             "Fetch.failRequest",
             {"requestId": "req-10", "errorReason": "AccessDenied"},
         )
+
+
+class TestInstallDriver(unittest.TestCase):
+    """``install_driver=False`` skips webdriver-manager and leaves the driver to Selenium Manager."""
+
+    def _start(self, **kwargs):
+        manager, browser = MagicMock(name="ChromeDriverManager"), MagicMock(name="Chrome")
+        with patch.dict(_webdriver_manager_dict, {"chrome": manager}), \
+                patch.dict(_webdriver_dict, {"chrome": browser}):
+            WebDriverWrapper().set_driver("chrome", **kwargs)
+        return manager, browser
+
+    def test_installs_by_default(self):
+        manager, browser = self._start()
+        manager.return_value.install.assert_called_once()
+        browser.assert_called_once()
+
+    def test_skipped_when_asked(self):
+        manager, browser = self._start(install_driver=False)
+        manager.assert_not_called()
+        browser.assert_called_once()
+
+    def test_new_driver_forwards_it(self):
+        from je_web_runner.manager.webrunner_manager import WebdriverManager
+        with patch("je_web_runner.manager.webrunner_manager.webdriver_wrapper_instance") as wrapper:
+            WebdriverManager().new_driver("chrome", install_driver=False)
+        self.assertIs(wrapper.set_driver.call_args.kwargs["install_driver"], False)
 
 
 if __name__ == "__main__":
