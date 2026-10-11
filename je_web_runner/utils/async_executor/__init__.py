@@ -5,15 +5,20 @@ The executor names load on first use: the synchronous command table imports
 :mod:`~je_web_runner.utils.async_executor.commands`, and the executor imports that table.
 """
 import importlib
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from je_web_runner.utils.async_executor.commands import ASYNC_COMMANDS, AsyncCommandError
 from je_web_runner.utils.async_executor.session import AsyncBrowserPool, AsyncSession, AsyncSessionError
 
 _EXECUTOR_NAMES = ("AsyncExecutor", "async_execute_action", "async_execute_many", "run_action_lists")
 
+if TYPE_CHECKING:
+    from je_web_runner.utils.async_executor.executor import (
+        AsyncExecutor, async_execute_action, async_execute_many, run_action_lists,
+    )
+
 # PEP 562 exports are provided by __getattr__ below, without a circular eager import.
-__all__ = [  # pylint: disable=undefined-all-variable
+__all__ = [
     "ASYNC_COMMANDS", "AsyncBrowserPool", "AsyncCommandError", "AsyncExecutor", "AsyncSession",
     "AsyncSessionError", "async_execute_action", "async_execute_many", "run_action_lists",
 ]
