@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import replace
-from threading import Lock
+from threading import Lock, local
 from types import TracebackType
 from typing import Any
 
@@ -27,12 +27,19 @@ class _CountingReporter(ExecutionReporter):
     def __init__(self, delegate: ExecutionReporter) -> None:
         self._delegate = delegate
         self._lock = Lock()
+        self._thread = local()
         self.raised = 0
 
     def add(self, count: int = 1) -> None:
         """Count ``count`` more failures (thread-safe: ``--parallel-mode=thread`` runs files on threads)."""
         with self._lock:
             self.raised += count
+        self._thread.raised = self.thread_failed + count
+
+    @property
+    def thread_failed(self) -> int:
+        """Failures seen on this worker thread, independent of other files."""
+        return getattr(self._thread, "raised", 0)
 
     def on_start(self, action_list: Any) -> None:
         self._delegate.on_start(action_list)
@@ -91,3 +98,9 @@ def note_failed_file() -> None:
     active = FailureCount._active  # pylint: disable=protected-access
     if active is not None:
         active._note()  # pylint: disable=protected-access
+
+
+def thread_failure_count() -> int | None:
+    """Return this thread's count during CLI dispatch, or None outside it."""
+    active = FailureCount._active  # pylint: disable=protected-access
+    return active._reporter.thread_failed if active is not None else None  # pylint: disable=protected-access

@@ -95,3 +95,81 @@ def test_a_file_that_failed_in_another_process_fails_the_run(tmp_path, monkeypat
     _write(tmp_path / "a.json", [PASSES])
     _write(tmp_path / "b.json", [PASSES])
     assert cli_main.main(["-d", str(tmp_path), "--parallel", "2", "--parallel-mode", "process"]) == 1  # nosec B101
+
+
+def test_async_failed_files_are_counted_once(tmp_path, monkeypatch, capsys):
+    from je_web_runner.utils.async_executor import executor as async_executor
+
+    _write(tmp_path / "a.json", [PASSES])
+    _write(tmp_path / "b.json", [PASSES])
+    monkeypatch.setattr(async_executor, "run_action_lists", lambda *args, **kwargs: [
+        ({"first": "failed", "second": "failed"}, ["first", "second"]),
+        ({"third": "passed"}, []),
+    ])
+    assert cli_main.main(["-d", str(tmp_path), "--parallel-mode", "async"]) == 1  # nosec B101
+    assert "error: 1 action(s) or file(s) failed" in capsys.readouterr().err  # nosec B101
+
+
+def test_thread_failures_are_counted(tmp_path, capsys):
+    for index in range(8):
+        _write(tmp_path / f"{index}.json", [RAISES, PASSES])
+    assert cli_main.main(["-d", str(tmp_path), "--parallel", "4"]) == 1  # nosec B101
+    captured = capsys.readouterr()
+    assert "error: 8 action(s) or file(s) failed" in captured.err  # nosec B101
+    assert captured.out.count("failure-count-test") >= 8  # nosec B101
+
+
+@pytest.mark.parametrize("flags", [[], ["--ledger"], ["--parallel", "2"]], ids=["sequential", "ledger", "thread"])
+def test_unreadable_file_fails_run_and_remaining_files_run(tmp_path, capsys, flags):
+    actions = tmp_path / "actions"
+    actions.mkdir()
+    (actions / "a_bad.json").write_text("{invalid", encoding="utf-8")
+    _write(actions / "b_ok.json", [PASSES])
+    if flags == ["--ledger"]:
+        flags = [*flags, str(tmp_path / "ledger.json")]
+    assert cli_main.main(["-d", str(actions), *flags]) == 1  # nosec B101
+    captured = capsys.readouterr()
+    assert "error: 1 action(s) or file(s) failed" in captured.err  # nosec B101
+    assert "failure-count-test" in captured.out  # nosec B101
+
+
+def test_ledger_detects_failed_actions_without_recording(tmp_path, monkeypatch):
+    from je_web_runner.utils.run_ledger.ledger import latest_status
+    from je_web_runner.utils.test_record.test_record_class import test_record_instance
+
+    monkeypatch.setattr(test_record_instance, "init_record", False)
+    actions = tmp_path / "actions"
+    actions.mkdir()
+    bad = _write(actions / "bad.json", [RAISES])
+    good = _write(actions / "good.json", [PASSES])
+    ledger = str(tmp_path / "ledger.json")
+    assert cli_main.main(["-d", str(actions), "--ledger", ledger]) == 1  # nosec B101
+    assert latest_status(ledger) == {bad: False, good: True}  # nosec B101
+
+
+def test_dependency_failure_skips_downstream_without_recording(tmp_path, monkeypatch, capsys):
+    from je_web_runner.utils.test_record.test_record_class import test_record_instance
+
+    monkeypatch.setattr(test_record_instance, "init_record", False)
+    _write(tmp_path / "upstream.json", [RAISES])
+    _write(tmp_path / "downstream.json", {
+        "meta": {"depends_on": ["upstream"]},
+        "webdriver_wrapper": [["print", ["must-not-run-downstream"]]],
+    })
+    assert cli_main.main(["-d", str(tmp_path)]) == 1  # nosec B101
+    assert "must-not-run-downstream" not in capsys.readouterr().out  # nosec B101
+
+
+def test_async_unreadable_file_does_not_stop_other_files(tmp_path, monkeypatch, capsys):
+    from je_web_runner.utils.async_executor import executor as async_executor
+
+    (tmp_path / "a_bad.json").write_text("{invalid", encoding="utf-8")
+    _write(tmp_path / "b_good.json", [PASSES])
+    def run_loaded(actions, **kwargs):
+        assert actions == [[PASSES]]  # nosec B101
+        return [({"passed": "async-continued"}, [])]
+    monkeypatch.setattr(async_executor, "run_action_lists", run_loaded)
+    assert cli_main.main(["-d", str(tmp_path), "--parallel-mode", "async"]) == 1  # nosec B101
+    captured = capsys.readouterr()
+    assert "async-continued" in captured.out  # nosec B101
+    assert "error: 1 action(s) or file(s) failed" in captured.err  # nosec B101

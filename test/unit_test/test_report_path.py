@@ -108,3 +108,20 @@ def test_outside_testpioneer_a_report_stays_in_the_working_directory(tmp_path, m
     monkeypatch.chdir(tmp_path)
     generate_json_report("web")
     assert (tmp_path / "web_success.json").is_file()  # nosec B101
+
+
+def test_invalid_artifact_directory_falls_back(monkeypatch):
+    monkeypatch.setenv(ARTIFACT_DIR_VARIABLE, "artifacts")
+    def invalid_path(*args, **kwargs):
+        raise ValueError("invalid path")
+    monkeypatch.setattr(Path, "resolve", invalid_path)
+    assert report_path("web.json") == "web.json"  # nosec B101
+
+
+def test_manifest_resolves_allure_directory(artifact_dir):
+    outcome = generate_all_reports("reports/web", allure_dir="allure-results")
+    manifest = json.loads(Path(outcome["manifest_path"]).read_text(encoding="utf-8"))
+    assert manifest["produced"]["allure"]  # nosec B101
+    assert all(Path(path).is_file() for path in manifest["produced"]["allure"])  # nosec B101
+    assert all(Path(path).parent == artifact_dir.resolve() / "allure-results"
+               for path in manifest["produced"]["allure"])  # nosec B101

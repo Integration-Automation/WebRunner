@@ -95,7 +95,7 @@ class TestCli(_Suite):
     def _ran(self, *flags):
         with patch("je_web_runner.utils.cli.cli_main.execute_files") as run:
             main(["-d", str(self.dir), *flags])
-        return sorted(run.call_args.args[0]) if run.called else []
+        return sorted(path for call in run.call_args_list for path in call.args[0])
 
     def test_affected_by_with_a_cache_and_tags_still_applying_after(self):
         cache = self.root / "impact.json"

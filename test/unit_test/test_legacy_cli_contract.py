@@ -106,6 +106,17 @@ def test_a_failed_action_in_execute_str_exits_1(tmp_path):
     assert result.returncode == 1, result.stdout + result.stderr  # nosec B101
 
 
+def test_process_mode_detects_failure_without_action_recording(tmp_path):
+    action_dir = tmp_path / "actions"
+    action_dir.mkdir()
+    (action_dir / "a_bad.json").write_text(json.dumps(_failing_actions()), encoding="utf-8")
+    (action_dir / "b_ok.json").write_text(json.dumps(_actions(tmp_path)), encoding="utf-8")
+    result = _run_cli(tmp_path, "-d", str(action_dir), "--parallel", "2", "--parallel-mode", "process")
+    assert result.returncode == 1, result.stdout + result.stderr  # nosec B101
+    assert "error: 1 action(s) or file(s) failed" in result.stderr  # nosec B101
+    assert result.stdout.count(MARKER) >= 2, result.stdout + result.stderr  # nosec B101
+
+
 def test_no_flag_exits_non_zero(tmp_path):
     assert _run_cli(tmp_path).returncode != 0  # nosec B101
 

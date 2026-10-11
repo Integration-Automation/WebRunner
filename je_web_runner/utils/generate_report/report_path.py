@@ -31,13 +31,13 @@ def report_path(name: str) -> str:
     directory = os.environ.get(ARTIFACT_DIR_VARIABLE, "").strip()
     if not directory or Path(name).is_absolute():
         return name
-    base = Path(directory).resolve()
-    target = (base / name).resolve()
-    if base not in target.parents:
-        return name
     try:
+        base = Path(directory).resolve()
+        target = (base / name).resolve()
+        if base not in target.parents:
+            return name
         target.parent.mkdir(parents=True, exist_ok=True)
-    except OSError as error:
+    except (OSError, ValueError, RuntimeError) as error:
         web_runner_logger.error(f"report_path, name: {name}, the artifact directory is not usable: {error!r}")
         return name
     return str(target)
