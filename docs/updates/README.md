@@ -59,6 +59,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
 | U-20261022-05 | 2026-10-22 | Preserve complete dependency locks | #bugfix #deps #ci | [2026-10](2026-10.md) |
+| U-20261011-02 | 2026-10-11 | Make Firefox option smoke failures fail CI | #done #ci | [2026-10](2026-10.md) |
 | U-20261011-01 | 2026-10-11 | Repair stable release security and browser checks | #done #ci | [2026-10](2026-10.md) |
 | U-20261008-01 | 2026-10-08 | The CLI exits 1 when the run failed; reports go below TestPioneer's artifact directory | #feature #cli #report #testpioneer | [2026-10](2026-10.md) |
 | U-20261001-53 | 2026-10-01 | The publish jobs build with the locked setuptools instead of downloading the newest | #ci #security #X-13 | [2026-10](2026-10.md) |
@@ -145,5 +146,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 56 |
+| [2026-10.md](2026-10.md) | 2026-10 | 57 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
