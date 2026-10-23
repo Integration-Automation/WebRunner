@@ -14,6 +14,7 @@ from je_web_runner.utils.issue_worker.doctor import IssueDoctor
 from je_web_runner.utils.issue_worker.processor import CodeProcessor
 from je_web_runner.utils.issue_worker.publisher import GitHubPublisher
 from je_web_runner.utils.issue_worker.runtime import WorkerRuntime, operational_log
+from je_web_runner.utils.issue_worker.reviews import ReviewInbox, owned_pr
 from je_web_runner.utils.issue_worker.types import (
     FINAL, EnvironmentUnavailable, IssueSnapshot, IssueWorkerConfig, IssueWorkerError, ProviderError,
 )
@@ -56,6 +57,27 @@ class IssueWorker:
         """Explicitly requeue a stopped issue after the ready label is restored."""
         self.inbox.retry(key)
 
+    def retry_review(self, key: str) -> None:
+        """Explicitly re-enable same-PR feedback after a stopped revision; never adopt an external head."""
+        if not self.config.review_enabled:
+            raise IssueWorkerError("enable review_enabled in host config before retrying review")
+        with self.store.lease():
+            jobs = self.store.status(key)
+            if not jobs or jobs[0]["status"] not in FINAL or not jobs[0]["data"].get("pr"):
+                raise IssueWorkerError("review retry requires a terminal job with its saved PR")
+            job = jobs[0]
+            if job["data"].get("report_pending"):
+                raise IssueWorkerError("deliver the pending progress report before retrying review")
+            if job["data"].get("review_rounds", 0) >= self.config.max_review_rounds:
+                raise IssueWorkerError("review round limit reached; increase the host limit explicitly first")
+            provider, snapshot = self.inbox._fetch(key)
+            if snapshot.closed or snapshot.assignee != provider.bot or "automation-review" not in snapshot.labels:
+                raise IssueWorkerError("review retry requires an open, bot-owned issue with automation-review")
+            pr = owned_pr(self.inbox.providers["github"], job)
+            if pr["state"] != "open" or pr["head"]["sha"] != job["data"]["pr"]["head"]:
+                raise IssueWorkerError("review retry cannot reopen a PR or adopt an external head")
+            self.store.resume_review(job, snapshot)
+
     def health(self) -> dict[str, Any]:
         """Inspect local daemon health without contacting platforms or model services."""
         return self.redactor.clean(self.runtime.health())
@@ -72,7 +94,7 @@ class IssueWorker:
             self.runtime.assert_allowed()
             if self._draining():
                 return {"status": "idle"}
-            job = self.store.next_job()
+            job = self._next_job()
             if job is None and discover:
                 self.inbox.discover()
                 job = self.store.next_job()
@@ -85,6 +107,12 @@ class IssueWorker:
             else:
                 self._process_job(job)
             return self.status(job["key"])[0]
+
+    def _next_job(self) -> dict[str, Any] | None:
+        job = self.store.next_job()
+        if self.config.review_enabled and (job is None or job["status"] == "queued"):
+            return ReviewInbox(self.inbox.providers["github"], self.redactor).poll(self.store) or job
+        return job
 
     def watch(self, stop: threading.Event | None = None) -> None:
         """Run one fenced local daemon; dependency outages pause intake rather than fail jobs."""
@@ -172,7 +200,8 @@ class IssueWorker:
             self._save(job, "claimed")
             data["claim_started"] = True
             self._save(job, "claimed")
-            provider.claim(snapshot)
+            if not data.get("review"):
+                provider.claim(snapshot)
             self._guard(job, provider, resume=True)
             provider.report(snapshot, "analyzing", "Claimed; preparing isolated implementation and validation.")
         workspace = self.workspace_factory(self.config, job)
@@ -197,7 +226,10 @@ class IssueWorker:
                 return
         self._guard(job, provider, resume=True)
         self._save(job, "publishing")
-        data["pr"] = self.publisher.publish(workspace, job, checkpoint)
+        deliver = self.publisher.revise if data.get("review") else self.publisher.publish
+        data["pr"] = deliver(workspace, job, checkpoint)
+        if data.get("review"):
+            self.store.finish_review(job)
         data.pop("platform_error", None)
         self._finish(job, "awaiting_review", "Validated changes are ready for human review.")
 
@@ -206,7 +238,15 @@ class IssueWorker:
         self.store.assert_lease()
         current = provider.fetch(job["snapshot"]["external_id"])
         expected = IssueSnapshot(**job["snapshot"])
-        if not current.eligible(provider.bot, resume=resume) or current.revision != expected.revision:
+        eligible = current.eligible(provider.bot, resume=resume)
+        if job["data"].get("review"):
+            pr = owned_pr(self.inbox.providers["github"], job)
+            allowed_heads = {job["data"]["review"]["parent"], job["data"].get("remote_commit")}
+            if pr["state"] != "open" or pr["head"]["sha"] not in allowed_heads:
+                raise IssueCancelled("PR was closed or changed during automated revision")
+            eligible = not current.closed and current.assignee == provider.bot and bool(
+                {"automation-review", "automation-running"} & set(current.labels))
+        if not eligible or current.revision != expected.revision:
             raise IssueCancelled("issue requirements, ready label, open state or ownership changed")
 
     def _save(self, job: dict[str, Any], status: str, next_attempt: float = 0) -> None:

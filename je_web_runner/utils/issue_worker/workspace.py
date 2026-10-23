@@ -32,6 +32,7 @@ class IssueWorkspace:
     def __init__(self, root: Path, base_sha: str, config: IssueWorkerConfig) -> None:
         self.root = root.resolve()
         self.base_sha = base_sha
+        self.scope_sha = base_sha
         self.config = config
 
     @classmethod
@@ -44,17 +45,26 @@ class IssueWorkspace:
             git_run(state, ["clone", "--no-checkout", "--", remote or f"https://github.com/{config.repository}.git",
                             str(clone)], timeout=120)
         slug = job["key"].replace(":", "-") + f"-r{job['run']}"
+        if job["data"].get("review"):
+            slug += f"-review-{job['data']['review']['round']}"
         root = state / "worktrees" / slug
         saved = job["data"].get("base_sha")
         if root.exists():
             if not saved:
                 saved = git_run(root, ["rev-parse", "HEAD"]).strip()
-            return cls(root, saved, config)
+            workspace = cls(root, saved, config)
+            workspace.scope_sha = job["data"].get("original_base_sha", saved)
+            return workspace
         root.parent.mkdir(parents=True, exist_ok=True)
-        git_run(clone, ["fetch", "origin", config.base_branch], timeout=120)
+        reference = job["data"].get("branch") if job["data"].get("review") else config.base_branch
+        git_run(clone, ["fetch", "origin", reference], timeout=120)
+        if job["data"].get("review") and git_run(clone, ["rev-parse", "FETCH_HEAD"]).strip() != saved:
+            raise IssueWorkerError("review branch moved before workspace preparation")
         base = saved or git_run(clone, ["rev-parse", "FETCH_HEAD"]).strip()
         git_run(clone, ["worktree", "add", "--detach", str(root), base])
-        return cls(root, base, config)
+        workspace = cls(root, base, config)
+        workspace.scope_sha = job["data"].get("original_base_sha", base)
+        return workspace
 
     def files(self) -> list[str]:
         """List indexed paths, including staged new files and excluding the git database."""
@@ -131,7 +141,7 @@ class IssueWorkspace:
 
     def verify_scope(self) -> None:
         """Enforce cumulative file/line/mode limits and reject partial unstaged edits."""
-        changes = self.changes()
+        changes = self._numstat(["diff", "--cached", "--no-renames", "--numstat", "-z", self.scope_sha])
         if len(changes) > self.config.max_files or sum(a + d for a, d, _name in changes) > self.config.max_lines:
             raise IssueWorkerError("cumulative patch exceeds host file/line limits")
         for line in git_run(self.root, ["ls-files", "--stage"]).splitlines():

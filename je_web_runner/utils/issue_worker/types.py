@@ -116,6 +116,9 @@ class IssueWorkerConfig:
     repair_rounds: int = 2
     max_files: int = 20
     max_lines: int = 1000
+    review_enabled: bool = False
+    max_review_rounds: int = 3
+    review_poll_seconds: float = 60
     checks: dict[str, list[str]] = field(default_factory=lambda: {key: list(value) for key, value in CHECKS.items()})
 
     def __post_init__(self) -> None:
@@ -148,11 +151,14 @@ class IssueWorkerConfig:
                 raise IssueWorkerError("credentials must reference environment variable names")
 
     def _validate_limits(self) -> None:
-        for name in ("poll_seconds", "timeout", "max_tools", "repair_rounds", "max_files", "max_lines"):
+        if not isinstance(self.review_enabled, bool):
+            raise IssueWorkerError("review_enabled must be a boolean")
+        for name in ("poll_seconds", "timeout", "max_tools", "repair_rounds", "max_files", "max_lines",
+                     "max_review_rounds", "review_poll_seconds"):
             value = getattr(self, name)
             if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or value <= 0:
                 raise IssueWorkerError(f"{name} must be finite and positive")
-        for name in ("max_tools", "repair_rounds", "max_files", "max_lines"):
+        for name in ("max_tools", "repair_rounds", "max_files", "max_lines", "max_review_rounds"):
             if not isinstance(getattr(self, name), int):
                 raise IssueWorkerError(f"{name} must be an integer")
 

@@ -31,6 +31,11 @@ class IssueStore:
                 );
                 CREATE TABLE IF NOT EXISTS lease (id INTEGER PRIMARY KEY CHECK(id=1), token TEXT, expires REAL);
                 CREATE TABLE IF NOT EXISTS settings (name TEXT PRIMARY KEY, value TEXT NOT NULL);
+                CREATE TABLE IF NOT EXISTS review_events (
+                    job_key TEXT NOT NULL, run INTEGER NOT NULL, event_key TEXT NOT NULL,
+                    state TEXT NOT NULL, payload TEXT NOT NULL,
+                    PRIMARY KEY(job_key,run,event_key)
+                );
             """)
 
     @contextmanager
@@ -103,6 +108,46 @@ class IssueStore:
             )
             if cursor.rowcount != 1:
                 raise IssueWorkerError("only failed, cancelled or needs_info jobs may be retried")
+
+    def review_seen(self, key: str, run: int) -> set[str]:
+        """Return events already claimed/handled for a particular PR run."""
+        with self.connection() as connection:
+            rows = connection.execute("SELECT event_key FROM review_events WHERE job_key=? AND run=?",
+                                      (key, run))
+            return {row["event_key"] for row in rows}
+
+    def start_review(self, job: dict[str, Any], events: list[dict[str, Any]]) -> None:
+        """Atomically checkpoint a revision and claim its immutable feedback batch."""
+        self.assert_lease()
+        with self.connection() as connection:
+            for event in events:
+                connection.execute("INSERT INTO review_events VALUES(?,?,?,'processing',?)",
+                                   (job["key"], job["run"], event["key"], json.dumps(event)))
+            connection.execute("UPDATE jobs SET status='claimed',data=?,updated=?,next_attempt=0 WHERE key=?",
+                               (json.dumps(job["data"]), time.time(), job["key"]))
+        job["status"] = "claimed"
+
+    def finish_review(self, job: dict[str, Any]) -> None:
+        """Acknowledge feedback only after revision publication and progress delivery checkpoint."""
+        self.assert_lease()
+        with self.connection() as connection:
+            connection.execute("UPDATE review_events SET state='handled' WHERE job_key=? AND run=?",
+                               (job["key"], job["run"]))
+
+    def resume_review(self, job: dict[str, Any], snapshot: IssueSnapshot) -> None:
+        """Explicitly accept refreshed requirements without changing the PR/run identity."""
+        self.assert_lease()
+        data = job["data"]
+        data.pop("review_blocked", None)
+        data.pop("review_closed", None)
+        data["review_polled"] = 0
+        data["report_pending"] = False
+        with self.connection() as connection:
+            connection.execute("DELETE FROM review_events WHERE job_key=? AND run=? AND state='processing'",
+                               (job["key"], job["run"]))
+            connection.execute("UPDATE jobs SET snapshot=?,status='awaiting_review',data=?,updated=?,next_attempt=0 "
+                               "WHERE key=?", (json.dumps(snapshot.to_dict()), json.dumps(data), time.time(),
+                                               job["key"]))
 
     @contextmanager
     def lease(self) -> Iterator[None]:

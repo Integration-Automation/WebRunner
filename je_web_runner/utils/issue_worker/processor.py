@@ -112,6 +112,7 @@ class CodeProcessor:
             "files": workspace.files()[:500], "check_names": list(self.config.checks),
             "history": job["data"]["history"][-12:], "checks": job["data"]["checks"],
             "baseline": job["data"]["baseline"],
+            "review_feedback": job["data"].get("review", {}).get("feedback", []),
         })
 
     def _tool(self, action: CodeAction, workspace: IssueWorkspace, data: dict[str, Any],

@@ -1,7 +1,6 @@
 """Local HTTP platforms/model plus real git and pytest, without contacting external services."""
 from __future__ import annotations
 
-import hashlib
 from dataclasses import asdict
 import json
 import os
@@ -46,6 +45,11 @@ class FixtureAPI:
         self.validated_tree = ""
         self.expected_entries = None
         self.read_status = 200
+        self.git_root = None
+        self.original = None
+        self.reviews, self.review_comments, self.pr_comments = [], [], []
+        self.model_actions = None
+        self.lose_ref_reply = False
         self.labels = {"automation-ready"}
         self.owner = ""
         self.comments = []
@@ -81,11 +85,24 @@ class FixtureAPI:
         }}
 
     def _github_get(self, path, query):
+        feedback = {
+            "/pulls/40": self.prs[0] if self.prs else None,
+            "/pulls/40/reviews": self.reviews,
+            "/pulls/40/comments": self.review_comments,
+            "/issues/40/comments": self.pr_comments,
+            "/permission": {"permission": "write"},
+            "/check-runs": {"check_runs": []},
+            "/statuses": [],
+        }
+        for suffix, response in feedback.items():
+            if path.endswith(suffix):
+                return response
         if path.endswith("/pulls"):
             branch = query["head"][0].split(":", 1)[1]
             return [row for row in self.prs if row["head"]["ref"] == branch]
         if "/git/commits/" in path:
-            return {"tree": {"sha": self.base_tree}}
+            tree = git_run(self.git_root, ["rev-parse", path.rsplit("/", 1)[-1] + "^{tree}"]).strip()
+            return {"tree": {"sha": tree}}
         if "/git/ref/heads/" in path:
             branch = path.split("/git/ref/heads/", 1)[1]
             sha = self.base_sha if branch == "dev" else self.refs.get(branch)
@@ -105,6 +122,8 @@ class FixtureAPI:
             action = {"kind": "patch", "text": _PATCH} if self.model_calls == 0 else {
                 "kind": "finish", "summary": "Corrected value(); baseline failed and final tests passed.",
             }
+            if self.model_actions is not None:
+                action = self.model_actions[self.model_calls]
             self.model_calls += 1
             return 200, {"message": {"content": json.dumps(action)}}
         if path == "/rest/api/3/search/jql":
@@ -117,6 +136,10 @@ class FixtureAPI:
         return self._github_write(method, path, data)
 
     def _github_write(self, method, path, data):
+        if path.endswith("/issues/40/comments"):
+            row = {"id": 2, "body": data["body"], "user": {"login": "worker-bot"}}
+            self.pr_comments.append(row)
+            return 201, row
         if path.endswith("/assignees"):
             self.owner = data["assignees"][0]
         elif "/labels/" in path and method == "DELETE":
@@ -151,20 +174,35 @@ class FixtureAPI:
 
     def _publish(self, path, data):
         if path.endswith("/git/trees"):
-            assert data["base_tree"] == self.base_tree
+            assert data["base_tree"] == git_run(self.git_root, ["rev-parse", "HEAD^{tree}"]).strip()
             expected = self.expected_entries if self.expected_entries is not None else [
                 {"path": "je_web_runner/calc.py", "mode": "100644", "type": "blob",
                  "content": "def value():\n    return 2\n"}]
             assert data["tree"] == expected
             return 201, {"sha": self.validated_tree}
         if path.endswith("/git/commits"):
-            return 201, {"sha": hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()[:40]}
-        if path.endswith("/git/refs"):
-            self.refs[data["ref"].removeprefix("refs/heads/")] = data["sha"]
+            args = ["-c", "user.name=Fixture", "-c", "user.email=fixture@example.test", "commit-tree", data["tree"]]
+            for parent in data["parents"]:
+                args.extend(["-p", parent])
+            return 201, {"sha": git_run(self.git_root, [*args, "-m", data["message"]]).strip()}
+        if "/git/refs" in path:
+            branch = data["ref"].removeprefix("refs/heads/") if "ref" in data else path.split("/heads/", 1)[1]
+            if "ref" not in data:
+                assert data["force"] is False
+            git_run(self.git_root, ["push", str(self.original), data["sha"] + ":refs/heads/" + branch])
+            self.refs[branch] = data["sha"]
+            for row in self.prs:
+                if row["head"]["ref"] == branch:
+                    row["head"]["sha"] = data["sha"]
+            if self.lose_ref_reply:
+                self.lose_ref_reply = False
+                return 503, {"error": "reference reply lost"}
             return 201, {}
         self.pr_posts += 1
         row = {"number": 40, "html_url": self.url + "/pull/40", "state": "open", "body": data["body"],
-               "user": {"login": "worker-bot"}, "head": {"ref": data["head"], "sha": self.refs[data["head"]]}}
+               "user": {"login": "worker-bot"}, "head": {"ref": data["head"], "sha": self.refs[data["head"]],
+               "repo": {"full_name": "Integration-Automation/WebRunner"}},
+               "base": {"ref": "dev", "repo": {"full_name": "Integration-Automation/WebRunner"}}}
         self.prs.append(row)
         if self.lose_pr_reply:
             self.lose_pr_reply = False
@@ -193,6 +231,7 @@ def pipeline(tmp_path, request, monkeypatch):
         pytest.fail("real acceptance requires WEBRUNNER_ISSUE_MODEL and WEBRUNNER_ISSUE_IMAGE")
     api = FixtureAPI(source, git_run(original, ["rev-parse", "HEAD"]).strip(),
                      git_run(original, ["rev-parse", "HEAD^{tree}"]).strip())
+    api.original = original
     server = _serve(api)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
@@ -285,6 +324,7 @@ class FixtureSandbox:
         return
 
     def check(self, workspace, name, timeout):
+        self.api.git_root = workspace.root
         with tempfile.TemporaryDirectory(prefix="issue-pipeline-test-") as temporary:
             source = Path(temporary) / "source"
             workspace.export(source)
@@ -296,6 +336,7 @@ class FixtureSandbox:
                                     timeout=min(20, timeout), check=False)
         tree = workspace.fingerprint()
         self.api.validated_tree = tree
+        self.api.expected_entries = GitHubPublisher._entries(workspace)
         self.api.checks.append(result.returncode)
         return {"name": name, "passed": result.returncode == 0, "tree": tree,
                 "output": result.stdout[-4000:] + result.stderr[-1000:]}
@@ -309,6 +350,7 @@ class RecordingPodmanSandbox(PodmanSandbox):
         self.api = api
 
     def check(self, workspace, name, timeout):
+        self.api.git_root = workspace.root
         result = super().check(workspace, name, timeout)
         self.api.validated_tree = result["tree"]
         self.api.expected_entries = GitHubPublisher._entries(workspace)
@@ -471,3 +513,36 @@ def test_watch_recovers_after_rate_limit_and_tcp_disconnect(pipeline):
     assert faults == []
     assert worker.status()[0]["status"] == "awaiting_review"
     assert api.pr_posts == 1 and len(api.prs) == 1
+
+
+@pytest.mark.parametrize("pipeline", ["github", "jira"], indirect=True)
+def test_review_updates_original_pr_with_real_git_and_tests_and_recovers_lost_ref(pipeline):
+    worker, api, original = pipeline
+    review_patch = _PATCH.replace("-    return 1", "-    return 2").replace(
+        "+    return 2", '+    """Return two for callers."""\n+    return 2'
+    ).replace("@@ -1,2 +1,2 @@", "@@ -1,2 +1,3 @@")
+    api.model_actions = [{"kind": "patch", "text": _PATCH}, {"kind": "finish", "summary": "Fix return value"},
+                         {"kind": "patch", "text": review_patch},
+                         {"kind": "finish", "summary": "Document the public value function"}]
+    worker.config.review_enabled = True
+    worker.config.review_poll_seconds = 0.01
+    initial = worker.run_once()
+    assert initial["status"] == "awaiting_review", initial
+    api.reviews = [{"id": 70, "state": "CHANGES_REQUESTED", "commit_id": initial["data"]["pr"]["head"],
+                    "body": "Add a docstring to value(), retaining return value two.",
+                    "user": {"login": "maintainer", "type": "User"}}]
+    api.lose_ref_reply = True
+    uncertain = worker.run_once()
+    assert uncertain["status"] == "publishing", uncertain
+    assert api.prs[0]["head"]["sha"] != initial["data"]["pr"]["head"]
+    worker.store.save(uncertain["key"], uncertain["status"], uncertain["data"])
+    recovered = worker.run_once(discover=False)
+    assert recovered["status"] == "awaiting_review", recovered
+    assert recovered["data"]["review_rounds"] == 1
+    assert api.pr_posts == 1 and len(api.pr_comments) == 1
+    assert api.model_calls == 4
+    assert api.checks == [1, 0, 0, 0]  # baseline/final on initial delivery and revision
+    assert "Return two for callers" in git_run(api.git_root, ["show", ":je_web_runner/calc.py"])
+    assert "return 1" in (original / "je_web_runner/calc.py").read_text()
+    assert worker.run_once()["status"] == "idle"
+    assert api.model_calls == 4

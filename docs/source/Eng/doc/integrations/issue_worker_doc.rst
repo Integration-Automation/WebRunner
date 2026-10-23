@@ -219,3 +219,47 @@ drain/restart. Separate process tests cover crashes, lease takeover and CLI stop
 Set ``WEBRUNNER_TEST_SCHEDULER=1`` to register and remove a unique temporary Windows
 task; that test never starts the task or changes production tasks.
 Report missing model/Podman and an uncompleted 24-hour soak as unverified separately.
+
+PR review revisions
+-------------------
+
+Set ``review_enabled=true`` to let run/watch poll delivered PRs when no active job
+needs resuming, before discovering new issues. Legacy configs default to disabled;
+the example explicitly enables it. ``review_poll_seconds`` defaults to 60 and
+``max_review_rounds`` to three. Only the same bot/run marker/repository/automation
+branch may be revised.
+
+Actionable feedback includes current-head CHANGES_REQUESTED/COMMENTED reviews and
+their inline comments, plus PR discussion comments starting with ``/webrunner fix``.
+Human authors must be User accounts with API-confirmed write/maintain/admin access.
+Bots and read-only collaborators cannot trigger revisions. Later approval/dismissal
+supersedes an author's prior review. Current-head failed check runs and latest commit
+statuses also qualify. The worker never downloads external logs, reruns remote CI
+or adds paid services. Tokens need read access to reviews/checks/statuses and
+collaborator permissions in addition to the original delivery permissions.
+
+Feedback is capped at 4,000 characters per event and 50 events/20,000 characters
+per batch. Oversized feedback stops intake for that PR and requests summarization;
+requirements are never silently truncated and acknowledged. Feedback is redacted and atomically claimed
+in SQLite before local inference. Feedback is data, never host command authority.
+Each round uses a separate worktree rooted at the saved PR head, runs all checks
+again, and retains cumulative file/line limits against the original dev baseline.
+Publication fast-forwards the same branch with force=false, adds one validation
+comment for that round, and preserves the human-editable PR body. It never opens
+another PR, merges or closes the source issue. Uncertain ref/comment replies are
+reconciled before retry, without rerunning the model or duplicating delivery.
+
+Checkpoints re-read source requirements/ownership and PR head/open state. The source
+must remain bot-owned with automation-review/automation-running; removing these
+labels cancels work. External head changes, an advanced dev baseline, closed PRs or
+round exhaustion stop automatic revisions, exposed as review_blocked/review_closed
+in status. Coding failures or needs_info retain the PR for manual handling; the
+existing retry guard prevents a duplicate PR.
+
+After clarification or environment repair, restore automation-review on the source
+and invoke ``retry-review --config issue-worker.json --issue github:123`` (Jira keys
+also work), or Python ``IssueWorker.retry_review(key)``. This explicit operation
+accepts refreshed source requirements, retains the same run/PR and requeues unfinished
+feedback. It still rejects external heads, closed PRs, pending reports and host round
+exhaustion. It performs no platform writes. Exhausted rounds require an explicit
+host configuration increase; the model cannot remove the limit.

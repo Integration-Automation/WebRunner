@@ -1728,6 +1728,8 @@ python -m je_web_runner.issue_worker retry --config issue-worker.json --issue gi
 
 啟用前先執行 `doctor --config issue-worker.json`，加上 `--platform` 才唯讀檢查平台。`health --json` 回報常駐心跳，`stop` 會完成當前單後停止。watch 遇到本機依賴故障時暫停接單。Windows 登入排程由 `scripts/issue_worker_task.ps1` 管理；真實本機驗收使用 `scripts/verify_issue_worker.py`，預設包含 24 小時常駐測試，不會自動安裝服務或下載模型。
 
+設定 `review_enabled=true`（範例已啟用），可依有寫入權限人員的審查或目前 head 的失敗檢查修正原 PR。SQLite 去重回饋，每輪獨立 worktree 並重新完整驗證，以非 force 更新原分支、在原 PR 留下證據。預設每 60 秒輪詢、最多三輪；人工改動 head 或 dev 前進時停止，不重開 PR、不合併、不關閉 issue。 人工補充後可用 `retry-review --config FILE --issue KEY` 在主機限制內接續同一 PR。
+
 ## CLI 用法
 
 ```bash

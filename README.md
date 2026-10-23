@@ -1740,6 +1740,8 @@ Copy `examples/issue-worker.example.json` and follow [the setup guide](docs/sour
 
 Before activation, run `doctor --config issue-worker.json`; add `--platform` for read-only platform checks. `health --json` reports the daemon heartbeat, and `stop` drains its current job. Watch pauses intake during local dependency outages. Windows login tasks are managed through `scripts/issue_worker_task.ps1`; real local acceptance uses `scripts/verify_issue_worker.py` (24-hour soak by default). These tools never install services or download models automatically.
 
+Set `review_enabled=true` (enabled in the example) to revise the same PR from trusted human reviews or current-head failed checks. Feedback is deduplicated in SQLite; each round uses a separate worktree and full validation, fast-forwards without force, and posts evidence on the original PR. Defaults: 60-second review polling and three rounds. External head/base changes stop automation; no duplicate PR, merge or issue close is performed. Use `retry-review --config FILE --issue KEY` after manual clarification to resume the same PR within host limits.
+
 ## CLI Usage
 
 ```bash

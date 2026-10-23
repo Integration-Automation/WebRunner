@@ -7,7 +7,8 @@ from typing import Any, Callable
 from urllib.parse import quote
 
 from je_web_runner.utils.issue_worker.providers import GitHubIssues
-from je_web_runner.utils.issue_worker.types import IssueWorkerError
+from je_web_runner.utils.issue_worker.reviews import owned_pr
+from je_web_runner.utils.issue_worker.types import IssueWorkerError, ProviderError
 from je_web_runner.utils.issue_worker.workspace import IssueWorkspace, git_run
 
 
@@ -33,12 +34,7 @@ class GitHubPublisher:
         existing = self._existing(branch, job)
         if existing:
             return existing
-        workspace.verify_scope()
-        if data.get("validated_tree") != workspace.fingerprint() or not workspace.changes():
-            raise IssueWorkerError("publication requires unchanged, independently validated content")
-        if not all(data.get("checks", {}).get(name, {}).get("passed") and
-                   data["checks"][name].get("tree") == data["validated_tree"] for name in self.config.checks):
-            raise IssueWorkerError("required check results do not match the publication tree")
+        self._validate_workspace(workspace, job)
         self.preflight()
         current_base = self.client.request("GET", self.prefix + "/git/ref/heads/" + self.config.base_branch)
         if current_base["object"]["sha"] != workspace.base_sha:
@@ -50,6 +46,64 @@ class GitHubPublisher:
             "head": branch, "base": self.config.base_branch, "body": self._body(job),
         }, job, checkpoint)
         return {"url": result["html_url"], "number": result["number"], "head": data["remote_commit"]}
+
+    def revise(self, workspace: IssueWorkspace, job: dict[str, Any],
+               checkpoint: Callable[[str, dict[str, Any]], None]) -> dict[str, Any]:
+        """Fast-forward the same owned PR, reconciling ambiguous ref/comment writes before retry."""
+        data = job["data"]
+        checkpoint("publishing", data)
+        row = owned_pr(self.provider, job)
+        parent = data["review"]["parent"]
+        if row["state"] != "open" or row["head"]["sha"] not in {parent, data.get("remote_commit")}:
+            raise IssueWorkerError("PR was closed or changed outside this revision")
+        if workspace.base_sha != parent:
+            raise IssueWorkerError("revision workspace does not match its saved PR parent")
+        self._validate_workspace(workspace, job)
+        self.preflight()
+        base = self.client.request("GET", self.prefix + "/git/ref/heads/" + self.config.base_branch)
+        if base["object"]["sha"] != data["original_base_sha"]:
+            raise IssueWorkerError("dev advanced during review validation")
+        self._commit(workspace, job, checkpoint)
+        self._advance(job, checkpoint)
+        row = owned_pr(self.provider, job)
+        if row["state"] != "open":
+            raise IssueWorkerError("PR closed during revision delivery")
+        if row["head"]["sha"] != data["remote_commit"]:
+            raise ProviderError("PR head update is not visible yet", retry_after=15)
+        self._revision_comment(job, checkpoint)
+        return {"url": row["html_url"], "number": row["number"], "head": data["remote_commit"]}
+
+    def _validate_workspace(self, workspace: IssueWorkspace, job: dict[str, Any]) -> None:
+        data = job["data"]
+        workspace.verify_scope()
+        if data.get("validated_tree") != workspace.fingerprint() or not workspace.changes():
+            raise IssueWorkerError("publication requires unchanged, independently validated content")
+        if not all(data.get("checks", {}).get(name, {}).get("passed") and
+                   data["checks"][name].get("tree") == data["validated_tree"] for name in self.config.checks):
+            raise IssueWorkerError("required check results do not match the publication tree")
+
+    def _advance(self, job: dict[str, Any], checkpoint: Callable[[str, dict[str, Any]], None]) -> None:
+        data = job["data"]
+        path = self.prefix + "/git/ref/heads/" + quote(data["branch"], safe="/")
+        current = self.client.request("GET", path)
+        head = current["object"]["sha"]
+        if head == data["remote_commit"]:
+            return
+        if head != data["review"]["parent"]:
+            raise IssueWorkerError("revision branch changed externally")
+        path = self.prefix + "/git/refs/heads/" + quote(data["branch"], safe="/")
+        self._mutation("PATCH", path, {"sha": data["remote_commit"], "force": False}, job, checkpoint)
+
+    def _revision_comment(self, job: dict[str, Any], checkpoint: Callable[[str, dict[str, Any]], None]) -> None:
+        data = job["data"]
+        path = self.prefix + f"/issues/{data['pr']['number']}/comments"
+        marker = f"<!-- webrunner-revision:{job['key']}:r{job['run']}:{data['review']['round']} -->"
+        rows = self.provider._pages(path)
+        if any((row.get("body") or "").startswith(marker + "\n") and
+               row.get("user", {}).get("login", "").casefold() == self.config.github_bot.casefold() for row in rows):
+            return
+        payload = {"body": marker + "\n" + self._body(job)}
+        self._write(path, payload, job, checkpoint)
 
     def _existing(self, branch: str, job: dict[str, Any]) -> dict[str, Any] | None:
         owner = self.config.repository.split("/")[0]
@@ -82,7 +136,8 @@ class GitHubPublisher:
         }, job, checkpoint)
         if tree["sha"] != data["validated_tree"]:
             raise IssueWorkerError("remote tree differs from the validated local tree")
-        date = datetime.fromtimestamp(job["created"], timezone.utc).isoformat()
+        created = data.get("review", {}).get("started", job["created"])
+        date = datetime.fromtimestamp(created, timezone.utc).isoformat()
         author = {"name": self.config.github_bot, "email": self.config.github_bot + "@users.noreply.github.com",
                   "date": date}
         commit = self._write(self.prefix + "/git/commits", {
@@ -108,10 +163,14 @@ class GitHubPublisher:
 
     def _write(self, path: str, payload: dict[str, Any], job: dict[str, Any],
                checkpoint: Callable[[str, dict[str, Any]], None]) -> Any:
+        return self._mutation("POST", path, payload, job, checkpoint)
+
+    def _mutation(self, method: str, path: str, payload: dict[str, Any], job: dict[str, Any],
+                  checkpoint: Callable[[str, dict[str, Any]], None]) -> Any:
         checkpoint("publishing", job["data"])
         if time.time() >= job["data"]["deadline"]:
             raise IssueWorkerError("issue deadline expired before publication")
-        return self.client.request("POST", path, payload=payload)
+        return self.client.request(method, path, payload=payload)
 
     @staticmethod
     def _entries(workspace: IssueWorkspace) -> list[dict[str, Any]]:

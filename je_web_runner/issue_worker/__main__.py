@@ -18,15 +18,16 @@ from je_web_runner.utils.issue_worker.worker import IssueWorker
 def main(argv: Sequence[str] | None = None) -> int:
     """Keep this CLI independent of the legacy browser execution flags."""
     parser = argparse.ArgumentParser(prog="python -m je_web_runner.issue_worker")
-    parser.add_argument("command", choices=("run", "watch", "status", "retry", "doctor", "health", "stop"))
+    parser.add_argument("command", choices=("run", "watch", "status", "retry", "doctor", "health", "stop",
+                                            "retry-review"))
     parser.add_argument("--config", required=True)
     parser.add_argument("--issue", help="github:123 or jira:PROJECT-123")
     parser.add_argument("--dry-run", action="store_true", help="read eligible issues; no claims, changes or PRs")
     parser.add_argument("--platform", action="store_true", help="doctor: also read configured platforms")
     parser.add_argument("--json", action="store_true", help="doctor/health: machine-readable output")
     args = parser.parse_args(argv)
-    if args.command == "retry" and not args.issue:
-        parser.error("retry requires --issue")
+    if args.command in {"retry", "retry-review"} and not args.issue:
+        parser.error("retry/retry-review requires --issue")
     if args.dry_run and args.command != "run":
         parser.error("--dry-run is only supported with run")
     if args.platform and args.command != "doctor":
@@ -57,6 +58,10 @@ def _dispatch(worker: IssueWorker, args: argparse.Namespace) -> int:
     if args.command == "retry":
         worker.retry(args.issue)
         print(json.dumps({"queued": args.issue}))
+        return 0
+    if args.command == "retry-review":
+        worker.retry_review(args.issue)
+        print(json.dumps({"review_queued": args.issue}))
         return 0
     result = worker.run_once(dry_run=args.dry_run)
     print(json.dumps(result, ensure_ascii=False))

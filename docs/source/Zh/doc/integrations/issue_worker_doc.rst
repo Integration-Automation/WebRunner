@@ -197,3 +197,39 @@ Windows 登入常駐
 Windows 排程的真實臨時註冊／移除測試以 ``WEBRUNNER_TEST_SCHEDULER=1`` 啟用，
 不啟動該任務，不修改正式排程。
 未安裝 Podman／模型或未完成 24 小時測試時，必須分別標示為尚未驗收。
+
+PR 審查修正循環
+---------------
+
+設定 ``review_enabled=true`` 後，run／watch 在沒有進行中工作時，輪詢已交付的
+待審 PR，再繼續接新單。舊設定預設不啟用；範例設定明確開啟。
+``review_poll_seconds`` 預設 60 秒，``max_review_rounds`` 預設三輪。
+只有同一個 bot、同一個執行標記、儲存庫與 automation 分支的 PR 才能續修。
+
+可處理目前 head 上的 CHANGES_REQUESTED／COMMENTED 審查與其行內留言，
+以及以 ``/webrunner fix`` 開頭的 PR 一般留言。人員須為 User 類型，且 API 確認
+具有 write／maintain／admin 權限；機器人及讀取權限的留言不觸發修正。
+同一人的後續核准／撤回會取代舊審查。也接收目前 head 的失敗 check runs 與
+最新 commit statuses；不下載外部日誌、不重新執行遠端 CI、不新增付費服務。
+Token 除原有寫入權限外，須能讀取 PR 審查、檢查、commit statuses 及人員權限。
+
+每筆最多 4,000 字、每批最多 50 件及 20,000 字回饋；超限時停止並要求整理，
+不會截斷要求後宣告完成。先遮蔽憑證並以 SQLite 原子保存、去重，再交給
+本機模型作為需求資料，不能改寫主機命令或權限。每輪使用獨立 worktree，以既有
+PR head 為 parent，重新取得整套驗證；檔案／行數上限仍以最初 dev 為累計基準。
+修正以非 force fast-forward 更新原分支，不另開 PR、不合併、不關閉來源 issue，
+並在原 PR 附上一則該輪的驗證留言，不覆寫人工編輯的 PR 本文。
+分支更新或留言成功但回應遺失時，先對帳，不重跑模型或重複發布。
+
+修正期間會重查來源需求、指派、PR head 及開啟狀態。來源須仍指派給 bot 並帶有
+automation-review／automation-running；移除這些標籤可取消。人工改動 PR head、
+dev 前進、PR 關閉或達到輪數上限時停止自動續修，狀態的 review_blocked／
+review_closed 說明原因。修正本身失敗或需補資訊時，保留 PR 供人工接手；
+不會利用既有 retry 另開重複 PR。
+
+人工補充或修復環境後，可恢復來源的 automation-review 標籤，再執行
+``retry-review --config issue-worker.json --issue github:123``（Jira key 亦可）。
+此明確操作接受新的來源需求快照、保留同一 run／PR，重新接收未完成回饋，
+但仍拒絕外部 head、已關閉 PR、未送達進度及超過主機輪數上限；不寫入平台。
+Python 對應為 ``IssueWorker.retry_review(key)``。輪數用盡須先由操作者明確調高
+主機設定，不可由模型解除。
