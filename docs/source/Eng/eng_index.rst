@@ -161,6 +161,7 @@ WebRunner.
 
     doc/integrations/integrations_doc.rst
     doc/integrations/local_agent_doc.rst
+    doc/integrations/issue_worker_doc.rst
     doc/mcp_claude/mcp_claude_doc.rst
     doc/cookbook/cookbook_doc.rst
 

@@ -1815,3 +1815,7 @@ WebRunner 提供一个自定义异常层次 —— 每个辅助函数都抛出 `
 ## 许可证
 
 本项目基于 [MIT 许可证](../LICENSE)授权。
+
+### 本地 Issue 接单
+
+通过 `je_web_runner.api.orchestration.IssueInbox` 提供 GitHub／Jira Cloud 接单、持久化检查点与只读预演。只有带有 `automation-ready`、尚未指派且未结案的 issue 才合格。配置见[Issue Worker 指南](../docs/source/Zh/doc/integrations/issue_worker_doc.rst)与 `examples/issue-worker.example.json`。

@@ -1815,3 +1815,7 @@ WebRunner 提供一個自訂例外階層 —— 每個輔助函式都擲出 `Web
 ## 授權
 
 本專案基於 [MIT 授權](../LICENSE)授權。
+
+### 本機 Issue 接單
+
+透過 `je_web_runner.api.orchestration.IssueInbox` 提供 GitHub／Jira Cloud 接單、持久化檢查點與只讀預演。只有帶有 `automation-ready`、尚未指派且未結案的 issue 才合格。設定見[Issue Worker 指南](../docs/source/Zh/doc/integrations/issue_worker_doc.rst)與 `examples/issue-worker.example.json`。

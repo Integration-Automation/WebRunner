@@ -1,0 +1,14 @@
+{
+  "state_dir": "../../.webrunner-issues/WebRunner",
+  "model": "YOUR_INSTALLED_LOCAL_MODEL",
+  "github_bot": "your-bot-login",
+  "repository": "Integration-Automation/WebRunner",
+  "base_branch": "dev",
+  "github_token_env": "GITHUB_TOKEN",
+  "jira_url": "https://YOUR_SITE.atlassian.net",
+  "jira_projects": ["WR"],
+  "jira_bot": "YOUR_JIRA_ACCOUNT_ID",
+  "jira_email_env": "JIRA_EMAIL",
+  "jira_token_env": "JIRA_API_TOKEN",
+  "image": "localhost/webrunner-issue-worker:local"
+}

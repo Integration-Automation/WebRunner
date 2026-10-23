@@ -228,3 +228,7 @@ Ollama preflight requires cloud-disabled status and installed local weights; req
 Task environment placeholders are allowlisted; MCP additionally requires the host's `WEBRUNNER_AGENT_ALLOWED_ENV`.
 MCP limits: 100 steps / 300 total seconds / 15 seconds per browser operation. Reports redact entered values and known secrets.
 CLI exits 0 only for verified success and optionally emits BASE.agent.json/html plus masked failure screenshots.
+
+## Issue intake
+
+`utils/issue_worker/` holds host-owned config, normalized snapshots, GitHub/Jira Cloud adapters, a SQLite WAL queue and renewable worker lease. `api.orchestration.IssueInbox` previews or enqueues ready issues. API writes verify bot identity, preserve human labels and update one bot progress comment. The existing browser agent and Jira creation APIs are unchanged.

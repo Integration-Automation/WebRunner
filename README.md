@@ -1827,3 +1827,7 @@ WebRunner provides a hierarchy of custom exceptions — every helper raises a do
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+### Local issue intake
+
+GitHub and Jira Cloud intake, durable checkpoints and read-only preview are available through `je_web_runner.api.orchestration.IssueInbox`. Only open, unassigned issues labeled `automation-ready` qualify. See [the issue worker guide](docs/source/Eng/doc/integrations/issue_worker_doc.rst) and `examples/issue-worker.example.json`.
