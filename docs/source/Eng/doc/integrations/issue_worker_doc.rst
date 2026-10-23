@@ -213,9 +213,13 @@ when prerequisites are missing and never counts skipped execution as acceptance:
 
 Only the model and containers are real; both platforms use local HTTP fixtures.
 Checks cover both sources, failing-before/passing-after evidence, uncertain PR
-creation recovery, non-root/offline containers, read-only source/root and absent
-platform credentials. The soak includes idle time, 429/503 recovery and repeated
-drain/restart. Separate process tests cover crashes, lease takeover and CLI stop.
+creation recovery, same-PR review corrections with lost-reference recovery,
+non-root/offline containers, read-only source/root and absent platform credentials.
+The soak records observed 429/503/TCP failures, successful polling recovery and
+distinct watch instances in ``soak-evidence.json`` under its test state directory.
+Runs of at least 150 seconds require every fault and a restart to be observed;
+full acceptance still requires 24 hours. Separate process tests cover crashes,
+lease takeover and CLI stop.
 Set ``WEBRUNNER_TEST_SCHEDULER=1`` to register and remove a unique temporary Windows
 task; that test never starts the task or changes production tasks.
 Report missing model/Podman and an uncompleted 24-hour soak as unverified separately.

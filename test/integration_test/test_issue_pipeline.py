@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+import ast
 import json
 import os
 import socket
@@ -433,6 +434,48 @@ def test_real_runtime_model_container_and_reviewed_delivery(pipeline, lose_reply
     assert "fixture-github-secret" not in json.dumps(worker.status())
 
 
+@pytest.mark.parametrize("pipeline", [{"source": "github"}, {"source": "jira"}], indirect=True)
+def test_real_runtime_review_revises_same_pr_and_recovers_lost_reference(pipeline):
+    worker, api, original = pipeline
+    worker.processor.preflight()
+    worker.config.review_enabled = True
+    worker.config.review_poll_seconds = 0.01
+    initial = worker.run_once()
+    assert initial["status"] == "awaiting_review", initial
+    api.reviews = [{"id": 70, "state": "CHANGES_REQUESTED", "commit_id": initial["data"]["pr"]["head"],
+                    "body": "Add a nonempty docstring to value(), retaining return value two.",
+                    "user": {"login": "maintainer", "type": "User"}}]
+    api.lose_ref_reply = True
+    uncertain = worker.run_once()
+    assert uncertain["status"] == "publishing", uncertain
+    worker.store.save(uncertain["key"], uncertain["status"], uncertain["data"])
+    recovered = worker.run_once(discover=False)
+    assert recovered["status"] == "awaiting_review", recovered
+    assert recovered["data"]["review_rounds"] == 1
+    assert api.pr_posts == 1 and len(api.pr_comments) == 1
+    assert api.model_calls == 0
+    assert api.checks[0] == 1 and api.checks[-1] == 0
+    code = git_run(api.git_root, ["show", ":je_web_runner/calc.py"])
+    function = next(node for node in ast.parse(code).body if isinstance(node, ast.FunctionDef) and node.name == "value")
+    assert ast.get_docstring(function)
+    assert "return 1" in (original / "je_web_runner/calc.py").read_text()
+    assert worker.run_once()["status"] == "idle"
+
+
+def _observe_soak_health(health, observed, instances, faults):
+    """Record actual health observations, independently of the injected fixture status."""
+    if health["active"]:
+        instances.add(health["instance"])
+    error = health.get("error") or ""
+    for name, marker in (("429", "rate limit"), ("503", "HTTP 503"), ("disconnect", "connection failed")):
+        if marker in error:
+            observed.add(name)
+    if health.get("last_poll") and not error:
+        observed.add("recovered")
+    if health["status"] == "stale":
+        faults.append("heartbeat expired")
+
+
 @pytest.mark.parametrize("pipeline", [{"source": "github"}], indirect=True)
 def test_real_runtime_watch_soak(pipeline):
     seconds = float(os.environ.get("WEBRUNNER_ISSUE_SOAK_SECONDS", "0"))
@@ -443,8 +486,10 @@ def test_real_runtime_watch_soak(pipeline):
     result = worker.run_once()
     assert result["status"] == "awaiting_review", result
     worker.config.poll_seconds = 1
-    deadline = time.monotonic() + seconds
+    started = time.monotonic()
+    deadline = started + seconds
     faults = []
+    observed, instances = set(), set()
     finished = threading.Event()
 
     def monitor():
@@ -452,11 +497,10 @@ def test_real_runtime_watch_soak(pipeline):
         try:
             next_restart = time.monotonic() + 120
             while not finished.is_set() and time.monotonic() < deadline:
-                phase = int(time.monotonic()) % 120
-                api.read_status = 429 if phase < 10 else (503 if phase < 20 else 200)
+                phase = int(time.monotonic() - started) % 120
+                api.read_status = 429 if phase < 10 else (503 if phase < 20 else (0 if phase < 30 else 200))
                 health = worker.health()
-                if health["status"] == "stale":
-                    faults.append("heartbeat expired")
+                _observe_soak_health(health, observed, instances, faults)
                 if time.monotonic() >= next_restart and health["active"]:
                     worker.request_stop()
                     next_restart = time.monotonic() + 120
@@ -470,13 +514,20 @@ def test_real_runtime_watch_soak(pipeline):
     monitor_thread = threading.Thread(target=monitor, daemon=True)
     monitor_thread.start()
     try:
-        while time.monotonic() < deadline:
+        while not finished.is_set() and time.monotonic() < deadline:
             worker.watch(finished)
     finally:
         finished.set()
         worker.request_stop()
         monitor_thread.join(timeout=5)
     assert faults == []
+    report = {"seconds": time.monotonic() - started, "observed": sorted(observed), "instances": len(instances)}
+    (Path(worker.config.state_dir) / "soak-evidence.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    print("SOAK_EVIDENCE=" + json.dumps(report), flush=True)
+    assert report["seconds"] >= seconds
+    if seconds >= 150:
+        assert observed == {"429", "503", "disconnect", "recovered"}, report
+        assert len(instances) >= 2, report
     assert len(api.prs) == 1 and api.pr_posts == 1
     assert worker.health()["status"] == "stopped"
 
