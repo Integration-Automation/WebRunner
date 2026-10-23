@@ -159,3 +159,22 @@ def test_last_quota_response_is_accepted_and_next_limit_is_deferred():
     with pytest.raises(ProviderError) as error:
         PlatformClient._check(response)
     assert error.value.retry_after == 123
+
+
+def test_github_pagination_detects_repeated_pages_instead_of_looping(tmp_path):
+    client = Mock()
+    client.session.headers = {}
+    client.request.return_value = [{"id": index} for index in range(100)]
+    provider = GitHubIssues(config(tmp_path), client)
+    with pytest.raises(IssueWorkerError, match="repeated"):
+        list(provider._pages(provider.prefix + "/issues"))
+    assert client.request.call_count == 2
+
+
+def test_jira_pagination_detects_multi_page_token_cycles(tmp_path):
+    settings = config(tmp_path, jira_url="https://jira.example.test", jira_projects=["WR"], jira_bot="account")
+    client = Mock()
+    client.request.side_effect = [{"issues": [], "nextPageToken": token} for token in ("a", "b", "a")]
+    with pytest.raises(IssueWorkerError, match="repeated"):
+        list(JiraIssues(settings, client).scan())
+    assert client.request.call_count == 3

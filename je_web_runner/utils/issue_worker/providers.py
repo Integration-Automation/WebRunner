@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+from collections import deque
 from dataclasses import replace
 from typing import Any, Iterable
 from urllib.parse import quote
@@ -78,8 +79,13 @@ class GitHubIssues:
 
     def _pages(self, path: str, params: dict[str, Any] | None = None) -> Iterable[dict[str, Any]]:
         page = 1
+        seen: set[tuple[str, ...]] = set()
         while True:
             rows = self.client.request("GET", path, params={**(params or {}), "per_page": 100, "page": page})
+            signature = tuple(str(row.get("id", row.get("number"))) for row in rows)
+            if len(rows) == 100 and signature in seen:
+                raise IssueWorkerError("GitHub repeated a results page")
+            seen.add(signature)
             yield from rows
             if len(rows) < 100:
                 return
@@ -100,11 +106,11 @@ class GitHubIssues:
         item = self.client.request("GET", path)
         if "pull_request" in item:
             raise IssueWorkerError("pull requests are not eligible issues")
-        comments = [row.get("body", "") for row in self._pages(path + "/comments")
-                    if row.get("user", {}).get("login", "").casefold() != self.bot.casefold()]
+        comments = deque((row.get("body", "") for row in self._pages(path + "/comments")
+                          if row.get("user", {}).get("login", "").casefold() != self.bot.casefold()), maxlen=20)
         owners = [row["login"] for row in item.get("assignees", [])]
         return safe_snapshot(IssueSnapshot(
-            "github", external_id, item["title"], (item.get("body") or "") + "\n" + "\n".join(comments[-20:]),
+            "github", external_id, item["title"], (item.get("body") or "") + "\n" + "\n".join(comments),
             item["html_url"], tuple(row["name"] for row in item.get("labels", [])),
             ",".join(owners), item["state"] != "open",
         ), self.config)
@@ -177,6 +183,7 @@ class JiraIssues:
         projects = ",".join(self.config.jira_projects)
         jql = f"project in ({projects}) AND labels = automation-ready AND assignee is EMPTY AND statusCategory != Done"
         payload: dict[str, Any] = {"jql": jql, "maxResults": 100, "fields": ["summary"]}
+        seen: set[str] = set()
         while True:
             data = self.client.request("POST", "/rest/api/3/search/jql", payload=payload)
             for row in data.get("issues", []):
@@ -186,8 +193,9 @@ class JiraIssues:
             token = data.get("nextPageToken")
             if not token or data.get("isLast"):
                 return
-            if token == payload.get("nextPageToken"):
+            if not isinstance(token, str) or token in seen:
                 raise IssueWorkerError("Jira repeated its search page token")
+            seen.add(token)
             payload["nextPageToken"] = token
 
     def fetch(self, external_id: str) -> IssueSnapshot:

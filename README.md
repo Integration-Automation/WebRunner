@@ -803,7 +803,7 @@ WebRunner ships a [Model Context Protocol](https://modelcontextprotocol.io/) ser
 python -m je_web_runner.mcp_server
 ```
 
-The default tool list (25 tools) exposes:
+The default tool list (27 tools) exposes:
 
 Live browser execution:
 - `webrunner_run_actions` — execute any `WR_*` action list. Covers all 547 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
@@ -1724,6 +1724,20 @@ draft = generate_actions_from_prompt("log in as alice and place an order")
 
 WebRunner intentionally ships **no built-in LLM client** — the boundary is a single `Callable[[str], str]` so swapping provider is one line.
 
+### Local issue worker
+
+The local `IssueWorker` handles GitHub and Jira Cloud issues labeled `automation-ready`, using an explicitly configured local Ollama model and offline Podman checks. It supports bugs, features, refactors, tests and documentation. Qualified issues are claimed, implemented in private worktrees, validated, then delivered as reviewed `automation/*` → `dev` PRs. Source issues stay open for human review.
+
+```bash
+python -m je_web_runner.issue_worker run --config issue-worker.json --dry-run
+python -m je_web_runner.issue_worker run --config issue-worker.json
+python -m je_web_runner.issue_worker watch --config issue-worker.json
+python -m je_web_runner.issue_worker status --config issue-worker.json
+python -m je_web_runner.issue_worker retry --config issue-worker.json --issue github:123
+```
+
+Copy `examples/issue-worker.example.json` and follow [the setup guide](docs/source/Eng/doc/integrations/issue_worker_doc.rst). Tokens are host environment references, never model/container inputs. SQLite checkpoints resume coding, checks, publication and progress reports without duplicating PRs. Python exposes `IssueWorker` / `IssueInbox` through `api.orchestration`; MCP adds `webrunner_issue_enqueue` and `webrunner_issue_status`, using host-only `WEBRUNNER_ISSUE_CONFIG`. MCP queues jobs; a separately started worker processes them. Defaults: one job, 60-second polling, 60 minutes, 100 tools, two validation rounds, 20 files and 1000 changed lines. No paid coding API or cloud scheduler is required.
+
 ## CLI Usage
 
 ```bash
@@ -1827,9 +1841,3 @@ WebRunner provides a hierarchy of custom exceptions — every helper raises a do
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
-### Local issue intake
-
-GitHub and Jira Cloud intake, durable checkpoints and read-only preview are available through `je_web_runner.api.orchestration.IssueInbox`. Only open, unassigned issues labeled `automation-ready` qualify. See [the issue worker guide](docs/source/Eng/doc/integrations/issue_worker_doc.rst) and `examples/issue-worker.example.json`.
-
-Local coding uses a separate clone/worktree, the shared local-only Ollama client and offline Podman checks. The model proposes typed read/search/patch/check actions; exact tree-bound validation determines readiness. Build instructions and protected paths are in the issue worker guide.

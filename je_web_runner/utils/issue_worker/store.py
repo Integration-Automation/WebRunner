@@ -30,6 +30,7 @@ class IssueStore:
                     created REAL NOT NULL, updated REAL NOT NULL, next_attempt REAL NOT NULL DEFAULT 0
                 );
                 CREATE TABLE IF NOT EXISTS lease (id INTEGER PRIMARY KEY CHECK(id=1), token TEXT, expires REAL);
+                CREATE TABLE IF NOT EXISTS settings (name TEXT PRIMARY KEY, value TEXT NOT NULL);
             """)
 
     @contextmanager
@@ -53,6 +54,15 @@ class IssueStore:
             )
             return cursor.rowcount == 1
 
+    def bind(self, scope: dict[str, str]) -> None:
+        """A state directory cannot silently switch API origins or repository identity."""
+        encoded = json.dumps(scope, sort_keys=True)
+        with self.connection() as connection:
+            connection.execute("INSERT OR IGNORE INTO settings VALUES('scope',?)", (encoded,))
+            row = connection.execute("SELECT value FROM settings WHERE name='scope'").fetchone()
+            if row["value"] != encoded:
+                raise IssueWorkerError("state directory belongs to a different platform scope; use another directory")
+
     @staticmethod
     def _decode(row: sqlite3.Row) -> dict[str, Any]:
         result = dict(row)
@@ -69,7 +79,8 @@ class IssueStore:
 
     def next_job(self) -> dict[str, Any] | None:
         """Resume active work before taking the next queued item."""
-        jobs = [item for item in self.status() if item["status"] not in FINAL and item["next_attempt"] <= time.time()]
+        jobs = [item for item in self.status() if (item["status"] not in FINAL or item["data"].get("report_pending"))
+                and item["next_attempt"] <= time.time()]
         active = [item for item in jobs if item["status"] in ACTIVE]
         candidates = active or jobs
         return candidates[0] if candidates else None

@@ -15,6 +15,7 @@ class IssueInbox:
                  store: IssueStore | None = None) -> None:
         self.config = config
         self.store = store or IssueStore(config.state_dir)
+        self.store.bind({"repository": config.repository, "github_api": config.github_api, "jira_url": config.jira_url})
         self.providers = providers if providers is not None else self._providers()
 
     def _providers(self) -> dict[str, Any]:
@@ -62,4 +63,14 @@ class IssueInbox:
         if not snapshot.eligible(provider.bot, resume=True):
             raise IssueWorkerError("retry requires an open issue with automation-ready and no different owner")
         with self.store.lease():
+            previous = self.store.status(key)
+            branch = previous[0]["data"].get("branch") if previous else None
+            if branch:
+                github = self.providers["github"]
+                owner = self.config.repository.split("/")[0]
+                opened = github.client.request("GET", github.prefix + "/pulls", params={
+                    "head": owner + ":" + branch, "base": self.config.base_branch, "state": "open",
+                })
+                if opened:
+                    raise IssueWorkerError("an earlier run has an open PR; review or close it before retry")
             self.store.retry(snapshot)

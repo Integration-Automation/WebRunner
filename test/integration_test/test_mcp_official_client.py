@@ -52,7 +52,7 @@ async def _stateless(cwd: Path) -> dict:
 
 
 def _assert_tools_work(outcome: dict) -> None:
-    assert len(outcome["tools"]) == 25  # nosec B101
+    assert len(outcome["tools"]) == 27  # nosec B101
     assert outcome["tools"]["webrunner_run_actions"].annotations.destructive_hint is True  # nosec B101
     assert outcome["strength"].is_error is False  # nosec B101
     assert outcome["run"].is_error is False  # nosec B101

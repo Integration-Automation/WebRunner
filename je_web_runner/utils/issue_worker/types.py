@@ -125,6 +125,8 @@ class IssueWorkerConfig:
                 raise IssueWorkerError("state_dir, model, github_bot and image are required")
         if self.repository != REPOSITORY or self.base_branch != "dev":
             raise IssueWorkerError("this worker targets Integration-Automation/WebRunner and dev only")
+        if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._/@:+-]*", self.image):
+            raise IssueWorkerError("image must be a container image name, not command flags")
         api_url(self.github_api)
         if self.jira_url:
             api_url(self.jira_url)
@@ -132,6 +134,9 @@ class IssueWorkerConfig:
                 raise IssueWorkerError("Jira requires an explicit project allowlist and bot accountId")
         elif self.jira_projects or self.jira_bot:
             raise IssueWorkerError("Jira projects and bot require jira_url")
+        self._validate_credentials()
+
+    def _validate_credentials(self) -> None:
         if not all(isinstance(name, str) and re.fullmatch(r"[A-Z][A-Z0-9_]*", name) for name in self.jira_projects):
             raise IssueWorkerError("invalid Jira project key")
         for name in (self.github_token_env, self.jira_email_env, self.jira_token_env):

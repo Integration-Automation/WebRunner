@@ -399,7 +399,12 @@ class TestToolMetadata(unittest.TestCase):
         browser = {"webrunner_run_actions", "webrunner_run_action_files", "webrunner_agent_step", "webrunner_run_agent"}
         for tool in self.tools:
             hints = tool["annotations"]
-            if tool["name"] in browser:
+            if tool["name"] == "webrunner_issue_enqueue":
+                self.assertFalse(hints["readOnlyHint"])
+                self.assertFalse(hints["destructiveHint"])
+                self.assertTrue(hints["idempotentHint"])
+                self.assertTrue(hints["openWorldHint"])
+            elif tool["name"] in browser:
                 self.assertFalse(hints["readOnlyHint"], tool["name"])
                 self.assertTrue(hints["destructiveHint"], tool["name"])
                 self.assertTrue(hints["openWorldHint"], tool["name"])

@@ -18,12 +18,12 @@ def git_run(directory: Path, arguments: list[str], timeout: float = 30) -> str:
     env.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull, "GIT_TERMINAL_PROMPT": "0"})
     result = subprocess.run(  # nosec B603 B607
         ["git", "-c", "core.hooksPath=" + str(directory / ".disabled-hooks"), "-C", str(directory), *arguments],
-        env=env, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=max(0.001, timeout),
+        env=env, capture_output=True, timeout=max(0.001, timeout),
         check=False,
     )
     if result.returncode:
         raise IssueWorkerError("git operation failed: " + arguments[0])
-    return result.stdout
+    return result.stdout.decode("utf-8", errors="replace")
 
 
 class IssueWorkspace:

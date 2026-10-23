@@ -14,6 +14,9 @@ from typing import Any
 from je_web_runner.utils.issue_worker.types import IssueWorkerConfig, IssueWorkerError
 from je_web_runner.utils.issue_worker.workspace import IssueWorkspace
 
+# This directory is a fresh container's private tmpfs, never a shared host temporary path.
+_CONTAINER_TMPFS = "/tmp:rw,nosuid,nodev,size=1g"  # nosec B108
+
 
 def transport_environment() -> dict[str, str]:
     """Only OS/container connection settings go to Podman; API credentials do not."""
@@ -55,8 +58,7 @@ class PodmanSandbox:
         return [
             self.executable, "run", "--rm", "--name", name, "--pull=never", "--network=none", "--read-only",
             "--user", "65532:65532", "--cap-drop=ALL", "--security-opt=no-new-privileges",
-            # A private per-container tmpfs, not a shared host temporary directory.
-            "--pids-limit=256", "--memory=4g", "--cpus=2", "--tmpfs", "/tmp:rw,nosuid,nodev,size=1g",  # nosec B108
+            "--pids-limit=256", "--memory=4g", "--cpus=2", "--tmpfs", _CONTAINER_TMPFS,
             "--mount", f"type=bind,src={source},destination=/work,ro=true", "--workdir", "/work",
             "--env", "PYTHONDONTWRITEBYTECODE=1", "--env", "PYTHONPATH=/work", "--env", "HOME=/tmp",
             "--env", "WEBRUNNER_LOG_PATH=/tmp/webrunner.log", "--env", "SE_OFFLINE=true",

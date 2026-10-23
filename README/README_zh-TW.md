@@ -798,7 +798,7 @@ WebRunner 隨附一個 [Model Context Protocol](https://modelcontextprotocol.io/
 python -m je_web_runner.mcp_server
 ```
 
-預設工具清單（25 個工具）公開：
+預設工具清單（27 個工具）公開：
 
 即時瀏覽器執行：
 - `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 547 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
@@ -1712,6 +1712,20 @@ draft = generate_actions_from_prompt("log in as alice and place an order")
 
 WebRunner 有意**不隨附內建的 LLM 用戶端** —— 邊界是單個 `Callable[[str], str]`，因此更換供應商只需一行。
 
+### 本機 Issue Worker
+
+本機 `IssueWorker` 接收帶有 `automation-ready` 的 GitHub／Jira Cloud issue，使用明確設定的本機 Ollama 模型與離線 Podman 檢查，支援 bug、新功能、重構、測試與文件。合格 issue 會被認領，在獨立 worktree 實作並驗證，再建立待審的 `automation/*` → `dev` PR；來源 issue 保持開啟，交由人工審查。
+
+```bash
+python -m je_web_runner.issue_worker run --config issue-worker.json --dry-run
+python -m je_web_runner.issue_worker run --config issue-worker.json
+python -m je_web_runner.issue_worker watch --config issue-worker.json
+python -m je_web_runner.issue_worker status --config issue-worker.json
+python -m je_web_runner.issue_worker retry --config issue-worker.json --issue github:123
+```
+
+複製 `examples/issue-worker.example.json` 並依[設定指南](../docs/source/Zh/doc/integrations/issue_worker_doc.rst)準備環境。金鑰只由主機環境變數提供，不傳給模型或容器。SQLite 檢查點可恢復程式修正、檢查、發布及進度回報，避免重複 PR。Python 由 `api.orchestration` 提供 `IssueWorker`／`IssueInbox`；MCP 新增 `webrunner_issue_enqueue` 與 `webrunner_issue_status`，只使用主機的 `WEBRUNNER_ISSUE_CONFIG`。MCP 負責排單，另外啟動的 worker 負責處理。預設一次一單、60 秒輪詢、每單 60 分鐘、100 次工具操作、兩輪驗證、20 個檔案及 1000 行變更，不需付費 coding API 或雲端排程。
+
 ## CLI 用法
 
 ```bash
@@ -1815,9 +1829,3 @@ WebRunner 提供一個自訂例外階層 —— 每個輔助函式都擲出 `Web
 ## 授權
 
 本專案基於 [MIT 授權](../LICENSE)授權。
-
-### 本機 Issue 接單
-
-透過 `je_web_runner.api.orchestration.IssueInbox` 提供 GitHub／Jira Cloud 接單、持久化檢查點與只讀預演。只有帶有 `automation-ready`、尚未指派且未結案的 issue 才合格。設定見[Issue Worker 指南](../docs/source/Zh/doc/integrations/issue_worker_doc.rst)與 `examples/issue-worker.example.json`。
-
-本機程式修正使用獨立 clone／worktree、共用的本機 Ollama client 與離線 Podman 檢查。模型只提出具型別的讀取／搜尋／patch／檢查，完成條件由綁定 git tree 的驗證決定。映像建置與保護路徑見 Issue Worker 指南。

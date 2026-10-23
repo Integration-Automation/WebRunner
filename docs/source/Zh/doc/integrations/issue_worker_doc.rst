@@ -49,3 +49,66 @@ SQLite WAL 保存佇列與檢查點，透過可續租的單一 worker 租約協�
 二進位修改及 rename 語法須人工處理，可用文字刪除／新增搬移檔案。
 預設最多 20 個檔案、1000 行變更、100 次工具操作、兩輪驗證與 60 分鐘。
 修改前與最後驗證結果均綁定明確 git tree ID，模型宣告完成不能跳過檢查。
+
+執行與審查
+----------
+
+支援 bug、新功能、重構、測試與文件。設定本機模型、``OLLAMA_NO_CLOUD=1``，
+再重新啟動 Ollama；執行器會確認雲端已關閉且本機權重已安裝。
+GitHub token 須有程式庫 Contents／Issues／Pull requests 寫入權限，
+且 ``github_bot`` 必須符合登入身分。Jira 須有瀏覽、指派、編輯及留言權限，
+並符合設定的 accountId，不需工作流程狀態轉換權限。
+
+.. code-block:: bash
+
+    python -m je_web_runner.issue_worker run --config issue-worker.json --dry-run
+    python -m je_web_runner.issue_worker run --config issue-worker.json
+    python -m je_web_runner.issue_worker watch --config issue-worker.json
+    python -m je_web_runner.issue_worker status --config issue-worker.json
+    python -m je_web_runner.issue_worker retry --config issue-worker.json --issue jira:WR-123
+
+``run`` 最多處理一單，``watch`` 預設每 60 秒輪詢。閒置、預演與待審 PR 交付
+結束碼為 0；失敗、未完成或平台回報尚未送達為 1，Ctrl-C 為 130。
+重試前須恢復 ``automation-ready``，不會搶走其他人的指派。
+GitHub 與 Jira 來源都會將 PR 交付到 GitHub 的 WebRunner 程式庫。
+
+Python ``IssueWorker(config)`` 提供 ``run_once``、``watch``、``status``、
+``retry``，須於 ``finally`` 呼叫 ``close``。``IssueInbox`` 可只預演或排單。
+MCP ``webrunner_issue_enqueue``／``webrunner_issue_status`` 只使用主機設定的
+``WEBRUNNER_ISSUE_CONFIG``，不接受呼叫者提供設定路徑、命令或權限變更。
+
+流程狀態為 queued／claimed／analyzing／fixing／validating／publishing／
+awaiting_review，另有 needs_info／failed／cancelled 停止狀態。
+報告位於狀態目錄下的 ``reports``；SQLite 為權威狀態。檢查點可恢復中斷的
+程式修正、綁定 git tree 的驗證與尚未送達的進度回報。
+同一狀態目錄不能靜默切換平台網址或程式庫。
+
+修改檢查點與發布前會重新讀取 ready 標籤、指派及人工需求；變更時取消執行。
+發布也會拒絕已前進的 dev 基準、未驗證的內容、外部改動的分支或 PR head。
+PR 建立成功但回應遺失時，先依分支與執行標記查詢，不會再建立第二個 PR。
+進度只更新一則 bot 留言；結束時移除 ready 標籤並標示待審、待補資訊、失敗或取消。
+只變更仍指派給預期 bot 的 issue 標籤，不覆寫人工指派。
+
+主機發布器透過 GitHub Git Database API 建立與驗證結果一致的 tree、
+可重現的 commit 與專用 automation 分支，再提出送往 dev 的 PR。
+Token 不寫入 git 設定、模型提示、容器或報告；系統不合併 PR，也不關閉來源 issue。
+人工審查仍須確認行為是否符合需求，測試通過不等於業務需求已被完整證明。
+準備映像時可能需要下載相依套件；執行時沒有付費服務備援。
+
+驗證
+----
+
+本機整合測試提供 GitHub、Jira 與 Ollama HTTP 模擬端點，並使用真實暫存 git
+程式庫重現失敗測試、套用 patch、執行 pytest、建立單一模擬 PR，及恢復遺失的
+建立回應。測試不修改真實 issue／PR／Jira 網站。
+真實 Podman 檢查為選用：安裝引擎與映像並設定 ``WEBRUNNER_ISSUE_IMAGE``，
+再執行 ``test/unit_test/test_issue_coding.py``。此選項才會啟動真實離線容器，
+一般 HTTP 模擬測試不宣稱已驗證容器隔離。
+
+MCP 伺服器建立工具時會解析並固定 issue 設定；修改主機設定後須重新啟動。
+其他工具載入環境變數時，不能改變這些 issue 工具的設定。分頁防護會拒絕重複
+結果頁與跨頁 token 循環，避免無限輪詢。
+
+啟用前請備妥 GitHub 程式庫標籤：``automation-ready``、``automation-running``、
+``automation-review``、``automation-needs-info``、``automation-failed``、
+``automation-cancelled``。Jira 使用相同標籤名稱。
