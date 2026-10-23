@@ -470,10 +470,21 @@ def _observe_soak_health(health, observed, instances, faults):
     for name, marker in (("429", "rate limit"), ("503", "HTTP 503"), ("disconnect", "connection failed")):
         if marker in error:
             observed.add(name)
-    if health.get("last_poll") and not error:
+    if health.get("phase") == "waiting" and not error and {"429", "503", "disconnect"}.issubset(observed):
         observed.add("recovered")
     if health["status"] == "stale":
         faults.append("heartbeat expired")
+
+
+def test_soak_observer_requires_a_successful_poll_after_the_injected_failures():
+    observed, instances, faults = {"429", "503", "disconnect"}, set(), []
+    health = {"active": True, "instance": "first", "phase": "checking", "status": "healthy",
+              "last_poll": 1, "error": None}
+    _observe_soak_health(health, observed, instances, faults)
+    assert "recovered" not in observed  # Starting a new preflight clears the error before any successful poll.
+    health["phase"] = "waiting"
+    _observe_soak_health(health, observed, instances, faults)
+    assert "recovered" in observed and instances == {"first"} and not faults
 
 
 @pytest.mark.parametrize("pipeline", [{"source": "github"}], indirect=True)
@@ -520,10 +531,11 @@ def test_real_runtime_watch_soak(pipeline):
         finished.set()
         worker.request_stop()
         monitor_thread.join(timeout=5)
-    assert faults == []
-    report = {"seconds": time.monotonic() - started, "observed": sorted(observed), "instances": len(instances)}
+    report = {"seconds": time.monotonic() - started, "observed": sorted(observed),
+              "instances": len(instances), "faults": faults}
     (Path(worker.config.state_dir) / "soak-evidence.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     print("SOAK_EVIDENCE=" + json.dumps(report), flush=True)
+    assert faults == [], report
     assert report["seconds"] >= seconds
     if seconds >= 150:
         assert observed == {"429", "503", "disconnect", "recovered"}, report
