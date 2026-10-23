@@ -12,7 +12,7 @@ CI 與整合
 =========
 
 * GitHub Actions ``::error::`` 行內註解
-* JIRA / TestRail 上報
+* JIRA 上報
 * Slack / 通用 webhook
 * Selenium Grid 4 docker-compose
 * VS Code / JetBrains JSON Schema 設定範例

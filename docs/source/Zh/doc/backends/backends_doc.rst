@@ -274,7 +274,7 @@ Playwright 做不到：
 
 * Internet Explorer 與真正的 Safari；Playwright 的 WebKit 不是 Safari。
 * Selenium Grid 與雲端 grid（``WR_start_remote_driver``、
-  ``WR_connect_browserstack`` …）：它們使用 WebDriver 協定，Playwright
+  ``WR_start_remote_driver``）：它們使用 WebDriver 協定，Playwright
   不支援。
 * Appium 行動 session（``WR_appium_*``）。
 * 視窗位置與大小（``WR_maximize_window``、``WR_minimize_window``、
@@ -296,10 +296,10 @@ Selenium 只能近似：以使用者的角度找元素，``WR_pw_find_by``\ （`
 ``text``、``label``、``placeholder``、``alt_text``、``title``、``test_id``）。
 Selenium 只能用 XPath 表達。
 
-雲端 Grid
+自架 Grid
 =========
 
-對應 BrowserStack / Sauce Labs / LambdaTest 的 helper。
+以 ``WR_start_remote_driver`` 連接自架 HTTP(S) Selenium Grid。
 
 Appium（行動）
 ==============

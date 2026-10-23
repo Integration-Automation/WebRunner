@@ -22,6 +22,8 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 
 > **Auto-generated reference** — every registered `WR_*` command (signature + summary) is exported under [`docs/reference/command_reference.md`](docs/reference/command_reference.md), and a JSON Schema for action JSON files lives at [`docs/reference/webrunner-action-schema.json`](docs/reference/webrunner-action-schema.json).
 
+> Commercial browser/device cloud connectors and TestRail have been removed, including their Python exports and WR commands (breaking change). Use a self-hosted Selenium Grid or local Appium, and JSON/JUnit reports or a generic webhook for results. Jira and free notification integrations remain. Locator healing requires a unique visible, enabled match. Smart waits track fetch/XHR and SPA routes, with bounded timeouts.
+
 ## Table of Contents
 
 - [Highlights](#highlights)
@@ -38,7 +40,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - [Backends](#backends)
   - [Selenium (default)](#selenium-default)
   - [Playwright](#playwright)
-  - [Cloud Grid](#cloud-grid)
+  - [Self-hosted Selenium Grid](#self-hosted-selenium-grid)
   - [Appium (mobile)](#appium-mobile)
 - [Reports](#reports)
 - [Observability](#observability)
@@ -75,7 +77,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - **Standalone CDP / BiDi modules.** Background `CDPEventListener` (WebSocket loop + sync `send` / `on` / context manager), `record_trace(driver, path)` for Chrome DevTools-loadable performance traces, and a `bidi_network` module wrapping `driver.network.add_request_handler` / `add_response_handler` / `add_auth_handler` for cross-browser request interception.
 - **Test data & fixtures.** Faker integration, factory pattern, testcontainers (Postgres / Redis / generic), per-environment `.env` loader with `${ENV.X}` placeholder expansion, CSV/JSON data-driven runner with `${ROW.x}`.
 - **Auth, API, DB.** OAuth2 / OIDC client-credentials / password / refresh-token flows with token cache, HTTP API testing commands with JSON assertions, SQLAlchemy-backed database validation.
-- **Integrations.** TCP socket server with token + TLS, BrowserStack / Sauce Labs / LambdaTest cloud Grid, Appium mobile, JIRA + TestRail, Slack / generic webhook notifier, GitHub Actions inline annotations, Locust load testing.
+- **Integrations.** TCP socket server with token + TLS, self-hosted Selenium Grid, Appium mobile, JIRA, Slack / generic webhook notifier, GitHub Actions inline annotations, Locust load testing.
 - **AI hooks.** Pluggable LLM callable powers self-healing locators and natural-language → action JSON drafts.
 - **Cross-platform & multi-browser.** Windows, macOS, Linux, Raspberry Pi · Chrome, Chromium, Firefox, Edge, IE, Safari · Chromium, Firefox, WebKit (Playwright).
 
@@ -142,7 +144,7 @@ flowchart LR
   subgraph Outputs
     REP["Reports<br/>HTML/JSON/XML/JUnit/Allure"]
     OBS["Observability<br/>OTel · dashboard · replay"]
-    NOT["Notifiers<br/>Slack · webhook · GH · JIRA · TestRail"]
+    NOT["Notifiers<br/>Slack · webhook · GH · JIRA"]
   end
 
   A1 --> EXE
@@ -227,7 +229,7 @@ je_web_runner/
     ├── cdp/                     # Raw CDP passthrough
     ├── ci_annotations/          # GitHub Actions ::error::
     ├── cli/                     # CLI parser, watch mode, dispatch
-    ├── cloud_grid/              # BrowserStack / Sauce Labs / LambdaTest
+    ├── cloud_grid/              # Self-hosted Selenium Grid
     ├── dashboard/               # Live progress HTTP server
     ├── database/                # SQL validation (SQLAlchemy)
     ├── data_driven/             # CSV/JSON dataset + ${ROW.x}
@@ -271,7 +273,7 @@ je_web_runner/
     ├── storage/                 # localStorage / session / IDB
     ├── test_data/               # Faker integration
     ├── test_filter/             # Tag filter + dependency graph
-    ├── test_management/         # JIRA + TestRail
+    ├── test_management/         # JIRA
     ├── test_object/             # TestObject + record
     ├── test_record/             # Action recording
     ├── testcontainers_integration/   # Postgres / Redis / generic
@@ -562,30 +564,13 @@ The page-level shortcuts pass extra Playwright options through (`button`, `modif
 
 Existing scripts can move to Playwright incrementally; `TestObject` records are translated to Playwright selectors automatically (`CSS_SELECTOR` → as-is, `XPATH` → `xpath=…`, `ID` → `#…`, `NAME` → `[name="…"]`, `LINK_TEXT` → `text=…`, `PARTIAL_LINK_TEXT` → `:has-text("…")`).
 
-### Cloud Grid
+### Self-hosted Selenium Grid
 
 ```python
-from je_web_runner.utils.cloud_grid.cloud_drivers import (
-    connect_browserstack,
-    build_browserstack_capabilities,
-)
+from je_web_runner.api.platform import start_remote_driver
 
-connect_browserstack(
-    username="...",
-    access_key="...",
-    capabilities=build_browserstack_capabilities(
-        browser_name="chrome",
-        browser_version="latest",
-        os_name="Windows",
-        os_version="11",
-        project="WebRunner",
-        build="ci-2026-04-26",
-    ),
-)
-# All existing WR_* commands now run against the cloud session.
+start_remote_driver("http://localhost:4444/wd/hub", {"browserName": "chrome"})
 ```
-
-`connect_saucelabs` and `connect_lambdatest` follow the same shape.
 
 ### Appium (mobile)
 
@@ -821,7 +806,7 @@ python -m je_web_runner.mcp_server
 The default tool list (22 tools) exposes:
 
 Live browser execution:
-- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 556 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
+- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 547 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
 - `webrunner_run_action_files` — batch-run JSON files on disk
 - `webrunner_list_commands` — discover the full `WR_*` surface
 
@@ -1148,9 +1133,7 @@ only what you use).
   file-specific regressions.
 - **`git_bisect_flake`** — Ledger-only or probe-driven bisect for the
   regression commit that caused a test to start failing.
-- **`test_cost_estimator`** — Per-runner rate-card (Sauce / BrowserStack /
-  LambdaTest / GitHub Actions) × ledger minutes → USD + CO₂ estimate
-  per suite / runner / test.
+- **`test_cost_estimator`** — Local resource estimates; optional caller-supplied rate cards. No commercial service defaults.
 - **`slack_digest`** — Render Slack Block-Kit + Teams Adaptive Card +
   plain-text test digest with quarantine activity, top-risk PRs, cost
   trend, and pass-rate delta.
@@ -1182,8 +1165,7 @@ only what you use).
 
 - **`chrome_profile`** — Persistent Chrome profile + stealth +
   snapshot / sync-back.
-- **`device_cloud`** — Real-device cloud (BrowserStack / Sauce /
-  LambdaTest) connector.
+
 - **`otel_bridge`** — W3C traceparent injection for distributed
   tracing.
 - **`otp_interceptor`** — MailHog / Mailpit / IMAP / SMS OTP polling
@@ -1666,10 +1648,6 @@ The recorder injects a static JS listener (no CDP, no eval), so it works on Chro
 ```python
 from je_web_runner.utils.notifier.webhook_notifier import notify_run_summary
 from je_web_runner.utils.test_management.jira_client import jira_create_failure_issues
-from je_web_runner.utils.test_management.testrail_client import (
-    testrail_send_results,
-    testrail_results_from_pairs,
-)
 from je_web_runner.utils.ci_annotations.github_annotations import (
     emit_failure_annotations,
     emit_from_junit_xml,
@@ -1798,7 +1776,7 @@ WebRunner provides a hierarchy of custom exceptions — every helper raises a do
 | `HealingError` / `EnvConfigError` / `DataDrivenError` | Self-healing / env / dataset            |
 | `HttpAssertionError` / `HttpError`         | HTTP API assertions                              |
 | `AccessibilityError` / `LighthouseError`   | a11y / Lighthouse                                |
-| `NotifierError` / `JiraError` / `TestRailError` | Notifications / test management            |
+| `NotifierError` / `JiraError` | Notifications / test management            |
 | `CDPError` / `StorageError` / `ServiceWorkerError` | Browser internals                        |
 | `OAuthError` / `DatabaseValidationError`   | Auth / DB                                        |
 | `NetworkEmulationError` / `LoadTestError`  | Throttling / Locust                              |

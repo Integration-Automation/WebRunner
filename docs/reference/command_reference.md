@@ -1,6 +1,6 @@
 # WebRunner command reference
 
-Auto-generated from the executor's event_dict (556 commands).
+Auto-generated from the executor's event_dict (547 commands).
 
 | Command | Signature | Summary |
 | --- | --- | --- |
@@ -55,10 +55,9 @@ Auto-generated from the executor's event_dict (556 commands).
 | `WR_back` | `() -> 'None'` | 返回上一頁 / Navigate back |
 | `WR_block_urls` | `(patterns: 'list[str]') -> 'None'` | 透過 CDP ``Network.setBlockedURLs`` 阻擋符合任一 pattern 的請求。 |
 | `WR_bring_to_front` | `() -> 'None'` | 將瀏覽器視窗叫到最上層 (透過 CDP ``Page.bringToFront``)。 |
-| `WR_browserstack_capabilities` | `(browser_name: 'str' = 'chrome', browser_version: 'str' = 'latest', os_name: 'str' = 'Windows', os_version: 'str' = '11', project: 'str | None' = None, build: 'str | None' = None, name: 'str | None' = None, extra: 'dict[str, Any] | None' = None) -> 'dict[str, Any]'` | Build a W3C-style capability dict for BrowserStack. |
 | `WR_build_action_schema` | `() -> 'dict[str, Any]'` | 產生一份描述 action JSON 結構的 Draft 2020-12 Schema |
 | `WR_build_command_reference` | `(title: 'str' = 'WebRunner command reference') -> 'str'` | 產生整份命令參考（Markdown 字串） |
-| `WR_build_dependency_graph` | `(paths: 'Sequence[str]') -> 'dict[str, list[str]]'` | 依基本檔名建立 ``{path: [dep_path, ...]}`` 圖 |
+| `WR_build_dependency_graph` | `(paths: 'Sequence[str]', *, allow_invalid: 'bool' = False) -> 'dict[str, list[str]]'` | 依基本檔名建立 ``{path: [dep_path, ...]}`` 圖 |
 | `WR_build_replay_html` | `(records: 'list[dict[str, Any]] | None' = None, screenshot_dir: 'str | None' = None, title: 'str' = 'WebRunner replay') -> 'str'` | 產生 self-contained HTML 報告字串 |
 | `WR_cdp` | `(method: 'str', params: 'dict[str, Any] | None' = None) -> 'Any'` | 在當前 Selenium driver 執行 CDP 命令 |
 | `WR_change_index_of_webdriver` | `(index_of_webdriver: int) -> None` | 切換當前 WebDriver |
@@ -77,9 +76,6 @@ Auto-generated from the executor's event_dict (556 commands).
 | `WR_click_element` | `() -> 'None'` | 點擊 WebElement |
 | `WR_clock_freeze` | `(moment: 'str | int | float', advance_ms_per_real_second: 'float' = 0.0) -> 'None'` | 凍結頁面時間 |
 | `WR_close_window` | `() -> 'None'` | 關閉當前 tab / window (不會結束整個 driver；要結束請用 ``quit``) |
-| `WR_connect_browserstack` | `(username: 'str', access_key: 'str', capabilities: 'dict[str, Any] | None' = None, hub_url: 'str | None' = None) -> 'WebDriver'` |  |
-| `WR_connect_lambdatest` | `(username: 'str', access_key: 'str', capabilities: 'dict[str, Any] | None' = None, hub_url: 'str | None' = None) -> 'WebDriver'` |  |
-| `WR_connect_saucelabs` | `(username: 'str', access_key: 'str', capabilities: 'dict[str, Any] | None' = None, hub_url: 'str | None' = None) -> 'WebDriver'` |  |
 | `WR_console_messages` | `() -> 'list[dict[str, Any]]'` | ``{type, text, location}`` per console message or JavaScript error collected. |
 | `WR_dashboard_start` | `(host: 'str' = '127.0.0.1', port: 'int' = 0) -> 'str'` |  |
 | `WR_dashboard_stop` | `() -> 'None'` |  |
@@ -128,7 +124,7 @@ Auto-generated from the executor's event_dict (556 commands).
 | `WR_event_capture_start` | `(dom_mutations: 'bool' = False) -> 'None'` | 開始收集 console、JavaScript 錯誤與網路回應（可選 DOM 變動） |
 | `WR_event_capture_stop` | `() -> 'None'` | Stop collecting; what was collected stays until :meth:`clear_event_capture`. |
 | `WR_execute` | `(driver_command: 'str', params: 'dict | None' = None) -> 'dict | None'` | 執行 Selenium WebDriver 的底層命令 |
-| `WR_execute_action` | `(action_list: list | dict) -> dict` | 執行一系列動作 |
+| `WR_execute_action` | `(action_list: 'Any') -> 'Dict[str, Any]'` | Run every action of ``action_list`` (a list, or a document holding one), report and return the records. |
 | `WR_execute_async_script` | `(script: 'str', *args)` | 執行非同步 JavaScript |
 | `WR_execute_cdp_cmd` | `(cmd: 'str', cmd_args: 'dict | None' = None)` | 在當前 driver 上執行 Chrome DevTools Protocol 命令 (僅 Chromium 系)。 |
 | `WR_execute_files` | `(execute_files_list: list) -> list` | 從檔案載入並執行動作 |
@@ -216,7 +212,6 @@ Auto-generated from the executor's event_dict (556 commands).
 | `WR_input_to_element` | `(input_value: 'str') -> 'None'` | 輸入文字到 WebElement |
 | `WR_jira_create_failure_issues` | `(base_url: 'str', email: 'str', api_token: 'str', project_key: 'str', issue_type: 'str' = 'Bug', build_url: 'str | None' = None) -> 'list[dict[str, Any]]'` | 對 ``test_record_instance`` 內每個失敗紀錄建立一個 issue |
 | `WR_jira_create_issue` | `(base_url: 'str', email: 'str', api_token: 'str', project_key: 'str', summary: 'str', description: 'str' = '', issue_type: 'str' = 'Bug', extra_fields: 'dict[str, Any] | None' = None, timeout: 'int' = 30) -> 'dict[str, Any]'` | 建立 JIRA issue |
-| `WR_lambdatest_capabilities` | `(browser_name: 'str' = 'Chrome', browser_version: 'str' = 'latest', platform_name: 'str' = 'Windows 11', build: 'str | None' = None, name: 'str | None' = None, extra: 'dict[str, Any] | None' = None) -> 'dict[str, Any]'` |  |
 | `WR_ledger_clear` | `(ledger_path: 'str') -> 'None'` | Delete the ledger file (no-op if missing). |
 | `WR_ledger_failed_files` | `(ledger_path: 'str') -> 'list[str]'` | Return paths whose most recent run was a failure. |
 | `WR_ledger_passed_files` | `(ledger_path: 'str') -> 'list[str]'` | Return paths whose most recent run was a pass. |
@@ -476,7 +471,6 @@ Auto-generated from the executor's event_dict (556 commands).
 | `WR_run_scheduler_for` | `(seconds: 'float') -> 'None'` |  |
 | `WR_run_scheduler_forever` | `() -> 'None'` |  |
 | `WR_run_with_dataset` | `(action_data, rows)` |  |
-| `WR_saucelabs_capabilities` | `(browser_name: 'str' = 'chrome', browser_version: 'str' = 'latest', platform_name: 'str' = 'Windows 11', build: 'str | None' = None, name: 'str | None' = None, extra: 'dict[str, Any] | None' = None) -> 'dict[str, Any]'` |  |
 | `WR_save_cookies` | `(file_path: 'str') -> 'bool'` | 將當前頁面的 cookies 序列化為 JSON 並寫入檔案 (用於 session reuse)。 |
 | `WR_save_full_page_screenshot` | `(file_path: 'str') -> 'bool'` | 將整個頁面 (含可視範圍外) 截圖儲存為 PNG，透過 CDP |
 | `WR_save_screenshot` | `(file_path: 'str') -> 'bool'` | 將當前頁面截圖儲存至指定路徑 (PNG) |
@@ -538,9 +532,6 @@ Auto-generated from the executor's event_dict (556 commands).
 | `WR_tc_redis` | `(image: 'str' = 'redis:7-alpine') -> 'Any'` |  |
 | `WR_tc_started_count` | `() -> 'int'` | How many containers are tracked as live by this module. |
 | `WR_tc_stop` | `(container: 'Any') -> 'None'` | Stop a single container started by this module. |
-| `WR_testrail_close_run` | `(base_url: 'str', username: 'str', api_key: 'str', run_id: 'int', timeout: 'int' = 30) -> 'dict[str, Any]'` | 關閉指定的 TestRail run |
-| `WR_testrail_results_from_pairs` | `(pairs: 'Iterable[dict[str, Any]]', comment_field: 'str' = 'comment') -> 'list[dict[str, Any]]'` | 把 ``[{case_id, passed, comment?}]`` 轉成 TestRail status_id 格式 |
-| `WR_testrail_send_results` | `(base_url: 'str', username: 'str', api_key: 'str', run_id: 'int', results: 'list[dict[str, Any]]', timeout: 'int' = 30) -> 'dict[str, Any]'` | 將結果送到 ``add_results_for_cases/{run_id}`` |
 | `WR_throttle` | `(preset: 'str') -> 'Any'` | Apply ``preset`` via the active Selenium driver's CDP channel. |
 | `WR_throttle_clear` | `() -> 'Any'` | Convenience for the ``no_throttling`` preset. |
 | `WR_throttle_presets` | `() -> 'list'` | Return all registered preset names. |
@@ -552,8 +543,8 @@ Auto-generated from the executor's event_dict (556 commands).
 | `WR_user_factory` | `(prefix: 'str' = 'user') -> 'Factory'` | Default user shape: id / name / email / password. |
 | `WR_validate_action_file` | `(json_file_path: 'str') -> 'bool'` | 讀取並驗證動作 JSON 檔案 |
 | `WR_validate_action_json` | `(data: 'list | dict') -> 'bool'` | 驗證動作 JSON 是否符合執行器格式 |
-| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002232B775080>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
-| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002232B775080>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
+| `WR_visual_capture_baseline` | `(baseline_path: 'str', screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002AB9A47DB20>) -> 'str'` | 擷取當前頁面並儲存為基準圖 |
+| `WR_visual_compare` | `(baseline_path: 'str', diff_path: 'str | None' = None, current_path: 'str | None' = None, threshold: 'int' = 0, screenshot: 'Callable[[], bytes]' = <function _selenium_png at 0x000002AB9A47DB20>) -> 'dict'` | 擷取目前頁面並與基準圖比較 |
 | `WR_wait_for_download` | `(directory: 'str', timeout: 'float' = 60.0, suffix: 'str | None' = None, poll_seconds: 'float' = 0.5) -> 'str'` | 等待 ``directory`` 內出現新檔案（會跳過 ``.crdownload`` / ``.part``） |
 | `WR_wait_for_element` | `(selector: 'str', by: 'str' = 'css selector', timeout: 'float' = 10.0, state: 'str' = 'visible') -> 'Any'` | 等元素出現（``present`` / ``visible`` / ``clickable``）或消失（``hidden``） |
 | `WR_wait_for_ready_state` | `(timeout: 'float' = 30.0) -> 'bool'` | Wait until ``document.readyState`` is ``complete``. |

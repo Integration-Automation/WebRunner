@@ -54,7 +54,6 @@ je_web_runner/
     ├── failure_triage/      # AI failure root-cause analysis on failure bundles
     ├── flake_detector/      # Time-decayed flake scoring + quarantine registry
     ├── locator_health/      # Project-wide locator audit + upgrade suggestions
-    ├── device_cloud/        # Real-device cloud (BrowserStack/Sauce/LambdaTest) connector
     ├── otel_bridge/         # W3C traceparent injection for distributed tracing
     ├── mutation_testing/    # Action JSON mutation testing (kill rate / score)
     ├── otp_interceptor/     # MailHog/Mailpit/IMAP/SMS OTP polling for 2FA flows

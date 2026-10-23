@@ -233,18 +233,6 @@ from je_web_runner.utils.locator_health.health_report import (
     suggest_upgrade as locator_suggest_upgrade,
     suggest_upgrades as locator_suggest_upgrades,
 )
-from je_web_runner.utils.device_cloud.real_device import (
-    CloudCredentials,
-    CloudSession,
-    DeviceCloudError,
-    RealDeviceCaps,
-    build_capabilities as device_cloud_build_capabilities,
-    connect_real_device,
-    fetch_session_info,
-    load_credentials as device_cloud_load_credentials,
-    session_summary_markdown,
-    update_session_status,
-)
 from je_web_runner.utils.otel_bridge.trace_bridge import (
     TraceBridgeError,
     TraceContext,
@@ -465,12 +453,7 @@ __all__ = [
     "fallback_hit_tracker", "locator_render_health_markdown",
     "save_health_report", "locator_scan_action_file", "locator_scan_project",
     "locator_suggest_upgrade", "locator_suggest_upgrades",
-    # Phase 5: device_cloud
-    "CloudCredentials", "CloudSession", "DeviceCloudError", "RealDeviceCaps",
-    "device_cloud_build_capabilities", "connect_real_device",
-    "fetch_session_info", "device_cloud_load_credentials",
-    "session_summary_markdown", "update_session_status",
-    # Phase 6: otel_bridge
+# Phase 6: otel_bridge
     "TraceBridgeError", "TraceContext",
     "bridged_span_playwright", "bridged_span_selenium",
     "clear_headers_playwright", "clear_headers_selenium",

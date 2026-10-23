@@ -1,126 +1,17 @@
-"""
-雲端 Grid 接入：BrowserStack / Sauce Labs / LambdaTest 的 Remote driver 建構器。
-Cloud Selenium Grid integrations: build provider-specific capability dicts
-and Remote drivers for BrowserStack, Sauce Labs, and LambdaTest.
-
-安全 / Security:
-- 認證以參數傳入；不接受寫死、不寫進 log。
-  Credentials are passed as arguments only — never hard-coded, never logged.
-- 預設 hub URL 為各家公開的官方端點，但呼叫者可以覆蓋。
-  Default hub URLs are the providers' public endpoints; callable can override.
-"""
+"""Generic Remote WebDriver connector for a self-hosted Selenium Grid."""
 from __future__ import annotations
 
-import urllib.parse
 from typing import Any
-
+from urllib.parse import urlsplit
 from selenium import webdriver
 from selenium.webdriver.remote.webdriver import WebDriver
-
 from je_web_runner.utils.exception.exceptions import WebRunnerException
-from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 from je_web_runner.webdriver.webdriver_wrapper import webdriver_wrapper_instance
+from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
 
 class CloudGridError(WebRunnerException):
-    """Raised when a cloud Remote driver cannot be started."""
-
-
-_DEFAULT_HUBS: dict[str, str] = {
-    "browserstack": "https://hub-cloud.browserstack.com/wd/hub",
-    "saucelabs": "https://ondemand.us-west-1.saucelabs.com:443/wd/hub",
-    "lambdatest": "https://hub.lambdatest.com/wd/hub",
-}
-
-
-def _hub_url_with_credentials(hub_url: str, username: str, access_key: str) -> str:
-    """Inject ``user:key`` into the hub URL's authority."""
-    if not username or not access_key:
-        raise CloudGridError("username and access_key are required")
-    parsed = urllib.parse.urlparse(hub_url)
-    if not parsed.scheme or not parsed.netloc:
-        raise CloudGridError(f"invalid hub URL: {hub_url!r}")
-    encoded_user = urllib.parse.quote(username, safe="")
-    encoded_key = urllib.parse.quote(access_key, safe="")
-    netloc_no_creds = parsed.netloc.split("@")[-1]
-    new_netloc = f"{encoded_user}:{encoded_key}@{netloc_no_creds}"
-    return urllib.parse.urlunparse(parsed._replace(netloc=new_netloc))
-
-
-def build_browserstack_capabilities(
-    browser_name: str = "chrome",
-    browser_version: str = "latest",
-    os_name: str = "Windows",
-    os_version: str = "11",
-    project: str | None = None,
-    build: str | None = None,
-    name: str | None = None,
-    extra: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Build a W3C-style capability dict for BrowserStack."""
-    bstack: dict[str, Any] = {"os": os_name, "osVersion": os_version}
-    if project:
-        bstack["projectName"] = project
-    if build:
-        bstack["buildName"] = build
-    if name:
-        bstack["sessionName"] = name
-    caps: dict[str, Any] = {
-        "browserName": browser_name,
-        "browserVersion": browser_version,
-        "bstack:options": bstack,
-    }
-    if extra:
-        caps.update(extra)
-    return caps
-
-
-def build_saucelabs_capabilities(
-    browser_name: str = "chrome",
-    browser_version: str = "latest",
-    platform_name: str = "Windows 11",
-    build: str | None = None,
-    name: str | None = None,
-    extra: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    sauce: dict[str, Any] = {}
-    if build:
-        sauce["build"] = build
-    if name:
-        sauce["name"] = name
-    caps: dict[str, Any] = {
-        "browserName": browser_name,
-        "browserVersion": browser_version,
-        "platformName": platform_name,
-        "sauce:options": sauce,
-    }
-    if extra:
-        caps.update(extra)
-    return caps
-
-
-def build_lambdatest_capabilities(
-    browser_name: str = "Chrome",
-    browser_version: str = "latest",
-    platform_name: str = "Windows 11",
-    build: str | None = None,
-    name: str | None = None,
-    extra: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    lt: dict[str, Any] = {}
-    if build:
-        lt["build"] = build
-    if name:
-        lt["name"] = name
-    caps: dict[str, Any] = {
-        "browserName": browser_name,
-        "browserVersion": browser_version,
-        "platformName": platform_name,
-        "LT:Options": lt,
-    }
-    if extra:
-        caps.update(extra)
-    return caps
+    """Invalid generic Grid configuration."""
 
 
 def start_remote_driver(
@@ -133,6 +24,13 @@ def start_remote_driver(
     Start a Remote WebDriver and (optionally) register it on the WebRunner
     Selenium wrapper so the rest of the action set works against it.
     """
+    target = urlsplit(hub_url)
+    if target.scheme not in {"http", "https"} or not target.hostname:
+        raise CloudGridError("hub_url must be an absolute HTTP(S) URL")
+    if target.username is not None or target.password is not None:
+        raise CloudGridError("hub_url must not contain credentials")
+    if not isinstance(capabilities, dict):
+        raise CloudGridError("capabilities must be an object")
     web_runner_logger.info("start_remote_driver")
     options = webdriver.ChromeOptions()
     for key, value in capabilities.items():
@@ -144,53 +42,3 @@ def start_remote_driver(
         webdriver_wrapper_instance.set_active_driver(driver)
     return driver
 
-
-def _connect(provider: str, username: str, access_key: str,
-             capabilities: dict[str, Any], hub_url: str | None) -> WebDriver:
-    target_hub = hub_url or _DEFAULT_HUBS[provider]
-    return start_remote_driver(_hub_url_with_credentials(target_hub, username, access_key), capabilities)
-
-
-def connect_browserstack(
-    username: str,
-    access_key: str,
-    capabilities: dict[str, Any] | None = None,
-    hub_url: str | None = None,
-) -> WebDriver:
-    return _connect(
-        "browserstack",
-        username,
-        access_key,
-        capabilities or build_browserstack_capabilities(),
-        hub_url,
-    )
-
-
-def connect_saucelabs(
-    username: str,
-    access_key: str,
-    capabilities: dict[str, Any] | None = None,
-    hub_url: str | None = None,
-) -> WebDriver:
-    return _connect(
-        "saucelabs",
-        username,
-        access_key,
-        capabilities or build_saucelabs_capabilities(),
-        hub_url,
-    )
-
-
-def connect_lambdatest(
-    username: str,
-    access_key: str,
-    capabilities: dict[str, Any] | None = None,
-    hub_url: str | None = None,
-) -> WebDriver:
-    return _connect(
-        "lambdatest",
-        username,
-        access_key,
-        capabilities or build_lambdatest_capabilities(),
-        hub_url,
-    )

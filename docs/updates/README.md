@@ -153,3 +153,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 |---|---|---:|
 | [2026-10.md](2026-10.md) | 2026-10 | 57 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
+
+| [U-20261023-01](2026-10.md#u-20261023-01) | 2026-10-23 | Local automation and commercial connector removal | #done #automation |

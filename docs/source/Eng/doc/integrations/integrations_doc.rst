@@ -16,8 +16,7 @@ CI / integrations
 
 * **GitHub Actions annotations** — ``emit_failure_annotations`` /
   ``emit_from_junit_xml`` produce ``::error file=…::`` lines.
-* **JIRA / TestRail** — ``jira_create_failure_issues`` /
-  ``testrail_send_results`` for post-run sync.
+* **JIRA** — ``jira_create_failure_issues`` for post-run sync.
 * **Slack / generic webhook** — ``notify_run_summary``.
 * **Selenium Grid 4 docker-compose** — ``docker/docker-compose.yml`` ships
   hub + Chrome + Firefox nodes.

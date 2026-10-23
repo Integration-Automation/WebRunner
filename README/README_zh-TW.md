@@ -22,6 +22,8 @@ WebRunner（`je_web_runner`）最初只是一個 Selenium 封裝，如今已成�
 
 > **自動產生的參考文件** —— 每個已註冊的 `WR_*` 命令（簽章 + 摘要）都匯出在 [`docs/reference/command_reference.md`](../docs/reference/command_reference.md)，動作 JSON 檔案的 JSON Schema 則位於 [`docs/reference/webrunner-action-schema.json`](../docs/reference/webrunner-action-schema.json)。
 
+> 商業瀏覽器／裝置雲與 TestRail 整合已移除，包含 Python 匯出與 WR 命令（破壞性變更）。請改用自架 Selenium Grid 或本機 Appium，並以 JSON／JUnit 報告或通用 webhook 輸出結果。保留 Jira 與免費通知整合。定位備援只接受唯一、可見且啟用的元素；智慧等待追蹤 fetch／XHR 與 SPA 路由，皆有逾時限制。
+
 ## 目錄
 
 - [亮點特色](#亮點特色)
@@ -38,7 +40,7 @@ WebRunner（`je_web_runner`）最初只是一個 Selenium 封裝，如今已成�
 - [後端](#後端)
   - [Selenium（預設）](#selenium預設)
   - [Playwright](#playwright)
-  - [Cloud Grid（雲端網格）](#cloud-grid雲端網格)
+  - [自架 Selenium Grid](#自架-selenium-grid)
   - [Appium（行動端）](#appium行動端)
 - [報告](#報告)
 - [可觀測性](#可觀測性)
@@ -75,7 +77,7 @@ WebRunner（`je_web_runner`）最初只是一個 Selenium 封裝，如今已成�
 - **獨立的 CDP / BiDi 模組。** 背景 `CDPEventListener`（WebSocket 迴圈 + 同步的 `send` / `on` / 情境管理器）、用於產生 Chrome DevTools 可載入效能追蹤的 `record_trace(driver, path)`，以及封裝 `driver.network.add_request_handler` / `add_response_handler` / `add_auth_handler` 的 `bidi_network` 模組，用於跨瀏覽器請求攔截。
 - **測試資料與固件。** Faker 整合、工廠模式、testcontainers（Postgres / Redis / 通用）、帶 `${ENV.X}` 佔位符展開的按環境 `.env` 載入器、帶 `${ROW.x}` 的 CSV/JSON 資料驅動執行器。
 - **認證、API、資料庫。** 帶權杖快取的 OAuth2 / OIDC 用戶端憑證 / 密碼 / 更新權杖流程、帶 JSON 斷言的 HTTP API 測試命令、由 SQLAlchemy 支撐的資料庫驗證。
-- **整合。** 帶權杖 + TLS 的 TCP 通訊端伺服器、BrowserStack / Sauce Labs / LambdaTest 雲端網格、Appium 行動端、JIRA + TestRail、Slack / 通用 webhook 通知器、GitHub Actions 內嵌註解、Locust 負載測試。
+- **整合。** 帶權杖 + TLS 的 TCP 通訊端伺服器、自架 Selenium Grid、Appium 行動端、JIRA、Slack / 通用 webhook 通知器、GitHub Actions 內嵌註解、Locust 負載測試。
 - **AI 掛鉤。** 可插拔的 LLM callable 驅動自我修復定位器和自然語言 → 動作 JSON 草稿。
 - **跨平台與多瀏覽器。** Windows、macOS、Linux、Raspberry Pi · Chrome、Chromium、Firefox、Edge、IE、Safari · Chromium、Firefox、WebKit（Playwright）。
 
@@ -141,7 +143,7 @@ flowchart LR
   subgraph Outputs
     REP["Reports<br/>HTML/JSON/XML/JUnit/Allure"]
     OBS["Observability<br/>OTel · dashboard · replay"]
-    NOT["Notifiers<br/>Slack · webhook · GH · JIRA · TestRail"]
+    NOT["Notifiers<br/>Slack · webhook · GH · JIRA"]
   end
 
   A1 --> EXE
@@ -225,7 +227,7 @@ je_web_runner/
     ├── cdp/                     # Raw CDP passthrough
     ├── ci_annotations/          # GitHub Actions ::error::
     ├── cli/                     # CLI parser, watch mode, dispatch
-    ├── cloud_grid/              # BrowserStack / Sauce Labs / LambdaTest
+    ├── cloud_grid/              # Self-hosted Selenium Grid
     ├── dashboard/               # Live progress HTTP server
     ├── database/                # SQL validation (SQLAlchemy)
     ├── data_driven/             # CSV/JSON dataset + ${ROW.x}
@@ -269,7 +271,7 @@ je_web_runner/
     ├── storage/                 # localStorage / session / IDB
     ├── test_data/               # Faker integration
     ├── test_filter/             # Tag filter + dependency graph
-    ├── test_management/         # JIRA + TestRail
+    ├── test_management/         # JIRA
     ├── test_object/             # TestObject + record
     ├── test_record/             # Action recording
     ├── testcontainers_integration/   # Postgres / Redis / generic
@@ -557,30 +559,13 @@ Playwright 後端在 `WR_pw_*` 下涵蓋 Selenium 封裝的大部分日常操作
 
 現有腳本可以逐步遷移到 Playwright；`TestObject` 記錄會自動翻譯為 Playwright 選擇器（`CSS_SELECTOR` → 原樣，`XPATH` → `xpath=…`，`ID` → `#…`，`NAME` → `[name="…"]`，`LINK_TEXT` → `text=…`，`PARTIAL_LINK_TEXT` → `:has-text("…")`）。
 
-### Cloud Grid（雲端網格）
+### 自架 Selenium Grid
 
 ```python
-from je_web_runner.utils.cloud_grid.cloud_drivers import (
-    connect_browserstack,
-    build_browserstack_capabilities,
-)
+from je_web_runner.api.platform import start_remote_driver
 
-connect_browserstack(
-    username="...",
-    access_key="...",
-    capabilities=build_browserstack_capabilities(
-        browser_name="chrome",
-        browser_version="latest",
-        os_name="Windows",
-        os_version="11",
-        project="WebRunner",
-        build="ci-2026-04-26",
-    ),
-)
-# All existing WR_* commands now run against the cloud session.
+start_remote_driver("http://localhost:4444/wd/hub", {"browserName": "chrome"})
 ```
-
-`connect_saucelabs` 與 `connect_lambdatest` 遵循相同的形態。
 
 ### Appium（行動端）
 
@@ -816,7 +801,7 @@ python -m je_web_runner.mcp_server
 預設工具清單（22 個工具）公開：
 
 即時瀏覽器執行：
-- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 556 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 547 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批次執行磁碟上的 JSON 檔案
 - `webrunner_list_commands` —— 探索完整的 `WR_*` 介面面
 
@@ -1137,9 +1122,7 @@ python -m je_web_runner.action_lsp
   檔案特定的回歸。
 - **`git_bisect_flake`** —— 僅帳本或探測驅動的 bisect，找出導致測試
   開始失敗的回歸提交。
-- **`test_cost_estimator`** —— 按執行器的價目表（Sauce / BrowserStack /
-  LambdaTest / GitHub Actions）× 帳本分鐘數 → 每套件 / 執行器 / 測試的
-  USD + CO₂ 估算。
+- **`test_cost_estimator`** — Local resource estimates; optional caller-supplied rate cards. No commercial service defaults.
 - **`slack_digest`** —— 渲染 Slack Block-Kit + Teams Adaptive Card +
   純文字測試摘要，含隔離活動、最高風險 PR、成本
   趨勢和通過率變化。
@@ -1171,8 +1154,7 @@ python -m je_web_runner.action_lsp
 
 - **`chrome_profile`** —— 持久化 Chrome 設定檔 + 隱身 +
   snapshot / sync-back。
-- **`device_cloud`** —— 真機雲（BrowserStack / Sauce /
-  LambdaTest）連接器。
+
 - **`otel_bridge`** —— 用於分散式追蹤的 W3C traceparent
   注入。
 - **`otp_interceptor`** —— MailHog / Mailpit / IMAP / SMS OTP 輪詢
@@ -1654,10 +1636,6 @@ recorder_save_recording(
 ```python
 from je_web_runner.utils.notifier.webhook_notifier import notify_run_summary
 from je_web_runner.utils.test_management.jira_client import jira_create_failure_issues
-from je_web_runner.utils.test_management.testrail_client import (
-    testrail_send_results,
-    testrail_results_from_pairs,
-)
 from je_web_runner.utils.ci_annotations.github_annotations import (
     emit_failure_annotations,
     emit_from_junit_xml,
@@ -1786,7 +1764,7 @@ WebRunner 提供一個自訂例外階層 —— 每個輔助函式都擲出 `Web
 | `HealingError` / `EnvConfigError` / `DataDrivenError` | 自我修復 / 環境 / 資料集              |
 | `HttpAssertionError` / `HttpError`         | HTTP API 斷言                                    |
 | `AccessibilityError` / `LighthouseError`   | 無障礙 / Lighthouse                              |
-| `NotifierError` / `JiraError` / `TestRailError` | 通知 / 測試管理                             |
+| `NotifierError` / `JiraError` | 通知 / 測試管理                             |
 | `CDPError` / `StorageError` / `ServiceWorkerError` | 瀏覽器內部機制                           |
 | `OAuthError` / `DatabaseValidationError`   | 認證 / 資料庫                                    |
 | `NetworkEmulationError` / `LoadTestError`  | 限速 / Locust                                    |

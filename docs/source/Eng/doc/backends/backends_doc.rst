@@ -291,7 +291,7 @@ Not possible on Playwright:
 * Internet Explorer and the real Safari browser; Playwright's WebKit is not
   Safari.
 * Selenium Grid and the cloud grids (``WR_start_remote_driver``,
-  ``WR_connect_browserstack`` …): they speak the WebDriver protocol, which
+  ``WR_start_remote_driver``): they speak the WebDriver protocol, which
   Playwright does not.
 * Appium mobile sessions (``WR_appium_*``).
 * Window geometry (``WR_maximize_window``, ``WR_minimize_window``,
@@ -315,15 +315,10 @@ Only approximated on Selenium: finding elements the way a user would,
 ``alt_text``, ``title``, ``test_id``). Selenium can only express these as
 XPath.
 
-Cloud Grid
-==========
+Self-hosted Grid
+================
 
-Provider helpers for BrowserStack, Sauce Labs, and LambdaTest:
-
-* ``connect_browserstack`` / ``connect_saucelabs`` / ``connect_lambdatest``
-* ``build_browserstack_capabilities`` / ``build_saucelabs_capabilities`` /
-  ``build_lambdatest_capabilities``
-* ``start_remote_driver`` for arbitrary hub URLs
+Use ``WR_start_remote_driver`` with a self-hosted HTTP(S) Selenium Grid.
 
 Appium (mobile)
 ===============

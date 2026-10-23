@@ -37,7 +37,7 @@ wired into the executor as `WR_*` commands, others are reachable only from Pytho
 | --- | --- |
 | Core engine and action I/O | `executor`, `callback`, `package_manager`, `json`, `test_object`, `test_record`, `exception`, `logging`, `file_process`, `xml` |
 | Run orchestration and CI | `async_executor` (asyncio engine, `WR_apw_*`), `cli`, `socket_server`, `watch_mode`, `scheduler`, `sharding`, `test_filter`, `run_ledger`, `pipeline`, `k8s_runner`, `fanout`, `multi_user`, `ab_run` |
-| Browser and driver control | `cdp`, `cdp_tap`, `bidi`, `bidi_backend`, `driver_dispatch`, `chrome_profile`, `browser_pool`, `process_supervisor`, `driver_pin`, `cloud_grid`, `device_cloud`, `appium_integration`, `dom_traversal`, `storage`, `network_emulation`, `smart_wait`, `autocontrol_bridge` (desktop control through AutoControl) |
+| Browser and driver control | `cdp`, `cdp_tap`, `bidi`, `bidi_backend`, `driver_dispatch`, `chrome_profile`, `browser_pool`, `process_supervisor`, `driver_pin`, `cloud_grid` (self-hosted Grid), `appium_integration`, `dom_traversal`, `storage`, `network_emulation`, `smart_wait`, `autocontrol_bridge` (desktop control through AutoControl) |
 | Authoring and code generation | `recorder`, `action_formatter`, `action_templates`, `md_authoring`, `linter`, `schema`, `docs`, `pom_generator`, `sel_to_pw`, `session_to_test`, `openapi_to_e2e`, `project` |
 | Reporting and observability | `generate_report`, `observability`, `otel_bridge`, `trace_recorder`, `failure_bundle`, `replay_studio`, `dashboard`, `live_dashboard`, `notifier`, `ci_annotations`, `test_management` |
 | Reliability, flakes and test governance | `adaptive_retry`, `self_healing`, `flake_detector`, `flakiness_graveyard`, `repro_minimizer`, `failure_triage`, `failure_cluster`, `locator_health`, `mutation_testing`, `impact_analysis`, `coverage_map`, `pr_risk_score`, `test_owners_map` |
@@ -213,3 +213,5 @@ process share one driver (`--parallel-mode process` exists for isolation).
 - A sibling repo starts or stops depending on WebRunner, or changes how it loads it.
 - A hard rule in CLAUDE.md is added or changed, or the extension steps in §5 change.
 - On every edit, refresh the "Last verified" line.
+
+Commercial browser/device cloud and TestRail clients were removed by explicit request. Generic Grid, local Appium, Jira and webhook APIs remain. Healing now rejects ambiguous actionable matches; smart waits track fetch/XHR and SPA routes.

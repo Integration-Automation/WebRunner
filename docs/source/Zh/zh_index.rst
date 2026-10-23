@@ -144,7 +144,7 @@ contract testing、資料/認證 helper。
 第 9 章 — 外部整合
 ==================
 
-CI 註解、JIRA / TestRail / Slack 通知、IDE schema 設定,以及讓 Claude 透過
+CI 註解、JIRA / Slack 通知、IDE schema 設定,以及讓 Claude 透過
 **Model Context Protocol (MCP)** 操作 WebRunner 的 server。
 
 .. toctree::

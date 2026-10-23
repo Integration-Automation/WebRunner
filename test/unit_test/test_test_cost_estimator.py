@@ -64,7 +64,7 @@ class TestLoadRuns(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / "l.json"
             p.write_text(json.dumps({"runs": [
-                {"test_id": "t1", "runner": "saucelabs", "duration_seconds": 30},
+                {"test_id": "t1", "runner": "runner_a", "duration_seconds": 30},
                 {"path": "t2", "runner": "local", "duration_seconds": 5},
                 {"test_id": "skip_me", "runner": "local"},  # no duration → skip
             ]}), encoding="utf-8")
@@ -94,67 +94,67 @@ class TestLoadRuns(unittest.TestCase):
 class TestEstimate(unittest.TestCase):
 
     def test_uses_defaults(self):
-        runs = _runs(("t1", "saucelabs", 120), ("t2", "saucelabs", 60))
-        est = estimate_runs(runs)
+        runs = _runs(("t1", "runner_a", 120), ("t2", "runner_a", 60))
+        est = estimate_runs(runs, rate_cards=[RateCard("runner_a", 0.18, 10.0, 1.0), RateCard("runner_b", 0.16)])
         self.assertEqual(est.total_runs, 2)
         # 2 + 1 = 3 minutes × $0.18 = $0.54
         self.assertAlmostEqual(est.total_usd, 0.54, places=2)
 
     def test_minimum_minutes_applied(self):
-        runs = _runs(("t1", "saucelabs", 10))  # 10s = 0.17m, billed as 1m
-        est = estimate_runs(runs)
+        runs = _runs(("t1", "runner_a", 10))  # 10s = 0.17m, billed as 1m
+        est = estimate_runs(runs, rate_cards=[RateCard("runner_a", 0.18, 10.0, 1.0), RateCard("runner_b", 0.16)])
         self.assertEqual(est.total_billed_minutes, 1.0)
 
     def test_unknown_runner_collected(self):
         runs = _runs(("t1", "mystery_cloud", 60))
-        est = estimate_runs(runs)
+        est = estimate_runs(runs, rate_cards=[RateCard("runner_a", 0.18, 10.0, 1.0), RateCard("runner_b", 0.16)])
         self.assertEqual(est.total_runs, 0)
         self.assertIn("mystery_cloud", est.unknown_runners)
 
     def test_per_test_costs(self):
-        runs = _runs(("t1", "saucelabs", 600), ("t1", "saucelabs", 300))
-        est = estimate_runs(runs)
+        runs = _runs(("t1", "runner_a", 600), ("t1", "runner_a", 300))
+        est = estimate_runs(runs, rate_cards=[RateCard("runner_a", 0.18, 10.0, 1.0), RateCard("runner_b", 0.16)])
         self.assertGreater(est.by_test["t1"], 0)
 
     def test_by_runner_breakdown(self):
-        runs = _runs(("a", "saucelabs", 60), ("b", "browserstack", 60))
-        est = estimate_runs(runs)
-        self.assertIn("saucelabs", est.by_runner)
-        self.assertIn("browserstack", est.by_runner)
+        runs = _runs(("a", "runner_a", 60), ("b", "runner_b", 60))
+        est = estimate_runs(runs, rate_cards=[RateCard("runner_a", 0.18, 10.0, 1.0), RateCard("runner_b", 0.16)])
+        self.assertIn("runner_a", est.by_runner)
+        self.assertIn("runner_b", est.by_runner)
 
     def test_empty_rejected(self):
         with self.assertRaises(TestCostEstimatorError):
             estimate_runs([])
 
     def test_co2_accumulates(self):
-        runs = _runs(("t1", "saucelabs", 60))
-        est = estimate_runs(runs)
+        runs = _runs(("t1", "runner_a", 60))
+        est = estimate_runs(runs, rate_cards=[RateCard("runner_a", 0.18, 10.0, 1.0), RateCard("runner_b", 0.16)])
         self.assertGreater(est.total_grams_co2, 0)
 
 
 class TestEstimateMarkdown(unittest.TestCase):
 
     def test_renders(self):
-        est = estimate_runs(_runs(("t1", "saucelabs", 600)))
+        est = estimate_runs(_runs(("t1", "runner_a", 600)))
         md = estimate_markdown(est)
         self.assertIn("Test cost estimate", md)
-        self.assertIn("saucelabs", md)
+        self.assertIn("runner_a", md)
 
     def test_top_tests(self):
         est = estimate_runs(_runs(
-            ("expensive", "saucelabs", 1200),
-            ("cheap", "saucelabs", 60),
-        ))
+            ("expensive", "runner_a", 1200),
+            ("cheap", "runner_a", 60),
+        ), rate_cards=[RateCard("runner_a", 0.18)])
         md = estimate_markdown(est, top_tests=1)
         self.assertIn("expensive", md)
 
     def test_zero_top_tests(self):
-        est = estimate_runs(_runs(("t1", "saucelabs", 60)))
+        est = estimate_runs(_runs(("t1", "runner_a", 60)))
         md = estimate_markdown(est, top_tests=0)
         self.assertNotIn("costliest", md)
 
     def test_bad_top_tests(self):
-        est = estimate_runs(_runs(("t1", "saucelabs", 60)))
+        est = estimate_runs(_runs(("t1", "runner_a", 60)))
         with self.assertRaises(TestCostEstimatorError):
             estimate_markdown(est, top_tests=-1)
 
@@ -168,8 +168,8 @@ class TestDefaultCards(unittest.TestCase):
     def test_have_well_known_runners(self):
         names = {c.runner for c in DEFAULT_RATE_CARDS}
         self.assertIn("local", names)
-        self.assertIn("saucelabs", names)
-        self.assertIn("browserstack", names)
+        self.assertEqual(names, {"local"})
+        self.assertTrue(all(card.usd_per_minute == 0 for card in DEFAULT_RATE_CARDS))
 
 
 if __name__ == "__main__":

@@ -29,6 +29,18 @@ class HealingError(WebRunnerException):
     """Raised when no primary or fallback locator matches."""
 
 
+class AmbiguousLocatorError(HealingError):
+    """A candidate matches several actionable elements; no action is safe."""
+
+
+def _unique(elements: list[Any]) -> Any:
+    if len(elements) > 1:
+        raise AmbiguousLocatorError("locator matches multiple actionable elements")
+    if not elements:
+        raise HealingError("locator matches no actionable element")
+    return elements[0]
+
+
 class HealingRegistry:
     """In-memory store of fallback locators keyed by element name."""
 
@@ -88,14 +100,17 @@ def find_with_healing_selenium(name: str):
     last_error: Exception | None = None
     for strategy, value in candidates:
         try:
-            element = webdriver_wrapper_instance.current_webdriver.find_element(
+            elements = webdriver_wrapper_instance.current_webdriver.find_elements(
                 _by_for(strategy), value
             )
+            element = _unique([item for item in elements if item.is_displayed() and item.is_enabled()])
             web_runner_logger.info(
                 f"healing(selenium): {name!r} matched via {strategy}={value!r}"
             )
             web_element_wrapper.current_web_element = element
             return element
+        except AmbiguousLocatorError:
+            raise
         except Exception as error:
             last_error = error
     raise HealingError(
@@ -118,15 +133,16 @@ def find_with_healing_playwright(name: str):
         probe.test_object_type = strategy
         try:
             selector = test_object_to_selector(probe)
-            element = playwright_wrapper_instance.page.query_selector(selector)
-            if element is None:
-                last_error = HealingError(f"{strategy}={value!r} returned no element")
-                continue
+            locator = playwright_wrapper_instance.page.locator(selector)
+            elements = [locator.nth(index) for index in range(locator.count())]
+            element = _unique([item for item in elements if item.is_visible() and item.is_enabled()])
             web_runner_logger.info(
                 f"healing(playwright): {name!r} matched via {strategy}={value!r}"
             )
             playwright_element_wrapper.current_element = element
             return element
+        except AmbiguousLocatorError:
+            raise
         except Exception as error:
             last_error = error
     raise HealingError(

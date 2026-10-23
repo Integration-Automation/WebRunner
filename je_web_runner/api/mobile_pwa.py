@@ -1,8 +1,4 @@
 """Facade: Mobile and PWA: touch gestures, viewport, virtual keyboard, pull-to-refresh, real devices."""
-from je_web_runner.utils.device_cloud.real_device import (
-    DeviceCloudError, CloudCredentials, load_credentials, RealDeviceCaps, build_capabilities, CloudSession,
-    connect_real_device, fetch_session_info, update_session_status, session_summary_markdown,
-)
 from je_web_runner.utils.pull_to_refresh.refresh import (
     PullToRefreshError, PullToRefreshSnapshot, parse_snapshot as pull_to_refresh_parse_snapshot,
     assert_overscroll_contained, assert_threshold_sensible, RefreshEvent, assert_refresh_triggered,
@@ -21,9 +17,7 @@ from je_web_runner.utils.virtual_keyboard.keyboard import (
 )
 
 __all__ = [
-    "DeviceCloudError", "CloudCredentials", "load_credentials", "RealDeviceCaps", "build_capabilities",
-    "CloudSession", "connect_real_device", "fetch_session_info", "update_session_status",
-    "session_summary_markdown", "PullToRefreshError", "PullToRefreshSnapshot", "pull_to_refresh_parse_snapshot",
+    "PullToRefreshError", "PullToRefreshSnapshot", "pull_to_refresh_parse_snapshot",
     "assert_overscroll_contained", "assert_threshold_sensible", "RefreshEvent", "assert_refresh_triggered",
     "TouchGestureError", "Phase", "TouchPoint", "TouchFrame", "tap", "long_press", "swipe", "pinch",
     "RecordedTouch", "parse_touch_events", "assert_received", "assert_two_finger", "gesture_distance_px",

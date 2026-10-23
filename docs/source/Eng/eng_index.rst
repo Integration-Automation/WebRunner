@@ -151,7 +151,7 @@ exception hierarchy you will see in tracebacks.
 Chapter 9 — Integrations
 ========================
 
-CI annotations, JIRA / TestRail / Slack notifiers, IDE schema mappings,
+CI annotations, JIRA / Slack notifiers, IDE schema mappings,
 and the **Model Context Protocol (MCP)** server that lets Claude drive
 WebRunner.
 

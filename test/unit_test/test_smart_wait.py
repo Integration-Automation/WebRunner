@@ -44,7 +44,7 @@ class TestSpaRouteStable(unittest.TestCase):
         driver = MagicMock()
         # last_change=0, Date.now=10000 ⇒ 10s since change
         driver.execute_script.side_effect = [
-            None, None,  # hook installs
+            None, None, None, None,  # initial and per-poll hook installs
             0,           # __wrLastRouteChange
             10000,       # Date.now
         ]

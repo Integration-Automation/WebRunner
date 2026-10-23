@@ -49,7 +49,6 @@ from je_web_runner.utils.lighthouse import lighthouse_runner as _lighthouse
 from je_web_runner.utils.web_vitals import vitals as _web_vitals
 from je_web_runner.utils.load_test import locust_wrapper as _locust
 from je_web_runner.utils.test_management import jira_client as _jira
-from je_web_runner.utils.test_management import testrail_client as _testrail
 from je_web_runner.utils.run_ledger import flaky as _flaky
 from je_web_runner.utils.run_ledger import ledger as _ledger
 from je_web_runner.utils.run_ledger import classifier as _classifier
@@ -582,21 +581,12 @@ COMMANDS: dict[str, Any] = {
         "WR_run_ab": _ab.run_ab,
         "WR_diff_ab_records": _ab.diff_records,
 
-        # cloud grid (BrowserStack / Sauce Labs / LambdaTest)
-        "WR_browserstack_capabilities": _cloud.build_browserstack_capabilities,
-        "WR_saucelabs_capabilities": _cloud.build_saucelabs_capabilities,
-        "WR_lambdatest_capabilities": _cloud.build_lambdatest_capabilities,
-        "WR_connect_browserstack": _cloud.connect_browserstack,
-        "WR_connect_saucelabs": _cloud.connect_saucelabs,
-        "WR_connect_lambdatest": _cloud.connect_lambdatest,
+        # Self-hosted Selenium Grid
         "WR_start_remote_driver": _cloud.start_remote_driver,
 
-        # JIRA / TestRail integration
+        # JIRA integration
         "WR_jira_create_issue": _jira.jira_create_issue,
         "WR_jira_create_failure_issues": _jira.jira_create_failure_issues,
-        "WR_testrail_send_results": _testrail.testrail_send_results,
-        "WR_testrail_results_from_pairs": _testrail.testrail_results_from_pairs,
-        "WR_testrail_close_run": _testrail.testrail_close_run,
 
         # GitHub Actions annotations
         "WR_gh_format_error": _gh_annotations.format_error_annotation,

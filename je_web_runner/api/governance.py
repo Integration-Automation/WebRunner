@@ -89,9 +89,6 @@ from je_web_runner.utils.test_dup_dry.dedup import (
 from je_web_runner.utils.test_management.jira_client import (
     JiraError, jira_create_issue, jira_create_failure_issues,
 )
-from je_web_runner.utils.test_management.testrail_client import (
-    TestRailError, testrail_send_results, testrail_results_from_pairs, testrail_close_run,
-)
 from je_web_runner.utils.test_naming_lint.lint import (
     NamingLintError, Convention, NamingFinding, lint_test_name, lint_many, assert_clean,
 )
@@ -143,8 +140,7 @@ __all__ = [
     "test_debt_dashboard_parse_codeowners", "scan_python_file", "scan_action_json", "scan_directory",
     "assert_under_age_limit", "test_debt_dashboard_report_markdown", "DupDryError", "DupSpec", "DuplicateGroup",
     "find_duplicates", "PrefixOverlap", "find_prefix_overlap", "assert_no_duplicates", "JiraError",
-    "jira_create_issue", "jira_create_failure_issues", "TestRailError", "testrail_send_results",
-    "testrail_results_from_pairs", "testrail_close_run", "NamingLintError", "Convention", "NamingFinding",
+    "jira_create_issue", "jira_create_failure_issues", "NamingLintError", "Convention", "NamingFinding",
     "lint_test_name", "lint_many", "assert_clean", "TestOwnersMapError", "TestOwnersMapCodeownersRule",
     "OwnersFile", "test_owners_map_parse_codeowners", "load_codeowners_file", "OwnersMap", "load_overrides",
     "OwnerAudit", "audit_unowned", "assert_no_unowned", "audit_markdown", "RoiScorerError", "RoiMetrics",

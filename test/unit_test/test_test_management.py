@@ -6,16 +6,6 @@ from je_web_runner.utils.test_management.jira_client import (
     jira_create_failure_issues,
     jira_create_issue,
 )
-from je_web_runner.utils.test_management.testrail_client import TestRailError
-from je_web_runner.utils.test_management.testrail_client import (
-    testrail_close_run as _close_run,
-)
-from je_web_runner.utils.test_management.testrail_client import (
-    testrail_results_from_pairs as _results_from_pairs,
-)
-from je_web_runner.utils.test_management.testrail_client import (
-    testrail_send_results as _send_results,
-)
 from je_web_runner.utils.test_record.test_record_class import (
     record_action_to_list,
     test_record_instance,
@@ -79,43 +69,6 @@ class TestJiraCreateFailureIssues(unittest.TestCase):
             )
             self.assertEqual(len(issues), 2)
             self.assertEqual(post_mock.call_count, 2)
-
-
-class TestTestRail(unittest.TestCase):
-
-    def test_send_results_invalid_url(self):
-        with self.assertRaises(TestRailError):
-            _send_results("ftp://x", "u", "k", 1, [])  # NOSONAR — fixture, asserts the validator rejects it
-
-    def test_send_results_posts_payload(self):
-        response = MagicMock(status_code=200, text="ok")
-        response.json.return_value = []
-        with patch("je_web_runner.utils.test_management.testrail_client.requests.post",
-                   return_value=response) as post_mock:
-            _send_results(
-                "https://example.testrail.io", "user", "key", 7, [{"case_id": 1, "status_id": 1}],
-            )
-            url = post_mock.call_args.args[0]
-            self.assertIn("/api/v2/add_results_for_cases/7", url)
-
-    def test_results_from_pairs_maps_status(self):
-        out = _results_from_pairs([
-            {"case_id": 1, "passed": True},
-            {"case_id": 2, "passed": False, "comment": "boom"},
-            {"passed": True},  # skipped — no case_id
-        ])
-        self.assertEqual(out, [
-            {"case_id": 1, "status_id": 1},
-            {"case_id": 2, "status_id": 5, "comment": "boom"},
-        ])
-
-    def test_close_run(self):
-        response = MagicMock(status_code=200, text="ok")
-        response.json.return_value = {"id": 7, "is_completed": True}
-        with patch("je_web_runner.utils.test_management.testrail_client.requests.post",
-                   return_value=response) as post_mock:
-            _close_run("https://example.testrail.io", "u", "k", 7)
-            self.assertIn("/api/v2/close_run/7", post_mock.call_args.args[0])
 
 
 if __name__ == "__main__":
