@@ -1,7 +1,7 @@
 # WebRunner Architecture
 
 > Short overview for people and agents.
-> Last verified: 2026-10-11 against the dev-to-main release review.
+> Last verified: 2026-10-24 on feat/managed-browser-sessions (managed SDK contracts).
 
 ## 1. Purpose
 
@@ -268,3 +268,5 @@ Cross-project contract: AutoControlGUI managed browser adapters use these WebRun
 AutoControlGUI consumer binding: feature branch feat/agent-task-runtime at 1f9c79a8 uses root/AI ManagedBrowserSession and AgentAction inside its owned helper, exact profile/task origins and observation-local DOM indexes. Fake Chromium source-to-source tests exercise the real SDK lifecycle, helper cleanup ACK and hung-effect retirement without installing into shared environments or launching a browser. Reviewed transfers and native acceptance remain open.
 
 ManagedBrowserSession.contract_version=1 identifies complete bounded readback. Fixed DOM text/value scripts reject results beyond 8,000 UTF-16 code units before IPC; the Python boundary rechecks length and Unicode validity. No substring is returned for exact comparison. Fill/select reject unsupported values before effect. Text reads refuse marked secret ancestry/descendants; observation previews remain independently bounded. An installed Node executes the fixed scripts with synthetic element objects in unit tests, with no browser/DOM/network process. AutoControl browser compiler consumer is at 988bcbef; reviewed transfers and native acceptance remain open.
+
+Managed transfer contract version 1 delegates bounded downloads to `_browser_download.py` and byte-only file inputs to `_browser_upload.py`. TLS validation and each redirect use the retained transport owner and origin policy; no filesystem publication is accepted in the SDK. AutoControl owns rooted file grants and publication. Browser-triggered downloads/file pickers remain blocked; explicit methods are the only transfer seam.

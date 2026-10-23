@@ -89,9 +89,8 @@ class ScopedBrowserProxy:
     def open_upstream(self, url: str) -> socket.socket:
         """Connect once to a reviewed origin and fence late resolution against retirement."""
         self._policy.require(url)
-        with self._lock:
-            if self._retired or self._server is None:
-                raise AgentError("browser proxy is not active")
+        self.require_active()
+
         parsed = urlsplit(url)
         port = parsed.port if parsed.port is not None else (443 if parsed.scheme == "https" else 80)
         connection = _connect(str(parsed.hostname), port)
@@ -101,6 +100,12 @@ class ScopedBrowserProxy:
         except BaseException:
             _close_socket(connection)
             raise
+
+    def require_active(self) -> None:
+        """Fence new work and buffered data as soon as retirement begins."""
+        with self._lock:
+            if self._retired or self._server is None:
+                raise AgentError("browser proxy is not active")
 
     def retain_socket(self, connection: socket.socket) -> None:
         """Register only a socket explicitly opened or accepted for this owner."""

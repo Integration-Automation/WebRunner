@@ -63,3 +63,15 @@ def test_text_readback_refuses_marked_secret_ancestor_or_descendant(changes):
 
 def test_managed_sdk_publishes_exact_readback_contract_version_without_launch():
     assert module.ManagedBrowserSession.contract_version == 1
+
+
+@pytest.mark.parametrize("changes", [{"tagName": "DIV"}, {"secret": True}, {"href": "x" * 4097}],
+                         ids=["not-link", "secret", "over-limit"])
+def test_link_script_refuses_unsupported_elements_without_prefix_truncation(changes):
+    values = {"tagName": "A", "href": "https://allowed.test/file", **changes}
+    assert read_script("link", **values) is None
+
+
+def test_link_script_returns_complete_href():
+    url = "https://allowed.test/file?version=1#download"
+    assert read_script("link", tagName="A", href=url) == url

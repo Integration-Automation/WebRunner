@@ -1,4 +1,5 @@
 """Managed lifecycle and pre-page guards with fake Playwright; never launch a browser."""
+from contextlib import contextmanager
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -199,6 +200,26 @@ def test_overlimit_fill_is_refused_before_effect(opened):
     page.locator.assert_not_called()
 
 
+def test_managed_link_is_scoped_and_transfer_marker_is_explicit(opened):
+    instance, _, _, _, _, _, _ = opened
+    assert instance.transfer_contract_version == 1
+    with patch.object(instance._session, "_find") as find:
+        find.return_value.evaluate.return_value = "https://allowed.test/report"
+        assert instance.link("#report") == "https://allowed.test/report"
+        find.return_value.evaluate.return_value = "https://outside.test/report"
+        with pytest.raises(Exception, match="outside allowed origins"):
+            instance.link("#outside")
+
+
+def test_managed_upload_uses_owned_session_and_reads_back_metadata(opened):
+    instance, _, _, _, page, _, _ = opened
+    page.url = "https://allowed.test/form"
+    with patch.object(instance._session, "_find") as find:
+        find.return_value.evaluate.side_effect = [True, [{"name": "report.bin", "size": 4}]]
+        assert instance.upload("#file", b"data", "report.bin")["bytes"] == 4
+        find.return_value.set_input_files.assert_called_once()
+
+
 def test_close_network_before_owned_browser_and_idempotent(opened):
     instance, runtime, browser, _, _, _, _ = opened
     browser.close.side_effect = lambda: instance._proxy.closed or pytest.fail("network still active")
@@ -281,3 +302,31 @@ def test_observe_is_memory_only_and_retired_constructor_cannot_enter(opened):
     finally:
         inactive.close()
     assert inactive.closed
+
+
+def test_managed_download_uses_owned_transport_and_url_filtered_cookies(opened):
+    instance, _, _, context, page, _, _ = opened
+    page.url = "https://allowed.test/form"
+    response = MagicMock()
+    context.cookies.return_value = [{"name": "session", "value": "private"}]
+
+    @contextmanager
+    def download(proxy, url, cookies, timeout):
+        assert proxy is instance._proxy
+        assert url == "https://allowed.test/file"
+        assert cookies(url) == context.cookies.return_value
+        assert timeout > 0
+        yield response
+
+    with patch("je_web_runner.utils.agent.managed_browser.download_response", side_effect=download):
+        with instance.open_download("https://allowed.test/file") as result:
+            assert result is response
+    context.cookies.assert_called_once_with(["https://allowed.test/file"])
+
+
+def test_managed_download_refuses_blank_page_before_reading_cookies(opened):
+    instance, _, _, context, _, _, _ = opened
+    with pytest.raises(ManagedBrowserError):
+        with instance.open_download("https://allowed.test/file"):
+            pytest.fail("blank page yielded a transfer")
+    context.cookies.assert_not_called()

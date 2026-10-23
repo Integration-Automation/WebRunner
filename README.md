@@ -1,5 +1,13 @@
 # WebRunner
 
+Managed transfer contract version 1 adds explicit `link`, `open_download` and `upload` methods.
+Links and every download redirect must remain within the immutable origin grant. Downloads reuse
+URL-filtered browser cookies through owned sockets, validate TLS certificates and hostnames, allow
+at most five redirects and 16 MiB, and fail on truncation, deadline or retirement. Uploads accept
+immutable bytes up to 4 MiB and a plain filename, then independently check file-input name/size.
+No method accepts a filesystem path or submits a form. AutoControl rooted publication/grants,
+deployment and real browser acceptance remain tracked in progress.md #22; acceptance pauses remain.
+
 Managed browser readback contract version 1 returns complete text/value strings up to 8,000 UTF-16
 code units. Larger or invalid Unicode values are refused before transport/publication, never truncated
 into an apparently equal prefix. Fill/select values beyond that limit are refused before effect.

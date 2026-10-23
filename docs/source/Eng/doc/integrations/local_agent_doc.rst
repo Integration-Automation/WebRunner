@@ -176,3 +176,14 @@ Password/file/hidden/secret form controls and marked secret text ancestors/desce
 Semantic observations remain bounded previews; use explicit readback for exact completion evidence.
 AutoControl browser form/transfer compilation is available on its isolated feature branch; reviewed
 file transfers, deployment and real application/browser acceptance remain separate open work.
+
+Explicit managed transfers
+------------------------------------------------------------
+
+Managed transfer contract version 1 adds explicit ``link``, ``open_download`` and ``upload`` methods.
+Links and every download redirect must remain within the immutable origin grant. Downloads reuse
+URL-filtered browser cookies through owned sockets, validate TLS certificates and hostnames, allow
+at most five redirects and 16 MiB, and fail on truncation, deadline or retirement. Uploads accept
+immutable bytes up to 4 MiB and a plain filename, then independently check file-input name/size.
+No method accepts a filesystem path or submits a form. AutoControl rooted publication/grants,
+deployment and real browser acceptance remain tracked in progress.md #22; acceptance pauses remain.

@@ -11,6 +11,8 @@ from je_web_runner.utils.agent.network_policy import BrowserOriginPolicy
 from je_web_runner.utils.agent.scoped_proxy import ScopedBrowserProxy
 from je_web_runner.utils.agent.types import AgentAction, positive
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
+from je_web_runner.utils.agent._browser_download import BrowserDownload, download_response
+from je_web_runner.utils.agent._browser_upload import upload_bytes
 
 _READ_VALUE = """element => {
   const tag = element.tagName.toLowerCase();
@@ -28,6 +30,12 @@ _READ_TEXT = """element => {
   return typeof value === 'string' && value.length <= 8000 ? value : null;
 }"""
 
+_READ_LINK = """element => {
+  if (!['A','AREA'].includes(element.tagName) || element.closest('[data-secret]')) return null;
+  const value = element.href;
+  return typeof value === 'string' && value.length <= 4096 ? value : null;
+}"""
+
 
 def _readback(value: Any, reason: str) -> str:
     if not isinstance(value, str) or len(value) > 8000:
@@ -43,12 +51,14 @@ def _readback(value: Any, reason: str) -> str:
 class ManagedBrowserSession:
     """One host-thread owned headless browser; explicit close or context management is required.
 
-    Only installed Playwright/Chromium are used. There is no download, CDP attachment,
-    persistent profile, caller script, executable path or launch-argument interface.
+    Only installed Playwright/Chromium are used. Explicit bounded transfers accept
+    no filesystem paths. There is no CDP attachment, persistent profile, caller
+    script, executable path or launch-argument interface.
     This is an HTTP(S) automation boundary, not an operating-system sandbox.
     """
 
     contract_version = 1
+    transfer_contract_version = 1
 
     def __init__(self, policy: BrowserOriginPolicy) -> None:
         self._proxy = ScopedBrowserProxy(policy)
@@ -148,6 +158,31 @@ class ManagedBrowserSession:
     def read_value(self, selector: str, frame: str = "") -> str:
         """Explicit bounded form readback; password, file, hidden and secret controls are refused."""
         return self._read(selector, frame, _READ_VALUE, "value_readback_refused")
+
+    def link(self, selector: str, frame: str = "") -> str:
+        """Read one complete HTTP(S) link only within this immutable origin grant."""
+        result = self._read(selector, frame, _READ_LINK, "link_readback_refused")
+        self.policy.require(result)
+        return result
+
+    @contextmanager
+    def open_download(self, url: str) -> Iterator[BrowserDownload]:
+        """Read an approved URL with URL-scoped browser cookies; the caller owns rooted file publication."""
+        self.policy.require(url)
+        with self._operation(uncertain=True) as session:
+            self.policy.require(session.url)
+
+            def cookies(target: str) -> list[dict]:
+                return self._owner.context.cookies([target])
+
+            with download_response(self._proxy, url, cookies, session.timeout) as response:
+                yield response
+
+    def upload(self, selector: str, contents: bytes, name: str, frame: str = "") -> dict[str, Any]:
+        """Set explicit bounded bytes on one owned file input and independently check its metadata."""
+        with self._operation(uncertain=True) as session:
+            self.policy.require(session.url)
+            return upload_bytes(session, selector, contents, name, frame)
 
     def _read(self, selector: str, frame: str, script: str, reason: str) -> str:
         with self._operation() as session:
