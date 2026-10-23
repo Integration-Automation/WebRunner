@@ -7,6 +7,7 @@ from typing import Any, Callable
 
 from je_web_runner.utils.agent.runner import Redactor, browser_privacy
 from je_web_runner.utils.issue_worker.planner import CodeAction, CodingPlanner
+from je_web_runner.utils.issue_worker.requirements import RequirementAnalyzer, RequirementPlan, criterion_evidence
 from je_web_runner.utils.issue_worker.sandbox import PodmanSandbox
 from je_web_runner.utils.issue_worker.types import EnvironmentUnavailable, IssueWorkerConfig, IssueWorkerError
 from je_web_runner.utils.issue_worker.workspace import IssueWorkspace
@@ -15,10 +16,13 @@ from je_web_runner.utils.issue_worker.workspace import IssueWorkspace
 class CodeProcessor:
     """Tool-limited coding, resumable checks and deterministic publication readiness."""
 
-    def __init__(self, config: IssueWorkerConfig, planner: Any = None, sandbox: Any = None) -> None:
+    def __init__(self, config: IssueWorkerConfig, planner: Any = None, sandbox: Any = None,
+                 analyzer: Any = None, browser_validator: Any = None) -> None:
         self.config = config
         self.planner = planner or CodingPlanner(config.model, config.ollama_url, IssueWorkerError)
         self.sandbox = sandbox or PodmanSandbox(config)
+        self.analyzer = analyzer or RequirementAnalyzer(config, self.planner)
+        self.browser_validator = browser_validator
 
     def close(self) -> None:
         """Close local inference connections."""
@@ -43,11 +47,31 @@ class CodeProcessor:
         data.setdefault("checks", {})
         checkpoint("analyzing", data)
         with browser_privacy():
+            if self.config.requirements_enabled and not self._analyze(job, data, checkpoint, redactor):
+                return "needs_info"
             if "baseline" not in data:
                 name = "unit" if "unit" in self.config.checks else next(iter(self.config.checks))
                 data["baseline"] = redactor.clean(self.sandbox.check(workspace, name, self._remaining(data)))
                 checkpoint("analyzing", data)
             return self._loop(job, workspace, checkpoint, redactor)
+
+    def _analyze(self, job: dict[str, Any], data: dict[str, Any], checkpoint: Callable,
+                 redactor: Redactor) -> bool:
+        if "analysis" not in data:
+            if data["tool_count"] >= self.config.max_tools:
+                raise IssueWorkerError("requirement analysis exceeded the tool budget")
+            data["tool_count"] += 1
+            checkpoint("analyzing", data)
+            data["analysis"] = redactor.clean(self.analyzer.analyze(
+                job["snapshot"], data.get("review", {}).get("feedback", []), min(120, self._remaining(data))))
+            self._remaining(data)
+            checkpoint("analyzing", data)
+        RequirementPlan.parse({key: data["analysis"].get(key) for key in
+                               ("summary", "kind", "criteria", "questions")}, self.config)
+        if data["analysis"]["questions"]:
+            data["reason"] = "\n".join(data["analysis"]["questions"])
+            return False
+        return True
 
     def recover(self) -> None:
         """Reap this state's interrupted containers only while the coordinator owns its job lease."""
@@ -113,6 +137,8 @@ class CodeProcessor:
             "history": job["data"]["history"][-12:], "checks": job["data"]["checks"],
             "baseline": job["data"]["baseline"],
             "review_feedback": job["data"].get("review", {}).get("feedback", []),
+            "acceptance_plan": job["data"].get("analysis"),
+            "browser_checks": job["data"].get("browser_checks", {}),
         })
 
     def _tool(self, action: CodeAction, workspace: IssueWorkspace, data: dict[str, Any],
@@ -161,6 +187,10 @@ class CodeProcessor:
         self._remaining(data)
         passed = all(data["checks"][name].get("passed") and data["checks"][name].get("tree") == tree
                      for name in self.config.checks)
+        passed = self._browser_checks(workspace, data, tree, checkpoint, redactor) and passed
+        self._remaining(data)
+        if data.get("analysis"):
+            data["acceptance"] = {"tree": tree, "criteria": criterion_evidence(data["analysis"], data, tree)}
         if passed:
             data["validated_tree"] = tree
             data["phase"] = "ready"
@@ -171,3 +201,21 @@ class CodeProcessor:
             data["phase"] = "fixing"
             checkpoint("fixing", data)
         return passed
+
+    def _browser_checks(self, workspace: IssueWorkspace, data: dict[str, Any], tree: str,
+                        checkpoint: Callable, redactor: Redactor) -> bool:
+        if not self.config.browser_scenarios:
+            return True
+        if self.browser_validator is None:
+            from je_web_runner.utils.issue_worker.browser_acceptance import BrowserAcceptance
+            self.browser_validator = BrowserAcceptance(self.config)
+        checks = data.setdefault("browser_checks", {})
+        for name in self.config.browser_scenarios:
+            previous = checks.get(name, {})
+            signature = self.browser_validator.signature(name)
+            if previous.get("tree") != tree or not previous.get("passed") or previous.get("signature") != signature:
+                checks[name] = redactor.clean(self.browser_validator.check(workspace, name, self._remaining(data)))
+                checkpoint("validating", data)
+        return all(checks[name].get("passed") is True and checks[name].get("tree") == tree and
+                   checks[name].get("signature") == self.browser_validator.signature(name)
+                   for name in self.config.browser_scenarios)

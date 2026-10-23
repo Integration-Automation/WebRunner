@@ -1742,6 +1742,8 @@ Before activation, run `doctor --config issue-worker.json`; add `--platform` for
 
 Set `review_enabled=true` (enabled in the example) to revise the same PR from trusted human reviews or current-head failed checks. Feedback is deduplicated in SQLite; each round uses a separate worktree and full validation, fast-forwards without force, and posts evidence on the original PR. Defaults: 60-second review polling and three rounds. External head/base changes stop automation; no duplicate PR, merge or issue close is performed. Use `retry-review --config FILE --issue KEY` after manual clarification to resume the same PR within host limits.
 
+Enable `requirements_enabled` to analyze acceptance criteria before coding and stop for clarification when needed. Criteria reference host checks or explicit manual review. Optional host-owned `browser_scenarios` run mandatory fixed-step browser agents in offline Podman, with trusted verifier code mounted separately from edited source. Evidence is bound to the published tree and verifier/scenario signatures; passing checks do not replace business review. See `examples/issue-worker-browser.example.json`.
+
 ## CLI Usage
 
 ```bash

@@ -4,6 +4,7 @@ from je_web_runner.utils.issue_worker.store import IssueStore
 from je_web_runner.utils.issue_worker.inbox import IssueInbox
 from je_web_runner.utils.issue_worker.worker import IssueWorker
 from je_web_runner.utils.issue_worker.doctor import IssueDoctor
+from je_web_runner.utils.issue_worker.requirements import AcceptanceCriterion, RequirementPlan
 
 __all__ = ["IssueSnapshot", "IssueWorkerConfig", "IssueWorkerError", "IssueStore", "IssueInbox", "IssueWorker",
-           "IssueDoctor"]
+           "IssueDoctor", "AcceptanceCriterion", "RequirementPlan"]

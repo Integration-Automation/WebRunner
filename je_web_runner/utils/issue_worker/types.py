@@ -119,12 +119,18 @@ class IssueWorkerConfig:
     review_enabled: bool = False
     max_review_rounds: int = 3
     review_poll_seconds: float = 60
+    requirements_enabled: bool = False
+    browser_scenarios: dict[str, dict[str, Any]] = field(default_factory=dict)
     checks: dict[str, list[str]] = field(default_factory=lambda: {key: list(value) for key, value in CHECKS.items()})
 
     def __post_init__(self) -> None:
         self._validate_identity()
         self._validate_limits()
         self._validate_checks()
+        if not isinstance(self.requirements_enabled, bool):
+            raise IssueWorkerError("requirements_enabled must be a boolean")
+        from je_web_runner.utils.issue_worker.browser_contract import validate_scenarios
+        validate_scenarios(self.browser_scenarios)
 
     def _validate_identity(self) -> None:
         for value in (self.state_dir, self.model, self.github_bot, self.image):

@@ -1730,6 +1730,8 @@ python -m je_web_runner.issue_worker retry --config issue-worker.json --issue gi
 
 設定 `review_enabled=true`（範例已啟用），可依有寫入權限人員的審查或目前 head 的失敗檢查修正原 PR。SQLite 去重回饋，每輪獨立 worktree 並重新完整驗證，以非 force 更新原分支、在原 PR 留下證據。預設每 60 秒輪詢、最多三輪；人工改動 head 或 dev 前進時停止，不重開 PR、不合併、不關閉 issue。 人工補充後可用 `retry-review --config FILE --issue KEY` 在主機限制內接續同一 PR。
 
+啟用 `requirements_enabled` 可在編碼前整理驗收條件，需求不明時先提問。條件引用主機具名檢查或明列人工驗收。選用的主機 `browser_scenarios` 會在離線 Podman 執行強制瀏覽器驗收，可信驗證器與修改中原始碼分開掛載；證據綁定發布 tree 與情境／驗證器摘要。檢查通過仍須業務審查，範例見 `examples/issue-worker-browser.example.json`。
+
 ## CLI 用法
 
 ```bash

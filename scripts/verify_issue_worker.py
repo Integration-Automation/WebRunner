@@ -28,6 +28,7 @@ def main() -> int:
         selected = "(" + selected + ") and not soak"
     command = [sys.executable, "-m", "pytest", "test/integration_test/test_issue_pipeline.py",
                "test/unit_test/test_issue_coding.py", "-q", "-s",
+               "test/unit_test/test_issue_acceptance.py",
                "-k", selected, "--tb=short"]
     completed = subprocess.run(command, cwd=Path(__file__).resolve().parent.parent,  # nosec B603
                                env=environment, check=False)

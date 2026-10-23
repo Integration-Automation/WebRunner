@@ -263,3 +263,44 @@ accepts refreshed source requirements, retains the same run/PR and requeues unfi
 feedback. It still rejects external heads, closed PRs, pending reports and host round
 exhaustion. It performs no platform writes. Exhausted rounds require an explicit
 host configuration increase; the model cannot remove the limit.
+
+Requirement analysis and browser acceptance
+------------------------------------------------------------
+
+Set ``requirements_enabled=true`` to use the same local model for a summary, task
+kind, C1/C2 acceptance criteria and concrete clarification questions before coding.
+Legacy configs default to disabled; examples explicitly enable it. Analysis consumes
+one tool operation, allows one malformed-response correction, and questions stop
+with needs_info before baseline execution or patching. Criteria may reference only
+host-owned check/browser names, or explicitly require manual review. Models cannot
+supply commands, URLs, privileges or their own pass flags.
+
+Plans support 20 criteria of up to 1,000 characters, plus 20 questions of 500
+characters. Analysis versions bind source requirements and revision feedback; final
+evidence binds the published git tree. ``AcceptanceCriterion``/``RequirementPlan``
+are exported by api.orchestration. PR evidence reports criterion/name/tree/outcome.
+evidence_passed means supporting host checks passed, not complete business proof;
+business_verified remains false and human review is required.
+
+See ``examples/issue-worker-browser.example.json``. Host-owned browser_scenarios
+provide server argv, port and a fixed-step TaskSpec (up to ten scenarios, 64 KB each).
+Every configured scenario is mandatory, even if the model does not reference it.
+The application runs inside the offline container against read-only /work, never
+a host shell. URLs use only that container's http://127.0.0.1:port (1024–65535).
+Tasks are headless steps without environment secrets, bounded to 100 steps, 20
+assertions, 120 seconds and 15 seconds per operation, within the worker's overall
+deadline/output limits.
+
+Trusted verifier code is snapshotted and mounted read-only at /trusted, separately
+from edited /work and a read-only manifest. Application children do not inherit
+the verifier import path. The Linux entry disables dumpability before starting the
+application to block access to verifier memory and /proc output handles; failure
+stops validation. Server output is not evidence. Servers/containers are cleaned up;
+only redacted condition kinds/selectors and step/assertion counts are returned.
+Real Podman acceptance is still required; host browser tests do not prove isolation.
+
+Browser evidence binds tree, host scenario and trusted source digest. Changed
+content/settings cannot reuse old evidence. The publisher rechecks all mandatory
+checks/scenarios and condition counts; model finish cannot bypass them. The required
+real local acceptance entry point includes the real browser container test and
+fails when prerequisites are unavailable.

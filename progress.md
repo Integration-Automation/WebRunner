@@ -10,5 +10,4 @@ Cross-repo and workspace items live in `D:\Codes\progress.md` (relevant here: X-
 
 - **#21** [UNVERIFIED] Real local issue-worker acceptance in `scripts/verify_issue_worker.py`: install/configure Podman, its worker image and an Ollama local model, then run both-source end-to-end checks and the full 24-hour soak. This environment has neither Podman nor Ollama on PATH; fixture/process/Windows task tests do not substitute for that acceptance.
 
-- **#22** Roadmap stage 3: add issue requirement analysis, explicit acceptance criteria and browser-agent validation with evidence bound to the reviewed tree.
 - **#23** Roadmap stage 4: add task classification/priority, historical outcome metrics and failure explanations for intake quality and observability.

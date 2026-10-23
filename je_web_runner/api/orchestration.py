@@ -44,10 +44,12 @@ from je_web_runner.utils.testcontainers_integration.containers import (
 
 from je_web_runner.utils.issue_worker import (
     IssueSnapshot, IssueWorkerConfig, IssueWorkerError, IssueStore, IssueInbox, IssueWorker, IssueDoctor,
+    AcceptanceCriterion, RequirementPlan,
 )
 
 __all__ = [
     "IssueSnapshot", "IssueWorkerConfig", "IssueWorkerError", "IssueStore", "IssueInbox", "IssueWorker", "IssueDoctor",
+    "AcceptanceCriterion", "RequirementPlan",
     "AsyncCommandError", "AsyncExecutor", "async_execute_action", "async_execute_many", "run_action_lists",
     "AsyncBrowserPool", "AsyncSession", "AsyncSessionError",
     "ABRunError", "diff_records", "run_ab", "ChaosHooksError", "ChaosFaultType", "ChaosEvent", "ChaosPlan",

@@ -56,6 +56,9 @@ class FixtureAPI:
         self.refs = {}
         self.prs = []
         self.model_calls = 0
+        self.coding_calls = 0
+        self.requirement_reply = {"summary": "Fix return value", "kind": "bug", "questions": [], "criteria": [
+            {"id": "C1", "description": "value() returns two", "checks": ["unit"], "browser": [], "manual": False}]}
         self.lose_pr_reply = False
         self.pr_posts = 0
         self.checks = []
@@ -119,12 +122,15 @@ class FixtureAPI:
 
     def mutate(self, method, path, data):
         if path == "/api/chat":
-            action = {"kind": "patch", "text": _PATCH} if self.model_calls == 0 else {
+            self.model_calls += 1
+            if "criteria" in data.get("format", {}).get("properties", {}):
+                return 200, {"message": {"content": json.dumps(self.requirement_reply)}}
+            action = {"kind": "patch", "text": _PATCH} if self.coding_calls == 0 else {
                 "kind": "finish", "summary": "Corrected value(); baseline failed and final tests passed.",
             }
             if self.model_actions is not None:
-                action = self.model_actions[self.model_calls]
-            self.model_calls += 1
+                action = self.model_actions[self.coding_calls]
+            self.coding_calls += 1
             return 200, {"message": {"content": json.dumps(action)}}
         if path == "/rest/api/3/search/jql":
             rows = [{"key": "WR-12"}] if self.source == "jira" and not self.owner else []
@@ -249,6 +255,7 @@ def pipeline(tmp_path, request, monkeypatch):
         config.model, config.image = os.environ["WEBRUNNER_ISSUE_MODEL"], os.environ["WEBRUNNER_ISSUE_IMAGE"]
         config.ollama_url = os.environ.get("WEBRUNNER_ISSUE_OLLAMA_URL", "http://127.0.0.1:11434")
         config.timeout, config.max_tools = 600, 20
+        config.requirements_enabled = True
     sandbox = RecordingPodmanSandbox(config, api) if real else FixtureSandbox(api)
     processor = CodeProcessor(config, sandbox=sandbox)
     worker = IssueWorker(config, processor=processor,
@@ -546,3 +553,28 @@ def test_review_updates_original_pr_with_real_git_and_tests_and_recovers_lost_re
     assert "return 1" in (original / "je_web_runner/calc.py").read_text()
     assert worker.run_once()["status"] == "idle"
     assert api.model_calls == 4
+
+
+@pytest.mark.parametrize("pipeline", ["github", "jira"], indirect=True)
+def test_requirement_analysis_produces_tree_bound_evidence_in_the_pr(pipeline):
+    worker, api, _original = pipeline
+    worker.config.requirements_enabled = True
+    result = worker.run_once()
+    assert result["status"] == "awaiting_review", result
+    evidence = result["data"]["acceptance"]
+    assert evidence["tree"] == result["data"]["validated_tree"]
+    assert evidence["criteria"][0]["status"] == "evidence_passed"
+    assert '"business_verified": false' in api.prs[0]["body"]
+    assert api.model_calls == 3 and api.coding_calls == 2
+
+
+def test_requirement_questions_reach_source_without_coding_or_pr(pipeline):
+    worker, api, original = pipeline
+    worker.config.requirements_enabled = True
+    api.requirement_reply["criteria"] = []
+    api.requirement_reply["questions"] = ["Which return value is correct?"]
+    result = worker.run_once()
+    assert result["status"] == "needs_info", result
+    assert api.coding_calls == 0 and api.pr_posts == 0
+    assert "Which return" in api.comments[0]["body"]
+    assert "return 1" in (original / "je_web_runner/calc.py").read_text()

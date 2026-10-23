@@ -2,12 +2,16 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import json
 import time
 from typing import Any, Callable
 from urllib.parse import quote
 
 from je_web_runner.utils.issue_worker.providers import GitHubIssues
 from je_web_runner.utils.issue_worker.reviews import owned_pr
+from je_web_runner.utils.issue_worker.requirements import (
+    RequirementPlan, criterion_evidence, requirement_revision,
+)
 from je_web_runner.utils.issue_worker.types import IssueWorkerError, ProviderError
 from je_web_runner.utils.issue_worker.workspace import IssueWorkspace, git_run
 
@@ -31,10 +35,10 @@ class GitHubPublisher:
         data = job["data"]
         branch = data.setdefault("branch", "automation/" + job["key"].replace(":", "-") + f"-r{job['run']}")
         checkpoint("publishing", data)
+        self._validate_workspace(workspace, job)
         existing = self._existing(branch, job)
         if existing:
             return existing
-        self._validate_workspace(workspace, job)
         self.preflight()
         current_base = self.client.request("GET", self.prefix + "/git/ref/heads/" + self.config.base_branch)
         if current_base["object"]["sha"] != workspace.base_sha:
@@ -81,6 +85,34 @@ class GitHubPublisher:
         if not all(data.get("checks", {}).get(name, {}).get("passed") and
                    data["checks"][name].get("tree") == data["validated_tree"] for name in self.config.checks):
             raise IssueWorkerError("required check results do not match the publication tree")
+        self._validate_acceptance(job)
+
+    def _validate_acceptance(self, job: dict[str, Any]) -> None:
+        data = job["data"]
+        tree = data["validated_tree"]
+        if self.config.requirements_enabled:
+            analysis = data.get("analysis", {})
+            RequirementPlan.parse({key: analysis.get(key) for key in
+                                   ("summary", "kind", "criteria", "questions")}, self.config)
+            expected = requirement_revision(job["snapshot"], data.get("review", {}).get("feedback", []))
+            if not analysis.get("criteria") or analysis.get("questions") or analysis.get("revision") != expected:
+                raise IssueWorkerError("publication requires a complete acceptance plan and matching evidence")
+            evidence = {"tree": tree, "criteria": criterion_evidence(analysis, data, tree)}
+            if data.get("acceptance") != evidence or any(row["status"] == "failed" for row in evidence["criteria"]):
+                raise IssueWorkerError("acceptance evidence does not match the validated tree")
+        if not self.config.browser_scenarios:
+            return
+        from je_web_runner.utils.issue_worker.browser_acceptance import BrowserAcceptance
+        validator = BrowserAcceptance(self.config)
+        for name in self.config.browser_scenarios:
+            result = data.get("browser_checks", {}).get(name, {})
+            if not result.get("passed") or result.get("tree") != tree or \
+                    result.get("signature") != validator.signature(name):
+                raise IssueWorkerError("publication requires every current host browser scenario to pass")
+            evidence = result.get("evidence", {})
+            if evidence.get("status") != "success" or evidence.get("conditions_verified") != \
+                    len(self.config.browser_scenarios[name]["task"]["success"]):
+                raise IssueWorkerError("browser evidence does not prove the configured condition count")
 
     def _advance(self, job: dict[str, Any], checkpoint: Callable[[str, dict[str, Any]], None]) -> None:
         data = job["data"]
@@ -201,4 +233,16 @@ class GitHubPublisher:
                 + data.get("summary", "Validated issue changes") + "\n\nValidation:\n" + checks
                 + f"\n\nBaseline check: {'passed' if baseline.get('passed') else 'failed'}."
                 + "\n\n" + evidence
+                + "\n\n" + self._acceptance_body(data)
                 + "\n\nReview required. This worker does not merge the PR or close the issue.")
+
+    @staticmethod
+    def _acceptance_body(data: dict[str, Any]) -> str:
+        if not data.get("acceptance") and not data.get("browser_checks"):
+            return ""
+        payload = {"acceptance": data.get("acceptance"),
+                   "browser_checks": {name: {field: result.get(field) for field in
+                                             ("passed", "tree", "signature", "evidence")}
+                                      for name, result in data.get("browser_checks", {}).items()}}
+        return "Acceptance evidence (business review remains required):\n```json\n" + \
+            json.dumps(payload, ensure_ascii=False, indent=2).replace("```", "'''") + "\n```"

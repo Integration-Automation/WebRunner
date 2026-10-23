@@ -2,13 +2,16 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+import json
+from typing import Any, Callable, TypeVar
 from urllib.parse import urlsplit
 
 import requests
 
 from je_web_runner.utils.ai_assist.llm_assist import LLMAssistError
 from je_web_runner.utils.exception.exceptions import WebRunnerException
+
+_Result = TypeVar("_Result")
 
 
 class LocalOllamaClient:
@@ -59,3 +62,22 @@ class LocalOllamaClient:
         installed = {item.get("name") for item in tags.get("models", []) if not item.get("remote_model")}
         if self.model not in installed and self.model + ":latest" not in installed:
             raise self.error_type("requested local model is not installed; install an open-source local model first")
+
+    def structured(self, instructions: str, context: dict[str, Any], schema: dict[str, Any],
+                   parse: Callable[[Any], _Result], timeout: float, label: str = "response") -> _Result:
+        """Decode one schema-constrained reply with one bounded correction, never echoing raw output."""
+        deadline = time.monotonic() + timeout
+        messages = [{"role": "system", "content": instructions},
+                    {"role": "user", "content": json.dumps(context, ensure_ascii=False)}]
+        for attempt in range(2):
+            result = self._request("/api/chat", max(0.001, deadline - time.monotonic()), {
+                "model": self.model, "messages": messages, "format": schema,
+                "stream": False, "options": {"temperature": 0},
+            })
+            try:
+                return parse(json.loads(result["message"]["content"]))
+            except (ValueError, KeyError, TypeError, WebRunnerException) as error:
+                if attempt:
+                    raise self.error_type(f"local model returned invalid {label} twice") from error
+                messages.append({"role": "user", "content": "Invalid response. Return one valid object."})
+        raise self.error_type("local model did not return a structured response")

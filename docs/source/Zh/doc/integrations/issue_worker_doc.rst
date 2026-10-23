@@ -233,3 +233,37 @@ review_closed 說明原因。修正本身失敗或需補資訊時，保留 PR �
 但仍拒絕外部 head、已關閉 PR、未送達進度及超過主機輪數上限；不寫入平台。
 Python 對應為 ``IssueWorker.retry_review(key)``。輪數用盡須先由操作者明確調高
 主機設定，不可由模型解除。
+
+需求分析與瀏覽器驗收
+--------------------
+
+``requirements_enabled=true`` 會先使用同一本機模型整理摘要、任務類型、C1／C2
+等驗收條件，以及必要的澄清問題。舊設定預設關閉，範例明確啟用。分析算一次工具
+操作，格式錯誤只修正一次；有問題時進入 needs_info，在 baseline／patch 前停止。
+每個條件只能引用主機具名 checks／browser_scenarios，或明列 manual=true；
+模型不能提供命令、網址、權限或自行宣告測試通過。
+
+分析最多 20 個條件，每項敘述最多 1,000 字；澄清問題最多 20 項、每項 500 字。
+分析版本綁定來源需求與本輪 PR 回饋；最終 acceptance 證據再綁定發布的 git tree。
+Python 的 ``AcceptanceCriterion``／``RequirementPlan`` 由 api.orchestration 匯出。
+PR 會附上每個條件的具名證據、tree 與狀態。evidence_passed 只表示所引用的
+獨立檢查通過；business_verified 維持 false，業務完整性仍須人工審查。
+
+``examples/issue-worker-browser.example.json`` 示範離線瀏覽器驗收。
+browser_scenarios 由主機設定 server argv、port 與固定步驟 TaskSpec；最多十個
+情境，每個設定最多 64 KB。所有已設定情境都必須通過，模型不能省略。
+server 是容器內的應用啟動命令，程式位於唯讀 /work；沒有主機 shell 或外網。
+網址限於該容器的 http://127.0.0.1:port，port 為 1024–65535；採 headless、
+steps 規劃器，不傳入環境密鑰。每個情境最多 100 步、20 個斷言、120 秒，
+每次瀏覽器操作最多 15 秒。沿用 worker 的總期限與輸出大小限制。
+
+瀏覽器驗證器從主機程式碼快照建立唯讀 /trusted 掛載，獨立於修改中的 /work；
+manifest 另行唯讀掛載，應用子程序不接收 verifier 的 Python import 路徑。
+Linux 入口在啟動應用前停用 dumpable，防止應用讀取 verifier 的記憶體與 /proc
+輸出描述符；無法啟用保護時停止。server 輸出不作為驗收證據。
+完成後回收 server／容器，僅回傳去識別的條件種類、selector、步數及成功數量。
+這項隔離仍須以真正 Podman 驗收，主機瀏覽器測試不替代容器驗收。
+
+瀏覽器證據同時綁定 tree、主機情境與 verifier 原始碼摘要。內容或設定改變時，
+不重用舊結果；發布器再次確認所有具名檢查、情境與條件數量，模型的 finish
+不能跳過它們。必要的真實本機驗收入口也會執行瀏覽器容器測試；缺少環境時失敗。

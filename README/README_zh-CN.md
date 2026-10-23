@@ -1730,6 +1730,8 @@ python -m je_web_runner.issue_worker retry --config issue-worker.json --issue gi
 
 设置 `review_enabled=true`（示例已启用），可根据有写入权限人员的审查或当前 head 的失败检查修正原 PR。SQLite 去重反馈，每轮独立 worktree 并重新完整验证，以非 force 更新原分支、在原 PR 留下证据。默认每 60 秒轮询、最多三轮；人工改动 head 或 dev 前进时停止，不重开 PR、不合并、不关闭 issue。 人工补充后可用 `retry-review --config FILE --issue KEY` 在主机限制内继续同一 PR。
 
+启用 `requirements_enabled` 可在编码前整理验收条件，需求不明时先提问。条件引用主机具名检查或明确标为人工验收。可选的主机 `browser_scenarios` 会在离线 Podman 执行强制浏览器验收，可信验证器与修改中源码分开挂载；证据绑定发布 tree 与场景／验证器摘要。检查通过仍需业务审查，示例见 `examples/issue-worker-browser.example.json`。
+
 ## CLI 用法
 
 ```bash
