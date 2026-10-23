@@ -5,18 +5,23 @@ import hashlib
 from dataclasses import asdict
 import json
 import os
+import socket
 import subprocess
 import sys
 import tempfile
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
+from unittest.mock import patch
 
 import pytest
 
 from je_web_runner.utils.issue_worker.processor import CodeProcessor
+from je_web_runner.utils.issue_worker.publisher import GitHubPublisher
 from je_web_runner.utils.issue_worker.providers import adf_document
+from je_web_runner.utils.issue_worker.sandbox import PodmanSandbox
 from je_web_runner.utils.issue_worker.types import IssueWorkerConfig
 from je_web_runner.utils.issue_worker.worker import IssueWorker
 from je_web_runner.utils.issue_worker.workspace import IssueWorkspace, git_run
@@ -39,6 +44,8 @@ class FixtureAPI:
         self.base_sha = base_sha
         self.base_tree = base_tree
         self.validated_tree = ""
+        self.expected_entries = None
+        self.read_status = 200
         self.labels = {"automation-ready"}
         self.owner = ""
         self.comments = []
@@ -145,8 +152,10 @@ class FixtureAPI:
     def _publish(self, path, data):
         if path.endswith("/git/trees"):
             assert data["base_tree"] == self.base_tree
-            assert data["tree"] == [{"path": "je_web_runner/calc.py", "mode": "100644", "type": "blob",
-                                     "content": "def value():\n    return 2\n"}]
+            expected = self.expected_entries if self.expected_entries is not None else [
+                {"path": "je_web_runner/calc.py", "mode": "100644", "type": "blob",
+                 "content": "def value():\n    return 2\n"}]
+            assert data["tree"] == expected
             return 201, {"sha": self.validated_tree}
         if path.endswith("/git/commits"):
             return 201, {"sha": hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()[:40]}
@@ -175,7 +184,13 @@ def pipeline(tmp_path, request, monkeypatch):
     git_run(original, ["init", "-b", "dev"])
     git_run(original, ["add", "--", "je_web_runner", "test"])
     git_run(original, ["-c", "user.name=Fixture", "-c", "user.email=fixture@example.test", "commit", "-m", "Baseline"])
-    source = getattr(request, "param", "github")
+    scenario = getattr(request, "param", "github")
+    real = isinstance(scenario, dict)
+    source = scenario["source"] if real else scenario
+    if real and os.environ.get("WEBRUNNER_ISSUE_REAL_TESTS") != "1":
+        pytest.skip("run scripts/verify_issue_worker.py for required real model/container acceptance")
+    if real and not all(os.environ.get(name) for name in ("WEBRUNNER_ISSUE_MODEL", "WEBRUNNER_ISSUE_IMAGE")):
+        pytest.fail("real acceptance requires WEBRUNNER_ISSUE_MODEL and WEBRUNNER_ISSUE_IMAGE")
     api = FixtureAPI(source, git_run(original, ["rev-parse", "HEAD"]).strip(),
                      git_run(original, ["rev-parse", "HEAD^{tree}"]).strip())
     server = _serve(api)
@@ -191,7 +206,12 @@ def pipeline(tmp_path, request, monkeypatch):
     if source == "jira":
         config.jira_url, config.jira_projects, config.jira_bot = api.url, ["WR"], "jira-bot"
         config.jira_token_env, config.jira_email_env = "FIXTURE_JIRA_TOKEN", "FIXTURE_JIRA_EMAIL"
-    processor = CodeProcessor(config, sandbox=FixtureSandbox(api))
+    if real:
+        config.model, config.image = os.environ["WEBRUNNER_ISSUE_MODEL"], os.environ["WEBRUNNER_ISSUE_IMAGE"]
+        config.ollama_url = os.environ.get("WEBRUNNER_ISSUE_OLLAMA_URL", "http://127.0.0.1:11434")
+        config.timeout, config.max_tools = 600, 20
+    sandbox = RecordingPodmanSandbox(config, api) if real else FixtureSandbox(api)
+    processor = CodeProcessor(config, sandbox=sandbox)
     worker = IssueWorker(config, processor=processor,
                          workspace_factory=lambda settings, job: IssueWorkspace.prepare(settings, job, str(original)))
     try:
@@ -203,44 +223,56 @@ def pipeline(tmp_path, request, monkeypatch):
         thread.join(timeout=5)
 
 
+class FixtureHandler(BaseHTTPRequestHandler):
+    """HTTP fixture adapter, including bounded connection failure injection."""
+    def do_GET(self):
+        self.respond("GET")
+
+    def do_POST(self):
+        self.respond("POST")
+
+    def do_PUT(self):
+        self.respond("PUT")
+
+    def do_PATCH(self):
+        self.respond("PATCH")
+
+    def do_DELETE(self):
+        self.respond("DELETE")
+
+    def respond(self, method):
+        api = self.server.api
+        parsed = urlsplit(self.path)
+        path = unquote(parsed.path)
+        api.requests.append((method, path, self.headers.get("Authorization")))
+        if method == "GET":
+            payload = api.get(path, parse_qs(parsed.query))
+            status = 404 if payload is None else 200
+            if path.endswith("/issues") and api.read_status != 200:
+                if api.read_status == 0:
+                    self.close_connection = True
+                    self.connection.shutdown(socket.SHUT_RDWR)
+                    self.connection.close()
+                    return
+                status, payload = api.read_status, {"error": "injected platform outage"}
+        else:
+            data = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))) or "null")
+            status, payload = api.mutate(method, path, data)
+        body = json.dumps(payload).encode() if payload is not None else b""
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def log_message(self, *_args):
+        return
+
+
 def _serve(api):
-    class Handler(BaseHTTPRequestHandler):
-        def do_GET(self):
-            self.respond("GET")
-
-        def do_POST(self):
-            self.respond("POST")
-
-        def do_PUT(self):
-            self.respond("PUT")
-
-        def do_PATCH(self):
-            self.respond("PATCH")
-
-        def do_DELETE(self):
-            self.respond("DELETE")
-
-        def respond(self, method):
-            parsed = urlsplit(self.path)
-            path = unquote(parsed.path)
-            api.requests.append((method, path, self.headers.get("Authorization")))
-            if method == "GET":
-                payload = api.get(path, parse_qs(parsed.query))
-                status = 404 if payload is None else 200
-            else:
-                data = json.loads(self.rfile.read(int(self.headers.get("Content-Length", "0"))) or "null")
-                status, payload = api.mutate(method, path, data)
-            body = json.dumps(payload).encode() if payload is not None else b""
-            self.send_response(status)
-            self.send_header("Content-Type", "application/json")
-            self.send_header("Content-Length", str(len(body)))
-            self.end_headers()
-            self.wfile.write(body)
-
-        def log_message(self, *_args):
-            return
-
-    return ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    server = ThreadingHTTPServer(("127.0.0.1", 0), FixtureHandler)
+    server.api = api
+    return server
 
 
 class FixtureSandbox:
@@ -267,6 +299,21 @@ class FixtureSandbox:
         self.api.checks.append(result.returncode)
         return {"name": name, "passed": result.returncode == 0, "tree": tree,
                 "output": result.stdout[-4000:] + result.stderr[-1000:]}
+
+
+class RecordingPodmanSandbox(PodmanSandbox):
+    """Real offline execution; capture the independently validated tree for the fake publisher."""
+
+    def __init__(self, config, api):
+        super().__init__(config)
+        self.api = api
+
+    def check(self, workspace, name, timeout):
+        result = super().check(workspace, name, timeout)
+        self.api.validated_tree = result["tree"]
+        self.api.expected_entries = GitHubPublisher._entries(workspace)
+        self.api.checks.append(0 if result["passed"] else 1)
+        return result
 
 
 @pytest.mark.parametrize("pipeline", ["github", "jira"], indirect=True)
@@ -314,3 +361,113 @@ def test_cli_preview_uses_platform_reads_without_claiming_or_running_a_model(pip
     assert len(json.loads(result.stdout)["preview"]) == 1
     assert api.owner == "" and api.model_calls == 0
     assert worker.status() == []
+
+
+@pytest.mark.parametrize("pipeline", [{"source": "github"}, {"source": "jira"}], indirect=True)
+@pytest.mark.parametrize("lose_reply", [False, True])
+def test_real_runtime_model_container_and_reviewed_delivery(pipeline, lose_reply):
+    worker, api, original = pipeline
+    worker.processor.preflight()  # Missing dependencies must fail this selected acceptance test.
+    api.lose_pr_reply = lose_reply
+    result = worker.run_once()
+    if lose_reply:
+        assert result["status"] == "publishing", result
+        calls = worker.config.max_tools - result["data"]["tool_count"]
+        worker.store.save(result["key"], result["status"], result["data"])
+        result = worker.run_once(discover=False)
+        assert worker.config.max_tools - result["data"]["tool_count"] == calls
+    assert result["status"] == "awaiting_review", result
+    assert api.checks[0] == 1 and api.checks[-1] == 0
+    assert api.pr_posts == 1 and len(api.prs) == 1
+    assert api.model_calls == 0  # The fixture model endpoint must never be used here.
+    assert "return 1" in (original / "je_web_runner/calc.py").read_text()
+    assert "fixture-github-secret" not in json.dumps(worker.status())
+
+
+@pytest.mark.parametrize("pipeline", [{"source": "github"}], indirect=True)
+def test_real_runtime_watch_soak(pipeline):
+    seconds = float(os.environ.get("WEBRUNNER_ISSUE_SOAK_SECONDS", "0"))
+    if seconds <= 0:
+        pytest.skip("set a soak duration through scripts/verify_issue_worker.py")
+    worker, api, _original = pipeline
+    worker.processor.preflight()
+    result = worker.run_once()
+    assert result["status"] == "awaiting_review", result
+    worker.config.poll_seconds = 1
+    deadline = time.monotonic() + seconds
+    faults = []
+    finished = threading.Event()
+
+    def monitor():
+        # Repeated watch start/stop cycles share durable state; induce rate limits and disconnect responses.
+        try:
+            next_restart = time.monotonic() + 120
+            while not finished.is_set() and time.monotonic() < deadline:
+                phase = int(time.monotonic()) % 120
+                api.read_status = 429 if phase < 10 else (503 if phase < 20 else 200)
+                health = worker.health()
+                if health["status"] == "stale":
+                    faults.append("heartbeat expired")
+                if time.monotonic() >= next_restart and health["active"]:
+                    worker.request_stop()
+                    next_restart = time.monotonic() + 120
+                finished.wait(0.2)
+        except Exception as error:
+            faults.append(type(error).__name__)
+        finally:
+            finished.set()
+            worker.request_stop()
+
+    monitor_thread = threading.Thread(target=monitor, daemon=True)
+    monitor_thread.start()
+    try:
+        while time.monotonic() < deadline:
+            worker.watch(finished)
+    finally:
+        finished.set()
+        worker.request_stop()
+        monitor_thread.join(timeout=5)
+    assert faults == []
+    assert len(api.prs) == 1 and api.pr_posts == 1
+    assert worker.health()["status"] == "stopped"
+
+
+def test_watch_recovers_after_rate_limit_and_tcp_disconnect(pipeline):
+    worker, api, _original = pipeline
+    worker.config.poll_seconds = 0.02
+    api.read_status = 429
+    stopped = threading.Event()
+    faults = []
+
+    def wait_for(predicate):
+        deadline = time.monotonic() + 15
+        while time.monotonic() < deadline:
+            if predicate():
+                return
+            stopped.wait(0.01)
+        raise AssertionError("worker did not reach the expected recovery checkpoint")
+
+    def monitor():
+        try:
+            wait_for(lambda: "rate limit" in (worker.health().get("error") or ""))
+            api.read_status = 0
+            wait_for(lambda: "connection failed" in (worker.health().get("error") or ""))
+            api.read_status = 200
+            wait_for(lambda: bool(worker.status()) and worker.status()[0]["status"] == "awaiting_review")
+        except Exception as error:
+            faults.append(str(error))
+        finally:
+            stopped.set()
+
+    monitor_thread = threading.Thread(target=monitor, daemon=True)
+    monitor_thread.start()
+    try:
+        with patch("je_web_runner.utils.issue_worker.worker.IssueDoctor") as doctor:
+            doctor.return_value.check.return_value = {"ready": True}
+            worker.watch(stopped)
+    finally:
+        stopped.set()
+        monitor_thread.join(timeout=5)
+    assert faults == []
+    assert worker.status()[0]["status"] == "awaiting_review"
+    assert api.pr_posts == 1 and len(api.prs) == 1

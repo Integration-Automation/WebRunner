@@ -1726,6 +1726,8 @@ python -m je_web_runner.issue_worker retry --config issue-worker.json --issue gi
 
 复制 `examples/issue-worker.example.json` 并依[配置指南](../docs/source/Zh/doc/integrations/issue_worker_doc.rst)准备环境。密钥只由主机环境变量提供，不传给模型或容器。SQLite 检查点可恢复代码修正、检查、发布及进度回报，避免重复 PR。Python 由 `api.orchestration` 提供 `IssueWorker`／`IssueInbox`；MCP 新增 `webrunner_issue_enqueue` 与 `webrunner_issue_status`，只使用主机的 `WEBRUNNER_ISSUE_CONFIG`。MCP 负责排单，另外启动的 worker 负责处理。默认一次一单、60 秒轮询、每单 60 分钟、100 次工具操作、两轮验证、20 个文件及 1000 行变更，不需付费 coding API 或云端调度。
 
+启用前先执行 `doctor --config issue-worker.json`，加上 `--platform` 才只读检查平台。`health --json` 回报常驻心跳，`stop` 会完成当前单后停止。watch 遇到本地依赖故障时暂停接单。Windows 登录任务由 `scripts/issue_worker_task.ps1` 管理；真实本地验收使用 `scripts/verify_issue_worker.py`，默认包含 24 小时常驻测试，不会自动安装服务或下载模型。
+
 ## CLI 用法
 
 ```bash

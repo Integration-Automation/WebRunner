@@ -10,10 +10,12 @@ from typing import Any, Callable
 
 from je_web_runner.utils.agent.runner import Redactor, browser_privacy
 from je_web_runner.utils.issue_worker.inbox import IssueInbox
+from je_web_runner.utils.issue_worker.doctor import IssueDoctor
 from je_web_runner.utils.issue_worker.processor import CodeProcessor
 from je_web_runner.utils.issue_worker.publisher import GitHubPublisher
+from je_web_runner.utils.issue_worker.runtime import WorkerRuntime, operational_log
 from je_web_runner.utils.issue_worker.types import (
-    FINAL, IssueSnapshot, IssueWorkerConfig, IssueWorkerError, ProviderError,
+    FINAL, EnvironmentUnavailable, IssueSnapshot, IssueWorkerConfig, IssueWorkerError, ProviderError,
 )
 from je_web_runner.utils.issue_worker.workspace import IssueWorkspace
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -31,9 +33,11 @@ class IssueWorker:
         self.config = config
         self.inbox = IssueInbox(config, providers)
         self.store = self.inbox.store
+        self.runtime = WorkerRuntime(self.store)
         self.processor = processor
         self.publisher = publisher or GitHubPublisher(self.inbox.providers["github"])
         self.workspace_factory = workspace_factory or IssueWorkspace.prepare
+        self._watch_stop: threading.Event | None = None
         self.redactor = Redactor()
         self.redactor.secrets.update(os.environ[name] for name in (config.github_token_env, config.jira_token_env)
                                      if os.environ.get(name))
@@ -52,16 +56,29 @@ class IssueWorker:
         """Explicitly requeue a stopped issue after the ready label is restored."""
         self.inbox.retry(key)
 
+    def health(self) -> dict[str, Any]:
+        """Inspect local daemon health without contacting platforms or model services."""
+        return self.redactor.clean(self.runtime.health())
+
+    def request_stop(self) -> bool:
+        """Drain the active watch instance, completing its current issue before stopping."""
+        return self.runtime.request_stop()
+
     def run_once(self, dry_run: bool = False, discover: bool = True) -> dict[str, Any]:
         """Discover and process at most one job; dry-run does not claim or publish anything."""
         if dry_run:
             return {"preview": self.inbox.discover(dry_run=True)}
         with self.store.lease(), browser_privacy():
+            self.runtime.assert_allowed()
+            if self._draining():
+                return {"status": "idle"}
             job = self.store.next_job()
             if job is None and discover:
                 self.inbox.discover()
                 job = self.store.next_job()
             if job is None:
+                return {"status": "idle"}
+            if not self._begin_job(job["key"]):
                 return {"status": "idle"}
             if job["status"] in FINAL:
                 self._report(job)
@@ -70,16 +87,56 @@ class IssueWorker:
             return self.status(job["key"])[0]
 
     def watch(self, stop: threading.Event | None = None) -> None:
-        """Poll locally without requiring a cloud scheduler; waits are interruptible."""
+        """Run one fenced local daemon; dependency outages pause intake rather than fail jobs."""
         stopped = stop or threading.Event()
-        while not stopped.is_set():
+        with self.runtime.own(), operational_log(self.store) as logger:
+            self._watch_stop = stopped
             try:
-                self.run_once()
-            except ProviderError as error:
-                if error.permanent:
-                    raise
-                web_runner_logger.warning("issue polling deferred: %s", str(error))
-            stopped.wait(self.config.poll_seconds)
+                logger.info("watch started")
+                while not self._stopping(stopped):
+                    self._watch_poll(logger, stopped)
+                    self._wait_poll(stopped)
+                logger.info("watch drained")
+            finally:
+                self._watch_stop = None
+
+    def _draining(self) -> bool:
+        return bool(self.runtime.token and (self.runtime.stopping() or
+                    (self._watch_stop is not None and self._watch_stop.is_set())))
+
+    def _begin_job(self, key: str) -> bool:
+        if self._draining():
+            return False
+        return not self.runtime.token or self.runtime.begin_job(key)
+
+    def _stopping(self, stop: threading.Event) -> bool:
+        return stop.is_set() or self.runtime.stopping()
+
+    def _wait_poll(self, stop: threading.Event) -> None:
+        deadline = time.monotonic() + self.config.poll_seconds
+        while not self._stopping(stop) and time.monotonic() < deadline:
+            stop.wait(min(0.25, max(0, deadline - time.monotonic())))
+
+    def _watch_poll(self, logger: Any, stop: threading.Event) -> None:
+        self.runtime.update("checking")
+        readiness = IssueDoctor(self.config).check()
+        if not readiness["ready"]:
+            codes = ",".join(item["code"] for item in readiness["checks"] if item["status"] == "failed")
+            self.runtime.update("waiting_dependencies", error=codes)
+            logger.warning("intake paused: %s", codes)
+            return
+        if self._stopping(stop):
+            return
+        try:
+            result = self.run_once()
+            error = result.get("data", {}).get("platform_error") or result.get("data", {}).get("environment_error")
+            self.runtime.update("waiting" if not error else "deferred", error=error, polled=True)
+            logger.info("poll completed: %s", result.get("status", "unknown"))
+        except ProviderError as error:
+            self.runtime.update("platform_error", error=self.redactor.clean(str(error)))
+            logger.warning("platform polling deferred")
+            if error.permanent:
+                raise
 
     def _process_job(self, job: dict[str, Any]) -> None:
         provider = self.inbox.providers[job["snapshot"]["source"]]
@@ -91,6 +148,9 @@ class IssueWorker:
             self._defer(job, error)
             if error.permanent:
                 raise
+        except EnvironmentUnavailable:
+            job["data"]["environment_error"] = "local model or container dependency is unavailable"
+            self._save(job, job["status"], time.time() + self.config.poll_seconds)
         except Exception as error:
             message = self.redactor.clean(f"{type(error).__name__}: {error}")
             web_runner_logger.warning("issue processing stopped: %s", message)
@@ -99,7 +159,6 @@ class IssueWorker:
     def _execute(self, job: dict[str, Any], provider: Any) -> None:
         snapshot = IssueSnapshot(**job["snapshot"])
         data = job["data"]
-        data.setdefault("deadline", time.time() + self.config.timeout)
         self._guard(job, provider, resume=job["status"] != "queued" or job["run"] > 1)
         self.publisher.preflight()
         coding_needed = job["status"] != "publishing" and data.get("phase") != "ready"
@@ -107,6 +166,9 @@ class IssueWorker:
             if self.processor is None:
                 self.processor = CodeProcessor(self.config)
             self.processor.preflight()
+            self.processor.recover()
+            data.pop("environment_error", None)
+            data.setdefault("deadline", time.time() + self.config.timeout)
             self._save(job, "claimed")
             data["claim_started"] = True
             self._save(job, "claimed")
@@ -140,6 +202,7 @@ class IssueWorker:
         self._finish(job, "awaiting_review", "Validated changes are ready for human review.")
 
     def _guard(self, job: dict[str, Any], provider: Any, resume: bool) -> None:
+        self.runtime.assert_allowed()
         self.store.assert_lease()
         current = provider.fetch(job["snapshot"]["external_id"])
         expected = IssueSnapshot(**job["snapshot"])
@@ -147,9 +210,13 @@ class IssueWorker:
             raise IssueCancelled("issue requirements, ready label, open state or ownership changed")
 
     def _save(self, job: dict[str, Any], status: str, next_attempt: float = 0) -> None:
+        self.runtime.assert_allowed()
         self.store.assert_lease()
         job["status"] = status
         self.store.save(job["key"], status, self.redactor.clean(job["data"]), next_attempt)
+        if self.runtime.token:
+            error = job["data"].get("environment_error") or job["data"].get("platform_error")
+            self.runtime.update(status, job["key"], error)
 
     def _finish(self, job: dict[str, Any], status: str, reason: str) -> None:
         if status not in FINAL:
@@ -169,6 +236,7 @@ class IssueWorker:
         if job["data"].get("pr"):
             message += "\nPR: " + job["data"]["pr"]["url"]
         try:
+            self.runtime.assert_allowed()
             self.store.assert_lease()
             provider.report(IssueSnapshot(**job["snapshot"]), job["status"], self.redactor.clean(message))
             job["data"]["report_pending"] = False

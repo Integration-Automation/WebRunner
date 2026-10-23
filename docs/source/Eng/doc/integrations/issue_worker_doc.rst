@@ -76,7 +76,8 @@ matching accountId. No workflow-transition permission is required.
 
 ``run`` handles at most one job; ``watch`` polls every 60 seconds by default. Idle,
 preview and reviewed-PR delivery return exit status 0; failure, incomplete work or
-pending platform delivery return 1. Ctrl-C returns 130. Retry is explicit: restore
+dependency deferral or pending platform delivery return 1. Watch's first Ctrl-C drains;
+a second interrupts with exit 130. Retry is explicit: restore
 ``automation-ready`` first; another person's assignment is never taken over.
 Jira and GitHub sources both deliver PRs to the configured GitHub WebRunner repo.
 
@@ -127,3 +128,94 @@ and multi-page token cycles instead of polling indefinitely.
 Before activation, prepare these GitHub repository labels: ``automation-ready``,
 ``automation-running``, ``automation-review``, ``automation-needs-info``,
 ``automation-failed`` and ``automation-cancelled``. Jira uses the same label names.
+
+Readiness and operational health
+----------------------------------------
+
+Use diagnostics, preview, a manual job, then watch, in that order:
+
+.. code-block:: bash
+
+    python -m je_web_runner.issue_worker doctor --config issue-worker.json
+    python -m je_web_runner.issue_worker doctor --config issue-worker.json --platform --json
+    python -m je_web_runner.issue_worker health --config issue-worker.json --json
+    python -m je_web_runner.issue_worker stop --config issue-worker.json
+
+Doctor checks Git, writable local state/SQLite, Podman and its installed image, and
+Ollama's cloud-disabled status and installed model. It never generates, installs,
+pulls or starts services. A temporary SQLite probe is created and removed locally;
+no issue queue is created. Only ``--platform`` enables platform reads: actor identity,
+GitHub repository/dev/required labels, and allowed Jira projects. Jira labels are
+free-form and need no label catalogue. Requests are GET-only; effective write
+permissions remain explicitly unverified. Exit 0 means all required checks passed;
+exit 1 means at least one failed. JSON contains ready/checks and each check's
+name/status/required/code/hint, without raw HTTP or subprocess output.
+
+Health reads local state (initializing local tables if needed), without contacting
+platforms or models. Healthy exits 0, degraded exits 1, stopped/stale exit 2. JSON
+includes instance, PID, start time, heartbeat, phase/current issue, last completed
+poll, error and drain request. Heartbeats run independently every ten seconds;
+45 seconds without one is stale. Stop exits 0 and targets only the live instance;
+without one it returns stop_requested=false and leaves no future stop flag.
+An active job finishes within its original deadline. Idle waits check drain every
+250 ms; in-progress diagnostics and HTTP calls retain their bounded timeouts.
+The first watch Ctrl-C drains; a second interrupts with exit 130. Normal drain exits 0.
+
+Watch checks local dependencies before intake and pauses/rechecks on outages.
+Infrastructure failures during coding preserve resumable jobs; their existing total
+deadline is not extended by downtime. A separate daemon lease prevents two watches
+or a concurrent manual run in one state directory. The additive worker_runtime
+table leaves existing job states intact. Operational logs are at logs/worker.log
+under state, with a 5 MB limit and five backups. They omit issue/model context;
+worktrees and historical reports are not deleted automatically.
+Containers carry a state-directory digest label. Under the job lease, recovery
+removes only matching containers with the worker's generated name pattern;
+other states/manual containers are untouched. Doctor never performs this cleanup.
+
+Python exposes ``IssueDoctor(config).check(include_platform=False)`` and
+``IssueWorker.health()`` / ``request_stop()``. MCP retains queue/status tools only.
+
+Windows login task
+------------------
+
+Prepare services and credentials in the same user's environment first. Tasks store
+absolute Python/script/config paths, never tokens:
+
+.. code-block:: powershell
+
+    .\scripts\issue_worker_task.ps1 -Action Install -Config .\issue-worker.json
+    .\scripts\issue_worker_task.ps1 -Action Start -Config .\issue-worker.json
+    .\scripts\issue_worker_task.ps1 -Action Status -Config .\issue-worker.json
+    python -m je_web_runner.issue_worker stop --config issue-worker.json
+    # Wait for the task to stop before removing it.
+    .\scripts\issue_worker_task.ps1 -Action Remove -Config .\issue-worker.json
+
+The default Python is this checkout's .venv\Scripts\python.exe; override with
+``-Python``. Keep the script and checkout available. Task names use a config-path
+digest; only owned tasks can be changed. Tasks use current-user interactive login,
+limited privileges, a hidden window, IgnoreNew, three one-minute failure restarts,
+and no execution time limit. Install does not start the task. Remain logged in;
+this is not a logoff-persistent service. Neither Ollama nor Podman is started
+automatically. Drain running tasks before updating or removing them.
+
+Required real local acceptance
+------------------------------
+
+Normal tests may skip unavailable real services. This dedicated entry point fails
+when prerequisites are missing and never counts skipped execution as acceptance:
+
+.. code-block:: powershell
+
+    $env:WEBRUNNER_ISSUE_MODEL = 'YOUR_INSTALLED_LOCAL_MODEL'
+    $env:WEBRUNNER_ISSUE_IMAGE = 'localhost/webrunner-issue-worker:local'
+    python scripts/verify_issue_worker.py --soak-hours 0
+    python scripts/verify_issue_worker.py  # end-to-end plus a default 24-hour soak
+
+Only the model and containers are real; both platforms use local HTTP fixtures.
+Checks cover both sources, failing-before/passing-after evidence, uncertain PR
+creation recovery, non-root/offline containers, read-only source/root and absent
+platform credentials. The soak includes idle time, 429/503 recovery and repeated
+drain/restart. Separate process tests cover crashes, lease takeover and CLI stop.
+Set ``WEBRUNNER_TEST_SCHEDULER=1`` to register and remove a unique temporary Windows
+task; that test never starts the task or changes production tasks.
+Report missing model/Podman and an uncompleted 24-hour soak as unverified separately.

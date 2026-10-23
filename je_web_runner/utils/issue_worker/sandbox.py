@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import os
+import hashlib
+import re
 import secrets
 import shutil
 import subprocess
@@ -11,7 +13,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from je_web_runner.utils.issue_worker.types import IssueWorkerConfig, IssueWorkerError
+from je_web_runner.utils.issue_worker.types import EnvironmentUnavailable, IssueWorkerConfig, IssueWorkerError
 from je_web_runner.utils.issue_worker.workspace import IssueWorkspace
 
 # This directory is a fresh container's private tmpfs, never a shared host temporary path.
@@ -31,6 +33,8 @@ class PodmanSandbox:
     def __init__(self, config: IssueWorkerConfig) -> None:
         self.config = config
         self.executable = shutil.which("podman") or "podman"
+        state = str(Path(config.state_dir).resolve())
+        self.label = "io.webrunner.issue.state=" + hashlib.sha256(os.path.normcase(state).encode()).hexdigest()
 
     def preflight(self) -> None:
         """Fail closed if Podman or the explicitly installed image is unavailable."""
@@ -40,9 +44,25 @@ class PodmanSandbox:
                 env=transport_environment(), timeout=30, check=False,
             )
         except (OSError, subprocess.SubprocessError) as error:
-            raise IssueWorkerError("Podman and its local worker image must be installed first") from error
+            raise EnvironmentUnavailable("Podman and its local worker image must be installed first") from error
         if result.returncode:
-            raise IssueWorkerError("local Podman worker image is unavailable; runtime never pulls images")
+            raise EnvironmentUnavailable("local Podman worker image is unavailable; runtime never pulls images")
+
+    def recover(self) -> None:
+        """Under the worker's job lease, reap only containers labeled for this state directory."""
+        try:
+            result = subprocess.run(  # nosec B603
+                [self.executable, "ps", "--all", "--filter", "label=" + self.label, "--format", "{{.Names}}"],
+                env=transport_environment(), capture_output=True, timeout=15, check=False,
+            )
+            if result.returncode:
+                raise EnvironmentUnavailable("could not inspect interrupted worker containers")
+            for name in result.stdout.decode("utf-8", errors="replace").splitlines():
+                if not re.fullmatch(r"webrunner-issue-[0-9a-f]{24}", name):
+                    raise EnvironmentUnavailable("unexpected container name in owned worker scope")
+                self._remove_container(name)
+        except (OSError, subprocess.SubprocessError) as error:
+            raise EnvironmentUnavailable("container recovery infrastructure is unavailable") from error
 
     def argv(self, workspace: IssueWorkspace, check: str, source: Path, name: str) -> list[str]:
         """Construct fixed sandbox policy around a configured check argv."""
@@ -56,7 +76,8 @@ class PodmanSandbox:
         if "{changed_python}" in self.config.checks[check] and not changed:
             return []
         return [
-            self.executable, "run", "--rm", "--name", name, "--pull=never", "--network=none", "--read-only",
+            self.executable, "run", "--rm", "--name", name, "--label", self.label,
+            "--pull=never", "--network=none", "--read-only",
             "--user", "65532:65532", "--cap-drop=ALL", "--security-opt=no-new-privileges",
             "--pids-limit=256", "--memory=4g", "--cpus=2", "--tmpfs", _CONTAINER_TMPFS,
             "--mount", f"type=bind,src={source},destination=/work,ro=true", "--workdir", "/work",
@@ -76,7 +97,12 @@ class PodmanSandbox:
             argv = self.argv(workspace, name, source, container)
             if not argv:
                 return {"name": name, "passed": True, "tree": tree, "output": "No changed Python files."}
-            result = self._execute(argv, container, Path(temporary) / "output.log", timeout)
+            try:
+                result = self._execute(argv, container, Path(temporary) / "output.log", timeout)
+            except (OSError, subprocess.SubprocessError) as error:
+                raise EnvironmentUnavailable("container execution infrastructure is unavailable") from error
+            if result.get("exit_code") in {125, 126, 127}:
+                raise EnvironmentUnavailable("container or configured check could not start")
             return {"name": name, "tree": tree, **result}
 
     def _execute(self, argv: list[str], container: str, output: Path, timeout: float) -> dict[str, Any]:
@@ -102,7 +128,8 @@ class PodmanSandbox:
         with output.open("rb") as stream:
             stream.seek(max(0, output.stat().st_size - 20000))
             text = stream.read().decode("utf-8", errors="replace")
-        return {"passed": process.returncode == 0 and not reason, "output": text, "reason": reason}
+        return {"passed": process.returncode == 0 and not reason, "output": text, "reason": reason,
+                "exit_code": process.returncode}
 
     def _remove_container(self, name: str) -> None:
         result = subprocess.run(  # nosec B603
@@ -110,4 +137,4 @@ class PodmanSandbox:
             capture_output=True, timeout=15, check=False,
         )
         if result.returncode:
-            raise IssueWorkerError("could not remove the isolated check container")
+            raise EnvironmentUnavailable("could not remove the isolated check container")

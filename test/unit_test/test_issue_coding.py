@@ -1,7 +1,7 @@
 """Real isolated git patches, coding bounds and immutable sandbox policy."""
 import os
 import shutil
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -142,14 +142,40 @@ def test_ambiguous_issue_returns_concrete_questions_without_changes(issue_worksp
 def test_optional_real_podman_isolation(issue_workspace):
     image = os.environ.get("WEBRUNNER_ISSUE_IMAGE")
     if not image or not shutil.which("podman"):
+        if os.environ.get("WEBRUNNER_ISSUE_REAL_TESTS") == "1":
+            pytest.fail("real acceptance requires Podman and WEBRUNNER_ISSUE_IMAGE")
         pytest.skip("set WEBRUNNER_ISSUE_IMAGE and install Podman to verify a real offline container")
     isolated, _job, _original = issue_workspace
     isolated.config.image = image
-    isolated.config.checks = {"unit": ["python", "-c",
-        "import os,pathlib; assert not os.getenv('GITHUB_TOKEN'); assert not pathlib.Path('/work/.git').exists(); "
-        "assert pathlib.Path('/work/je_web_runner/calc.py').is_file(); print('isolation verified')"]}
+    probe = """import os, pathlib, socket
+assert os.getuid() != 0
+assert not any(os.getenv(key) for key in ('GITHUB_TOKEN', 'JIRA_API_TOKEN', 'FIXTURE_GH_TOKEN'))
+assert not pathlib.Path('/work/.git').exists()
+assert pathlib.Path('/work/je_web_runner/calc.py').is_file()
+for target in ('/work/forbidden', '/etc/forbidden'):
+    try:
+        pathlib.Path(target).write_text('forbidden')
+    except OSError:
+        continue
+    raise AssertionError('read-only mount allowed a write')
+try:
+    connection = socket.create_connection(('192.0.2.1', 9), timeout=0.2)
+except OSError:
+    print('isolation verified')
+else:
+    connection.close()
+    raise AssertionError('offline container reached an external address')
+"""
+    isolated.config.checks = {"unit": ["python", "-c", probe]}
     sandbox = PodmanSandbox(isolated.config)
     sandbox.preflight()
     result = sandbox.check(isolated, "unit", 30)
     assert result["passed"], result
     assert "isolation verified" in result["output"]
+    isolated.config.checks = {"timeout": ["python", "-c", "import time; time.sleep(30)"]}
+    result = sandbox.check(isolated, "timeout", 0.5)
+    assert not result["passed"] and "limit" in result["reason"]
+    # Force cleanup already ran; recovery must find no residual containers in this unique state scope.
+    with patch.object(sandbox, "_remove_container", wraps=sandbox._remove_container) as remove:
+        sandbox.recover()
+    remove.assert_not_called()

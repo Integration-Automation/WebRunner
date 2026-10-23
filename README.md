@@ -1738,6 +1738,8 @@ python -m je_web_runner.issue_worker retry --config issue-worker.json --issue gi
 
 Copy `examples/issue-worker.example.json` and follow [the setup guide](docs/source/Eng/doc/integrations/issue_worker_doc.rst). Tokens are host environment references, never model/container inputs. SQLite checkpoints resume coding, checks, publication and progress reports without duplicating PRs. Python exposes `IssueWorker` / `IssueInbox` through `api.orchestration`; MCP adds `webrunner_issue_enqueue` and `webrunner_issue_status`, using host-only `WEBRUNNER_ISSUE_CONFIG`. MCP queues jobs; a separately started worker processes them. Defaults: one job, 60-second polling, 60 minutes, 100 tools, two validation rounds, 20 files and 1000 changed lines. No paid coding API or cloud scheduler is required.
 
+Before activation, run `doctor --config issue-worker.json`; add `--platform` for read-only platform checks. `health --json` reports the daemon heartbeat, and `stop` drains its current job. Watch pauses intake during local dependency outages. Windows login tasks are managed through `scripts/issue_worker_task.ps1`; real local acceptance uses `scripts/verify_issue_worker.py` (24-hour soak by default). These tools never install services or download models automatically.
+
 ## CLI Usage
 
 ```bash

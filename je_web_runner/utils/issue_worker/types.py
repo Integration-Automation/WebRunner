@@ -28,6 +28,10 @@ class IssueWorkerError(WebRunnerException):
     """Invalid configuration or a bounded worker operation failed."""
 
 
+class EnvironmentUnavailable(IssueWorkerError):
+    """Shared local dependencies are unavailable; keep the job resumable."""
+
+
 class ProviderError(IssueWorkerError):
     """A platform request failed without exposing its credentials or response body."""
 

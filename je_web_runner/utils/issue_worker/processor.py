@@ -8,7 +8,7 @@ from typing import Any, Callable
 from je_web_runner.utils.agent.runner import Redactor, browser_privacy
 from je_web_runner.utils.issue_worker.planner import CodeAction, CodingPlanner
 from je_web_runner.utils.issue_worker.sandbox import PodmanSandbox
-from je_web_runner.utils.issue_worker.types import IssueWorkerConfig, IssueWorkerError
+from je_web_runner.utils.issue_worker.types import EnvironmentUnavailable, IssueWorkerConfig, IssueWorkerError
 from je_web_runner.utils.issue_worker.workspace import IssueWorkspace
 
 
@@ -26,8 +26,11 @@ class CodeProcessor:
 
     def preflight(self) -> None:
         """Check free local prerequisites before claiming a remote issue."""
-        self.planner.preflight(15)
-        self.sandbox.preflight()
+        try:
+            self.planner.preflight(15)
+            self.sandbox.preflight()
+        except IssueWorkerError as error:
+            raise EnvironmentUnavailable("local model or container dependency is unavailable") from error
 
     def process(self, job: dict[str, Any], workspace: IssueWorkspace,
                 checkpoint: Callable[[str, dict[str, Any]], None], redactor: Redactor) -> str:
@@ -45,6 +48,12 @@ class CodeProcessor:
                 data["baseline"] = redactor.clean(self.sandbox.check(workspace, name, self._remaining(data)))
                 checkpoint("analyzing", data)
             return self._loop(job, workspace, checkpoint, redactor)
+
+    def recover(self) -> None:
+        """Reap this state's interrupted containers only while the coordinator owns its job lease."""
+        recover = getattr(self.sandbox, "recover", None)
+        if recover is not None:
+            recover()
 
     @staticmethod
     def _remaining(data: dict[str, Any]) -> float:
@@ -64,7 +73,7 @@ class CodeProcessor:
         while data["tool_count"] < self.config.max_tools:
             self._remaining(data)
             context = self._context(job, workspace, redactor)
-            action = self.planner.plan(context, min(120, self._remaining(data)))
+            action = self._plan(context, data)
             self._remaining(data)
             if not isinstance(action, CodeAction):
                 raise IssueWorkerError("coding planner must return CodeAction")
@@ -85,6 +94,13 @@ class CodeProcessor:
                 self._tool(action, workspace, data, checkpoint, redactor)
         data["reason"] = "issue exceeded its tool operation limit"
         return "failed"
+
+    def _plan(self, context: dict[str, Any], data: dict[str, Any]) -> CodeAction:
+        try:
+            return self.planner.plan(context, min(120, self._remaining(data)))
+        except IssueWorkerError:
+            self.preflight()
+            raise
 
     def _context(self, job: dict[str, Any], workspace: IssueWorkspace, redactor: Redactor) -> dict[str, Any]:
         instructions = {}
@@ -111,6 +127,8 @@ class CodeProcessor:
             if action.kind == "check":
                 data["checks"][action.check] = redactor.clean(result)
             entry = {"action": asdict(action), "result": result}
+        except EnvironmentUnavailable:
+            raise
         except IssueWorkerError as error:
             entry = {"action": asdict(action), "error": str(error)}
         if action.kind == "patch":

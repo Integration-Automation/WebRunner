@@ -68,7 +68,8 @@ GitHub token 須有程式庫 Contents／Issues／Pull requests 寫入權限，
     python -m je_web_runner.issue_worker retry --config issue-worker.json --issue jira:WR-123
 
 ``run`` 最多處理一單，``watch`` 預設每 60 秒輪詢。閒置、預演與待審 PR 交付
-結束碼為 0；失敗、未完成或平台回報尚未送達為 1，Ctrl-C 為 130。
+結束碼為 0；失敗、環境暫停或平台回報尚未送達為 1。watch 第一次 Ctrl-C
+停止接單並完成當前工作，第二次強制中斷，結束碼為 130。
 重試前須恢復 ``automation-ready``，不會搶走其他人的指派。
 GitHub 與 Jira 來源都會將 PR 交付到 GitHub 的 WebRunner 程式庫。
 
@@ -112,3 +113,87 @@ MCP 伺服器建立工具時會解析並固定 issue 設定；修改主機設定
 啟用前請備妥 GitHub 程式庫標籤：``automation-ready``、``automation-running``、
 ``automation-review``、``automation-needs-info``、``automation-failed``、
 ``automation-cancelled``。Jira 使用相同標籤名稱。
+
+啟用診斷與健康狀態
+------------------
+
+先診斷，再預演、手動一單，最後才啟用常駐：
+
+.. code-block:: bash
+
+    python -m je_web_runner.issue_worker doctor --config issue-worker.json
+    python -m je_web_runner.issue_worker doctor --config issue-worker.json --platform --json
+    python -m je_web_runner.issue_worker health --config issue-worker.json --json
+    python -m je_web_runner.issue_worker stop --config issue-worker.json
+
+``doctor`` 檢查 Git、可寫狀態目錄／SQLite、Podman 引擎與既有映像，以及本機
+Ollama 的雲端停用狀態及已安裝模型。不執行模型生成，不下載、不安裝、不啟動服務。
+會建立並清除暫存的本機 SQLite 探針，但不建立工作佇列。
+``--platform`` 才讀取真平台，確認 GitHub 身分、儲存庫、dev 與六個標籤，以及
+Jira 身分與所有白名單專案；Jira 標籤可自由使用，沒有預先建立的標籤目錄。
+所有平台請求皆為 GET，不認領、不留言；完整寫入權限明列為未驗證。
+必要檢查皆通過時結束碼為 0，否則為 1。JSON 包含 ready、checks，以及各項
+name／status／required／code／hint，不含原始 HTTP 本文或子程序錯誤輸出。
+
+``health`` 只讀本機營運狀態；首次使用可能初始化本機資料表，不連接平台或模型。
+healthy 回傳 0，degraded 回傳 1，stopped／stale 回傳 2。JSON 顯示執行個體、
+PID、啟動時間、心跳、當前階段／issue、最近完成輪詢、錯誤及停止請求。
+心跳獨立於模型及容器，每 10 秒更新，超過 45 秒視為過期。
+``stop`` 完成請求時回傳 0；沒有活躍程序時輸出 stop_requested=false，不留下
+未來的停止標記。當前單依原有期限完成，正常排空後退出；閒置輪詢等待每 250 ms
+檢查停止請求，正在進行的診斷或 HTTP 請求仍受各自逾時約束。
+
+watch 在每次接單前檢查本機必要條件，依賴故障時暫停接單、每個輪詢週期重查。
+修正期間發生模型／容器基礎服務故障時，工作保留可恢復狀態；既有每單總期限
+不因停機延長。常駐租約與工作租約分開，同一目錄只允許一個 watch，並拒絕另一個
+手動 run。新的 worker_runtime 資料表不修改既有工作狀態。
+容器加上狀態目錄摘要標籤；取得工作租約後，只清除相同標籤及專用名稱的中斷容器，
+不清除其他工作或人工容器。doctor 不執行此清理。
+日誌位於狀態目錄 logs/worker.log，每檔 5 MB、保留五份備份，不寫入需求或模型
+對話，也不自動清除工作目錄及歷史報告。
+
+Python ``IssueDoctor(config).check(include_platform=False)`` 提供相同診斷；
+``IssueWorker.health()``／``request_stop()`` 提供本機健康及排空控制。
+MCP 仍只提供排單及查詢，不增加執行或停止工具。
+
+Windows 登入常駐
+----------------
+
+使用與手動執行相同的使用者環境提供憑證，並先準備好模型、Podman 及映像。
+排程不保存金鑰，只保存 Python／腳本／設定檔的絕對路徑。
+
+.. code-block:: powershell
+
+    .\scripts\issue_worker_task.ps1 -Action Install -Config .\issue-worker.json
+    .\scripts\issue_worker_task.ps1 -Action Start -Config .\issue-worker.json
+    .\scripts\issue_worker_task.ps1 -Action Status -Config .\issue-worker.json
+    python -m je_web_runner.issue_worker stop --config issue-worker.json
+    # 等待排程停止後移除；不強制終止工作。
+    .\scripts\issue_worker_task.ps1 -Action Remove -Config .\issue-worker.json
+
+預設 Python 為此 checkout 的 .venv\Scripts\python.exe，可用 ``-Python`` 指定。
+腳本位置及 checkout 必須持續存在。任務名稱由設定路徑摘要產生，只操作自己建立的
+任務；目前使用者登入時觸發、一般權限、隱藏視窗、忽略重複啟動，異常退出每分鐘
+重試、最多三次，不設執行時間上限。Install 不會立即啟動，使用者須保持登入；
+不提供登出後仍運作的系統服務，也不自動啟動 Ollama 或 Podman。
+正在執行的任務須先排空，才能更新或移除。
+
+必要的真實本機驗收
+------------------
+
+一般測試可略過真實環境；專用入口在缺少環境時失敗，不將略過算成驗收成功：
+
+.. code-block:: powershell
+
+    $env:WEBRUNNER_ISSUE_MODEL = 'YOUR_INSTALLED_LOCAL_MODEL'
+    $env:WEBRUNNER_ISSUE_IMAGE = 'localhost/webrunner-issue-worker:local'
+    python scripts/verify_issue_worker.py --soak-hours 0
+    python scripts/verify_issue_worker.py  # 真實端到端＋預設 24 小時常駐驗收
+
+僅模型和容器使用真實服務；GitHub／Jira 全部使用本地測試 HTTP 端點。
+驗收覆蓋兩種來源、失敗基準與修正後通過、PR 回應遺失後恢復，並驗證容器非 root、
+來源與根目錄唯讀、無平台憑證及無外網。常駐驗收加入 429／503、閒置與反覆停止／
+重啟；另有獨立程序測試驗證崩潰、租約接手及 CLI 停止。
+Windows 排程的真實臨時註冊／移除測試以 ``WEBRUNNER_TEST_SCHEDULER=1`` 啟用，
+不啟動該任務，不修改正式排程。
+未安裝 Podman／模型或未完成 24 小時測試時，必須分別標示為尚未驗收。

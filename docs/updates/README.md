@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261023-07 | 2026-10-23 | Issue worker readiness and Windows operations | #done #issues #operations #tests | [2026-10](2026-10.md) |
 | U-20261023-06 | 2026-10-23 | Issue worker delivery, CLI and MCP | #done #issues #mcp #cli | [2026-10](2026-10.md) |
 | U-20261023-05 | 2026-10-23 | Isolated local issue coding and validation | #done #issues | [2026-10](2026-10.md) |
 | U-20261023-04 | 2026-10-23 | Durable GitHub and Jira issue intake | #done #issues | [2026-10](2026-10.md) |
@@ -157,5 +158,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 69 |
+| [2026-10.md](2026-10.md) | 2026-10 | 70 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
