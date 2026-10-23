@@ -126,9 +126,9 @@ class FixtureAPI:
             self.model_calls += 1
             if "criteria" in data.get("format", {}).get("properties", {}):
                 return 200, {"message": {"content": json.dumps(self.requirement_reply)}}
-            action = {"kind": "patch", "text": _PATCH} if self.coding_calls == 0 else {
-                "kind": "finish", "summary": "Corrected value(); baseline failed and final tests passed.",
-            }
+            actions = [{"kind": "read", "path": "je_web_runner/calc.py"}, {"kind": "patch", "text": _PATCH},
+                       {"kind": "finish", "summary": "Corrected value(); baseline failed and final tests passed."}]
+            action = actions[min(self.coding_calls, len(actions) - 1)]
             if self.model_actions is not None:
                 action = self.model_actions[self.coding_calls]
             self.coding_calls += 1
@@ -375,7 +375,7 @@ def test_ready_issue_to_single_reviewed_pr_with_real_regression_evidence(pipelin
     result = worker.run_once()
     assert result["status"] == "awaiting_review", result
     assert api.checks == [1, 0]  # real failing baseline, real passing patched test
-    assert api.model_calls == 2 and len(api.prs) == 1
+    assert api.model_calls == 3 and len(api.prs) == 1
     assert api.pr_posts == 1
     assert "automation-review" in api.labels and "automation-ready" not in api.labels
     assert len(api.comments) == 1
@@ -395,7 +395,7 @@ def test_lost_pr_reply_recovers_without_second_pr_or_model_run(pipeline):
     worker.store.save(uncertain["key"], uncertain["status"], uncertain["data"])
     recovered = worker.run_once(discover=False)
     assert recovered["status"] == "awaiting_review", recovered
-    assert api.pr_posts == 1 and api.model_calls == 2
+    assert api.pr_posts == 1 and api.model_calls == 3
     assert recovered["data"]["report_pending"] is False
 
 
@@ -591,7 +591,9 @@ def test_review_updates_original_pr_with_real_git_and_tests_and_recovers_lost_re
     review_patch = _PATCH.replace("-    return 1", "-    return 2").replace(
         "+    return 2", '+    """Return two for callers."""\n+    return 2'
     ).replace("@@ -1,2 +1,2 @@", "@@ -1,2 +1,3 @@")
-    api.model_actions = [{"kind": "patch", "text": _PATCH}, {"kind": "finish", "summary": "Fix return value"},
+    api.model_actions = [{"kind": "read", "path": "je_web_runner/calc.py"},
+                         {"kind": "patch", "text": _PATCH}, {"kind": "finish", "summary": "Fix return value"},
+                         {"kind": "read", "path": "je_web_runner/calc.py"},
                          {"kind": "patch", "text": review_patch},
                          {"kind": "finish", "summary": "Document the public value function"}]
     worker.config.review_enabled = True
@@ -610,12 +612,12 @@ def test_review_updates_original_pr_with_real_git_and_tests_and_recovers_lost_re
     assert recovered["status"] == "awaiting_review", recovered
     assert recovered["data"]["review_rounds"] == 1
     assert api.pr_posts == 1 and len(api.pr_comments) == 1
-    assert api.model_calls == 4
+    assert api.model_calls == 6
     assert api.checks == [1, 0, 0, 0]  # baseline/final on initial delivery and revision
     assert "Return two for callers" in git_run(api.git_root, ["show", ":je_web_runner/calc.py"])
     assert "return 1" in (original / "je_web_runner/calc.py").read_text()
     assert worker.run_once()["status"] == "idle"
-    assert api.model_calls == 4
+    assert api.model_calls == 6
 
 
 @pytest.mark.parametrize("pipeline", ["github", "jira"], indirect=True)
@@ -628,7 +630,7 @@ def test_requirement_analysis_produces_tree_bound_evidence_in_the_pr(pipeline):
     assert evidence["tree"] == result["data"]["validated_tree"]
     assert evidence["criteria"][0]["status"] == "evidence_passed"
     assert '"business_verified": false' in api.prs[0]["body"]
-    assert api.model_calls == 3 and api.coding_calls == 2
+    assert api.model_calls == 4 and api.coding_calls == 3
 
 
 def test_requirement_questions_reach_source_without_coding_or_pr(pipeline):

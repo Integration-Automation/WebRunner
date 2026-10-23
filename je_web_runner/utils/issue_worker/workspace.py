@@ -96,8 +96,15 @@ class IssueWorkspace:
         return matches
 
     def _numstat(self, arguments: list[str]) -> list[tuple[int, int, str]]:
+        try:
+            output = git_run(self.root, arguments)
+        except IssueWorkerError as error:
+            if arguments[0] != "apply":
+                raise
+            raise IssueWorkerError("patch is not a complete git unified diff; include file headers and valid "
+                                   "@@ hunk counts after reading the current files") from error
         stats = []
-        for row in git_run(self.root, arguments).split("\0"):
+        for row in output.split("\0"):
             if not row:
                 continue
             fields = row.split("\t", 2)
@@ -112,16 +119,23 @@ class IssueWorkspace:
         return self._numstat(["diff", "--cached", "--no-renames", "--numstat", "-z", self.base_sha])
 
     def patch(self, patch: str) -> list[str]:
-        """Check and apply a bounded unified diff, restoring the prior index on policy failure."""
+        """Normalize its final line terminator and apply a bounded diff, restoring the index on policy failure."""
+        patch = patch.replace("\r\n", "\n")
+        if not patch.endswith("\n"):
+            patch += "\n"
         if len(patch.encode()) > 500_000 or "GIT binary patch" in patch:
             raise IssueWorkerError("patch exceeds the text patch limit")
         patch_file = self.root.parent / (self.root.name + ".patch")
-        patch_file.write_text(patch.replace("\r\n", "\n"), encoding="utf-8", newline="\n")
-        stats = self._numstat(["apply", "--numstat", "-z", str(patch_file)])
+        patch_file.write_text(patch, encoding="utf-8", newline="\n")
+        stats = self._numstat(["apply", "--recount", "--numstat", "-z", str(patch_file)])
         before = {name: self._base_text(name) for _added, _removed, name in stats if name.startswith("test/")}
         tree = git_run(self.root, ["write-tree"]).strip()
-        git_run(self.root, ["apply", "--check", "--index", "--", str(patch_file)])
-        git_run(self.root, ["apply", "--index", "--", str(patch_file)])
+        try:
+            git_run(self.root, ["apply", "--recount", "--check", "--index", "--", str(patch_file)])
+        except IssueWorkerError as error:
+            raise IssueWorkerError("patch does not match the current files; read them and regenerate exact "
+                                   "context and hunk counts before retrying") from error
+        git_run(self.root, ["apply", "--recount", "--index", "--", str(patch_file)])
         try:
             self.verify_scope()
             for name, original in before.items():

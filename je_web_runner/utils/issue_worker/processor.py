@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import asdict
-from typing import Any, Callable
+from typing import Any, Callable, TypeVar
 
 from je_web_runner.utils.agent.runner import Redactor, browser_privacy
 from je_web_runner.utils.issue_worker.planner import CodeAction, CodingPlanner
@@ -11,6 +11,8 @@ from je_web_runner.utils.issue_worker.requirements import RequirementAnalyzer, R
 from je_web_runner.utils.issue_worker.sandbox import PodmanSandbox
 from je_web_runner.utils.issue_worker.types import EnvironmentUnavailable, IssueWorkerConfig, IssueWorkerError
 from je_web_runner.utils.issue_worker.workspace import IssueWorkspace
+
+_Inference = TypeVar("_Inference")
 
 
 class CodeProcessor:
@@ -62,8 +64,8 @@ class CodeProcessor:
                 raise IssueWorkerError("requirement analysis exceeded the tool budget")
             data["tool_count"] += 1
             checkpoint("analyzing", data)
-            data["analysis"] = redactor.clean(self.analyzer.analyze(
-                job["snapshot"], data.get("review", {}).get("feedback", []), min(120, self._remaining(data))))
+            data["analysis"] = redactor.clean(self._infer(lambda: self.analyzer.analyze(
+                job["snapshot"], data.get("review", {}).get("feedback", []), min(120, self._remaining(data))), data))
             self._remaining(data)
             checkpoint("analyzing", data)
         RequirementPlan.parse({key: data["analysis"].get(key) for key in
@@ -124,10 +126,16 @@ class CodeProcessor:
         return "failed"
 
     def _plan(self, context: dict[str, Any], data: dict[str, Any]) -> CodeAction:
+        return self._infer(lambda: self.planner.plan(context, min(120, self._remaining(data))), data)
+
+    def _infer(self, operation: Callable[[], _Inference], data: dict[str, Any]) -> _Inference:
+        """Preserve wall-time attribution and dependency deferral across all local inference phases."""
         try:
-            return self.planner.plan(context, min(120, self._remaining(data)))
+            return operation()
         except IssueWorkerError:
+            self._remaining(data)
             self.preflight()
+            self._remaining(data)
             raise
 
     def _context(self, job: dict[str, Any], workspace: IssueWorkspace, redactor: Redactor) -> dict[str, Any]:
@@ -163,7 +171,8 @@ class CodeProcessor:
         except IssueWorkerError as error:
             entry = {"action": asdict(action), "error": str(error)}
         if action.kind == "patch":
-            entry["action"]["text"] = "<patch stored in isolated git index>"
+            entry["action"]["text"] = ("<patch rejected>" if "error" in entry else
+                                       "<patch applied to files and git index>")
         rendered = redactor.clean(entry)
         if isinstance(rendered.get("result"), str):
             rendered["result"] = rendered["result"][:16000]

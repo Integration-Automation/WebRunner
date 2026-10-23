@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261024-01 | 2026-10-24 | Ground local coding actions and recover malformed edits | #snapshot #issues #runtime #fix | [2026-10](2026-10.md) |
 | U-20261023-12 | 2026-10-23 | Verify real container isolation and browser acceptance | #snapshot #issues #runtime | [2026-10](2026-10.md) |
 | U-20261023-11 | 2026-10-23 | Require observed runtime failures and same-PR local acceptance | #snapshot #issues #acceptance | [2026-10](2026-10.md) |
 | U-20261023-10 | 2026-10-23 | Intake quality and local delivery history | #done #issues #triage #metrics | [2026-10](2026-10.md) |
@@ -163,5 +164,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 75 |
+| [2026-10.md](2026-10.md) | 2026-10 | 76 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

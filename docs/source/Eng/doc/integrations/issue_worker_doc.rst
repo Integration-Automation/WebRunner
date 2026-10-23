@@ -66,6 +66,17 @@ Contents, Issues and Pull requests write permissions, with ``github_bot`` matchi
 the authenticated login. Jira needs browse/assign/edit/comment permissions and a
 matching accountId. No workflow-transition permission is required.
 
+The local coding planner requires a successful read/search before proposing edits
+and accepts only the argument fields for the selected action. The closed schema is
+also included in the model prompt, with complete git unified diff and finish examples.
+Final diff newlines are normalized
+and Git recounts hunk line counts from their payload; source context, actual change
+budgets and test preservation remain checked. Malformed or non-applicable patches
+return repair guidance without changing the index.
+Rejected proposals are identified as rejected in history, rather than stored changes.
+Local inference dependency failures defer requirement analysis as well as coding;
+requests that exhaust the job deadline are attributed to the time budget.
+
 .. code-block:: bash
 
     python -m je_web_runner.issue_worker run --config issue-worker.json --dry-run
@@ -273,6 +284,9 @@ Requirement analysis and browser acceptance
 
 Set ``requirements_enabled=true`` to use the same local model for a summary, task
 kind, C1/C2 acceptance criteria and concrete clarification questions before coding.
+Clarification is reserved for unresolved product decisions or conflicting desired
+behavior. Explicitly stated behavior is used directly; implementation details and
+existing tests are inspected by the coding worker rather than requested from users.
 Legacy configs default to disabled; examples explicitly enable it. Analysis consumes
 one tool operation, allows one malformed-response correction, and questions stop
 with needs_info before baseline execution or patching. Criteria may reference only

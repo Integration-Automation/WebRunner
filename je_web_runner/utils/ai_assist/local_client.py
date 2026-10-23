@@ -67,7 +67,8 @@ class LocalOllamaClient:
                    parse: Callable[[Any], _Result], timeout: float, label: str = "response") -> _Result:
         """Decode one schema-constrained reply with one bounded correction, never echoing raw output."""
         deadline = time.monotonic() + timeout
-        messages = [{"role": "system", "content": instructions},
+        grounded = instructions + "\nJSON schema:\n" + json.dumps(schema, ensure_ascii=False)
+        messages = [{"role": "system", "content": grounded},
                     {"role": "user", "content": json.dumps(context, ensure_ascii=False)}]
         for attempt in range(2):
             result = self._request("/api/chat", max(0.001, deadline - time.monotonic()), {
