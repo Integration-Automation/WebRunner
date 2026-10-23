@@ -20,6 +20,7 @@ class SmartWaitError(WebRunnerException):
 _INSTALL_FETCH_HOOK = """
 (() => {
   if (window.__wrFetchHook) { return; }
+  window.__wrWaitDocument = performance.timeOrigin || Date.now();
   window.__wrFetchInflight = 0;
   const original = window.fetch;
   window.fetch = function(...args) {
@@ -123,8 +124,13 @@ def wait_for_fetch_idle(
     install_hooks(driver)
     deadline = time.monotonic() + timeout
     quiet_started: float | None = None
+    previous_document: int | None = None
     while time.monotonic() < deadline:
         install_hooks(driver)
+        document = _read_int(driver, "(window.__wrWaitDocument || 0)")
+        if document != previous_document:
+            quiet_started = None
+            previous_document = document
         in_flight = _read_int(driver, "(window.__wrFetchInflight || 0)")
         now = time.monotonic()
         if in_flight == 0:

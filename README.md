@@ -803,7 +803,7 @@ WebRunner ships a [Model Context Protocol](https://modelcontextprotocol.io/) ser
 python -m je_web_runner.mcp_server
 ```
 
-The default tool list (22 tools) exposes:
+The default tool list (25 tools) exposes:
 
 Live browser execution:
 - `webrunner_run_actions` — execute any `WR_*` action list. Covers all 547 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
@@ -1688,6 +1688,21 @@ The native commands refuse a Selenium driver whose window is not on this machine
 The other direction, AutoControl's `AC_web_*` commands running `WR_*` commands, is part of AutoControl.
 
 ## AI Assistance
+
+### Local browser agents
+
+`je_web_runner.api.ai.run_agent(task)` runs a verified task with Selenium (default) or Playwright. Fixed steps need no model; autonomous planning uses an explicitly installed local Ollama model with cloud features disabled. No paid API, subscription or free cloud quota is required.
+
+```bash
+python -m http.server 8000 --bind 127.0.0.1 --directory examples/agent_demo
+# In another terminal:
+python -m je_web_runner --agent-task examples/agent_form.json --report results/form
+```
+
+Also try `agent_search.json` and `agent_iframe.json`. Tasks require `goal`, HTTP(S) `start_url`, and deterministic `success` conditions. Set `planner` to `ollama` and `model` to your installed open-source model name for autonomous planning; otherwise supply `steps`. Defaults: 25 steps, 300 seconds total, 15 seconds per operation. Only verified success exits 0. Reports are `BASE.agent.json` / `.agent.html`, with masked failure screenshots when `--report` is set.
+
+MCP adds `webrunner_observe_page`, `webrunner_agent_step`, and `webrunner_run_agent`. Host-controlled `WEBRUNNER_AGENT_ALLOWED_ENV` limits access to environment secrets. See [the local agent guide](docs/source/Eng/doc/integrations/local_agent_doc.rst) and [task schema](docs/reference/webrunner-agent-schema.json) for task fields, local-only setup, secret handling, limits and migration from removed commercial connectors.
+
 
 ```python
 from je_web_runner.utils.ai_assist.llm_assist import (

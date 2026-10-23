@@ -798,7 +798,7 @@ WebRunner 附带一个 [Model Context Protocol](https://modelcontextprotocol.io/
 python -m je_web_runner.mcp_server
 ```
 
-默认工具列表（22 个工具）暴露：
+默认工具列表（25 个工具）暴露：
 
 实时浏览器执行：
 - `webrunner_run_actions` —— 执行任意 `WR_*` 动作列表。覆盖全部 547 个 `WR_*` 命令，包括高级 WebDriverWrapper 新增项：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、页面元数据取值器、Fetch 拦截原语、`WR_add_script_to_evaluate_on_new_document`……
@@ -1122,7 +1122,7 @@ python -m je_web_runner.action_lsp
   文件特定的回归。
 - **`git_bisect_flake`** —— 仅账本或探测驱动的 bisect，找出导致测试
   开始失败的回归提交。
-- **`test_cost_estimator`** — Local resource estimates; optional caller-supplied rate cards. No commercial service defaults.
+- **`test_cost_estimator`** —— 本地资源估算，可自行提供估算参数；不含商业服务默认费率。
 - **`slack_digest`** —— 渲染 Slack Block-Kit + Teams Adaptive Card +
   纯文本测试摘要，含隔离活动、最高风险 PR、成本
   趋势和通过率变化。
@@ -1676,6 +1676,21 @@ AutoControl 动作失败时，它所在的 `WR_ac_*` 动作以 `AutoControlBridg
 另一个方向，也就是 AutoControl 的 `AC_web_*` 命令执行 `WR_*` 命令，属于 AutoControl。
 
 ## AI 辅助
+
+### 本地浏览器 Agent
+
+`je_web_runner.api.ai.run_agent(task)` 以 Selenium（默认）或 Playwright 执行可验证的任务。固定步骤不需要模型；自主规划使用明确指定、已安装且关闭云端功能的本地 Ollama 模型，不需要付费 API、订阅或云端免费额度。
+
+```bash
+python -m http.server 8000 --bind 127.0.0.1 --directory examples/agent_demo
+# 在另一个终端执行：
+python -m je_web_runner --agent-task examples/agent_form.json --report results/form
+```
+
+另提供 `agent_search.json` 与 `agent_iframe.json`。任务必须有 `goal`、HTTP(S) `start_url` 与确定性的 `success` 条件。自主规划设置 `planner: ollama` 与已安装的开源 `model` 名称；固定步骤使用 `steps`。默认最多 25 步、总时限 300 秒、每次操作 15 秒；只有通过验证的成功才返回退出码 0。报告为 `BASE.agent.json`／`.agent.html`，搭配 `--report` 时会保存已遮蔽的失败截图。
+
+MCP 新增 `webrunner_observe_page`、`webrunner_agent_step`、`webrunner_run_agent`；环境变量密钥由主机端的 `WEBRUNNER_AGENT_ALLOWED_ENV` 限制。任务格式、本地设置、密钥遮蔽、限制及商业集成迁移方式，见[本地 agent 指南](../docs/source/Zh/doc/integrations/local_agent_doc.rst)与[任务 Schema](../docs/reference/webrunner-agent-schema.json)。
+
 
 ```python
 from je_web_runner.utils.ai_assist.llm_assist import (

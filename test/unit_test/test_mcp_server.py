@@ -396,7 +396,7 @@ class TestToolMetadata(unittest.TestCase):
             self.assertIn("readOnlyHint", tool["annotations"], tool["name"])
 
     def test_only_the_browser_tools_have_side_effects(self):
-        browser = {"webrunner_run_actions", "webrunner_run_action_files"}
+        browser = {"webrunner_run_actions", "webrunner_run_action_files", "webrunner_agent_step", "webrunner_run_agent"}
         for tool in self.tools:
             hints = tool["annotations"]
             if tool["name"] in browser:
@@ -405,7 +405,7 @@ class TestToolMetadata(unittest.TestCase):
                 self.assertTrue(hints["openWorldHint"], tool["name"])
             else:
                 self.assertTrue(hints["readOnlyHint"], tool["name"])
-                self.assertFalse(hints["openWorldHint"], tool["name"])
+                self.assertEqual(hints["openWorldHint"], tool["name"] == "webrunner_observe_page", tool["name"])
 
     def test_every_input_schema_is_closed_and_described(self):
         for tool in self.tools:

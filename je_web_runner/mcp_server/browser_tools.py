@@ -85,6 +85,7 @@ def _tool_list_commands(_arguments: dict[str, Any]) -> Any:
 
 def build_browser_tools() -> list[Tool]:
     """Return the browser-execution MCP tools."""
+    from je_web_runner.mcp_server.agent_tools import build_agent_tools
     return [
         Tool(
             name="webrunner_run_actions",
@@ -178,4 +179,4 @@ def build_browser_tools() -> list[Tool]:
             handler=_tool_list_commands,
             annotations=READ_ONLY,
         ),
-    ]
+    ] + build_agent_tools()

@@ -453,7 +453,7 @@ __all__ = [
     "fallback_hit_tracker", "locator_render_health_markdown",
     "save_health_report", "locator_scan_action_file", "locator_scan_project",
     "locator_suggest_upgrade", "locator_suggest_upgrades",
-# Phase 6: otel_bridge
+    # Phase 6: otel_bridge
     "TraceBridgeError", "TraceContext",
     "bridged_span_playwright", "bridged_span_selenium",
     "clear_headers_playwright", "clear_headers_selenium",

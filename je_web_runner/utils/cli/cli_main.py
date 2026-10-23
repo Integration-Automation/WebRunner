@@ -42,6 +42,7 @@ def _add_run_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("-e", "--execute_file", type=str, help="execute a single action JSON file")
     parser.add_argument("-d", "--execute_dir", type=str, help="execute all JSON files in a directory")
     parser.add_argument("--execute_str", type=str, help="execute a JSON action string directly")
+    parser.add_argument("--agent-task", type=str, help="run a local browser agent task JSON file")
     parser.add_argument("--validate", type=str, help="validate a single action JSON file (no execute)")
     parser.add_argument("--validate_dir", type=str, help="validate all JSON files in a directory (no execute)")
     parser.add_argument(
@@ -400,6 +401,9 @@ def _validate_dir(directory: str, include_tags=None, exclude_tags=None) -> None:
 
 def _dispatch(args: argparse.Namespace) -> None:
     """Run side-effects requested by the parsed args, in a sensible order."""
+    if args.agent_task:
+        _run_agent_task(args.agent_task, args.report)
+        return
     include_tags = _split_csv(args.tag)
     exclude_tags = _split_csv(args.exclude_tag)
     if args.validate:
@@ -409,25 +413,7 @@ def _dispatch(args: argparse.Namespace) -> None:
     if args.execute_file:
         execute_action(read_action_json(args.execute_file))
     if args.execute_dir:
-        selection = FileSelection(
-            include_tags=include_tags,
-            exclude_tags=exclude_tags,
-            rerun_only=failed_files(args.rerun_failed) if args.rerun_failed else None,
-            shard_spec=args.shard,
-            affected_by=args.affected_by or (),
-            changed_since=args.changed_since,
-            impact_cache=args.impact_cache,
-        )
-
-        def _do_run() -> None:
-            _run_dir(args.execute_dir, args.parallel, selection,
-                     ledger_path=args.ledger, parallel_mode=args.parallel_mode)
-
-        if args.watch:
-            from je_web_runner.utils.cli.watch_mode import watch_directory
-            watch_directory(args.watch, _do_run)
-        else:
-            _do_run()
+        _dispatch_directory(args, include_tags, exclude_tags)
     if args.execute_str:
         execute_action(_parse_execute_str(args.execute_str))
     if args.report:
@@ -436,8 +422,28 @@ def _dispatch(args: argparse.Namespace) -> None:
         _do_migrate(args.migrate, dry_run=args.migrate_dry_run)
 
 
+def _dispatch_directory(args: argparse.Namespace, include_tags: Sequence[str],
+                        exclude_tags: Sequence[str]) -> None:
+    selection = FileSelection(
+        include_tags=include_tags, exclude_tags=exclude_tags,
+        rerun_only=failed_files(args.rerun_failed) if args.rerun_failed else None,
+        shard_spec=args.shard, affected_by=args.affected_by or (),
+        changed_since=args.changed_since, impact_cache=args.impact_cache,
+    )
+
+    def do_run() -> None:
+        _run_dir(args.execute_dir, args.parallel, selection, ledger_path=args.ledger, parallel_mode=args.parallel_mode)
+
+    if args.watch:
+        from je_web_runner.utils.cli.watch_mode import watch_directory
+        watch_directory(args.watch, do_run)
+    else:
+        do_run()
+
+
 def _has_any_action(args: argparse.Namespace) -> bool:
     return any([
+        args.agent_task,
         args.execute_file,
         args.execute_dir,
         args.execute_str,
@@ -446,6 +452,19 @@ def _has_any_action(args: argparse.Namespace) -> bool:
         args.report,
         args.migrate,
     ])
+
+
+def _run_agent_task(path: str, report_base: str | None) -> None:
+    """Run one validated agent task and count every unverified outcome as failure."""
+    from je_web_runner.utils.agent import TaskSpec, run_agent
+    from je_web_runner.utils.agent.report import write_agent_report
+    task = TaskSpec.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+    report = run_agent(task, artifact_dir=report_base + ".agent-artifacts" if report_base else None)
+    if report_base:
+        write_agent_report(report, report_base)
+    print(json.dumps(report.to_dict(), ensure_ascii=False))
+    if report.status != "success":
+        note_failed_file()
 
 
 def _do_migrate(target: str, dry_run: bool) -> None:
@@ -469,6 +488,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Entry point for ``python -m je_web_runner``."""
     parser = _build_parser()
     args = parser.parse_args(argv)
+    if args.agent_task and any((args.execute_file, args.execute_dir, args.execute_str, args.validate,
+                               args.validate_dir, args.migrate, args.watch)):
+        parser.error("--agent-task runs independently; only --report can be combined with it")
     if not _has_any_action(args):
         raise WebRunnerExecuteException(argparse_get_wrong_data)
     # A failed action does not stop its list, so the run is judged once everything has run.

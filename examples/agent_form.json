@@ -1,0 +1,9 @@
+{
+  "goal": "Enter a name and submit the local form",
+  "start_url": "http://127.0.0.1:8000/index.html",
+  "steps": [
+    {"kind": "fill", "selector": "#name", "value": "Ada"},
+    {"kind": "click", "selector": "#submit"}
+  ],
+  "success": [{"kind": "text_contains", "selector": "#result", "value": "Hello Ada"}]
+}

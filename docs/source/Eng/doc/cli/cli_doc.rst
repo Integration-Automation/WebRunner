@@ -89,3 +89,9 @@ output belongs in. A report asked for under a relative name (JSON, XML, HTML, JU
 interactive HTML, and ``generate_all_reports``) is then written below that directory, and the
 folders it needs are created. An absolute name, and a name that would leave the directory, are
 used as given. Without the variable nothing changes.
+
+Local agent tasks
+-----------------
+
+``--agent-task task.json --report results/task`` runs a verified local task.
+See :doc:`../integrations/local_agent_doc`.

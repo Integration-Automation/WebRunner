@@ -41,4 +41,3 @@ def start_remote_driver(
         # wrapper's ActionChains bind to this remote driver.
         webdriver_wrapper_instance.set_active_driver(driver)
     return driver
-

@@ -215,3 +215,16 @@ process share one driver (`--parallel-mode process` exists for isolation).
 - On every edit, refresh the "Last verified" line.
 
 Commercial browser/device cloud and TestRail clients were removed by explicit request. Generic Grid, local Appium, Jira and webhook APIs remain. Healing now rejects ambiguous actionable matches; smart waits track fetch/XHR and SPA routes.
+
+## Local browser agents
+
+`utils/agent/` holds typed TaskSpec / AgentAction / SuccessCondition / AgentReport contracts, the browser adapter,
+fixed-step and local-only Ollama planners, the bounded AgentRunner, task schema and local report writer.
+`api.ai.run_agent` and CLI `--agent-task FILE` share this core. New MCP tools in `mcp_server/agent_tools.py`
+observe/step the existing browser or run a task in its own local wrapper. No agent command accepts arbitrary code.
+A quiet executor with zero retries executes a fixed internal operation; success is checked independently of the planner.
+Owned wrappers are isolated from legacy singletons; borrowed browsers stay open. A process lock serializes agent work.
+Ollama preflight requires cloud-disabled status and installed local weights; requests use loopback only, no proxy or redirects.
+Task environment placeholders are allowlisted; MCP additionally requires the host's `WEBRUNNER_AGENT_ALLOWED_ENV`.
+MCP limits: 100 steps / 300 total seconds / 15 seconds per browser operation. Reports redact entered values and known secrets.
+CLI exits 0 only for verified success and optionally emits BASE.agent.json/html plus masked failure screenshots.

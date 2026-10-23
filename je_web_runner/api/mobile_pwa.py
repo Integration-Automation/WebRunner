@@ -1,4 +1,4 @@
-"""Facade: Mobile and PWA: touch gestures, viewport, virtual keyboard, pull-to-refresh, real devices."""
+"""Facade: Mobile and PWA: touch gestures, viewport, virtual keyboard and pull-to-refresh."""
 from je_web_runner.utils.pull_to_refresh.refresh import (
     PullToRefreshError, PullToRefreshSnapshot, parse_snapshot as pull_to_refresh_parse_snapshot,
     assert_overscroll_contained, assert_threshold_sensible, RefreshEvent, assert_refresh_triggered,

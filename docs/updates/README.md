@@ -58,6 +58,9 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261023-03 | 2026-10-23 | Agent CLI, MCP, reports and local examples | #done #agent #mcp #cli | [2026-10](2026-10.md) |
+| U-20261023-02 | 2026-10-23 | Local agents with verified task completion | #done #agent | [2026-10](2026-10.md) |
+| U-20261023-01 | 2026-10-23 | Remove commercial clients and harden browser waits | #done #automation | [2026-10](2026-10.md) |
 | U-20261022-06 | 2026-10-22 | Retain SQLAlchemy support on Python 3.10 | #bugfix #deps #ci | [2026-10](2026-10.md) |
 | U-20261022-01 | 2026-10-22 | Preserve complete dependency locks | #bugfix #deps #ci | [2026-10](2026-10.md) |
 | U-20261022-02 | 2026-10-22 | Preserve complete dependency locks | #bugfix #deps #ci | [2026-10](2026-10.md) |
@@ -151,7 +154,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 57 |
+| [2026-10.md](2026-10.md) | 2026-10 | 66 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
-
-| [U-20261023-01](2026-10.md#u-20261023-01) | 2026-10-23 | Local automation and commercial connector removal | #done #automation |

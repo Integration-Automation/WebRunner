@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 from je_web_runner.utils.smart_wait import (
     SmartWaitError,
@@ -20,6 +20,23 @@ class TestWaitUntil(unittest.TestCase):
 
 
 class TestFetchIdle(unittest.TestCase):
+
+    def test_navigation_restarts_the_quiet_window(self):
+        now = [0.0]
+
+        def sleep(delay):
+            now[0] += delay
+
+        def read(_driver, expression):
+            if "__wrWaitDocument" in expression:
+                return 1 if now[0] < 0.2 else 2
+            return 0
+
+        module = "je_web_runner.utils.smart_wait.smart_wait"
+        with patch(module + ".install_hooks"), patch(module + "._read_int", side_effect=read), \
+                patch(module + ".time.monotonic", side_effect=lambda: now[0]):
+            wait_for_fetch_idle(MagicMock(), quiet_for=0.3, timeout=2, poll=0.1, sleep=sleep)
+        self.assertGreaterEqual(now[0], 0.5)
 
     def test_returns_when_zero_inflight_for_quiet_window(self):
         driver = MagicMock()

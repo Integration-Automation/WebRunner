@@ -152,6 +152,7 @@ CI 註解、JIRA / Slack 通知、IDE schema 設定,以及讓 Claude 透過
     :caption: 整合
 
     doc/integrations/integrations_doc.rst
+    doc/integrations/local_agent_doc.rst
     doc/mcp_claude/mcp_claude_doc.rst
     doc/cookbook/cookbook_doc.rst
 
