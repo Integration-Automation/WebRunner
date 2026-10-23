@@ -13,7 +13,7 @@ from je_web_runner.utils.issue_worker.policy import checked_path, preserve_tests
 from je_web_runner.utils.issue_worker.processor import CodeProcessor
 from je_web_runner.utils.issue_worker.sandbox import PodmanSandbox, transport_environment
 from je_web_runner.utils.issue_worker.types import EnvironmentUnavailable, IssueWorkerError
-from je_web_runner.utils.issue_worker.workspace import IssueWorkspace
+from je_web_runner.utils.issue_worker.workspace import IssueWorkspace, git_run
 
 PATCH = """diff --git a/je_web_runner/calc.py b/je_web_runner/calc.py
 --- a/je_web_runner/calc.py
@@ -54,6 +54,27 @@ def test_rejected_patch_gives_repair_guidance_without_changing_the_index(issue_w
     assert isolated.changes() == []
     isolated.patch(PATCH)
     assert "return 2" in isolated.read("je_web_runner/calc.py")
+
+
+def test_staged_diff_preview_is_bounded_and_explicitly_marks_omitted_content(issue_workspace):
+    isolated = issue_workspace[0]
+    baseline_tree = isolated.fingerprint()
+    initial = isolated.preview()
+    assert initial["tree"] == baseline_tree and initial["diff"] == "" and not initial["truncated"]
+    isolated.patch(PATCH.replace("+    return 2", '+    return "' + "A" * 18000 + '"'))
+    draft = isolated.preview()
+    assert len(draft["diff"]) == 16000 and draft["truncated"] is True
+    assert draft["tree"] == isolated.fingerprint() and draft["tree"] != baseline_tree
+    assert draft["base_commit"] == isolated.base_sha
+
+
+def test_staged_diff_preview_refuses_credentials_even_if_staged_outside_the_patch_tool(issue_workspace):
+    isolated = issue_workspace[0]
+    (isolated.root / ".env").write_text("SYNTHETIC_SECRET=fixture-private-value", encoding="utf-8")
+    git_run(isolated.root, ["add", "--", ".env"])
+    with pytest.raises(IssueWorkerError, match="credential") as error:
+        isolated.preview()
+    assert "fixture-private-value" not in str(error.value)
 
 
 @pytest.mark.parametrize("path", ["../outside", "/etc/passwd", "C:/Windows/file", ".git/config", ".env"])
@@ -178,6 +199,33 @@ def test_local_coding_finish_requires_actual_host_checks_and_matching_tree(issue
     assert job["data"]["validated_tree"] == issue_workspace[0].fingerprint()
     assert sandbox.check.call_count == 2  # original baseline and patched final tree
     assert "validating" in checkpoints
+
+
+def test_planner_sees_applied_diff_and_historical_baseline_before_requesting_final_checks(issue_workspace):
+    workspace, job, _original = issue_workspace
+    baseline_tree = workspace.fingerprint()
+    planner, sandbox = Mock(), Mock()
+
+    def request_validation(context, _timeout):
+        assert "-    return 1" in context["current_diff"]
+        assert "+    return 2" in context["current_diff"]
+        assert context["current_tree"] == workspace.fingerprint()
+        assert context["baseline"]["historical"] is True
+        assert context["baseline"]["applies_to_current_tree"] is False
+        assert context["baseline"]["passed"] is False
+        assert context["checks"] == {}  # A draft diff does not fabricate current test success.
+        return CodeAction("finish", summary="Ready for the host's independent final checks")
+
+    planner.plan.side_effect = lambda context, timeout: (
+        CodeAction("patch", text=PATCH) if not context["history"] else request_validation(context, timeout))
+    sandbox.check.side_effect = lambda root, name, _timeout: {
+        "name": name, "passed": root.fingerprint() != baseline_tree, "tree": root.fingerprint()}
+    engine = CodeProcessor(workspace.config, planner, sandbox)
+    assert engine.process(job, workspace, Mock(), Redactor()) == "ready"
+    assert sandbox.check.call_count == 2
+    assert job["data"]["baseline"]["passed"] is False
+    assert "historical" not in job["data"]["baseline"]
+    assert job["data"]["validated_tree"] == workspace.fingerprint()
 
 
 def test_model_finish_without_changes_cannot_publish(issue_workspace):

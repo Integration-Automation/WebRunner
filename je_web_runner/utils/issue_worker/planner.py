@@ -75,6 +75,10 @@ class CodingPlanner(LocalOllamaClient):
             "For a patch the pathname belongs inside text; a separate path field cannot replace diff headers. "
             'Finish JSON example: {"kind":"finish","summary":"Implemented the requested behavior"}. '
             "A successful patch result means the working files already changed. Do not reapply it. "
+            "current_diff shows the changes already staged, not a proposal to apply again. "
+            "The historical baseline is from before edits; applies_to_current_tree tells whether it still "
+            "describes the current code. Never present that old failure as a new test result. "
+            "If diff_truncated is true, read the relevant files to inspect omitted changes. "
             "Inspect current files if unsure. When the requirements are implemented, use finish to request "
             "the host's final validation; do not keep patching already-correct code. "
             "Add meaningful regression/acceptance tests. Do not delete or weaken existing assertions or add skips. "

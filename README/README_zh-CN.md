@@ -1733,6 +1733,8 @@ python -m je_web_runner.issue_worker retry --config issue-worker.json --issue gi
 
 复制 `examples/issue-worker.example.json` 并依[配置指南](../docs/source/Zh/doc/integrations/issue_worker_doc.rst)准备环境。密钥只由主机环境变量提供，不传给模型或容器。SQLite 检查点可恢复代码修正、检查、发布及进度回报，避免重复 PR。Python 由 `api.orchestration` 提供 `IssueWorker`／`IssueInbox`；MCP 新增 `webrunner_issue_enqueue` 与 `webrunner_issue_status`，只使用主机的 `WEBRUNNER_ISSUE_CONFIG`。MCP 负责排单，另外启动的 worker 负责处理。默认一次一单、60 秒轮询、每单 60 分钟、100 次工具操作、两轮验证、20 个文件及 1000 行变更，不需付费 coding API 或云端调度。
 
+每个 coding 步骤都会收到有长度限制的已应用变更预览，以及明确标为修改前数据的 baseline。主机仍会验证最终 tree，才交付 PR。
+
 启用前先执行 `doctor --config issue-worker.json`，加上 `--platform` 才只读检查平台。`health --json` 回报常驻心跳，`stop` 会完成当前单后停止。watch 遇到本地依赖故障时暂停接单。Windows 登录任务由 `scripts/issue_worker_task.ps1` 管理；真实本地验收使用 `scripts/verify_issue_worker.py`，默认包含 24 小时常驻测试，不会自动安装服务或下载模型。
 
 设置 `review_enabled=true`（示例已启用），可根据有写入权限人员的审查或当前 head 的失败检查修正原 PR。SQLite 去重反馈，每轮独立 worktree 并重新完整验证，以非 force 更新原分支、在原 PR 留下证据。默认每 60 秒轮询、最多三轮；人工改动 head 或 dev 前进时停止，不重开 PR、不合并、不关闭 issue。 人工补充后可用 `retry-review --config FILE --issue KEY` 在主机限制内继续同一 PR。

@@ -143,11 +143,15 @@ class CodeProcessor:
         for name in ("CLAUDE.md", "architecture.md", "pyproject.toml"):
             if (workspace.root / name).is_file():
                 instructions[name] = workspace.read(name)[:8000]
+        current = workspace.preview()
+        baseline = {**job["data"]["baseline"], "historical": True,
+                    "applies_to_current_tree": job["data"]["baseline"].get("tree") == current["tree"]}
         return redactor.clean({
             "issue": job["snapshot"], "repository_instructions": instructions,
             "files": workspace.files()[:500], "check_names": list(self.config.checks),
             "history": job["data"]["history"][-12:], "checks": job["data"]["checks"],
-            "baseline": job["data"]["baseline"],
+            "baseline": baseline, "current_tree": current["tree"],
+            "current_diff": current["diff"], "diff_truncated": current["truncated"],
             "review_feedback": job["data"].get("review", {}).get("feedback", []),
             "acceptance_plan": job["data"].get("analysis"),
             "browser_checks": job["data"].get("browser_checks", {}),

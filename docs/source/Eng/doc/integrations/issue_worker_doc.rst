@@ -74,6 +74,12 @@ and Git recounts hunk line counts from their payload; source context, actual cha
 budgets and test preservation remain checked. Malformed or non-applicable patches
 return repair guidance without changing the index.
 Rejected proposals are identified as rejected in history, rather than stored changes.
+Each planning step includes a scope-checked staged ``current_diff`` relative to the
+round's base commit, ``current_tree`` and ``diff_truncated``. Diff previews are limited
+to 16,000 characters and do not run repository diff drivers or text converters.
+The prompt's baseline copy is marked ``historical`` and ``applies_to_current_tree``;
+the stored baseline remains unchanged. A draft diff never counts as passing checks:
+``finish`` still requests all required host checks before publication.
 Local inference dependency failures defer requirement analysis as well as coding;
 requests that exhaust the job deadline are attributed to the time budget.
 

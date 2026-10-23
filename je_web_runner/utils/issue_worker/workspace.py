@@ -168,6 +168,14 @@ class IssueWorkspace:
         """A tree ID pins check results to exactly the content later published."""
         return git_run(self.root, ["write-tree"]).strip()
 
+    def preview(self) -> dict[str, Any]:
+        """Return a bounded, scope-checked staged diff without running repository diff drivers."""
+        self.verify_scope()
+        content = git_run(self.root, ["diff", "--cached", "--no-ext-diff", "--no-textconv", "--no-renames",
+                                      "--unified=3", self.base_sha, "--"])
+        return {"tree": self.fingerprint(), "base_commit": self.base_sha,
+                "diff": content[:16000], "truncated": len(content) > 16000}
+
     def export(self, destination: Path) -> None:
         """Copy only indexed source, never .git, credential files or host configuration."""
         destination.mkdir(parents=True, exist_ok=False)

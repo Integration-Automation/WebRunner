@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261024-03 | 2026-10-24 | Expose applied diffs and historical baseline in coding feedback | #snapshot #issues #coding | [2026-10](2026-10.md) |
 | U-20261024-02 | 2026-10-24 | Bind evidence names and cancel changed analysis jobs | #snapshot #issues #acceptance | [2026-10](2026-10.md) |
 | U-20261024-01 | 2026-10-24 | Ground local coding actions and recover malformed edits | #snapshot #issues #runtime #fix | [2026-10](2026-10.md) |
 | U-20261023-12 | 2026-10-23 | Verify real container isolation and browser acceptance | #snapshot #issues #runtime | [2026-10](2026-10.md) |
@@ -165,5 +166,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 77 |
+| [2026-10.md](2026-10.md) | 2026-10 | 78 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

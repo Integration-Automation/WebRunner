@@ -249,6 +249,11 @@ Python 對應為 ``IssueWorker.retry_review(key)``。輪數用盡須先由操作
 diff 缺少結尾換行時會補齊，Git 會依內容重算 hunk 行數；來源上下文、實際修改
 預算及測試保護仍須驗證。格式錯誤或無法套用時回傳修正方向，不改動 index。
 歷史會明確標示被拒絕的提案，不將其描述為已儲存的修改。
+每個規劃步驟會收到通過範圍檢查、相對於本輪 base commit 的 ``current_diff``、
+``current_tree`` 與 ``diff_truncated``。diff 預覽最多 16,000 字元，不執行程式庫的
+diff driver 或文字轉換器。模型取得的 baseline 副本會標明 ``historical`` 與
+``applies_to_current_tree``，原始 baseline 紀錄不變。變更預覽不算檢查通過的證據；
+``finish`` 仍須執行所有必要的主機檢查，才能發布。
 需求分析與 coding 遇到本機推論依賴中斷時都會延後處理；耗盡工作期限的推論請求
 則歸類為時間預算耗盡。
 每個條件只能引用主機具名 checks／browser_scenarios，或明列 manual=true；
