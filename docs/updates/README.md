@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261024-04 | 2026-10-24 | Pass both-source real local delivery and review acceptance | #snapshot #issues #runtime #acceptance | [2026-10](2026-10.md) |
 | U-20261024-03 | 2026-10-24 | Expose applied diffs and historical baseline in coding feedback | #snapshot #issues #coding | [2026-10](2026-10.md) |
 | U-20261024-02 | 2026-10-24 | Bind evidence names and cancel changed analysis jobs | #snapshot #issues #acceptance | [2026-10](2026-10.md) |
 | U-20261024-01 | 2026-10-24 | Ground local coding actions and recover malformed edits | #snapshot #issues #runtime #fix | [2026-10](2026-10.md) |
@@ -166,5 +167,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 78 |
+| [2026-10.md](2026-10.md) | 2026-10 | 79 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
