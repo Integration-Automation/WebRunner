@@ -1,5 +1,17 @@
 # WebRunner
 
+Host integrations can use `BrowserOriginPolicy` and `ScopedBrowserProxy` from Python or
+`je_web_runner.api.ai`. Origin grants are immutable exact HTTP(S) authorities; path/query grants,
+credentials and ambiguous host encodings are rejected. The proxy starts explicitly on authenticated
+loopback, checks each HTTP request and HTTPS CONNECT destination, and closes only retained sockets.
+Every redirect destination remains subject to the same transport check. Private SDK proxy settings
+contain a per-owner credential and belong outside model/task data and logs. Plain HTTP has bounded
+uploads/responses; HTTPS is an opaque TLS tunnel whose certificate validation belongs to the browser.
+Streaming uploads and HTTP protocol upgrades are unsupported. Construction is inert, retired owners
+cannot restart, and incomplete HTTP responses use incomplete chunk framing rather than a successful end.
+This SDK increment uses only the standard library; managed browser-session and AutoControl target
+integration remain in progress. Native acceptance remains separate from controlled loopback evidence.
+
 <p align="center">
   <strong>Cross-platform web automation: Selenium + Playwright, plus a JSON-driven action executor with batteries included.</strong>
 </p>

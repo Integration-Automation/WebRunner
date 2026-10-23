@@ -1,5 +1,15 @@
 # WebRunner
 
+主机集成可从 Python 或 `je_web_runner.api.ai` 使用 `BrowserOriginPolicy` 与
+`ScopedBrowserProxy`。授权是不可变、精确的 HTTP(S) origin；拒绝路径／查询范围、URL 凭证及
+有歧义的主机编码。代理须明确启动，只绑定具有验证的 loopback，逐一检查 HTTP 请求及 HTTPS
+CONNECT 目的地，且只关闭已登记拥有的 socket；重定向后的目的地仍受相同传输检查。
+SDK 私有代理设置含每位拥有者的凭证，不应放入模型／任务数据或日志。普通 HTTP 限制上传及
+响应大小；HTTPS 是不解密的 TLS 通道，凭证验证由浏览器负责。不支持流式上传及 HTTP 协议升级。
+构建对象不启动资源，结束后不可重新启动；中断的 HTTP 响应不会发送表示完整结束的 chunk。
+此 SDK 增量仅使用标准库；受管浏览器 session 与 AutoControl target 集成仍在进行。
+受控 loopback 证据与原生验收分开记录。
+
 <p align="center">
   <strong>跨平台网页自动化：Selenium + Playwright，外加一个开箱即用、由 JSON 驱动的动作执行器。</strong>
 </p>

@@ -126,3 +126,16 @@ Python 匯出與 WR 命令，屬於明示破壞性變更。
 智慧等待追蹤 fetch／XHR、在導頁後重新注入監測，並觀察 history／hash 變化。
 網路閒置是有期限的明確等待條件，不是元素／URL 型 agent 操作的必要前提，
 因此長連線不會無限阻塞任務進度。
+
+主機擁有的 origin 傳輸層
+------------------------------------------------------------
+
+主機整合可從 Python 或 ``je_web_runner.api.ai`` 使用 ``BrowserOriginPolicy`` 與
+``ScopedBrowserProxy``。授權是不可變、精確的 HTTP(S) origin；拒絕路徑／查詢範圍、URL 憑證及
+有歧義的主機編碼。代理須明確啟動，只綁定具驗證的 loopback，逐一檢查 HTTP 請求及 HTTPS
+CONNECT 目的地，且只關閉已登記擁有的 socket；重新導向後的目的地仍受相同傳輸檢查。
+SDK 私有代理設定含每位擁有者的憑證，不應放入模型／任務資料或日誌。一般 HTTP 限制上傳及
+回應大小；HTTPS 是不解密的 TLS 通道，憑證驗證由瀏覽器負責。不支援串流上傳及 HTTP 協定升級。
+建構物件不啟動資源，結束後不可重新啟動；中斷的 HTTP 回應不會送出表示完整結束的 chunk。
+此 SDK 增量僅使用標準函式庫；受管瀏覽器 session 與 AutoControl target 接合仍在進行。
+受控 loopback 證據與原生驗收分開記錄。

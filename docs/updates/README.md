@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261024-06 | 2026-10-24 | Fence owned browser network destinations | #done #agent #scope | [2026-10-b](2026-10-b.md) |
 | U-20261024-05 | 2026-10-24 | Defer full-duration acceptance at owner request | #decision #issues #acceptance | [2026-10](2026-10.md) |
 | U-20261024-04 | 2026-10-24 | Pass both-source real local delivery and review acceptance | #snapshot #issues #runtime #acceptance | [2026-10](2026-10.md) |
 | U-20261024-03 | 2026-10-24 | Expose applied diffs and historical baseline in coding feedback | #snapshot #issues #coding | [2026-10](2026-10.md) |
@@ -168,5 +169,6 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
+| [2026-10-b.md](2026-10-b.md) | 2026-10 | 1 |
 | [2026-10.md](2026-10.md) | 2026-10 | 80 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

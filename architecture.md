@@ -244,3 +244,21 @@ PR feedback cycle: opt-in ReviewInbox reads current-head GitHub reviews/inline c
 Requirement/browser evidence: opt-in RequirementAnalyzer borrows the local-only structured client, produces closed AcceptanceCriterion/RequirementPlan values, and asks questions before patching. Host checks and all configured browser_scenarios independently validate final content. BrowserAcceptance snapshots trusted verifier source separately from the edited worktree and mounts both read-only in offline Podman. browser_entry protects its process, starts a credential-free app child, and uses AgentRunner fixed steps/deterministic assertions. Evidence is bound to git tree and scenario/verifier digests, rechecked by the publisher, and displayed per criterion without claiming business completeness.
 
 Intake/history: host triage classifies labels/title prefixes and records advisory suitability plus priority. Explicit manual labels hold admissions; SQL dispatch prioritizes active work/outbox, then label score plus age, with additive legacy schema migration. Each completed run/revision has an immutable outcomes row, independent of subsequent retry snapshots; untracked legacy observations never enter historical rates. IssueMetrics provides local aggregates, per-issue history and offline interactive JSON/HTML. CLI metrics and read-only MCP webrunner_issue_metrics share this evidence, distinguish delivery from business acceptance, and never activate a worker or query a platform.
+
+## Owned browser origin transport SDK
+
+Host integrations can use `BrowserOriginPolicy` and `ScopedBrowserProxy` from Python or
+`je_web_runner.api.ai`. Origin grants are immutable exact HTTP(S) authorities; path/query grants,
+credentials and ambiguous host encodings are rejected. The proxy starts explicitly on authenticated
+loopback, checks each HTTP request and HTTPS CONNECT destination, and closes only retained sockets.
+Every redirect destination remains subject to the same transport check. Private SDK proxy settings
+contain a per-owner credential and belong outside model/task data and logs. Plain HTTP has bounded
+uploads/responses; HTTPS is an opaque TLS tunnel whose certificate validation belongs to the browser.
+Streaming uploads and HTTP protocol upgrades are unsupported. Construction is inert, retired owners
+cannot restart, and incomplete HTTP responses use incomplete chunk framing rather than a successful end.
+This SDK increment uses only the standard library; managed browser-session and AutoControl target
+integration remain in progress. Native acceptance remains separate from controlled loopback evidence.
+
+`utils/agent/network_policy.py` validates immutable origin configuration. `scoped_proxy.py` owns a nonce-authenticated loopback listener and retained socket objects; `_proxy_server.py` bounds workers, `_proxy_handler.py` checks each destination before a non-retrying upstream operation, and `_proxy_types.py` defines their ownership seam. Proxy credentials never forward to origins. HTTP response re-chunking preserves incomplete transfer failure, duplicate Set-Cookie fields remain intact, and late connection completion cannot send a new payload after retirement. No persisted PID or foreign process is signaled.
+
+Cross-project contract: AutoControlGUI managed browser adapters use these WebRunner interfaces instead of importing browser engines. The forthcoming session seam must apply the private proxy before navigation, block unsupported browser transports and acknowledge owned cleanup. Existing Selenium/Playwright global wrappers retain their behavior.
