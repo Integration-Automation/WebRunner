@@ -9,8 +9,19 @@ contain a per-owner credential and belong outside model/task data and logs. Plai
 uploads/responses; HTTPS is an opaque TLS tunnel whose certificate validation belongs to the browser.
 Streaming uploads and HTTP protocol upgrades are unsupported. Construction is inert, retired owners
 cannot restart, and incomplete HTTP responses use incomplete chunk framing rather than a successful end.
-This SDK increment uses only the standard library; managed browser-session and AutoControl target
-integration remain in progress. Native acceptance remains separate from controlled loopback evidence.
+The transport SDK uses only the standard library; the optional managed session uses installed Playwright.
+AutoControl target integration remains in progress. Native acceptance remains separate from controlled loopback evidence.
+
+
+`ManagedBrowserSession.open(policy)` now composes that transport with an isolated, headless
+Chromium context using explicitly installed Playwright/Chromium. It installs request/WebSocket hooks
+before the first page, blocks service workers/downloads, and enables the browser sandbox and TLS
+validation. Fixed launch arguments disable HTTP/2 and QUIC; there is no user argument, profile, CDP,
+script or executable-path interface. Unexpected popups, dialogs, uploads, downloads and page failures
+retire the network and block later commands. Closed typed actions execute once; failures retain an
+uncertainty flag. Semantic observations stay in memory, and explicit bounded form readback refuses
+password/file/hidden/secret controls. Cleanup failure remains unconfirmed. This is an HTTP(S)
+automation boundary, not an OS sandbox; real-browser acceptance and the AutoControl target remain open.
 
 <p align="center">
   <strong>Cross-platform web automation: Selenium + Playwright, plus a JSON-driven action executor with batteries included.</strong>

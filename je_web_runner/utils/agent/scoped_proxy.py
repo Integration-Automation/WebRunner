@@ -47,7 +47,7 @@ class ScopedBrowserProxy:
 
     @property
     def closed(self) -> bool:
-        """Whether this owner currently has no listening transport."""
+        """Whether this owner has no retained listener awaiting retirement proof."""
         with self._lock:
             return self._server is None
 
@@ -123,7 +123,6 @@ class ScopedBrowserProxy:
         with self._lock:
             self._retired = True
             server, thread = self._server, self._thread
-            self._server, self._thread = None, None
             sockets = tuple(self._sockets)
             self._sockets.clear()
         for connection in sockets:
@@ -135,6 +134,8 @@ class ScopedBrowserProxy:
             thread.join(timeout=2)
             if thread.is_alive():
                 raise AgentError("browser proxy listener did not retire")
+        with self._lock:
+            self._server, self._thread = None, None
 
     def __enter__(self) -> ScopedBrowserProxy:
         self.start()

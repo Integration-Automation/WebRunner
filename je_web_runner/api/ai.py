@@ -82,12 +82,12 @@ from je_web_runner.utils.walkthrough_docs.generator import (
 
 from je_web_runner.utils.agent import (
     AgentAction, AgentError, AgentReport, AgentRunner, SuccessCondition, TaskSpec, run_agent,
-    BrowserOriginPolicy, ScopedBrowserProxy,
+    BrowserOriginPolicy, ScopedBrowserProxy, ManagedBrowserSession, ManagedBrowserError,
 )
 
 __all__ = [
     "AgentAction", "AgentError", "AgentReport", "AgentRunner", "SuccessCondition", "TaskSpec", "run_agent",
-    "BrowserOriginPolicy", "ScopedBrowserProxy",
+    "BrowserOriginPolicy", "ScopedBrowserProxy", "ManagedBrowserSession", "ManagedBrowserError",
     "LLMAssistError", "set_llm_callable", "has_llm_callable", "suggest_locator", "generate_actions_from_prompt",
     "llm_self_heal_locator", "explain_failure", "TestAutoRepairError", "collect_git_diff", "RepairPlan",
     "propose_repair", "repair_from_bundle", "apply_repair", "render_repair_markdown", "EdgeCaseGeneratorError",

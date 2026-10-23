@@ -7,8 +7,17 @@ CONNECT 目的地，且只关闭已登记拥有的 socket；重定向后的目�
 SDK 私有代理设置含每位拥有者的凭证，不应放入模型／任务数据或日志。普通 HTTP 限制上传及
 响应大小；HTTPS 是不解密的 TLS 通道，凭证验证由浏览器负责。不支持流式上传及 HTTP 协议升级。
 构建对象不启动资源，结束后不可重新启动；中断的 HTTP 响应不会发送表示完整结束的 chunk。
-此 SDK 增量仅使用标准库；受管浏览器 session 与 AutoControl target 集成仍在进行。
+传输 SDK 仅使用标准库；可选受管 session 使用已安装的 Playwright。AutoControl target 集成仍在进行。
 受控 loopback 证据与原生验收分开记录。
+
+
+`ManagedBrowserSession.open(policy)` 将传输层接到独立、无界面的 Chromium context；仅使用
+已明确安装的 Playwright／Chromium。第一个分页创建前就安装请求及 WebSocket 拦截，阻止
+service worker／下载，启用浏览器 sandbox 与 TLS 验证。固定参数禁用 HTTP/2、QUIC；
+不提供自定义参数、profile、CDP、脚本或可执行文件路径接口。非预期弹窗、对话框、上传、下载或
+分页失败会结束网络并阻止后续命令。封闭类型动作只执行一次，失败保留不确定标记。
+语义观测仅留在内存；明确且有长度上限的表单读回拒绝密码／文件／隐藏／秘密字段。
+清理失败仍标记未确认。这是 HTTP(S) 自动化边界；实际浏览器验收及 AutoControl target 仍待完成。
 
 <p align="center">
   <strong>跨平台网页自动化：Selenium + Playwright，外加一个开箱即用、由 JSON 驱动的动作执行器。</strong>

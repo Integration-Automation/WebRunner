@@ -3,9 +3,29 @@ import base64
 import http.client
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import threading
+from unittest.mock import patch
 from urllib.parse import urlsplit
 
 import pytest
+
+
+def test_missing_retirement_proof_keeps_listener_reference_until_confirmed():
+    from je_web_runner.utils.agent.network_policy import BrowserOriginPolicy
+    from je_web_runner.utils.agent.scoped_proxy import ScopedBrowserProxy
+    from je_web_runner.utils.agent.types import AgentError
+
+    owner = ScopedBrowserProxy(BrowserOriginPolicy(("https://allowed.test",)))
+    owner.start()
+    thread = owner._thread
+    try:
+        with patch.object(thread, "is_alive", return_value=True):
+            with pytest.raises(AgentError, match="did not retire"):
+                owner.close()
+        assert not owner.closed
+        assert owner._thread is thread
+    finally:
+        owner.close()
+    assert owner.closed
 
 
 @pytest.fixture
