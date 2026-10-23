@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261024-08 | 2026-10-24 | Record AutoControl managed-session consumer binding | #done #agent #integration | [2026-10-b](2026-10-b.md) |
 | U-20261024-07 | 2026-10-24 | Add isolated managed browser sessions | #done #agent #scope | [2026-10-b](2026-10-b.md) |
 | U-20261024-06 | 2026-10-24 | Fence owned browser network destinations | #done #agent #scope | [2026-10-b](2026-10-b.md) |
 | U-20261024-05 | 2026-10-24 | Defer full-duration acceptance at owner request | #decision #issues #acceptance | [2026-10](2026-10.md) |
@@ -170,6 +171,6 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10-b.md](2026-10-b.md) | 2026-10 | 2 |
+| [2026-10-b.md](2026-10-b.md) | 2026-10 | 3 |
 | [2026-10.md](2026-10.md) | 2026-10 | 80 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

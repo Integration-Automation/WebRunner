@@ -10,7 +10,7 @@ uploads/responses; HTTPS is an opaque TLS tunnel whose certificate validation be
 Streaming uploads and HTTP protocol upgrades are unsupported. Construction is inert, retired owners
 cannot restart, and incomplete HTTP responses use incomplete chunk framing rather than a successful end.
 The transport SDK uses only the standard library; the optional managed session uses installed Playwright.
-AutoControl target integration remains in progress. Native acceptance remains separate from controlled loopback evidence.
+AutoControl target binding is available on its isolated feature branch; reviewed transfers/workflows remain open. Native acceptance remains separate from controlled loopback evidence.
 
 
 `ManagedBrowserSession.open(policy)` now composes that transport with an isolated, headless
@@ -21,7 +21,7 @@ script or executable-path interface. Unexpected popups, dialogs, uploads, downlo
 retire the network and block later commands. Closed typed actions execute once; failures retain an
 uncertainty flag. Semantic observations stay in memory, and explicit bounded form readback refuses
 password/file/hidden/secret controls. Cleanup failure remains unconfirmed. This is an HTTP(S)
-automation boundary, not an OS sandbox; real-browser acceptance and the AutoControl target remain open.
+automation boundary, not an OS sandbox; real-browser acceptance and reviewed transfer/workflow integration remain open.
 
 <p align="center">
   <strong>Cross-platform web automation: Selenium + Playwright, plus a JSON-driven action executor with batteries included.</strong>

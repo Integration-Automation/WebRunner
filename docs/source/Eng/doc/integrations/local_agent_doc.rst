@@ -151,7 +151,7 @@ uploads/responses; HTTPS is an opaque TLS tunnel whose certificate validation be
 Streaming uploads and HTTP protocol upgrades are unsupported. Construction is inert, retired owners
 cannot restart, and incomplete HTTP responses use incomplete chunk framing rather than a successful end.
 The transport uses only the standard library; optional sessions use installed Playwright.
-AutoControl target integration remains open. Native acceptance remains separate from controlled loopback evidence.
+AutoControl target binding is available on its isolated feature branch; reviewed transfers/workflows remain open. Native acceptance remains separate from controlled loopback evidence.
 
 Owned managed browser sessions
 ------------------------------------------------------------
@@ -164,4 +164,4 @@ script or executable-path interface. Unexpected popups, dialogs, uploads, downlo
 retire the network and block later commands. Closed typed actions execute once; failures retain an
 uncertainty flag. Semantic observations stay in memory, and explicit bounded form readback refuses
 password/file/hidden/secret controls. Cleanup failure remains unconfirmed. This is an HTTP(S)
-automation boundary, not an OS sandbox; real-browser acceptance and the AutoControl target remain open.
+automation boundary, not an OS sandbox; real-browser acceptance and reviewed transfer/workflow integration remain open.

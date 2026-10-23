@@ -7,7 +7,7 @@ CONNECT 目的地，且只關閉已登記擁有的 socket；重新導向後的�
 SDK 私有代理設定含每位擁有者的憑證，不應放入模型／任務資料或日誌。一般 HTTP 限制上傳及
 回應大小；HTTPS 是不解密的 TLS 通道，憑證驗證由瀏覽器負責。不支援串流上傳及 HTTP 協定升級。
 建構物件不啟動資源，結束後不可重新啟動；中斷的 HTTP 回應不會送出表示完整結束的 chunk。
-傳輸 SDK 僅使用標準函式庫；可選受管 session 使用已安裝的 Playwright。AutoControl target 接合仍在進行。
+傳輸 SDK 僅使用標準函式庫；可選受管 session 使用已安裝的 Playwright。AutoControl target 已接到隔離功能分支；已審閱傳輸及流程仍待完成。
 受控 loopback 證據與原生驗收分開記錄。
 
 
@@ -17,7 +17,7 @@ service worker／下載，啟用瀏覽器 sandbox 與 TLS 驗證。固定參數�
 不提供自訂參數、profile、CDP、腳本或執行檔路徑介面。非預期彈窗、對話框、上傳、下載或
 分頁失敗會結束網路並阻止後續命令。封閉型別動作只執行一次，失敗保留不確定旗標。
 語意觀測僅留在記憶體；明確且有長度上限的表單讀回拒絕密碼／檔案／隱藏／秘密欄位。
-清理失敗仍標記未確認。這是 HTTP(S) 自動化邊界；實際瀏覽器驗收及 AutoControl target 仍待完成。
+清理失敗仍標記未確認。這是 HTTP(S) 自動化邊界；實際瀏覽器驗收及已審閱的傳輸／流程接合仍待完成。
 
 <p align="center">
   <strong>跨平台網頁自動化：Selenium + Playwright，外加一個開箱即用、由 JSON 驅動的動作執行器。</strong>
