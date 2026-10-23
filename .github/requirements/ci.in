@@ -11,7 +11,7 @@ python-dotenv>=1.2.4
 webdriver-manager>=4.0.0
 defusedxml>=0.7.1
 Pillow>=12.3.0
-je_action_core>=0.0.3
+je_action_core>=0.0.4
 faker
 sqlalchemy
 pytest
