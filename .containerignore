@@ -1,0 +1,7 @@
+# The build needs dependency metadata only, never source checkout secrets or git credentials.
+**
+!.github/
+!.github/requirements/
+!.github/requirements/ci.txt
+!docker/
+!docker/IssueWorker.Containerfile

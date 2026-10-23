@@ -1819,3 +1819,5 @@ WebRunner 提供一個自訂例外階層 —— 每個輔助函式都擲出 `Web
 ### 本機 Issue 接單
 
 透過 `je_web_runner.api.orchestration.IssueInbox` 提供 GitHub／Jira Cloud 接單、持久化檢查點與只讀預演。只有帶有 `automation-ready`、尚未指派且未結案的 issue 才合格。設定見[Issue Worker 指南](../docs/source/Zh/doc/integrations/issue_worker_doc.rst)與 `examples/issue-worker.example.json`。
+
+本機程式修正使用獨立 clone／worktree、共用的本機 Ollama client 與離線 Podman 檢查。模型只提出具型別的讀取／搜尋／patch／檢查，完成條件由綁定 git tree 的驗證決定。映像建置與保護路徑見 Issue Worker 指南。

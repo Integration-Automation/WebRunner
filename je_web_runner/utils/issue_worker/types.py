@@ -19,7 +19,8 @@ CHECKS = {
     "unit": ["python", "-m", "pytest", "test/unit_test", "-q", "-p", "no:cacheprovider"],
     "lint": ["python", "-m", "flake8", "{changed_python}", "--max-line-length=120", "--max-complexity=10"],
     "security": ["python", "-m", "bandit", "{changed_python}", "-ll", "-q"],
-    "types": ["python", "-m", "mypy", "{changed_python}", "--follow-imports=silent", "--ignore-missing-imports"],
+    "types": ["python", "-m", "mypy", "{changed_python}", "--follow-imports=silent", "--ignore-missing-imports",
+              "--cache-dir=/tmp/mypy-cache"],
 }
 
 
