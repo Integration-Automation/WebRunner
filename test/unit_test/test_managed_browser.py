@@ -170,6 +170,35 @@ def test_explicit_form_readback_refuses_secret_result(opened):
     assert not instance._proxy.closed
 
 
+@pytest.mark.parametrize("value", ["x" * 8001, "😀" * 4001, "invalid\ud800"],
+                         ids=["overlimit", "surrogate-overlimit", "unpaired-surrogate"])
+def test_value_response_boundary_refuses_overlimit_or_invalid_unicode(opened, value):
+    instance, _, _, _, _, _, _ = opened
+    with patch.object(instance._session, "_find") as find:
+        find.return_value.evaluate.return_value = value
+        with pytest.raises(ManagedBrowserError, match="value_readback_refused"):
+            instance.read_value("#field")
+    assert not instance._proxy.closed
+
+
+def test_text_response_boundary_refuses_prefix_and_accepts_complete_text(opened):
+    instance, _, _, _, _, _, _ = opened
+    with patch.object(instance._session, "_find") as find:
+        find.return_value.evaluate.return_value = "x" * 8001
+        with pytest.raises(ManagedBrowserError, match="text_readback_refused"):
+            instance.text("#status")
+        find.return_value.evaluate.return_value = "complete"
+        assert instance.text("#status") == "complete"
+    assert not instance._proxy.closed
+
+
+def test_overlimit_fill_is_refused_before_effect(opened):
+    instance, _, _, _, page, _, _ = opened
+    with pytest.raises(ManagedBrowserError, match="invalid_action_value"):
+        instance.perform(AgentAction("fill", selector="#field", value="😀" * 4001))
+    page.locator.assert_not_called()
+
+
 def test_close_network_before_owned_browser_and_idempotent(opened):
     instance, runtime, browser, _, _, _, _ = opened
     browser.close.side_effect = lambda: instance._proxy.closed or pytest.fail("network still active")

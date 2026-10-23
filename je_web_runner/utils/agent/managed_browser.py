@@ -18,8 +18,26 @@ _READ_VALUE = """element => {
   if (!['input','textarea','select'].includes(tag) || ['password','hidden','file'].includes(type)) return null;
   if (element.closest('[data-secret]') || element.autocomplete === 'current-password'
       || element.autocomplete === 'new-password') return null;
-  return String(element.value).slice(0, 8000);
+  const value = String(element.value);
+  return value.length <= 8000 ? value : null;
 }"""
+
+_READ_TEXT = """element => {
+  if (element.closest('[data-secret]') || element.querySelector('[data-secret]')) return null;
+  const value = element.innerText;
+  return typeof value === 'string' && value.length <= 8000 ? value : null;
+}"""
+
+
+def _readback(value: Any, reason: str) -> str:
+    if not isinstance(value, str) or len(value) > 8000:
+        raise ManagedBrowserError(reason)
+    try:
+        if len(value.encode("utf-16-le")) > 16000:
+            raise ManagedBrowserError(reason)
+    except UnicodeError:
+        raise ManagedBrowserError(reason) from None
+    return value
 
 
 class ManagedBrowserSession:
@@ -29,6 +47,8 @@ class ManagedBrowserSession:
     persistent profile, caller script, executable path or launch-argument interface.
     This is an HTTP(S) automation boundary, not an operating-system sandbox.
     """
+
+    contract_version = 1
 
     def __init__(self, policy: BrowserOriginPolicy) -> None:
         self._proxy = ScopedBrowserProxy(policy)
@@ -110,14 +130,15 @@ class ManagedBrowserSession:
             raise ManagedBrowserError("invalid_action")
         if action.kind == "navigate":
             self.policy.require(action.value)
+        if action.kind in {"fill", "select"}:
+            _readback(action.value, "invalid_action_value")
         uncertain = action.kind in {"navigate", "click", "fill", "select", "check", "scroll"}
         with self._operation(uncertain) as session:
             return session.perform(action)
 
     def text(self, selector: str = "body", frame: str = "") -> str:
-        """Read visible text from one unique element through the shared browser adapter."""
-        with self._operation() as session:
-            return session.text(selector, frame)
+        """Read complete bounded visible text, refusing marked secret descendants and ancestors."""
+        return self._read(selector, frame, _READ_TEXT, "text_readback_refused")
 
     def visible(self, selector: str, frame: str = "") -> bool:
         """Check one unique visible element, preserving ambiguity as a refusal."""
@@ -126,13 +147,13 @@ class ManagedBrowserSession:
 
     def read_value(self, selector: str, frame: str = "") -> str:
         """Explicit bounded form readback; password, file, hidden and secret controls are refused."""
+        return self._read(selector, frame, _READ_VALUE, "value_readback_refused")
+
+    def _read(self, selector: str, frame: str, script: str, reason: str) -> str:
         with self._operation() as session:
             with session.scope(frame) as scope:
                 element = session._find(scope, selector, enabled=False)  # pylint: disable=protected-access
-                result = element.evaluate(_READ_VALUE)
-                if not isinstance(result, str):
-                    raise ManagedBrowserError("value_readback_refused")
-                return result
+                return _readback(element.evaluate(script), reason)
 
     def close(self) -> None:
         """Retire network first, then only this browser; a failed cleanup stays unconfirmed."""

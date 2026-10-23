@@ -171,6 +171,8 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10-b.md](2026-10-b.md) | 2026-10 | 3 |
+| [2026-10-b.md](2026-10-b.md) | 2026-10 | 4 |
 | [2026-10.md](2026-10.md) | 2026-10 | 80 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
+
+| U-20261024-09 | 2026-10-24 | Preserve complete managed browser readback | #done #agent #verification | [2026-10-b](2026-10-b.md) |

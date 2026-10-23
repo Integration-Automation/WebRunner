@@ -1,5 +1,12 @@
 # WebRunner
 
+受管瀏覽器讀回契約版本 1 只回傳完整且不超過 8,000 個 UTF-16 code unit 的 text／value。
+超限或無效 Unicode 值會在傳輸／發布前拒絕，不截短成看似相等的前段；超限 fill／select 值
+也在副作用前拒絕。密碼／檔案／隱藏／秘密表單欄位，以及帶秘密標記的文字祖先／後代仍不可讀。
+語意觀測保持有界預覽；精確完成條件使用明確讀回。AutoControl 瀏覽器填表／轉填編譯已位於
+隔離功能分支；已審閱檔案傳輸、部署與實際應用／瀏覽器驗收仍分開追蹤。
+
+
 主機整合可從 Python 或 `je_web_runner.api.ai` 使用 `BrowserOriginPolicy` 與
 `ScopedBrowserProxy`。授權是不可變、精確的 HTTP(S) origin；拒絕路徑／查詢範圍、URL 憑證及
 有歧義的主機編碼。代理須明確啟動，只綁定具驗證的 loopback，逐一檢查 HTTP 請求及 HTTPS
@@ -7,7 +14,7 @@ CONNECT 目的地，且只關閉已登記擁有的 socket；重新導向後的�
 SDK 私有代理設定含每位擁有者的憑證，不應放入模型／任務資料或日誌。一般 HTTP 限制上傳及
 回應大小；HTTPS 是不解密的 TLS 通道，憑證驗證由瀏覽器負責。不支援串流上傳及 HTTP 協定升級。
 建構物件不啟動資源，結束後不可重新啟動；中斷的 HTTP 回應不會送出表示完整結束的 chunk。
-傳輸 SDK 僅使用標準函式庫；可選受管 session 使用已安裝的 Playwright。AutoControl target 已接到隔離功能分支；已審閱傳輸及流程仍待完成。
+傳輸 SDK 僅使用標準函式庫；可選受管 session 使用已安裝的 Playwright。AutoControl target 已接到隔離功能分支；已審閱傳輸及實際應用驗收仍待完成。
 受控 loopback 證據與原生驗收分開記錄。
 
 
@@ -17,7 +24,7 @@ service worker／下載，啟用瀏覽器 sandbox 與 TLS 驗證。固定參數�
 不提供自訂參數、profile、CDP、腳本或執行檔路徑介面。非預期彈窗、對話框、上傳、下載或
 分頁失敗會結束網路並阻止後續命令。封閉型別動作只執行一次，失敗保留不確定旗標。
 語意觀測僅留在記憶體；明確且有長度上限的表單讀回拒絕密碼／檔案／隱藏／秘密欄位。
-清理失敗仍標記未確認。這是 HTTP(S) 自動化邊界；實際瀏覽器驗收及已審閱的傳輸／流程接合仍待完成。
+清理失敗仍標記未確認。這是 HTTP(S) 自動化邊界；實際瀏覽器驗收及已審閱傳輸及實際應用驗收仍待完成。
 
 <p align="center">
   <strong>跨平台網頁自動化：Selenium + Playwright，外加一個開箱即用、由 JSON 驅動的動作執行器。</strong>

@@ -1,5 +1,14 @@
 # WebRunner
 
+Managed browser readback contract version 1 returns complete text/value strings up to 8,000 UTF-16
+code units. Larger or invalid Unicode values are refused before transport/publication, never truncated
+into an apparently equal prefix. Fill/select values beyond that limit are refused before effect.
+Password/file/hidden/secret form controls and marked secret text ancestors/descendants remain unreadable.
+Semantic observations remain bounded previews; use explicit readback for exact completion evidence.
+AutoControl browser form/transfer compilation is available on its isolated feature branch; reviewed
+file transfers, deployment and real application/browser acceptance remain separate open work.
+
+
 Host integrations can use `BrowserOriginPolicy` and `ScopedBrowserProxy` from Python or
 `je_web_runner.api.ai`. Origin grants are immutable exact HTTP(S) authorities; path/query grants,
 credentials and ambiguous host encodings are rejected. The proxy starts explicitly on authenticated
@@ -10,7 +19,7 @@ uploads/responses; HTTPS is an opaque TLS tunnel whose certificate validation be
 Streaming uploads and HTTP protocol upgrades are unsupported. Construction is inert, retired owners
 cannot restart, and incomplete HTTP responses use incomplete chunk framing rather than a successful end.
 The transport SDK uses only the standard library; the optional managed session uses installed Playwright.
-AutoControl target binding is available on its isolated feature branch; reviewed transfers/workflows remain open. Native acceptance remains separate from controlled loopback evidence.
+AutoControl target binding is available on its isolated feature branch; reviewed transfers and real application acceptance remain open. Native acceptance remains separate from controlled loopback evidence.
 
 
 `ManagedBrowserSession.open(policy)` now composes that transport with an isolated, headless
@@ -21,7 +30,7 @@ script or executable-path interface. Unexpected popups, dialogs, uploads, downlo
 retire the network and block later commands. Closed typed actions execute once; failures retain an
 uncertainty flag. Semantic observations stay in memory, and explicit bounded form readback refuses
 password/file/hidden/secret controls. Cleanup failure remains unconfirmed. This is an HTTP(S)
-automation boundary, not an OS sandbox; real-browser acceptance and reviewed transfer/workflow integration remain open.
+automation boundary, not an OS sandbox; real-browser acceptance and reviewed transfers and real application acceptance remain open.
 
 <p align="center">
   <strong>Cross-platform web automation: Selenium + Playwright, plus a JSON-driven action executor with batteries included.</strong>
