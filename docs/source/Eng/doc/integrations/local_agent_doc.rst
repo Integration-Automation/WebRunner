@@ -151,7 +151,7 @@ uploads/responses; HTTPS is an opaque TLS tunnel whose certificate validation be
 Streaming uploads and HTTP protocol upgrades are unsupported. Construction is inert, retired owners
 cannot restart, and incomplete HTTP responses use incomplete chunk framing rather than a successful end.
 The transport uses only the standard library; optional sessions use installed Playwright.
-AutoControl target binding is available on its isolated feature branch; reviewed transfers and real application acceptance remain open. Native acceptance remains separate from controlled loopback evidence.
+AutoControl target binding is available on its isolated feature branch; deployment and real application acceptance remain open. Native acceptance remains separate from controlled loopback evidence.
 
 Owned managed browser sessions
 ------------------------------------------------------------
@@ -164,7 +164,7 @@ script or executable-path interface. Unexpected popups, dialogs, uploads, downlo
 retire the network and block later commands. Closed typed actions execute once; failures retain an
 uncertainty flag. Semantic observations stay in memory, and explicit bounded form readback refuses
 password/file/hidden/secret controls. Cleanup failure remains unconfirmed. This is an HTTP(S)
-automation boundary, not an OS sandbox; real-browser acceptance and reviewed transfers and real application acceptance remain open.
+automation boundary, not an OS sandbox; deployment and real application/browser acceptance remain open.
 
 Complete managed readback contract
 ------------------------------------------------------------
@@ -174,8 +174,7 @@ code units. Larger or invalid Unicode values are refused before transport/public
 into an apparently equal prefix. Fill/select values beyond that limit are refused before effect.
 Password/file/hidden/secret form controls and marked secret text ancestors/descendants remain unreadable.
 Semantic observations remain bounded previews; use explicit readback for exact completion evidence.
-AutoControl browser form/transfer compilation is available on its isolated feature branch; reviewed
-file transfers, deployment and real application/browser acceptance remain separate open work.
+AutoControl browser form/transfer compilation is available on its isolated feature branch; deployment and real application/browser acceptance remain separate open work.
 
 Explicit managed transfers
 ------------------------------------------------------------
@@ -185,5 +184,14 @@ Links and every download redirect must remain within the immutable origin grant.
 URL-filtered browser cookies through owned sockets, validate TLS certificates and hostnames, allow
 at most five redirects and 16 MiB, and fail on truncation, deadline or retirement. Uploads accept
 immutable bytes up to 4 MiB and a plain filename, then independently check file-input name/size.
-No method accepts a filesystem path or submits a form. AutoControl rooted publication/grants,
-deployment and real browser acceptance remain tracked in progress.md #22; acceptance pauses remain.
+No method accepts a filesystem path or submits a form. AutoControl deployment and real browser acceptance remain tracked in progress.md #22; acceptance pauses remain.
+
+AutoControl rooted transfer consumer
+------------------------------------------------------------
+
+AutoControlGUI now binds the reviewed file-transfer contract on feat/agent-task-runtime at 26bfea43:
+rooted immutable upload snapshots, atomic bounded downloads, URL-scoped browser cookies and independent
+archive manifest verification. Five real SDK/owned-helper contracts use fake Chromium and owned loopback;
+the transfer contract also checks host cancellation through the actual SDK context. Shared installations,
+production checkouts and paused native/24-hour acceptance are unchanged. Deployment and real application/
+browser evidence remain open in progress.md #22.

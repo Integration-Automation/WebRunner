@@ -1,17 +1,22 @@
 # WebRunner
 
+AutoControlGUI 已于 feat/agent-task-runtime 的 26bfea43 接合已审核文件传输契约：
+授权路径内的不可变上传快照、原子且有大小上限的下载、按 URL 筛选的浏览器 Cookie，以及独立
+归档清单验证。五项真实 SDK／自有 helper 契约使用替身 Chromium 与自有 loopback；传输契约
+另验证穿过实际 SDK context 的主机取消。共享安装、正式工作树及暂停的原生／24 小时验收
+保持原状；部署与实际应用／浏览器证据仍记录于 progress.md #22。
+
 受管传输契约版本 1 新增明确的 `link`、`open_download` 与 `upload` 方法。
 链接及每个下载重定向都必须位于不可变的 origin 授权内。下载使用按 URL 筛选的浏览器
 Cookie 与持有的 socket，验证 TLS 证书及主机名，最多五次重定向、16 MiB；遇到截断、
 超时或拥有者结束即失败。上传仅接受最多 4 MiB 的不可变 bytes 及单纯文件名，并独立核对
-file input 的名称／大小。不接受文件路径，也不自动提交表单。AutoControl 授权路径写入、
-部署与实际浏览器验收仍记录于 progress.md #22，现有验收暂停保持生效。
+file input 的名称／大小。不接受文件路径，也不自动提交表单。AutoControl 部署与实际浏览器验收仍记录于 progress.md #22，现有验收暂停保持生效。
 
 受管浏览器读回契约版本 1 仅返回完整且不超过 8,000 个 UTF-16 code unit 的 text／value。
 超限或无效 Unicode 值会在传输／发布前拒绝，不截短成看似相等的前段；超限 fill／select 值
 也在副作用前拒绝。密码／文件／隐藏／秘密表单字段，以及带秘密标记的文字祖先／后代仍不可读。
 语义观测保持有界预览；精确完成条件使用明确读回。AutoControl 浏览器填表／转填编译已位于
-隔离功能分支；已审核文件传输、部署与实际应用／浏览器验收仍单独跟踪。
+隔离功能分支；部署与实际应用／浏览器验收仍单独跟踪。
 
 
 主机集成可从 Python 或 `je_web_runner.api.ai` 使用 `BrowserOriginPolicy` 与
@@ -21,7 +26,7 @@ CONNECT 目的地，且只关闭已登记拥有的 socket；重定向后的目�
 SDK 私有代理设置含每位拥有者的凭证，不应放入模型／任务数据或日志。普通 HTTP 限制上传及
 响应大小；HTTPS 是不解密的 TLS 通道，凭证验证由浏览器负责。不支持流式上传及 HTTP 协议升级。
 构建对象不启动资源，结束后不可重新启动；中断的 HTTP 响应不会发送表示完整结束的 chunk。
-传输 SDK 仅使用标准库；可选受管 session 使用已安装的 Playwright。AutoControl target 已接到隔离功能分支；已审核传输及实际应用验收仍待完成。
+传输 SDK 仅使用标准库；可选受管 session 使用已安装的 Playwright。AutoControl target 已接到隔离功能分支；部署及实际应用验收仍待完成。
 受控 loopback 证据与原生验收分开记录。
 
 
@@ -31,7 +36,7 @@ service worker／下载，启用浏览器 sandbox 与 TLS 验证。固定参数�
 不提供自定义参数、profile、CDP、脚本或可执行文件路径接口。非预期弹窗、对话框、上传、下载或
 分页失败会结束网络并阻止后续命令。封闭类型动作只执行一次，失败保留不确定标记。
 语义观测仅留在内存；明确且有长度上限的表单读回拒绝密码／文件／隐藏／秘密字段。
-清理失败仍标记未确认。这是 HTTP(S) 自动化边界；实际浏览器验收及已审核传输及实际应用验收仍待完成。
+清理失败仍标记未确认。这是 HTTP(S) 自动化边界；部署及实际应用／浏览器验收仍待完成。
 
 <p align="center">
   <strong>跨平台网页自动化：Selenium + Playwright，外加一个开箱即用、由 JSON 驱动的动作执行器。</strong>

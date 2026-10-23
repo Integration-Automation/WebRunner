@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261024-11 | 2026-10-24 | Record rooted AutoControl transfer consumer | #done #agent #integration | [2026-10-b](2026-10-b.md) |
 | U-20261024-10 | 2026-10-24 | Add owned bounded browser transfers | #done #agent #transfers | [2026-10-b](2026-10-b.md) |
 | U-20261024-08 | 2026-10-24 | Record AutoControl managed-session consumer binding | #done #agent #integration | [2026-10-b](2026-10-b.md) |
 | U-20261024-07 | 2026-10-24 | Add isolated managed browser sessions | #done #agent #scope | [2026-10-b](2026-10-b.md) |
@@ -172,7 +173,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10-b.md](2026-10-b.md) | 2026-10 | 5 |
+| [2026-10-b.md](2026-10-b.md) | 2026-10 | 6 |
 | [2026-10.md](2026-10.md) | 2026-10 | 80 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
 
