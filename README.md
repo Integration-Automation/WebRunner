@@ -803,14 +803,14 @@ WebRunner ships a [Model Context Protocol](https://modelcontextprotocol.io/) ser
 python -m je_web_runner.mcp_server
 ```
 
-The default tool list (27 tools) exposes:
+The default tool list (28 tools) exposes:
 
 Live browser execution:
 - `webrunner_run_actions` — execute any `WR_*` action list. Covers all 547 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
 - `webrunner_run_action_files` — batch-run JSON files on disk
 - `webrunner_list_commands` — discover the full `WR_*` surface
 
-Plus the utility tools below (no live browser):
+Additional tools:
 
 Action JSON authoring & linting:
 - `webrunner_lint_action`, `webrunner_score_action_locators`, `webrunner_locator_strength`
@@ -831,6 +831,13 @@ Reporting & contract:
 
 Sharding & infra:
 - `webrunner_diff_shard`, `webrunner_render_k8s`, `webrunner_partition_shard`
+
+
+Local browser agents:
+- `webrunner_observe_page`, `webrunner_agent_step`, `webrunner_run_agent`
+
+Issue automation (frozen host configuration):
+- `webrunner_issue_enqueue`, `webrunner_issue_status`, `webrunner_issue_metrics`
 
 ```python
 from je_web_runner.mcp_server import McpServer, Tool, build_default_tools, serve_stdio
@@ -1743,6 +1750,8 @@ Before activation, run `doctor --config issue-worker.json`; add `--platform` for
 Set `review_enabled=true` (enabled in the example) to revise the same PR from trusted human reviews or current-head failed checks. Feedback is deduplicated in SQLite; each round uses a separate worktree and full validation, fast-forwards without force, and posts evidence on the original PR. Defaults: 60-second review polling and three rounds. External head/base changes stop automation; no duplicate PR, merge or issue close is performed. Use `retry-review --config FILE --issue KEY` after manual clarification to resume the same PR within host limits.
 
 Enable `requirements_enabled` to analyze acceptance criteria before coding and stop for clarification when needed. Criteria reference host checks or explicit manual review. Optional host-owned `browser_scenarios` run mandatory fixed-step browser agents in offline Podman, with trusted verifier code mounted separately from edited source. Evidence is bound to the published tree and verifier/scenario signatures; passing checks do not replace business review. See `examples/issue-worker-browser.example.json`.
+
+Intake now reports explainable task kind, advisory suitability and label-based priority with waiting-time aging; `automation-manual` / `automation-blocked` hold new jobs without claim. `metrics --config FILE --json` reads durable run/revision outcomes; add `--since-hours`, `--issue` or `--report BASE` for history filtering and an offline interactive HTML/JSON report. `IssueMetrics` and read-only MCP `webrunner_issue_metrics` expose the same data. Legacy observations are excluded from rates; delivery is not business acceptance.
 
 ## CLI Usage
 

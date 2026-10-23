@@ -169,7 +169,7 @@ subsequent ``webrunner_run_actions`` calls reuse it until you issue
 Tool catalog
 ============
 
-The server registers 27 tools out of the box. Use
+The server registers 28 tools out of the box. Use
 ``webrunner_list_commands`` for the *full* runtime command list (every
 ``WR_*`` registered in the action executor, 547 of them).
 
@@ -247,6 +247,15 @@ Browser execution
   one ``failed`` list per file.
 * ``webrunner_list_commands`` — Discover every ``WR_*`` command
   currently registered in the executor.
+
+Local issue automation
+----------------------
+
+* ``webrunner_issue_enqueue`` — Queue a ready issue with the frozen host configuration;
+  manual hold labels prevent claim. A separately started worker performs coding.
+* ``webrunner_issue_status`` — Read saved jobs and their triage/revision state.
+* ``webrunner_issue_metrics`` — Read local delivery history and queue aggregates,
+  optionally filtered by since_hours/issue. No worker activation or platform writes.
 
 ----
 

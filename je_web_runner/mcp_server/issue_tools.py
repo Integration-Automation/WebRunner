@@ -8,6 +8,7 @@ from typing import Any
 
 from je_web_runner.mcp_server._types import READ_ONLY, Tool
 from je_web_runner.utils.issue_worker import IssueInbox, IssueStore, IssueWorkerConfig, IssueWorkerError
+from je_web_runner.utils.issue_worker.metrics import IssueMetrics
 
 
 def _host_configuration() -> tuple[IssueWorkerConfig | None, str]:
@@ -42,11 +43,26 @@ def _enqueue(arguments: dict[str, Any], config: IssueWorkerConfig | None, error:
         inbox.close()
 
 
+def _metrics(arguments: dict[str, Any], config: IssueWorkerConfig | None, error: str) -> Any:
+    if config is None:
+        raise IssueWorkerError(error)
+    store = IssueStore(config.state_dir)
+    store.bind({"repository": config.repository, "github_api": config.github_api, "jira_url": config.jira_url})
+    return IssueMetrics(store).summary(arguments.get("since_hours"), arguments.get("issue"))
+
+
 def build_issue_tools() -> list[Tool]:
-    """Expose only queue/status operations, never config overrides or arbitrary commands."""
+    """Expose queue/status/local metrics, never config overrides or arbitrary commands."""
     config, error = _host_configuration()
     issue = {"type": "string", "description": "Configured source issue key: github:123 or jira:PROJECT-123."}
+    metrics_properties = {"issue": issue, "since_hours": {
+        "type": "number", "exclusiveMinimum": 0,
+        "description": "Optional positive recorded-history window in hours."}}
     return [
+        Tool(name="webrunner_issue_metrics", title="Inspect local issue delivery metrics",
+             description="Read local delivery outcomes, holds and failures; business acceptance is not measured.",
+             input_schema={"type": "object", "properties": metrics_properties, "additionalProperties": False},
+             annotations=READ_ONLY, handler=partial(_metrics, config=config, error=error)),
         Tool(name="webrunner_issue_status", title="Inspect local issue jobs",
              description="Read saved issue job status.",
              input_schema={"type": "object", "properties": {"issue": issue}, "additionalProperties": False},

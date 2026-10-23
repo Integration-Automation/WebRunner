@@ -798,14 +798,14 @@ WebRunner 隨附一個 [Model Context Protocol](https://modelcontextprotocol.io/
 python -m je_web_runner.mcp_server
 ```
 
-預設工具清單（27 個工具）公開：
+預設工具清單（28 個工具）公開：
 
 即時瀏覽器執行：
 - `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 547 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批次執行磁碟上的 JSON 檔案
 - `webrunner_list_commands` —— 探索完整的 `WR_*` 介面面
 
-外加以下工具（無即時瀏覽器）：
+其他工具：
 
 動作 JSON 撰寫與檢查：
 - `webrunner_lint_action`、`webrunner_score_action_locators`、`webrunner_locator_strength`
@@ -826,6 +826,13 @@ python -m je_web_runner.mcp_server
 
 分片與基礎設施：
 - `webrunner_diff_shard`、`webrunner_render_k8s`、`webrunner_partition_shard`
+
+
+本機瀏覽器 agent：
+- `webrunner_observe_page`、`webrunner_agent_step`、`webrunner_run_agent`
+
+Issue 自動化（固定主機設定）：
+- `webrunner_issue_enqueue`、`webrunner_issue_status`、`webrunner_issue_metrics`
 
 ```python
 from je_web_runner.mcp_server import McpServer, Tool, build_default_tools, serve_stdio
@@ -1731,6 +1738,8 @@ python -m je_web_runner.issue_worker retry --config issue-worker.json --issue gi
 設定 `review_enabled=true`（範例已啟用），可依有寫入權限人員的審查或目前 head 的失敗檢查修正原 PR。SQLite 去重回饋，每輪獨立 worktree 並重新完整驗證，以非 force 更新原分支、在原 PR 留下證據。預設每 60 秒輪詢、最多三輪；人工改動 head 或 dev 前進時停止，不重開 PR、不合併、不關閉 issue。 人工補充後可用 `retry-review --config FILE --issue KEY` 在主機限制內接續同一 PR。
 
 啟用 `requirements_enabled` 可在編碼前整理驗收條件，需求不明時先提問。條件引用主機具名檢查或明列人工驗收。選用的主機 `browser_scenarios` 會在離線 Podman 執行強制瀏覽器驗收，可信驗證器與修改中原始碼分開掛載；證據綁定發布 tree 與情境／驗證器摘要。檢查通過仍須業務審查，範例見 `examples/issue-worker-browser.example.json`。
+
+接單結果提供可解釋的分類、參考適合度、標籤優先順序與等待加權；`automation-manual`／`automation-blocked` 保留新排單而不認領。`metrics --config FILE --json` 讀取持久的 run／revision 結果，可加上 `--since-hours`、`--issue` 或 `--report BASE` 篩選歷史及輸出離線互動 HTML／JSON。Python `IssueMetrics` 與唯讀 MCP `webrunner_issue_metrics` 提供相同資料。未追蹤的舊紀錄不列入交付率，PR 交付不代表業務驗收。
 
 ## CLI 用法
 

@@ -70,6 +70,7 @@ class CodeProcessor:
                                ("summary", "kind", "criteria", "questions")}, self.config)
         if data["analysis"]["questions"]:
             data["reason"] = "\n".join(data["analysis"]["questions"])
+            data["reason_code"] = "requirements_clarification"
             return False
         return True
 
@@ -83,6 +84,7 @@ class CodeProcessor:
     def _remaining(data: dict[str, Any]) -> float:
         remaining = data["deadline"] - time.time()
         if remaining <= 0:
+            data["reason_code"] = "time_budget"
             raise IssueWorkerError("issue exceeded its total time limit")
         return remaining
 
@@ -105,6 +107,7 @@ class CodeProcessor:
             checkpoint("fixing", data)
             if action.kind == "needs_info":
                 data["reason"] = redactor.clean(action.summary)
+                data["reason_code"] = "requirements_clarification"
                 return "needs_info"
             if action.kind == "finish":
                 data["summary"] = redactor.clean(action.summary[:2000])
@@ -117,6 +120,7 @@ class CodeProcessor:
             else:
                 self._tool(action, workspace, data, checkpoint, redactor)
         data["reason"] = "issue exceeded its tool operation limit"
+        data["reason_code"] = "tool_budget"
         return "failed"
 
     def _plan(self, context: dict[str, Any], data: dict[str, Any]) -> CodeAction:
@@ -171,8 +175,11 @@ class CodeProcessor:
                   checkpoint: Callable[[str, dict[str, Any]], None], redactor: Redactor) -> bool:
         workspace.verify_scope()
         changes = workspace.changes()
+        data["change_summary"] = {"files": len(changes),
+                                  "lines": sum(added + deleted for added, deleted, _path in changes)}
         if not changes:
             data["reason"] = "no code or documentation changes were produced"
+            data["reason_code"] = "no_changes"
             data["validation_rounds"] += 1
             data["phase"] = "fixing"
             checkpoint("fixing", data)
@@ -197,6 +204,7 @@ class CodeProcessor:
         else:
             data["validation_rounds"] += 1
             data["reason"] = "required host validation checks failed"
+            data["reason_code"] = "validation_failed"
             data["history"].append({"validation_failed": data["checks"]})
             data["phase"] = "fixing"
             checkpoint("fixing", data)

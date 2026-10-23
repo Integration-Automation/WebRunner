@@ -304,3 +304,52 @@ content/settings cannot reuse old evidence. The publisher rechecks all mandatory
 checks/scenarios and condition counts; model finish cannot bypass them. The required
 real local acceptance entry point includes the real browser container test and
 fails when prerequisites are unavailable.
+
+Intake quality, priority and history
+------------------------------------------------------------
+
+Preview/status triage shows task kind, classification basis, priority labels,
+advisory suitability score and reasons. Kind uses type labels/title prefixes,
+explicitly falling back to unknown; validated requirement analysis can classify
+recorded outcomes. Scores do not grant tool permissions or predict success.
+automation-manual/automation-blocked holds new jobs locally without claiming them.
+Discovery refreshes a never-started held snapshot after labels are removed;
+adding a hold during active execution cancels it.
+
+priority_labels defaults to priority:critical/p0=100, priority:high/p1=75,
+priority:normal/p2=50, priority:low/p3=25; unmatched jobs use 50. The highest matching
+label wins; body text cannot raise priority or permissions. Hosts may configure up
+to 50 labels scored 0–100. queue_aging_per_hour adds five points per waiting hour
+by default (0 disables), with FIFO ties. Active work and pending reports precede
+new admissions. Legacy queued jobs retain their snapshots and default to priority
+50; ordinary queued requirements remain guarded before execution.
+Discovery runs before selecting new work and refreshes queued priority labels so
+new urgent issues do not wait for the entire old queue to drain. Priority refreshes
+never replace ordinary admitted requirements.
+
+.. code-block:: bash
+
+    python -m je_web_runner.issue_worker metrics --config issue-worker.json --json
+    python -m je_web_runner.issue_worker metrics --config issue-worker.json --since-hours 24 --report reports/issues
+    python -m je_web_runner.issue_worker metrics --config issue-worker.json --issue github:123 --json
+
+Metrics read local history only, without platforms/models. Reports include recorded
+delivery rates by source/kind, measured duration/tools/validation rounds, failure
+reasons, UTC daily trends and the latest 50 outcomes. Queue counts are current local
+snapshots of holds, dependency/platform deferrals, pending reports and blocked
+reviews; time windows filter outcomes only. --issue selects cross-retry/revision
+history for a source issue.
+
+Each run/revision is recorded once. Retry preserves old outcomes and report retries
+do not inflate completion counts. Untracked legacy/write-failure observations are
+reported separately and excluded from rates/timing; current state is never used to
+invent history. Delivery does not mean business acceptance: business_acceptance is
+not_measured. Metrics write failures cannot turn delivered PRs into failed issues.
+SQLite upgrades add tables/columns/indexes; drain the old watch before upgrading.
+
+--report writes matching JSON and standalone HTML with source filters and daily
+bars, escaped text and no external assets/CDN. Python exposes
+``IssueMetrics(store).summary()``/``write_report(base)`` and
+``IssueWorker.metrics(since_hours=None, issue=None)``. MCP adds read-only
+``webrunner_issue_metrics`` with optional since_hours/issue, using the frozen host
+config. It never starts workers/writes platforms or accepts an output path.

@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261023-10 | 2026-10-23 | Intake quality and local delivery history | #done #issues #triage #metrics | [2026-10](2026-10.md) |
 | U-20261023-09 | 2026-10-23 | Requirement plans and browser acceptance | #done #issues #acceptance #browser | [2026-10](2026-10.md) |
 | U-20261023-08 | 2026-10-23 | Durable same-PR review revisions | #done #issues #review | [2026-10](2026-10.md) |
 | U-20261023-07 | 2026-10-23 | Issue worker readiness and Windows operations | #done #issues #operations #tests | [2026-10](2026-10.md) |
@@ -160,5 +161,5 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 72 |
+| [2026-10.md](2026-10.md) | 2026-10 | 73 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |

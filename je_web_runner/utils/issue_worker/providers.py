@@ -12,6 +12,7 @@ from je_web_runner.utils.agent.runner import Redactor
 
 from je_web_runner.utils.issue_worker.http import PlatformClient
 from je_web_runner.utils.issue_worker.types import IssueSnapshot, IssueWorkerConfig, IssueWorkerError
+from je_web_runner.utils.issue_worker.triage import MANUAL_LABELS
 
 MANAGED = {"automation-running", "automation-review", "automation-needs-info",
            "automation-failed", "automation-cancelled"}
@@ -26,6 +27,12 @@ def safe_snapshot(snapshot: IssueSnapshot, config: IssueWorkerConfig) -> IssueSn
                             if os.environ.get(name))
     return replace(snapshot, title=redactor.clean(snapshot.title), body=redactor.clean(snapshot.body),
                    url=redactor.clean(snapshot.url))
+
+
+def claimable(current: IssueSnapshot, expected: IssueSnapshot, bot: str) -> bool:
+    """Recheck manual admission control immediately before either provider can assign an issue."""
+    return current.eligible(bot, resume=True) and current.revision == expected.revision and not \
+        (MANUAL_LABELS & {label.casefold() for label in current.labels})
 
 
 def adf_text(value: Any) -> str:
@@ -119,7 +126,7 @@ class GitHubIssues:
         """Assign the bot, add only our label, then re-read ownership and requirements."""
         self.authorize()
         current = self.fetch(snapshot.external_id)
-        if not current.eligible(self.bot, resume=True) or current.revision != snapshot.revision:
+        if not claimable(current, snapshot, self.bot):
             raise IssueWorkerError("issue eligibility or requirements changed before claim")
         path = self.prefix + "/issues/" + snapshot.external_id
         self.client.request("POST", path + "/assignees", payload={"assignees": [self.bot]})
@@ -221,7 +228,7 @@ class JiraIssues:
         """Assign our account and append a progress label without replacing human labels."""
         self.authorize()
         current = self.fetch(snapshot.external_id)
-        if not current.eligible(self.bot, resume=True) or current.revision != snapshot.revision:
+        if not claimable(current, snapshot, self.bot):
             raise IssueWorkerError("issue eligibility or requirements changed before claim")
         self.client.request("PUT", "/rest/api/3/issue/" + snapshot.external_id, payload={
             "fields": {"assignee": {"accountId": self.bot}},

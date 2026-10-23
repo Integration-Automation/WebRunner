@@ -5,6 +5,7 @@ from typing import Any
 
 from je_web_runner.utils.issue_worker.providers import GitHubIssues, JiraIssues
 from je_web_runner.utils.issue_worker.store import IssueStore
+from je_web_runner.utils.issue_worker.triage import MANUAL_LABELS, assess_issue
 from je_web_runner.utils.issue_worker.types import IssueSnapshot, IssueWorkerConfig, IssueWorkerError
 
 
@@ -14,7 +15,7 @@ class IssueInbox:
     def __init__(self, config: IssueWorkerConfig, providers: dict[str, Any] | None = None,
                  store: IssueStore | None = None) -> None:
         self.config = config
-        self.store = store or IssueStore(config.state_dir)
+        self.store = store or IssueStore(config.state_dir, config.queue_aging_per_hour)
         self.store.bind({"repository": config.repository, "github_api": config.github_api, "jira_url": config.jira_url})
         self.providers = providers if providers is not None else self._providers()
 
@@ -39,9 +40,10 @@ class IssueInbox:
         snapshots.sort(key=lambda item: item.key)
         results = []
         for snapshot in snapshots:
-            inserted = False if dry_run else self.store.enqueue(snapshot)
-            results.append({"key": snapshot.key, "title": snapshot.title, "queued": inserted})
-        return results
+            triage = assess_issue(snapshot, self.config)
+            inserted = False if dry_run else self.store.enqueue(snapshot, triage)
+            results.append({"key": snapshot.key, "title": snapshot.title, "queued": inserted, "triage": triage})
+        return sorted(results, key=lambda item: (-item["triage"]["priority"], item["key"]))
 
     def _fetch(self, key: str) -> tuple[Any, IssueSnapshot]:
         source, separator, external_id = key.partition(":")
@@ -55,13 +57,15 @@ class IssueInbox:
         provider, snapshot = self._fetch(key)
         if not snapshot.eligible(provider.bot):
             raise IssueWorkerError("issue must be open, unassigned and labeled automation-ready")
-        return self.store.enqueue(snapshot)
+        return self.store.enqueue(snapshot, assess_issue(snapshot, self.config))
 
     def retry(self, key: str) -> None:
         """Requeue a terminal issue only after an operator restores its ready label."""
         provider, snapshot = self._fetch(key)
         if not snapshot.eligible(provider.bot, resume=True):
             raise IssueWorkerError("retry requires an open issue with automation-ready and no different owner")
+        if MANUAL_LABELS & {label.casefold() for label in snapshot.labels}:
+            raise IssueWorkerError("remove manual hold labels before retrying an issue")
         with self.store.lease():
             previous = self.store.status(key)
             branch = previous[0]["data"].get("branch") if previous else None
@@ -73,4 +77,4 @@ class IssueInbox:
                 })
                 if opened:
                     raise IssueWorkerError("an earlier run has an open PR; review or close it before retry")
-            self.store.retry(snapshot)
+            self.store.retry(snapshot, assess_issue(snapshot, self.config))

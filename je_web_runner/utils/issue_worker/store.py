@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import math
 import secrets
 import sqlite3
 import threading
@@ -16,11 +17,15 @@ from je_web_runner.utils.issue_worker.types import ACTIVE, FINAL, IssueSnapshot,
 class IssueStore:
     """A local WAL database; no network filesystem or multi-host coordination is assumed."""
 
-    def __init__(self, state_dir: str | Path) -> None:
+    def __init__(self, state_dir: str | Path, aging_per_hour: float = 5) -> None:
+        if isinstance(aging_per_hour, bool) or not isinstance(aging_per_hour, (int, float)) or \
+                not math.isfinite(aging_per_hour) or not 0 <= aging_per_hour <= 100:
+            raise IssueWorkerError("invalid queue aging rate")
         self.root = Path(state_dir).resolve()
         self.root.mkdir(parents=True, exist_ok=True)
         self.path = self.root / "issues.sqlite3"
         self._local = threading.local()
+        self.aging_per_hour = aging_per_hour
         with self.connection() as connection:
             connection.executescript("""
                 PRAGMA journal_mode=WAL;
@@ -36,7 +41,22 @@ class IssueStore:
                     state TEXT NOT NULL, payload TEXT NOT NULL,
                     PRIMARY KEY(job_key,run,event_key)
                 );
+                CREATE TABLE IF NOT EXISTS outcomes (
+                    job_key TEXT NOT NULL, run INTEGER NOT NULL, revision INTEGER NOT NULL,
+                    payload TEXT NOT NULL, recorded REAL NOT NULL,
+                    PRIMARY KEY(job_key,run,revision)
+                );
             """)
+            connection.execute("BEGIN IMMEDIATE")
+            columns = {row["name"] for row in connection.execute("PRAGMA table_info(jobs)")}
+            for name, declaration in (("priority", "INTEGER NOT NULL DEFAULT 50"),
+                                      ("suitable", "INTEGER NOT NULL DEFAULT 1")):
+                if name not in columns:
+                    connection.execute(f"ALTER TABLE jobs ADD COLUMN {name} {declaration}")
+            connection.execute("INSERT OR IGNORE INTO settings VALUES('metrics_since',?)", (str(time.time()),))
+            connection.execute("CREATE INDEX IF NOT EXISTS jobs_dispatch ON jobs(status,suitable,next_attempt)")
+            connection.execute("""CREATE INDEX IF NOT EXISTS jobs_outbox ON jobs(created,key)
+                WHERE instr(data,'"report_pending": true') > 0""")
 
     @contextmanager
     def connection(self) -> Iterator[sqlite3.Connection]:
@@ -49,15 +69,35 @@ class IssueStore:
         finally:
             connection.close()
 
-    def enqueue(self, snapshot: IssueSnapshot) -> bool:
+    def enqueue(self, snapshot: IssueSnapshot, triage: dict[str, Any] | None = None) -> bool:
         """Insert a source/id once; polling never overwrites an in-flight requirement snapshot."""
         now = time.time()
         with self.connection() as connection:
             cursor = connection.execute(
-                "INSERT OR IGNORE INTO jobs(key,snapshot,status,created,updated) VALUES(?,?,?,?,?)",
-                (snapshot.key, json.dumps(snapshot.to_dict()), "queued", now, now),
+                "INSERT OR IGNORE INTO jobs(key,snapshot,status,created,updated,data,priority,suitable) "
+                "VALUES(?,?,?,?,?,?,?,?)",
+                (snapshot.key, json.dumps(snapshot.to_dict()), "queued", now, now,
+                 json.dumps({"triage": triage} if triage else {}), (triage or {}).get("priority", 50),
+                 int((triage or {}).get("suitable", True))),
             )
+            if not cursor.rowcount and triage is not None:
+                self._refresh_queued(connection, snapshot, triage)
             return cursor.rowcount == 1
+
+    @staticmethod
+    def _refresh_queued(connection: sqlite3.Connection, snapshot: IssueSnapshot, triage: dict[str, Any]) -> None:
+        row = connection.execute("SELECT snapshot,data,suitable FROM jobs WHERE key=? AND status='queued'",
+                                 (snapshot.key,)).fetchone()
+        if row is None:
+            return
+        data = json.loads(row["data"])
+        if data.get("claim_started"):
+            return
+        data["triage"] = triage
+        payload = json.dumps(snapshot.to_dict()) if not row["suitable"] or not triage["suitable"] else row["snapshot"]
+        connection.execute("UPDATE jobs SET snapshot=?,data=?,priority=?,suitable=?,updated=? "
+                           "WHERE key=? AND status='queued'", (payload, json.dumps(data), triage["priority"],
+                                                               int(triage["suitable"]), time.time(), snapshot.key))
 
     def bind(self, scope: dict[str, str]) -> None:
         """A state directory cannot silently switch API origins or repository identity."""
@@ -84,11 +124,28 @@ class IssueStore:
 
     def next_job(self) -> dict[str, Any] | None:
         """Resume active work before taking the next queued item."""
-        jobs = [item for item in self.status() if (item["status"] not in FINAL or item["data"].get("report_pending"))
-                and item["next_attempt"] <= time.time()]
-        active = [item for item in jobs if item["status"] in ACTIVE]
-        candidates = active or jobs
-        return candidates[0] if candidates else None
+        now = time.time()
+        with self.connection() as connection:
+            active = connection.execute(
+                "SELECT * FROM jobs WHERE status IN (?,?,?,?,?) AND suitable=1 AND next_attempt<=? "
+                "ORDER BY created,key LIMIT 1", (*sorted(ACTIVE), now),
+            ).fetchone()
+            if active:
+                return self._decode(active)
+            pending = connection.execute(
+                "SELECT * FROM jobs WHERE instr(data,'\"report_pending\": true') > 0 AND next_attempt<=? "
+                "ORDER BY created,key", (now,),
+            )
+            for row in pending:
+                job = self._decode(row)
+                if job["data"].get("report_pending"):
+                    return job
+            queued = connection.execute(
+                "SELECT * FROM jobs WHERE status='queued' AND suitable=1 AND next_attempt<=? "
+                "ORDER BY priority+MAX(0,?-created)/3600.0*? DESC,created,key LIMIT 1",
+                (now, now, self.aging_per_hour),
+            ).fetchone()
+            return self._decode(queued) if queued else None
 
     def save(self, key: str, status: str, data: dict[str, Any], next_attempt: float = 0) -> None:
         """Persist a checkpoint before publishing any external side effect."""
@@ -98,13 +155,15 @@ class IssueStore:
             connection.execute("UPDATE jobs SET status=?,data=?,updated=?,next_attempt=? WHERE key=?",
                                (status, json.dumps(data), time.time(), next_attempt, key))
 
-    def retry(self, snapshot: IssueSnapshot) -> None:
+    def retry(self, snapshot: IssueSnapshot, triage: dict[str, Any] | None = None) -> None:
         """Explicitly requeue a terminal job with fresh requirements and a new run identity."""
         with self.connection() as connection:
             cursor = connection.execute(
-                "UPDATE jobs SET snapshot=?,status='queued',data='{}',run=run+1,updated=?,next_attempt=0 "
+                "UPDATE jobs SET snapshot=?,status='queued',data=?,run=run+1,updated=?,next_attempt=0,"
+                "priority=?,suitable=? "
                 "WHERE key=? AND status IN ('needs_info','failed','cancelled')",
-                (json.dumps(snapshot.to_dict()), time.time(), snapshot.key),
+                (json.dumps(snapshot.to_dict()), json.dumps({"triage": triage} if triage else {}), time.time(),
+                 (triage or {}).get("priority", 50), int((triage or {}).get("suitable", True)), snapshot.key),
             )
             if cursor.rowcount != 1:
                 raise IssueWorkerError("only failed, cancelled or needs_info jobs may be retried")
@@ -148,6 +207,26 @@ class IssueStore:
             connection.execute("UPDATE jobs SET snapshot=?,status='awaiting_review',data=?,updated=?,next_attempt=0 "
                                "WHERE key=?", (json.dumps(snapshot.to_dict()), json.dumps(data), time.time(),
                                                job["key"]))
+
+    def record_outcome(self, job: dict[str, Any]) -> None:
+        """Record each run/revision once; delivery metrics are not claims of business acceptance."""
+        self.assert_lease()
+        data = job["data"]
+        if "finished_at" not in data:
+            return  # Older pending reports are legacy observations, not newly measured completions.
+        started = data.get("started_at")
+        finished = data.get("finished_at", time.time())
+        duration = max(0, finished - started) if isinstance(started, (int, float)) else None
+        payload = {"key": job["key"], "run": job["run"], "revision": data.get("review_rounds", 0),
+                   "source": job["snapshot"]["source"], "kind": data.get("analysis", {}).get("kind") or
+                   data.get("triage", {}).get("kind", "unknown"), "status": job["status"],
+                   "reason_code": data.get("reason_code", job["status"]), "reason": data.get("reason", "")[:1000],
+                   "duration_seconds": duration, "tool_count": data.get("tool_count", 0),
+                   "validation_rounds": data.get("validation_rounds", 0), "tree": data.get("validated_tree"),
+                   "changes": data.get("change_summary", {}), "business_verified": False}
+        with self.connection() as connection:
+            connection.execute("INSERT OR IGNORE INTO outcomes VALUES(?,?,?,?,?)",
+                               (job["key"], job["run"], payload["revision"], json.dumps(payload), finished))
 
     @contextmanager
     def lease(self) -> Iterator[None]:

@@ -154,7 +154,9 @@ Claude Code(終端機客戶端)以專案為單位,從 repo 根目錄的
 工具清單
 ========
 
-server 預設註冊 27 個工具。完整 runtime 指令清單(executor 中所有
+server 預設註冊 28 個工具，包含主機設定固定的 issue 排單、狀態與唯讀
+``webrunner_issue_metrics``。指標接受 since_hours／issue，不啟動 worker、
+不寫平台，也不接受輸出路徑。完整 runtime 指令清單(executor 中所有
 ``WR_*``,共 547 個)請呼叫 ``webrunner_list_commands``。
 
 撰寫與 lint

@@ -104,7 +104,8 @@ class ReviewInbox:
                original: str, round_number: int) -> None:
         data = job["data"]
         # Preserve delivery identity and immutable source requirements; reset only per-revision coding state.
-        retained = {name: data[name] for name in ("pr", "branch", "claim_started", "review_polled") if name in data}
+        retained = {name: data[name] for name in ("pr", "branch", "claim_started", "review_polled", "triage")
+                    if name in data}
         retained.update({"original_base_sha": original, "review_rounds": round_number,
                          "base_sha": data["pr"]["head"],
                          "review": {"parent": data["pr"]["head"], "round": round_number,

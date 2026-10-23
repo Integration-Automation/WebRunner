@@ -10,6 +10,7 @@ from typing import Sequence
 
 from je_web_runner.utils.issue_worker import IssueWorkerConfig
 from je_web_runner.utils.issue_worker.doctor import IssueDoctor
+from je_web_runner.utils.issue_worker.metrics import IssueMetrics
 from je_web_runner.utils.issue_worker.runtime import WorkerRuntime
 from je_web_runner.utils.issue_worker.store import IssueStore
 from je_web_runner.utils.issue_worker.worker import IssueWorker
@@ -19,12 +20,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     """Keep this CLI independent of the legacy browser execution flags."""
     parser = argparse.ArgumentParser(prog="python -m je_web_runner.issue_worker")
     parser.add_argument("command", choices=("run", "watch", "status", "retry", "doctor", "health", "stop",
-                                            "retry-review"))
+                                            "retry-review", "metrics"))
     parser.add_argument("--config", required=True)
     parser.add_argument("--issue", help="github:123 or jira:PROJECT-123")
     parser.add_argument("--dry-run", action="store_true", help="read eligible issues; no claims, changes or PRs")
     parser.add_argument("--platform", action="store_true", help="doctor: also read configured platforms")
-    parser.add_argument("--json", action="store_true", help="doctor/health: machine-readable output")
+    parser.add_argument("--json", action="store_true", help="doctor/health/metrics: machine-readable output")
+    parser.add_argument("--since-hours", type=float, help="metrics: restrict recorded outcomes to this time window")
+    parser.add_argument("--report", help="metrics: write BASE.json and an offline interactive BASE.html")
     args = parser.parse_args(argv)
     if args.command in {"retry", "retry-review"} and not args.issue:
         parser.error("retry/retry-review requires --issue")
@@ -32,9 +35,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         parser.error("--dry-run is only supported with run")
     if args.platform and args.command != "doctor":
         parser.error("--platform is only supported with doctor")
-    if args.json and args.command not in {"doctor", "health"}:
-        parser.error("--json is only supported with doctor or health")
+    if args.json and args.command not in {"doctor", "health", "metrics"}:
+        parser.error("--json is only supported with doctor, health or metrics")
+    if (args.since_hours is not None or args.report) and args.command != "metrics":
+        parser.error("--since-hours/--report are only supported with metrics")
     config = IssueWorkerConfig.load(args.config)
+    if args.command == "metrics":
+        return _metrics(config, args)
     if args.command == "doctor":
         result = IssueDoctor(config).check(include_platform=args.platform)
         _diagnostics(result, args.json)
@@ -77,6 +84,25 @@ def _diagnostics(result: dict, as_json: bool) -> None:
         return
     for item in result["checks"]:
         print(f"{item['status']}: {item['name']} ({item['code']}) {item['hint']}")
+
+
+def _metrics(config: IssueWorkerConfig, args: argparse.Namespace) -> int:
+    store = IssueStore(config.state_dir)
+    store.bind({"repository": config.repository, "github_api": config.github_api, "jira_url": config.jira_url})
+    service = IssueMetrics(store)
+    report = service.summary(args.since_hours, args.issue)
+    if args.report:
+        paths = service.write_report(args.report, report=report)
+        report["artifacts"] = {"json": paths[0], "html": paths[1]}
+    if args.json:
+        print(json.dumps(report, ensure_ascii=False))
+    else:
+        summary = report["summary"]
+        print(f"Delivered {summary['delivered']} / {summary['attempts']} recorded attempts; "
+              f"{report['legacy_observations']} legacy observations excluded. Business acceptance is not measured.")
+        if args.report:
+            print(report["artifacts"]["html"])
+    return 0
 
 
 def _control(runtime: WorkerRuntime, args: argparse.Namespace) -> int:

@@ -121,6 +121,11 @@ class IssueWorkerConfig:
     review_poll_seconds: float = 60
     requirements_enabled: bool = False
     browser_scenarios: dict[str, dict[str, Any]] = field(default_factory=dict)
+    priority_labels: dict[str, int] = field(default_factory=lambda: {
+        "priority:critical": 100, "priority:high": 75, "priority:normal": 50, "priority:low": 25,
+        "p0": 100, "p1": 75, "p2": 50, "p3": 25,
+    })
+    queue_aging_per_hour: float = 5
     checks: dict[str, list[str]] = field(default_factory=lambda: {key: list(value) for key, value in CHECKS.items()})
 
     def __post_init__(self) -> None:
@@ -131,6 +136,20 @@ class IssueWorkerConfig:
             raise IssueWorkerError("requirements_enabled must be a boolean")
         from je_web_runner.utils.issue_worker.browser_contract import validate_scenarios
         validate_scenarios(self.browser_scenarios)
+        self._validate_queue()
+
+    def _validate_queue(self) -> None:
+        if not isinstance(self.priority_labels, dict) or len(self.priority_labels) > 50:
+            raise IssueWorkerError("priority_labels must be a bounded mapping")
+        for name, value in self.priority_labels.items():
+            if not isinstance(name, str) or not name.strip() or len(name) > 50 or any(ord(char) < 32 for char in name):
+                raise IssueWorkerError("invalid priority label")
+            if not isinstance(value, int) or isinstance(value, bool) or not 0 <= value <= 100:
+                raise IssueWorkerError("priority label values must be integers between 0 and 100")
+        aging = self.queue_aging_per_hour
+        if isinstance(aging, bool) or not isinstance(aging, (int, float)) or \
+                not math.isfinite(aging) or not 0 <= aging <= 100:
+            raise IssueWorkerError("queue_aging_per_hour must be finite and between 0 and 100")
 
     def _validate_identity(self) -> None:
         for value in (self.state_dir, self.model, self.github_bot, self.image):

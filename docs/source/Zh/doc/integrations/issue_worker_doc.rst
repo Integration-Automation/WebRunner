@@ -267,3 +267,44 @@ Linux 入口在啟動應用前停用 dumpable，防止應用讀取 verifier 的�
 瀏覽器證據同時綁定 tree、主機情境與 verifier 原始碼摘要。內容或設定改變時，
 不重用舊結果；發布器再次確認所有具名檢查、情境與條件數量，模型的 finish
 不能跳過它們。必要的真實本機驗收入口也會執行瀏覽器容器測試；缺少環境時失敗。
+
+接單分類、排序與歷史報表
+------------------------
+
+預演結果與 status 的 triage 顯示任務分類、分類依據、優先標籤、適合度分數及理由。
+分類採類型標籤／標題前綴，未知時明列 unknown；需求分析啟用時，歷史結果可使用
+經驗證的分析類型。適合度分數僅供參考，不會授予工具權限或代表成功機率。
+automation-manual／automation-blocked 會讓新排單保留於本機而不認領；移除標籤
+後的再次探索會更新尚未開始的保留單。進行中加上這些標籤則取消執行。
+
+priority_labels 預設 critical／p0=100、high／p1=75、normal／p2=50、low／p3=25，
+使用 priority:critical 等完整標籤；沒有對應標籤時為 50。多個標籤取最高分，
+內容文字不能自行提高權限或優先順序。主機可設定最多 50 個標籤，分數限 0–100。
+queue_aging_per_hour 預設每小時加五分，0 可停用；高優先排前，等待時間逐步加權，
+同分採先進先出。進行中工作及待送達進度優先於新排單。舊佇列遷移為預設 50 分，
+不覆寫其需求快照；一般排單仍會在開始前檢查需求版本。
+每次選取新工作前會探索新 issue，並更新尚未認領排單的優先標籤，避免新緊急單
+一直等到舊佇列耗盡；更新排序不會覆寫一般排單原有的需求內容。
+
+.. code-block:: bash
+
+    python -m je_web_runner.issue_worker metrics --config issue-worker.json --json
+    python -m je_web_runner.issue_worker metrics --config issue-worker.json --since-hours 24 --report reports/issues
+    python -m je_web_runner.issue_worker metrics --config issue-worker.json --issue github:123 --json
+
+metrics 只讀本機紀錄，不連接平台或模型。結果包含每個來源／類型的 PR 交付率、
+實際記錄的執行時間／工具及驗證輪數、失敗原因、UTC 每日趨勢、最近 50 筆結果，
+以及保留、環境暫停、待回報及審查停止的目前本機狀態。時間窗僅篩選完成紀錄；
+佇列數量是目前快照。--issue 可查看同一 issue 跨 retry／review 的歷史。
+
+每個 run／revision 只記錄一次，retry 不會覆寫舊結果；回報重試不增加完成次數。
+舊版未記錄的資料與寫入失敗的紀錄列為 legacy_observations，不納入率及時間計算，
+不從目前狀態推測完整歷史。PR 已交付不等於業務已驗收，business_acceptance
+固定為 not_measured。指標寫入失敗不會把已交付 PR 改判為修正失敗。
+SQLite 升級採新增資料表／欄位及索引；升級程式前應先排空舊 watch。
+
+--report 產生相同快照的 JSON 與獨立 HTML，支援來源篩選與每日長條圖，沒有 CDN
+或外部資源，文字內容經跳脫。Python 可使用 ``IssueMetrics(store).summary()``／
+``write_report(base)``，或 ``IssueWorker.metrics(since_hours=None, issue=None)``。
+MCP 新增唯讀 ``webrunner_issue_metrics``，接受選用 since_hours／issue，仍只讀取
+伺服器啟動時固定的主機設定，不啟動 worker、不寫入平台、不接受報表路徑。

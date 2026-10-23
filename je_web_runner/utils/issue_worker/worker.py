@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import sqlite3
 import threading
 import time
 from pathlib import Path
@@ -11,9 +12,11 @@ from typing import Any, Callable
 from je_web_runner.utils.agent.runner import Redactor, browser_privacy
 from je_web_runner.utils.issue_worker.inbox import IssueInbox
 from je_web_runner.utils.issue_worker.doctor import IssueDoctor
+from je_web_runner.utils.issue_worker.metrics import IssueMetrics
 from je_web_runner.utils.issue_worker.processor import CodeProcessor
 from je_web_runner.utils.issue_worker.publisher import GitHubPublisher
 from je_web_runner.utils.issue_worker.runtime import WorkerRuntime, operational_log
+from je_web_runner.utils.issue_worker.triage import MANUAL_LABELS
 from je_web_runner.utils.issue_worker.reviews import ReviewInbox, owned_pr
 from je_web_runner.utils.issue_worker.types import (
     FINAL, EnvironmentUnavailable, IssueSnapshot, IssueWorkerConfig, IssueWorkerError, ProviderError,
@@ -53,6 +56,10 @@ class IssueWorker:
         """Return sanitized durable reports."""
         return self.redactor.clean(self.store.status(key))
 
+    def metrics(self, since_hours: float | None = None, issue: str | None = None) -> dict[str, Any]:
+        """Return local delivery history/queue aggregates without platform requests."""
+        return self.redactor.clean(IssueMetrics(self.store).summary(since_hours, issue))
+
     def retry(self, key: str) -> None:
         """Explicitly requeue a stopped issue after the ready label is restored."""
         self.inbox.retry(key)
@@ -73,6 +80,8 @@ class IssueWorker:
             provider, snapshot = self.inbox._fetch(key)
             if snapshot.closed or snapshot.assignee != provider.bot or "automation-review" not in snapshot.labels:
                 raise IssueWorkerError("review retry requires an open, bot-owned issue with automation-review")
+            if MANUAL_LABELS & {label.casefold() for label in snapshot.labels}:
+                raise IssueWorkerError("remove manual hold labels before retrying review")
             pr = owned_pr(self.inbox.providers["github"], job)
             if pr["state"] != "open" or pr["head"]["sha"] != job["data"]["pr"]["head"]:
                 raise IssueWorkerError("review retry cannot reopen a PR or adopt an external head")
@@ -94,10 +103,7 @@ class IssueWorker:
             self.runtime.assert_allowed()
             if self._draining():
                 return {"status": "idle"}
-            job = self._next_job()
-            if job is None and discover:
-                self.inbox.discover()
-                job = self.store.next_job()
+            job = self._next_job(discover)
             if job is None:
                 return {"status": "idle"}
             if not self._begin_job(job["key"]):
@@ -108,8 +114,11 @@ class IssueWorker:
                 self._process_job(job)
             return self.status(job["key"])[0]
 
-    def _next_job(self) -> dict[str, Any] | None:
+    def _next_job(self, discover: bool = True) -> dict[str, Any] | None:
         job = self.store.next_job()
+        if discover and (job is None or job["status"] == "queued"):
+            self.inbox.discover()
+            job = self.store.next_job()
         if self.config.review_enabled and (job is None or job["status"] == "queued"):
             return ReviewInbox(self.inbox.providers["github"], self.redactor).poll(self.store) or job
         return job
@@ -182,7 +191,8 @@ class IssueWorker:
         except Exception as error:
             message = self.redactor.clean(f"{type(error).__name__}: {error}")
             web_runner_logger.warning("issue processing stopped: %s", message)
-            self._finish(job, "failed", message)
+            code = "time_budget" if job["data"].get("reason_code") == "time_budget" else "execution_error"
+            self._finish(job, "failed", message, code=code)
 
     def _execute(self, job: dict[str, Any], provider: Any) -> None:
         snapshot = IssueSnapshot(**job["snapshot"])
@@ -196,6 +206,7 @@ class IssueWorker:
             self.processor.preflight()
             self.processor.recover()
             data.pop("environment_error", None)
+            data.setdefault("started_at", time.time())
             data.setdefault("deadline", time.time() + self.config.timeout)
             self._save(job, "claimed")
             data["claim_started"] = True
@@ -248,6 +259,8 @@ class IssueWorker:
                 {"automation-review", "automation-running"} & set(current.labels))
         if not eligible or current.revision != expected.revision:
             raise IssueCancelled("issue requirements, ready label, open state or ownership changed")
+        if MANUAL_LABELS & {label.casefold() for label in current.labels}:
+            raise IssueCancelled("issue was explicitly placed on manual hold")
 
     def _save(self, job: dict[str, Any], status: str, next_attempt: float = 0) -> None:
         self.runtime.assert_allowed()
@@ -258,12 +271,16 @@ class IssueWorker:
             error = job["data"].get("environment_error") or job["data"].get("platform_error")
             self.runtime.update(status, job["key"], error)
 
-    def _finish(self, job: dict[str, Any], status: str, reason: str) -> None:
+    def _finish(self, job: dict[str, Any], status: str, reason: str, code: str = "") -> None:
         if status not in FINAL:
             raise IssueWorkerError("processor returned an invalid terminal outcome")
         job["data"]["reason"] = self.redactor.clean(reason)
+        known = {"awaiting_review": "delivered", "cancelled": "cancelled", "needs_info": "requirements_clarification"}
+        job["data"]["reason_code"] = known.get(status) or code or job["data"].get("reason_code", status)
+        job["data"].setdefault("finished_at", time.time())
         job["data"]["report_pending"] = bool(job["data"].get("claim_started"))
         self._save(job, status)
+        self._record_outcome(job)
         self._write_artifact(job)
         if job["data"]["report_pending"]:
             self._report(job)
@@ -271,6 +288,7 @@ class IssueWorker:
     def _report(self, job: dict[str, Any]) -> None:
         if not job["data"].get("report_pending"):
             return
+        self._record_outcome(job)
         provider = self.inbox.providers[job["snapshot"]["source"]]
         message = job["status"] + ": " + job["data"].get("reason", "")
         if job["data"].get("pr"):
@@ -291,6 +309,12 @@ class IssueWorker:
     def _defer(self, job: dict[str, Any], error: ProviderError) -> None:
         job["data"]["platform_error"] = str(error)
         self._save(job, job["status"], time.time() + max(60, error.retry_after))
+
+    def _record_outcome(self, job: dict[str, Any]) -> None:
+        try:
+            self.store.record_outcome(job)
+        except sqlite3.Error as error:
+            web_runner_logger.warning("issue metrics unavailable: %s", type(error).__name__)
 
     def _write_artifact(self, job: dict[str, Any]) -> None:
         try:
