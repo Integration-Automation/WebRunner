@@ -221,8 +221,7 @@ class IssueWorker:
 
         def checkpoint(status: str, progress: dict[str, Any]) -> None:
             self.store.assert_lease()
-            if status in {"fixing", "validating", "publishing"}:
-                self._guard(job, provider, resume=True)
+            self._guard(job, provider, resume=True)
             job["data"] = progress
             self._save(job, status)
             if data.get("reported_stage") != status:

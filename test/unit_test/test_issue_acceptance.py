@@ -7,6 +7,7 @@ from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
+import jsonschema
 
 from je_web_runner.utils.agent.runner import Redactor
 from je_web_runner.utils.issue_worker.browser_acceptance import BrowserAcceptance
@@ -16,7 +17,7 @@ from je_web_runner.utils.issue_worker.planner import CodeAction, CodingPlanner
 from je_web_runner.utils.issue_worker.processor import CodeProcessor
 from je_web_runner.utils.issue_worker.publisher import GitHubPublisher
 from je_web_runner.utils.issue_worker.requirements import (
-    RequirementAnalyzer, RequirementPlan, criterion_evidence, requirement_revision,
+    REQUIREMENT_SCHEMA, RequirementAnalyzer, RequirementPlan, criterion_evidence, requirement_revision,
 )
 from je_web_runner.utils.issue_worker.types import IssueWorkerConfig, IssueWorkerError
 from test_issue_coding import PATCH
@@ -84,6 +85,30 @@ def test_requirement_analysis_corrects_one_bad_response_and_binds_source_and_fee
         assert result["revision"] == requirement_revision(job["snapshot"], feedback)
         assert result["revision"] != requirement_revision(job["snapshot"], [])
         assert request.call_args_list[0].args[2]["format"]["additionalProperties"] is False
+    finally:
+        client.close()
+
+
+@pytest.mark.parametrize("browser_enabled", [False, True])
+def test_generation_schema_cannot_invent_browser_engines_or_host_checks(issue_workspace, browser_enabled):
+    workspace, job, _original = issue_workspace
+    workspace.config.browser_scenarios = {"form": case()} if browser_enabled else {}
+    value = analysis()
+    value["criteria"][0]["browser"] = ["form"] if browser_enabled else []
+    client = CodingPlanner("local-model", error_type=IssueWorkerError)
+    try:
+        with patch.object(client, "_request", return_value={"message": {"content": json.dumps(value)}}) as request:
+            RequirementAnalyzer(workspace.config, client).analyze(job["snapshot"], [], 5)
+        schema = request.call_args.args[2]["format"]
+        jsonschema.validate(value, schema)
+        for field, invented in (("browser", "chrome"), ("checks", "invented_shell_check")):
+            invalid = copy.deepcopy(value)
+            invalid["criteria"][0][field] = [invented]
+            with pytest.raises(jsonschema.ValidationError):
+                jsonschema.validate(invalid, schema)
+        assert schema["properties"]["questions"]["maxItems"] == 20
+        assert "enum" not in schema["properties"]["questions"]["items"]
+        assert REQUIREMENT_SCHEMA["properties"]["criteria"]["items"]["properties"]["browser"]["maxItems"] == 20
     finally:
         client.close()
 

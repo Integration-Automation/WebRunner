@@ -287,6 +287,10 @@ kind, C1/C2 acceptance criteria and concrete clarification questions before codi
 Clarification is reserved for unresolved product decisions or conflicting desired
 behavior. Explicitly stated behavior is used directly; implementation details and
 existing tests are inspected by the coding worker rather than requested from users.
+The generation schema binds check/scenario references to the configured names;
+when no browser scenarios are configured, browser reference arrays must be empty.
+Analysis checkpoints also re-read requirements, ownership and manual holds; changes
+cancel the run before returning clarification questions or starting baseline checks.
 Legacy configs default to disabled; examples explicitly enable it. Analysis consumes
 one tool operation, allows one malformed-response correction, and questions stop
 with needs_info before baseline execution or patching. Criteria may reference only

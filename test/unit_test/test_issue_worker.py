@@ -95,6 +95,32 @@ def test_removed_ready_label_cancels_before_patch_or_publication(issue_workspace
         worker.close()
 
 
+@pytest.mark.parametrize("change", ["requirements", "manual_hold", "owner", "ready_label"])
+def test_analysis_rechecks_source_changes_before_returning_questions(issue_workspace, change):
+    worker, provider, planner, publisher = worker_for(issue_workspace)
+    worker.config.requirements_enabled = True
+    analyzer = Mock()
+
+    def changed_during_analysis(_snapshot, _feedback, _timeout):
+        changes = {"requirements": {"body": "A revised requirement"},
+                   "manual_hold": {"labels": ("automation-ready", "automation-manual")},
+                   "owner": {"assignee": "human"}, "ready_label": {"labels": ()}}
+        provider.snapshot = replace(provider.snapshot, **changes[change])
+        return {"summary": "Clarify behavior", "kind": "bug", "criteria": [],
+                "questions": ["Which input should change?"], "revision": "fixture"}
+
+    analyzer.analyze.side_effect = changed_during_analysis
+    worker.processor.analyzer = analyzer
+    try:
+        result = worker.run_once()
+        assert result["status"] == "cancelled"
+        worker.processor.sandbox.check.assert_not_called()
+        planner.plan.assert_not_called()
+        publisher.publish.assert_not_called()
+    finally:
+        worker.close()
+
+
 def test_model_or_sandbox_unavailable_does_not_claim_an_issue(issue_workspace):
     worker, provider, _planner, publisher = worker_for(issue_workspace)
     worker.processor.preflight = Mock(side_effect=IssueWorkerError("Podman image unavailable"))

@@ -253,6 +253,10 @@ diff 缺少結尾換行時會補齊，Git 會依內容重算 hunk 行數；來�
 則歸類為時間預算耗盡。
 每個條件只能引用主機具名 checks／browser_scenarios，或明列 manual=true；
 模型不能提供命令、網址、權限或自行宣告測試通過。
+產生回應的 schema 也會限制為主機設定的 check／scenario 名稱；未設定瀏覽器
+scenario 時，browser 參照陣列必須為空，不接受瀏覽器引擎名稱。
+分析階段的 checkpoint 也會重新檢查需求、指派與人工暫停狀態；有變動時先取消，
+不繼續回報澄清問題或執行 baseline 檢查。
 
 分析最多 20 個條件，每項敘述最多 1,000 字；澄清問題最多 20 項、每項 500 字。
 分析版本綁定來源需求與本輪 PR 回饋；最終 acceptance 證據再綁定發布的 git tree。
