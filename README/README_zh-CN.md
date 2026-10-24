@@ -1,5 +1,13 @@
 # WebRunner
 
+AutoControlGUI 2fff8c88 新增主机审核的隔离 helper Python 配置与依赖诊断。
+固定 helper 协议检查本 SDK 的读回／传输契约，并通过
+`je_web_runner.webdriver.playwright_wrapper._require_playwright()` 检查已安装 runtime。
+此 hook 仅返回已安装的 factory 而不启动，现已是必须维持签名及行为的跨项目契约。
+八项来源到来源 SDK／自有 helper／loader 契约通过；独立安装环境的 pip check 及实际依赖诊断
+也通过。浏览器启动与原生证据仍明确未验证；正式服务配置及暂停的验收仍记录于 progress.md
+#22，共享环境与正式工作树保持原状。
+
 AutoControlGUI 已于 feat/agent-task-runtime 的 26bfea43 接合已审核文件传输契约：
 授权路径内的不可变上传快照、原子且有大小上限的下载、按 URL 筛选的浏览器 Cookie，以及独立
 归档清单验证。五项真实 SDK／自有 helper 契约使用替身 Chromium 与自有 loopback；传输契约

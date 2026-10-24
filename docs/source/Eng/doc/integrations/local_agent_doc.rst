@@ -195,3 +195,15 @@ archive manifest verification. Five real SDK/owned-helper contracts use fake Chr
 the transfer contract also checks host cancellation through the actual SDK context. Shared installations,
 production checkouts and paused native/24-hour acceptance are unchanged. Deployment and real application/
 browser evidence remain open in progress.md #22.
+
+Installed AutoControl helper dependency contract
+------------------------------------------------------------
+
+AutoControlGUI 2fff8c88 adds host-reviewed isolated helper Python selection and dependency probing.
+Its fixed helper protocol checks this SDK's readback/transfer contracts and uses
+``je_web_runner.webdriver.playwright_wrapper._require_playwright()`` to inspect the installed runtime.
+The hook returns the installed factory without starting it; preserving that signature/behavior is now
+a cross-project consumer contract. Eight source-to-source SDK/owned-helper/loader contracts pass.
+A dedicated installed environment passes pip check and the actual dependency probe, while browser launch
+and native evidence remain explicitly unverified. Production service setup and paused acceptance remain
+open in progress.md #22; neither shared environments nor production checkouts were changed.

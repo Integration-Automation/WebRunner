@@ -1,5 +1,14 @@
 # WebRunner
 
+AutoControlGUI 2fff8c88 adds host-reviewed isolated helper Python selection and dependency probing.
+Its fixed helper protocol checks this SDK's readback/transfer contracts and uses
+`je_web_runner.webdriver.playwright_wrapper._require_playwright()` to inspect the installed runtime.
+The hook returns the installed factory without starting it; preserving that signature/behavior is now
+a cross-project consumer contract. Eight source-to-source SDK/owned-helper/loader contracts pass.
+A dedicated installed environment passes pip check and the actual dependency probe, while browser launch
+and native evidence remain explicitly unverified. Production service setup and paused acceptance remain
+open in progress.md #22; neither shared environments nor production checkouts were changed.
+
 AutoControlGUI now binds the reviewed file-transfer contract on feat/agent-task-runtime at 26bfea43:
 rooted immutable upload snapshots, atomic bounded downloads, URL-scoped browser cookies and independent
 archive manifest verification. Five real SDK/owned-helper contracts use fake Chromium and owned loopback;

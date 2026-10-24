@@ -177,3 +177,14 @@ AutoControlGUI 已於 feat/agent-task-runtime 的 26bfea43 接合已審閱檔案
 歸檔清單驗證。五項真實 SDK／自有 helper 契約使用替身 Chromium 與自有 loopback；傳輸契約
 另驗證穿過實際 SDK context 的主機取消。共用安裝、正式工作樹及暫停的原生／24 小時驗收
 維持原狀；部署與實際應用／瀏覽器證據仍記錄於 progress.md #22。
+
+AutoControl 已安裝 helper 的依賴契約
+------------------------------------------------------------
+
+AutoControlGUI 2fff8c88 新增主機審閱的隔離 helper Python 設定與依賴診斷。
+固定 helper 協定檢查本 SDK 的讀回／傳輸契約，並透過
+``je_web_runner.webdriver.playwright_wrapper._require_playwright()`` 檢查已安裝 runtime。
+此 hook 只回傳已安裝的 factory 而不啟動，現已是必須維持簽名及行為的跨專案契約。
+八項來源對來源 SDK／自有 helper／loader 契約通過；獨立安裝環境的 pip check 及實際依賴診斷
+也通過。瀏覽器啟動與原生證據仍明確未驗證；正式服務設定及暫停的驗收仍記錄於 progress.md
+#22，共用環境與正式工作樹維持原狀。
