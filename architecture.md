@@ -1,7 +1,7 @@
 # WebRunner Architecture
 
 > Short overview for people and agents.
-> Last verified: 2026-10-24 on feat/managed-browser-sessions (managed SDK contracts).
+> Last verified: 2026-10-25 on feat/managed-browser-sessions (managed SDK contracts).
 
 ## 1. Purpose
 
@@ -118,6 +118,15 @@ python -m je_web_runner -d DIR [--tag/--exclude-tag] [--rerun-failed LEDGER] [--
 - Second backend pattern: a wrapper module under `webdriver/` plus prefixed `WR_*` registrations, as Playwright does with `WR_pw_*`.
 
 ## 6. Cross-project boundaries
+
+Managed browser retirement adds `ManagedBrowserSession.readonly_contract_version=1` and
+`freeze_readonly() -> ManagedReadOnlySession`, exported through root, api.ai and utils.agent.
+The synchronous host keeps the exact original page/context; it cannot replace an absent context
+with a new browser. Once freeze starts, the original reference permanently loses action/transfer
+authority before its owned network retires. Only then can the fixed read-only view be issued.
+The context identity is metadata, not a JSON session handle or authorization grant. AutoControl's
+retained-helper completion/skill provider is still pending (#22); no GUI or capability declaration
+in this repository substitutes for that consumer integration or native evidence.
 
 | Consumer | How it uses this repo | What it relies on |
 | --- | --- | --- |
@@ -274,3 +283,14 @@ Managed transfer contract version 1 delegates bounded downloads to `_browser_dow
 AutoControlGUI consumer 26bfea43 now binds managed transfer version 1: rooted immutable upload snapshots, atomic complete downloads, independent archive manifests and cancellation preserved through foreign SDK context cleanup. Python/root/api.core/AC/MCP/REST/CLI/Builder/GUI share the AutoControl commands while all browser/network operations remain in this SDK. Deployment and real browser evidence remain open (#22).
 
 Cross-project dependency inspection contract: AutoControlGUI 2fff8c88 probes an installed isolated helper through ManagedBrowserSession readback/transfer markers and webdriver.playwright_wrapper._require_playwright(). The existing private hook returns sync_playwright without starting its factory or a browser. Do not rename/remove/change this behavior without updating the consumer and its source-to-source loader contracts. Probe metadata never establishes native/browser execution readiness. Installed environment evidence and wheel hashes are retained by the AutoControl consumer; production setup and paused acceptance remain open.
+
+Permanent read-only lifecycle: `_managed_lifecycle.py` holds the six-field host state (opaque ID,
+monotonic mode, session/page/URL anchor, issued view, active count and actual owning Thread).
+`managed_readonly.py` exposes only bounded reads and cleanup through a closed host callback.
+`managed_browser.py` requires inactive owning-thread preflight, retires transport before issuance,
+and checks the live original context before/after each call. Navigation, including same-URL frame
+navigation, and unexpected UI invalidate the view. Failed retirement cannot restore writes or
+turn later cleanup into confirmed success. `_managed_guard.py` aborts all routes once freezing
+starts. Network-retired DOM reads do not establish a new server response; existing readback and
+transfer versions remain 1. Controlled fake-engine/owned-loopback evidence is separate from
+deferred browser/native/device/24-hour acceptance and production deployment (#22).

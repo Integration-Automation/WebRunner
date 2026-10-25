@@ -207,3 +207,31 @@ a cross-project consumer contract. Eight source-to-source SDK/owned-helper/loade
 A dedicated installed environment passes pip check and the actual dependency probe, while browser launch
 and native evidence remain explicitly unverified. Production service setup and paused acceptance remain
 open in progress.md #22; neither shared environments nor production checkouts were changed.
+
+Permanent read-only completion context
+----------------------------------------
+
+An already open ``ManagedBrowserSession`` supports ``readonly_contract_version = 1`` and
+``freeze_readonly() -> ManagedReadOnlySession``. The view is exported from the package root,
+``je_web_runner.api.ai`` and ``je_web_runner.utils.agent``. It retains the original page, immutable
+origin grants and opaque context ID; it never opens, attaches or restores another browser.
+
+On the owning thread, after all active operations return, freeze permanently refuses the original
+owner's actions, uploads, downloads and timeout mutations before closing owned sockets/listener.
+Only confirmed network retirement issues a view. Failed retirement stays unusable and cleanup
+unconfirmed. Other threads cannot read, freeze or close the owner through either handle.
+
+The view offers ``policy``, ``context_id``, ``capabilities()``, ``url``, ``observe(step=0)``,
+``text(selector='body', frame='')``, ``read_value(selector, frame='')``, ``visible(selector, frame='')``,
+``link(selector, frame='')``, read-only ``set_timeout(timeout)``, ``close()`` and context management.
+Capabilities confirm contract 1, ``input_supported=False``, ``network_retired=True`` and the context
+ID only while that same context remains live. A saved dictionary or ID grants no later access.
+Reads recheck session/page/URL continuity and sticky UI faults; navigation, even to the same URL,
+invalidates the frozen context. Either handle's close invalidates the view. Existing bounded/secret
+readback rules still apply; semantic observations remain previews. These are fresh retained DOM
+reads after network retirement, not new server responses or task completion authority.
+
+``examples/managed_readonly_review.py`` demonstrates trusted host use with no import-time startup.
+AutoControl still needs actual retained-helper ownership and its existing completion/skill API/GUI
+integration (progress.md #22). This SDK prerequisite does not complete that provider or the deferred
+native/browser/device/24-hour acceptance; the readback/transfer contracts remain version 1.

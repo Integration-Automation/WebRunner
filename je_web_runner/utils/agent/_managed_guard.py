@@ -1,9 +1,11 @@
 """Install managed-context restrictions before the first page exists."""
 from __future__ import annotations
 
+import threading
 from typing import Any, Callable
 
 from je_web_runner.utils.agent.network_policy import BrowserOriginPolicy
+from je_web_runner.utils.agent._managed_lifecycle import ManagedContextState
 from je_web_runner.utils.agent.types import AgentError
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
 
@@ -34,6 +36,7 @@ class ContextGuard:
         self._retire_network = retire_network
         self.page: Any = None
         self.fault = ""
+        self.state = ManagedContextState()
 
     def install(self, context: Any) -> None:
         """Install before new_page; no caller-supplied scripts, routes or handlers."""
@@ -46,8 +49,14 @@ class ContextGuard:
 
     def require(self, uncertain: bool = False) -> None:
         """Reject every later command after a sticky guard fault."""
+        self.require_thread()
         if self.fault:
             raise ManagedBrowserError(self.fault, uncertain)
+
+    def require_thread(self) -> None:
+        """Refuse foreign threads before entering the synchronous SDK or owned cleanup."""
+        if threading.current_thread() is not self.state.owner_thread:
+            raise ManagedBrowserError("wrong_thread")
 
     def fail(self, reason: str) -> None:
         """Cut the owned network transport before returning to an event or operation."""
@@ -58,7 +67,7 @@ class ContextGuard:
     def route(self, route: Any) -> None:
         """Supplement the proxy with page ownership and explicit protocol checks."""
         request = route.request
-        if self.fault or not self.policy.allows(request.url):
+        if self.state.mode != "writable" or self.fault or not self.policy.allows(request.url):
             route.abort("blockedbyclient")
             return
         try:
@@ -87,8 +96,14 @@ class ContextGuard:
         page.on("dialog", self.dialog)
         page.on("download", self.download)
         page.on("filechooser", self.filechooser)
+        page.on("framenavigated", self.navigated)
         page.on("crash", lambda _page: self.fail("page_crashed"))
         page.on("close", lambda _page: self.fail("page_closed"))
+
+    def navigated(self, _frame: Any) -> None:
+        """A document change after retirement cannot retain the old context's evidence authority."""
+        if self.state.mode != "writable":
+            self.fail("readonly_context_changed")
 
     def dialog(self, dialog: Any) -> None:
         """Dismiss, never accept, an unreviewed JavaScript dialog."""

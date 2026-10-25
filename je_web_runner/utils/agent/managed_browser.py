@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any, Callable, Iterator, NoReturn, cast
 
 from je_web_runner.utils.agent._managed_guard import ContextGuard, ManagedBrowserError
 from je_web_runner.utils.agent._managed_owner import ManagedPlaywrightOwner
 from je_web_runner.utils.agent.browser import BrowserSession
 from je_web_runner.utils.agent.network_policy import BrowserOriginPolicy
+from je_web_runner.utils.agent.managed_readonly import ManagedReadOnlySession
 from je_web_runner.utils.agent.scoped_proxy import ScopedBrowserProxy
 from je_web_runner.utils.agent.types import AgentAction, positive
 from je_web_runner.utils.logging.loggin_instance import web_runner_logger
@@ -59,6 +60,7 @@ class ManagedBrowserSession:
 
     contract_version = 1
     transfer_contract_version = 1
+    readonly_contract_version = 1
 
     def __init__(self, policy: BrowserOriginPolicy) -> None:
         self._proxy = ScopedBrowserProxy(policy)
@@ -98,13 +100,114 @@ class ManagedBrowserSession:
         """True only after normal cleanup returned successfully, never on a failed close."""
         return self._closed
 
-    @contextmanager
-    def _operation(self, uncertain: bool = False) -> Iterator[BrowserSession]:
+    @property
+    def context_id(self) -> str:
+        """Return this owner's opaque context identity, without claiming current readiness."""
+        return self._guard.state.context_id
+
+    def _require_live(self) -> BrowserSession:
         if self._retired or self._session is None:
             raise ManagedBrowserError("retired")
         self._guard.require()
+        return self._session
+
+    def _require_writable(self) -> None:
+        self._require_live()
+        if self._guard.state.mode != "writable":
+            raise ManagedBrowserError("readonly")
+
+    def _readonly_source(self) -> tuple[BrowserSession, Any, str]:
+        session = self._require_live()
+        page = self._guard.page
         try:
-            yield self._session
+            current = session.url
+            self.policy.require(current)
+        except Exception as error:
+            web_runner_logger.debug("managed readonly source refused: %s", type(error).__name__)
+            raise ManagedBrowserError("readonly_context_unavailable") from None
+        if page is None or session.driver is not page:
+            raise ManagedBrowserError("readonly_context_unavailable")
+        return session, page, current
+
+    def freeze_readonly(self) -> ManagedReadOnlySession:
+        """Retire input/network permanently, retaining only the exact original context's reads."""
+        self._require_live()
+        state = self._guard.state
+        if state.active:
+            raise ManagedBrowserError("operation_active")
+        if state.mode == "readonly":
+            self._readonly_context(state.context_id)
+            return cast(ManagedReadOnlySession, state.view)
+        if state.mode != "writable":
+            raise ManagedBrowserError("readonly_retirement_unconfirmed", True)
+        anchor = self._readonly_source()
+        state.mode = "freezing"
+        try:
+            self._proxy.close()
+            if not self._proxy.closed:
+                raise ManagedBrowserError("readonly_retirement_unconfirmed", True)
+            self._guard.require()
+            current = self._readonly_source()
+            if current[0] is not anchor[0] or current[1] is not anchor[1] or current[2] != anchor[2]:
+                raise ManagedBrowserError("readonly_context_changed")
+        except Exception as error:
+            self._retired = self._cleanup_failed = True
+            web_runner_logger.debug("managed readonly retirement failed: %s", type(error).__name__)
+            raise ManagedBrowserError("readonly_retirement_unconfirmed", True) from None
+        state.anchor, state.mode = anchor, "readonly"
+        identity = state.context_id
+        state.view = ManagedReadOnlySession(
+            self.policy, identity, lambda operation, values: self._readonly_call(identity, operation, values))
+        return cast(ManagedReadOnlySession, state.view)
+
+    def _invalidate_readonly(self) -> NoReturn:
+        self._retired = True
+        self._guard.fault = self._guard.fault or "readonly_context_changed"
+        raise ManagedBrowserError("readonly_context_changed") from None
+
+    def _readonly_context(self, identity: str) -> str:
+        session = self._require_live()
+        state, anchor = self._guard.state, self._guard.state.anchor
+        if state.mode != "readonly" or identity != state.context_id or anchor is None:
+            self._invalidate_readonly()
+        if (session is not anchor[0] or self._guard.page is not anchor[1]
+                or session.driver is not anchor[1] or not self._proxy.closed):
+            self._invalidate_readonly()
+        try:
+            current = self._readonly_source()[2]
+        except ManagedBrowserError:
+            self._invalidate_readonly()
+        if current != anchor[2]:
+            self._invalidate_readonly()
+        return current
+
+    def _readonly_call(self, identity: str, operation: str, values: tuple[Any, ...]) -> Any:
+        if operation == "close":
+            if identity != self.context_id:
+                raise ManagedBrowserError("readonly_context_unavailable")
+            return self.close()
+        before = self._readonly_context(identity)
+        if operation == "capabilities":
+            result = {"contract": 1, "input_supported": False,
+                      "network_retired": True, "context_id": identity}
+        else:
+            readers: dict[str, Callable[..., Any]] = {
+                "observe": self.observe, "text": self.text, "read_value": self.read_value,
+                "visible": self.visible, "link": self.link, "url": lambda: self.url,
+                "set_timeout": self._set_timeout}
+            if operation not in readers:
+                raise ManagedBrowserError("readonly_operation_refused")
+            result = readers[operation](*values)
+        if self._readonly_context(identity) != before:
+            self._invalidate_readonly()
+        return result
+
+    @contextmanager
+    def _operation(self, uncertain: bool = False) -> Iterator[BrowserSession]:
+        session = self._require_live()
+        self._guard.state.active += 1
+        try:
+            yield session
             self._guard.require(uncertain)
         except ManagedBrowserError as error:
             if uncertain:
@@ -114,9 +217,15 @@ class ManagedBrowserSession:
             web_runner_logger.debug("managed browser operation failed: %s", type(error).__name__)
             self._guard.fail("operation_failed")
             raise ManagedBrowserError("operation_failed", uncertain) from None
+        finally:
+            self._guard.state.active -= 1
 
     def set_timeout(self, timeout: float) -> None:
         """Set a finite positive action timeout without extending the host task deadline."""
+        self._require_writable()
+        self._set_timeout(timeout)
+
+    def _set_timeout(self, timeout: float) -> None:
         positive(timeout, "timeout")
         with self._operation() as session:
             session.set_timeout(timeout)
@@ -136,6 +245,7 @@ class ManagedBrowserSession:
 
     def perform(self, action: AgentAction) -> str | None:
         """Execute once; a failed effect is uncertain and is never retried by this SDK."""
+        self._require_writable()
         if not isinstance(action, AgentAction):
             raise ManagedBrowserError("invalid_action")
         if action.kind == "navigate":
@@ -168,6 +278,7 @@ class ManagedBrowserSession:
     @contextmanager
     def open_download(self, url: str) -> Iterator[BrowserDownload]:
         """Read an approved URL with URL-scoped browser cookies; the caller owns rooted file publication."""
+        self._require_writable()
         self.policy.require(url)
         with self._operation(uncertain=True) as session:
             self.policy.require(session.url)
@@ -180,6 +291,7 @@ class ManagedBrowserSession:
 
     def upload(self, selector: str, contents: bytes, name: str, frame: str = "") -> dict[str, Any]:
         """Set explicit bounded bytes on one owned file input and independently check its metadata."""
+        self._require_writable()
         with self._operation(uncertain=True) as session:
             self.policy.require(session.url)
             return upload_bytes(session, selector, contents, name, frame)
@@ -192,6 +304,7 @@ class ManagedBrowserSession:
 
     def close(self) -> None:
         """Retire network first, then only this browser; a failed cleanup stays unconfirmed."""
+        self._guard.require_thread()
         if self._closed:
             return
         self._retired = True

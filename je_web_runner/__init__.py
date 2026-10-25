@@ -365,7 +365,7 @@ from je_web_runner.utils.walkthrough_docs.generator import (
     save_walkthrough,
 )
 from je_web_runner.utils.agent import (
-    BrowserOriginPolicy, ScopedBrowserProxy, ManagedBrowserSession, ManagedBrowserError,
+    BrowserOriginPolicy, ScopedBrowserProxy, ManagedBrowserSession, ManagedBrowserError, ManagedReadOnlySession,
 )
 from je_web_runner.utils.live_dashboard.server import (
     DashboardConfig,
@@ -375,7 +375,7 @@ from je_web_runner.utils.live_dashboard.server import (
 )
 __all__ = [
     "BrowserOriginPolicy", "ScopedBrowserProxy", "ManagedBrowserSession", "ManagedBrowserError",
-    "web_element_wrapper", "set_webdriver_options_argument",
+    "ManagedReadOnlySession", "web_element_wrapper", "set_webdriver_options_argument",
     "webdriver_wrapper_instance", "get_webdriver_manager",
     "get_desired_capabilities", "get_desired_capabilities_keys", "add_command_to_executor",
     "execute_action", "execute_files", "execute_one", "executor",

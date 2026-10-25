@@ -188,3 +188,28 @@ AutoControlGUI 2fff8c88 新增主機審閱的隔離 helper Python 設定與依�
 八項來源對來源 SDK／自有 helper／loader 契約通過；獨立安裝環境的 pip check 及實際依賴診斷
 也通過。瀏覽器啟動與原生證據仍明確未驗證；正式服務設定及暫停的驗收仍記錄於 progress.md
 #22，共用環境與正式工作樹維持原狀。
+
+永久唯讀完成驗證 context
+------------------------
+
+已開啟的 ``ManagedBrowserSession`` 支援 ``readonly_contract_version = 1`` 及
+``freeze_readonly() -> ManagedReadOnlySession``。套件根目錄、``je_web_runner.api.ai`` 與
+``je_web_runner.utils.agent`` 匯出相同唯讀類別；保留原頁面、不可變 origin 授權與不透明
+context ID，不另開、附掛或還原其他瀏覽器。
+
+擁有者執行緒須等所有操作結束才能切換。切換先永久拒絕原擁有者的動作、上傳、下載及逾時
+修改，再關閉持有的 socket／listener；只有網路結束已確認才發出唯讀介面。失敗後仍不可用，
+清理維持未確認。其他執行緒不能透過任一介面讀取、切換或關閉。
+
+唯讀介面提供 ``policy``、``context_id``、``capabilities()``、``url``、``observe(step=0)``、
+``text(selector='body', frame='')``、``read_value(selector, frame='')``、
+``visible(selector, frame='')``、``link(selector, frame='')``、唯讀 ``set_timeout(timeout)``、
+``close()`` 與 context manager。能力只在同一 context 仍存活時確認契約 1、
+``input_supported=False``、``network_retired=True`` 及 context ID；快取字典或 ID 不授予後續權限。
+每次讀取重驗 session／page／URL 與持續 UI 拒絕；導覽即使回到相同 URL 也使凍結 context 失效。
+任一介面關閉即使唯讀介面失效。原有完整有界／秘密讀回規則不變，語意觀測仍是預覽。
+此處是網路結束後保留的即時 DOM 讀取，不能當作新伺服器回應或任務完成權限。
+
+``examples/managed_readonly_review.py`` 展示可信主機使用，匯入不啟動任何程序。AutoControl
+仍須接合實際保留 helper 的擁有權與既有完成／技能 API／GUI（progress.md #22）。此 SDK 前置
+功能不代表 provider 或暫緩的原生／瀏覽器／真機／24 小時驗收完成；讀回／傳輸契約維持版本 1。

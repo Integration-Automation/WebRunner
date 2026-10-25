@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261025-01 | 2026-10-25 | Retain original managed context for permanent read-only review | #done #agent #verification | [2026-10-b](2026-10-b.md) |
 | U-20261024-12 | 2026-10-24 | Record isolated helper runtime-inspection contract | #done #agent #integration | [2026-10-b](2026-10-b.md) |
 | U-20261024-11 | 2026-10-24 | Record rooted AutoControl transfer consumer | #done #agent #integration | [2026-10-b](2026-10-b.md) |
 | U-20261024-10 | 2026-10-24 | Add owned bounded browser transfers | #done #agent #transfers | [2026-10-b](2026-10-b.md) |
@@ -174,7 +175,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10-b.md](2026-10-b.md) | 2026-10 | 7 |
+| [2026-10-b.md](2026-10-b.md) | 2026-10 | 8 |
 | [2026-10.md](2026-10.md) | 2026-10 | 80 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
 

@@ -1,5 +1,16 @@
 # WebRunner
 
+既有 `ManagedBrowserSession` 可用 `freeze_readonly() -> ManagedReadOnlySession` 永久結束
+輸入與網路權限（`readonly_contract_version = 1`）。唯讀介面保留原頁面、授權及不透明 context
+身分，不啟動或還原任何瀏覽器；提供最新 DOM 觀測、有界文字／欄位值／連結讀回、可見性、
+讀取逾時與明確關閉。舊擁有者也拒絕動作、上傳、下載及逾時修改。操作尚未結束或非擁有者
+執行緒不可切換；結束權限失敗時不發出 reader，清理仍為未確認。任一介面關閉即使唯讀介面
+失效；導覽、context 更換或非預期 UI 也使證據權限失效。快取能力與 context ID 不授予權限。
+讀取的是網路結束後保留的即時 DOM，不能當作新取得的伺服器回應。
+範例見 `examples/managed_readonly_review.py`。AutoControl 保留 helper 的完成／技能 provider
+仍列於 progress.md #22；SDK 支援不代表該接合或原生／瀏覽器／真機／24 小時驗收已完成。
+既有讀回／傳輸契約維持版本 1。
+
 AutoControlGUI 2fff8c88 新增主機審閱的隔離 helper Python 設定與依賴診斷。
 固定 helper 協定檢查本 SDK 的讀回／傳輸契約，並透過
 `je_web_runner.webdriver.playwright_wrapper._require_playwright()` 檢查已安裝 runtime。
