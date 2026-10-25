@@ -94,7 +94,7 @@ AutoControl `docs/superpowers/plans/2026-10-23-agent-runtime.md` P5/P9 contract.
   command/counts/exclusions. Do not invoke the nominal full suite that starts installed real browsers.
 - [x] Build strict docs and compare existing warnings to baseline; run dependency/build diagnostics,
   wheel/sdist byte checks and isolated no-deps installation/public SDK proof without browser startup.
-- [ ] Add actual verification/update entry+index atomically; stage only owned WebRunner files,
+- [x] Add actual verification/update entry+index atomically; stage only owned WebRunner files,
   commit/push feat/managed-browser-sessions and verify remote/clean status. No production branch push.
 - [x] Record the completed prerequisite and remaining AutoControl provider/remote steps before the next
   task. The original goal stays active; one whole-branch review remains for the actual whole-plan end.
