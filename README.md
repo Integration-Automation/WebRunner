@@ -1,5 +1,73 @@
 # WebRunner
 
+An existing `ManagedBrowserSession` can permanently retire input and network access with
+`freeze_readonly() -> ManagedReadOnlySession` (`readonly_contract_version = 1`). The view retains
+the original page, policy and opaque context identity; it launches or restores nothing. It supports
+fresh DOM observations, bounded text/value/link reads, visibility, read timeout and explicit close.
+The old owner also refuses actions, uploads, downloads and timeout mutation. Active operations and
+foreign threads cannot freeze; failed retirement issues no reader and remains unconfirmed.
+Closing either handle invalidates the view. Navigation, context replacement and unexpected UI
+invalidate its evidence authority; cached capabilities and context IDs do not grant access.
+Reads concern the retained live DOM after network retirement, not a new server response.
+See `examples/managed_readonly_review.py`. AutoControl's retained-helper completion/skill provider
+is still pending under progress.md #22; this SDK support does not complete that integration or
+native/browser/device/24-hour acceptance. Existing readback/transfer contracts remain version 1.
+
+AutoControlGUI 2fff8c88 adds host-reviewed isolated helper Python selection and dependency probing.
+Its fixed helper protocol checks this SDK's readback/transfer contracts and uses
+`je_web_runner.webdriver.playwright_wrapper._require_playwright()` to inspect the installed runtime.
+The hook returns the installed factory without starting it; preserving that signature/behavior is now
+a cross-project consumer contract. Eight source-to-source SDK/owned-helper/loader contracts pass.
+A dedicated installed environment passes pip check and the actual dependency probe, while browser launch
+and native evidence remain explicitly unverified. Production service setup and paused acceptance remain
+open in progress.md #22; neither shared environments nor production checkouts were changed.
+
+AutoControlGUI now binds the reviewed file-transfer contract on feat/agent-task-runtime at 26bfea43:
+rooted immutable upload snapshots, atomic bounded downloads, URL-scoped browser cookies and independent
+archive manifest verification. Five real SDK/owned-helper contracts use fake Chromium and owned loopback;
+the transfer contract also checks host cancellation through the actual SDK context. Shared installations,
+production checkouts and paused native/24-hour acceptance are unchanged. Deployment and real application/
+browser evidence remain open in progress.md #22.
+
+Managed transfer contract version 1 adds explicit `link`, `open_download` and `upload` methods.
+Links and every download redirect must remain within the immutable origin grant. Downloads reuse
+URL-filtered browser cookies through owned sockets, validate TLS certificates and hostnames, allow
+at most five redirects and 16 MiB, and fail on truncation, deadline or retirement. Uploads accept
+immutable bytes up to 4 MiB and a plain filename, then independently check file-input name/size.
+No method accepts a filesystem path or submits a form. AutoControl deployment and real browser acceptance remain tracked in progress.md #22; acceptance pauses remain.
+
+Managed browser readback contract version 1 returns complete text/value strings up to 8,000 UTF-16
+code units. Larger or invalid Unicode values are refused before transport/publication, never truncated
+into an apparently equal prefix. Fill/select values beyond that limit are refused before effect.
+Password/file/hidden/secret form controls and marked secret text ancestors/descendants remain unreadable.
+Semantic observations remain bounded previews; use explicit readback for exact completion evidence.
+AutoControl browser form/transfer compilation is available on its isolated feature branch;
+deployment and real application/browser acceptance remain separate open work.
+
+
+Host integrations can use `BrowserOriginPolicy` and `ScopedBrowserProxy` from Python or
+`je_web_runner.api.ai`. Origin grants are immutable exact HTTP(S) authorities; path/query grants,
+credentials and ambiguous host encodings are rejected. The proxy starts explicitly on authenticated
+loopback, checks each HTTP request and HTTPS CONNECT destination, and closes only retained sockets.
+Every redirect destination remains subject to the same transport check. Private SDK proxy settings
+contain a per-owner credential and belong outside model/task data and logs. Plain HTTP has bounded
+uploads/responses; HTTPS is an opaque TLS tunnel whose certificate validation belongs to the browser.
+Streaming uploads and HTTP protocol upgrades are unsupported. Construction is inert, retired owners
+cannot restart, and incomplete HTTP responses use incomplete chunk framing rather than a successful end.
+The transport SDK uses only the standard library; the optional managed session uses installed Playwright.
+AutoControl target binding is available on its isolated feature branch; deployment and real application acceptance remain open. Native acceptance remains separate from controlled loopback evidence.
+
+
+`ManagedBrowserSession.open(policy)` now composes that transport with an isolated, headless
+Chromium context using explicitly installed Playwright/Chromium. It installs request/WebSocket hooks
+before the first page, blocks service workers/downloads, and enables the browser sandbox and TLS
+validation. Fixed launch arguments disable HTTP/2 and QUIC; there is no user argument, profile, CDP,
+script or executable-path interface. Unexpected popups, dialogs, uploads, downloads and page failures
+retire the network and block later commands. Closed typed actions execute once; failures retain an
+uncertainty flag. Semantic observations stay in memory, and explicit bounded form readback refuses
+password/file/hidden/secret controls. Cleanup failure remains unconfirmed. This is an HTTP(S)
+automation boundary, not an OS sandbox; deployment and real application/browser acceptance remain open.
+
 <p align="center">
   <strong>Cross-platform web automation: Selenium + Playwright, plus a JSON-driven action executor with batteries included.</strong>
 </p>
@@ -22,6 +90,8 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 
 > **Auto-generated reference** — every registered `WR_*` command (signature + summary) is exported under [`docs/reference/command_reference.md`](docs/reference/command_reference.md), and a JSON Schema for action JSON files lives at [`docs/reference/webrunner-action-schema.json`](docs/reference/webrunner-action-schema.json).
 
+> Commercial browser/device cloud connectors and TestRail have been removed, including their Python exports and WR commands (breaking change). Use a self-hosted Selenium Grid or local Appium, and JSON/JUnit reports or a generic webhook for results. Jira and free notification integrations remain. Locator healing requires a unique visible, enabled match. Smart waits track fetch/XHR and SPA routes, with bounded timeouts.
+
 ## Table of Contents
 
 - [Highlights](#highlights)
@@ -38,7 +108,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - [Backends](#backends)
   - [Selenium (default)](#selenium-default)
   - [Playwright](#playwright)
-  - [Cloud Grid](#cloud-grid)
+  - [Self-hosted Selenium Grid](#self-hosted-selenium-grid)
   - [Appium (mobile)](#appium-mobile)
 - [Reports](#reports)
 - [Observability](#observability)
@@ -75,7 +145,7 @@ WebRunner (`je_web_runner`) started as a Selenium wrapper and grew into a full a
 - **Standalone CDP / BiDi modules.** Background `CDPEventListener` (WebSocket loop + sync `send` / `on` / context manager), `record_trace(driver, path)` for Chrome DevTools-loadable performance traces, and a `bidi_network` module wrapping `driver.network.add_request_handler` / `add_response_handler` / `add_auth_handler` for cross-browser request interception.
 - **Test data & fixtures.** Faker integration, factory pattern, testcontainers (Postgres / Redis / generic), per-environment `.env` loader with `${ENV.X}` placeholder expansion, CSV/JSON data-driven runner with `${ROW.x}`.
 - **Auth, API, DB.** OAuth2 / OIDC client-credentials / password / refresh-token flows with token cache, HTTP API testing commands with JSON assertions, SQLAlchemy-backed database validation.
-- **Integrations.** TCP socket server with token + TLS, BrowserStack / Sauce Labs / LambdaTest cloud Grid, Appium mobile, JIRA + TestRail, Slack / generic webhook notifier, GitHub Actions inline annotations, Locust load testing.
+- **Integrations.** TCP socket server with token + TLS, self-hosted Selenium Grid, Appium mobile, JIRA, Slack / generic webhook notifier, GitHub Actions inline annotations, Locust load testing.
 - **AI hooks.** Pluggable LLM callable powers self-healing locators and natural-language → action JSON drafts.
 - **Cross-platform & multi-browser.** Windows, macOS, Linux, Raspberry Pi · Chrome, Chromium, Firefox, Edge, IE, Safari · Chromium, Firefox, WebKit (Playwright).
 
@@ -142,7 +212,7 @@ flowchart LR
   subgraph Outputs
     REP["Reports<br/>HTML/JSON/XML/JUnit/Allure"]
     OBS["Observability<br/>OTel · dashboard · replay"]
-    NOT["Notifiers<br/>Slack · webhook · GH · JIRA · TestRail"]
+    NOT["Notifiers<br/>Slack · webhook · GH · JIRA"]
   end
 
   A1 --> EXE
@@ -227,7 +297,7 @@ je_web_runner/
     ├── cdp/                     # Raw CDP passthrough
     ├── ci_annotations/          # GitHub Actions ::error::
     ├── cli/                     # CLI parser, watch mode, dispatch
-    ├── cloud_grid/              # BrowserStack / Sauce Labs / LambdaTest
+    ├── cloud_grid/              # Self-hosted Selenium Grid
     ├── dashboard/               # Live progress HTTP server
     ├── database/                # SQL validation (SQLAlchemy)
     ├── data_driven/             # CSV/JSON dataset + ${ROW.x}
@@ -271,7 +341,7 @@ je_web_runner/
     ├── storage/                 # localStorage / session / IDB
     ├── test_data/               # Faker integration
     ├── test_filter/             # Tag filter + dependency graph
-    ├── test_management/         # JIRA + TestRail
+    ├── test_management/         # JIRA
     ├── test_object/             # TestObject + record
     ├── test_record/             # Action recording
     ├── testcontainers_integration/   # Postgres / Redis / generic
@@ -562,30 +632,13 @@ The page-level shortcuts pass extra Playwright options through (`button`, `modif
 
 Existing scripts can move to Playwright incrementally; `TestObject` records are translated to Playwright selectors automatically (`CSS_SELECTOR` → as-is, `XPATH` → `xpath=…`, `ID` → `#…`, `NAME` → `[name="…"]`, `LINK_TEXT` → `text=…`, `PARTIAL_LINK_TEXT` → `:has-text("…")`).
 
-### Cloud Grid
+### Self-hosted Selenium Grid
 
 ```python
-from je_web_runner.utils.cloud_grid.cloud_drivers import (
-    connect_browserstack,
-    build_browserstack_capabilities,
-)
+from je_web_runner.api.platform import start_remote_driver
 
-connect_browserstack(
-    username="...",
-    access_key="...",
-    capabilities=build_browserstack_capabilities(
-        browser_name="chrome",
-        browser_version="latest",
-        os_name="Windows",
-        os_version="11",
-        project="WebRunner",
-        build="ci-2026-04-26",
-    ),
-)
-# All existing WR_* commands now run against the cloud session.
+start_remote_driver("http://localhost:4444/wd/hub", {"browserName": "chrome"})
 ```
-
-`connect_saucelabs` and `connect_lambdatest` follow the same shape.
 
 ### Appium (mobile)
 
@@ -818,14 +871,14 @@ WebRunner ships a [Model Context Protocol](https://modelcontextprotocol.io/) ser
 python -m je_web_runner.mcp_server
 ```
 
-The default tool list (22 tools) exposes:
+The default tool list (28 tools) exposes:
 
 Live browser execution:
-- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 556 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
+- `webrunner_run_actions` — execute any `WR_*` action list. Covers all 547 `WR_*` commands, including the advanced WebDriverWrapper additions: `WR_attach_to_existing_browser`, `WR_execute_cdp_cmd`, `WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`, `WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`, `WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`, `WR_save_full_page_screenshot` / `_print_page`, `WR_reload(ignore_cache=True)`, `WR_bring_to_front`, `WR_switch_to_window_by_url|title`, `WR_new_window` / `_close_window`, page metadata getters, Fetch interception primitives, `WR_add_script_to_evaluate_on_new_document`, …
 - `webrunner_run_action_files` — batch-run JSON files on disk
 - `webrunner_list_commands` — discover the full `WR_*` surface
 
-Plus the utility tools below (no live browser):
+Additional tools:
 
 Action JSON authoring & linting:
 - `webrunner_lint_action`, `webrunner_score_action_locators`, `webrunner_locator_strength`
@@ -846,6 +899,13 @@ Reporting & contract:
 
 Sharding & infra:
 - `webrunner_diff_shard`, `webrunner_render_k8s`, `webrunner_partition_shard`
+
+
+Local browser agents:
+- `webrunner_observe_page`, `webrunner_agent_step`, `webrunner_run_agent`
+
+Issue automation (frozen host configuration):
+- `webrunner_issue_enqueue`, `webrunner_issue_status`, `webrunner_issue_metrics`
 
 ```python
 from je_web_runner.mcp_server import McpServer, Tool, build_default_tools, serve_stdio
@@ -1148,9 +1208,7 @@ only what you use).
   file-specific regressions.
 - **`git_bisect_flake`** — Ledger-only or probe-driven bisect for the
   regression commit that caused a test to start failing.
-- **`test_cost_estimator`** — Per-runner rate-card (Sauce / BrowserStack /
-  LambdaTest / GitHub Actions) × ledger minutes → USD + CO₂ estimate
-  per suite / runner / test.
+- **`test_cost_estimator`** — Local resource estimates; optional caller-supplied rate cards. No commercial service defaults.
 - **`slack_digest`** — Render Slack Block-Kit + Teams Adaptive Card +
   plain-text test digest with quarantine activity, top-risk PRs, cost
   trend, and pass-rate delta.
@@ -1182,8 +1240,7 @@ only what you use).
 
 - **`chrome_profile`** — Persistent Chrome profile + stealth +
   snapshot / sync-back.
-- **`device_cloud`** — Real-device cloud (BrowserStack / Sauce /
-  LambdaTest) connector.
+
 - **`otel_bridge`** — W3C traceparent injection for distributed
   tracing.
 - **`otp_interceptor`** — MailHog / Mailpit / IMAP / SMS OTP polling
@@ -1666,10 +1723,6 @@ The recorder injects a static JS listener (no CDP, no eval), so it works on Chro
 ```python
 from je_web_runner.utils.notifier.webhook_notifier import notify_run_summary
 from je_web_runner.utils.test_management.jira_client import jira_create_failure_issues
-from je_web_runner.utils.test_management.testrail_client import (
-    testrail_send_results,
-    testrail_results_from_pairs,
-)
 from je_web_runner.utils.ci_annotations.github_annotations import (
     emit_failure_annotations,
     emit_from_junit_xml,
@@ -1711,6 +1764,21 @@ The other direction, AutoControl's `AC_web_*` commands running `WR_*` commands, 
 
 ## AI Assistance
 
+### Local browser agents
+
+`je_web_runner.api.ai.run_agent(task)` runs a verified task with Selenium (default) or Playwright. Fixed steps need no model; autonomous planning uses an explicitly installed local Ollama model with cloud features disabled. No paid API, subscription or free cloud quota is required.
+
+```bash
+python -m http.server 8000 --bind 127.0.0.1 --directory examples/agent_demo
+# In another terminal:
+python -m je_web_runner --agent-task examples/agent_form.json --report results/form
+```
+
+Also try `agent_search.json` and `agent_iframe.json`. Tasks require `goal`, HTTP(S) `start_url`, and deterministic `success` conditions. Set `planner` to `ollama` and `model` to your installed open-source model name for autonomous planning; otherwise supply `steps`. Defaults: 25 steps, 300 seconds total, 15 seconds per operation. Only verified success exits 0. Reports are `BASE.agent.json` / `.agent.html`, with masked failure screenshots when `--report` is set.
+
+MCP adds `webrunner_observe_page`, `webrunner_agent_step`, and `webrunner_run_agent`. Host-controlled `WEBRUNNER_AGENT_ALLOWED_ENV` limits access to environment secrets. See [the local agent guide](docs/source/Eng/doc/integrations/local_agent_doc.rst) and [task schema](docs/reference/webrunner-agent-schema.json) for task fields, local-only setup, secret handling, limits and migration from removed commercial connectors.
+
+
 ```python
 from je_web_runner.utils.ai_assist.llm_assist import (
     set_llm_callable,
@@ -1730,6 +1798,30 @@ draft = generate_actions_from_prompt("log in as alice and place an order")
 ```
 
 WebRunner intentionally ships **no built-in LLM client** — the boundary is a single `Callable[[str], str]` so swapping provider is one line.
+
+### Local issue worker
+
+The local `IssueWorker` handles GitHub and Jira Cloud issues labeled `automation-ready`, using an explicitly configured local Ollama model and offline Podman checks. It supports bugs, features, refactors, tests and documentation. Qualified issues are claimed, implemented in private worktrees, validated, then delivered as reviewed `automation/*` → `dev` PRs. Source issues stay open for human review.
+
+```bash
+python -m je_web_runner.issue_worker run --config issue-worker.json --dry-run
+python -m je_web_runner.issue_worker run --config issue-worker.json
+python -m je_web_runner.issue_worker watch --config issue-worker.json
+python -m je_web_runner.issue_worker status --config issue-worker.json
+python -m je_web_runner.issue_worker retry --config issue-worker.json --issue github:123
+```
+
+Copy `examples/issue-worker.example.json` and follow [the setup guide](docs/source/Eng/doc/integrations/issue_worker_doc.rst). Tokens are host environment references, never model/container inputs. SQLite checkpoints resume coding, checks, publication and progress reports without duplicating PRs. Python exposes `IssueWorker` / `IssueInbox` through `api.orchestration`; MCP adds `webrunner_issue_enqueue` and `webrunner_issue_status`, using host-only `WEBRUNNER_ISSUE_CONFIG`. MCP queues jobs; a separately started worker processes them. Defaults: one job, 60-second polling, 60 minutes, 100 tools, two validation rounds, 20 files and 1000 changed lines. No paid coding API or cloud scheduler is required.
+
+Each coding step receives a bounded preview of applied changes and a baseline marked as coming from before the edits. The host validates the final tree before PR delivery.
+
+Before activation, run `doctor --config issue-worker.json`; add `--platform` for read-only platform checks. `health --json` reports the daemon heartbeat, and `stop` drains its current job. Watch pauses intake during local dependency outages. Windows login tasks are managed through `scripts/issue_worker_task.ps1`; real local acceptance uses `scripts/verify_issue_worker.py` (24-hour soak by default). These tools never install services or download models automatically.
+
+Set `review_enabled=true` (enabled in the example) to revise the same PR from trusted human reviews or current-head failed checks. Feedback is deduplicated in SQLite; each round uses a separate worktree and full validation, fast-forwards without force, and posts evidence on the original PR. Defaults: 60-second review polling and three rounds. External head/base changes stop automation; no duplicate PR, merge or issue close is performed. Use `retry-review --config FILE --issue KEY` after manual clarification to resume the same PR within host limits.
+
+Enable `requirements_enabled` to analyze acceptance criteria before coding and stop for clarification when needed. Criteria reference host checks or explicit manual review. Optional host-owned `browser_scenarios` run mandatory fixed-step browser agents in offline Podman, with trusted verifier code mounted separately from edited source. Evidence is bound to the published tree and verifier/scenario signatures; passing checks do not replace business review. See `examples/issue-worker-browser.example.json`.
+
+Intake now reports explainable task kind, advisory suitability and label-based priority with waiting-time aging; `automation-manual` / `automation-blocked` hold new jobs without claim. `metrics --config FILE --json` reads durable run/revision outcomes; add `--since-hours`, `--issue` or `--report BASE` for history filtering and an offline interactive HTML/JSON report. `IssueMetrics` and read-only MCP `webrunner_issue_metrics` expose the same data. Legacy observations are excluded from rates; delivery is not business acceptance.
 
 ## CLI Usage
 
@@ -1798,7 +1890,7 @@ WebRunner provides a hierarchy of custom exceptions — every helper raises a do
 | `HealingError` / `EnvConfigError` / `DataDrivenError` | Self-healing / env / dataset            |
 | `HttpAssertionError` / `HttpError`         | HTTP API assertions                              |
 | `AccessibilityError` / `LighthouseError`   | a11y / Lighthouse                                |
-| `NotifierError` / `JiraError` / `TestRailError` | Notifications / test management            |
+| `NotifierError` / `JiraError` | Notifications / test management            |
 | `CDPError` / `StorageError` / `ServiceWorkerError` | Browser internals                        |
 | `OAuthError` / `DatabaseValidationError`   | Auth / DB                                        |
 | `NetworkEmulationError` / `LoadTestError`  | Throttling / Locust                              |

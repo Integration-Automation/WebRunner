@@ -73,3 +73,9 @@ TestPioneer 啟動 runner 時會把 ``TEST_PIONEER_ARTIFACT_DIR`` 設為該次�
 以相對名稱要求的報告（JSON、XML、HTML、JUnit、Allure、互動式 HTML，以及 ``generate_all_reports``）
 會寫到該目錄底下，所需的資料夾會自動建立。絕對路徑，以及會離開該目錄的名稱，則照原樣使用。
 沒有設定這個變數時，行為不變。
+
+本機 Agent 任務
+---------------
+
+``--agent-task task.json --report results/task`` 執行可驗證的本機任務。
+詳見 :doc:`../integrations/local_agent_doc`。

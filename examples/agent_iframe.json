@@ -1,0 +1,9 @@
+{
+  "goal": "Send a message through the local iframe",
+  "start_url": "http://127.0.0.1:8000/index.html",
+  "steps": [
+    {"kind": "fill", "selector": "#message", "frame": "#frame", "value": "demo"},
+    {"kind": "click", "selector": "#send", "frame": "#frame"}
+  ],
+  "success": [{"kind": "text_contains", "selector": "#reply", "frame": "#frame", "value": "sent"}]
+}

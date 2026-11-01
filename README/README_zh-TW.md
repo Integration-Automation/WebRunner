@@ -1,5 +1,62 @@
 # WebRunner
 
+既有 `ManagedBrowserSession` 可用 `freeze_readonly() -> ManagedReadOnlySession` 永久結束
+輸入與網路權限（`readonly_contract_version = 1`）。唯讀介面保留原頁面、授權及不透明 context
+身分，不啟動或還原任何瀏覽器；提供最新 DOM 觀測、有界文字／欄位值／連結讀回、可見性、
+讀取逾時與明確關閉。舊擁有者也拒絕動作、上傳、下載及逾時修改。操作尚未結束或非擁有者
+執行緒不可切換；結束權限失敗時不發出 reader，清理仍為未確認。任一介面關閉即使唯讀介面
+失效；導覽、context 更換或非預期 UI 也使證據權限失效。快取能力與 context ID 不授予權限。
+讀取的是網路結束後保留的即時 DOM，不能當作新取得的伺服器回應。
+範例見 `examples/managed_readonly_review.py`。AutoControl 保留 helper 的完成／技能 provider
+仍列於 progress.md #22；SDK 支援不代表該接合或原生／瀏覽器／真機／24 小時驗收已完成。
+既有讀回／傳輸契約維持版本 1。
+
+AutoControlGUI 2fff8c88 新增主機審閱的隔離 helper Python 設定與依賴診斷。
+固定 helper 協定檢查本 SDK 的讀回／傳輸契約，並透過
+`je_web_runner.webdriver.playwright_wrapper._require_playwright()` 檢查已安裝 runtime。
+此 hook 只回傳已安裝的 factory 而不啟動，現已是必須維持簽名及行為的跨專案契約。
+八項來源對來源 SDK／自有 helper／loader 契約通過；獨立安裝環境的 pip check 及實際依賴診斷
+也通過。瀏覽器啟動與原生證據仍明確未驗證；正式服務設定及暫停的驗收仍記錄於 progress.md
+#22，共用環境與正式工作樹維持原狀。
+
+AutoControlGUI 已於 feat/agent-task-runtime 的 26bfea43 接合已審閱檔案傳輸契約：
+授權路徑內的不可變上傳快照、原子且有大小上限的下載、依 URL 篩選的瀏覽器 Cookie，以及獨立
+歸檔清單驗證。五項真實 SDK／自有 helper 契約使用替身 Chromium 與自有 loopback；傳輸契約
+另驗證穿過實際 SDK context 的主機取消。共用安裝、正式工作樹及暫停的原生／24 小時驗收
+維持原狀；部署與實際應用／瀏覽器證據仍記錄於 progress.md #22。
+
+受管傳輸契約版本 1 新增明確的 `link`、`open_download` 與 `upload` 方法。
+連結及每個下載重新導向都必須位於不可變的 origin 授權內。下載使用依 URL 篩選的瀏覽器
+Cookie 與持有的 socket，驗證 TLS 憑證及主機名稱，最多五次重新導向、16 MiB；遇到截斷、
+逾時或擁有者結束即失敗。上傳僅接受最多 4 MiB 的不可變 bytes 及單純檔名，並獨立核對
+file input 的名稱／大小。不接受檔案路徑，也不自動提交表單。AutoControl 部署與實際瀏覽器驗收仍記錄於 progress.md #22，既有驗收暫停保持生效。
+
+受管瀏覽器讀回契約版本 1 只回傳完整且不超過 8,000 個 UTF-16 code unit 的 text／value。
+超限或無效 Unicode 值會在傳輸／發布前拒絕，不截短成看似相等的前段；超限 fill／select 值
+也在副作用前拒絕。密碼／檔案／隱藏／秘密表單欄位，以及帶秘密標記的文字祖先／後代仍不可讀。
+語意觀測保持有界預覽；精確完成條件使用明確讀回。AutoControl 瀏覽器填表／轉填編譯已位於
+隔離功能分支；部署與實際應用／瀏覽器驗收仍分開追蹤。
+
+
+主機整合可從 Python 或 `je_web_runner.api.ai` 使用 `BrowserOriginPolicy` 與
+`ScopedBrowserProxy`。授權是不可變、精確的 HTTP(S) origin；拒絕路徑／查詢範圍、URL 憑證及
+有歧義的主機編碼。代理須明確啟動，只綁定具驗證的 loopback，逐一檢查 HTTP 請求及 HTTPS
+CONNECT 目的地，且只關閉已登記擁有的 socket；重新導向後的目的地仍受相同傳輸檢查。
+SDK 私有代理設定含每位擁有者的憑證，不應放入模型／任務資料或日誌。一般 HTTP 限制上傳及
+回應大小；HTTPS 是不解密的 TLS 通道，憑證驗證由瀏覽器負責。不支援串流上傳及 HTTP 協定升級。
+建構物件不啟動資源，結束後不可重新啟動；中斷的 HTTP 回應不會送出表示完整結束的 chunk。
+傳輸 SDK 僅使用標準函式庫；可選受管 session 使用已安裝的 Playwright。AutoControl target 已接到隔離功能分支；部署及實際應用驗收仍待完成。
+受控 loopback 證據與原生驗收分開記錄。
+
+
+`ManagedBrowserSession.open(policy)` 將傳輸層接到獨立、無介面的 Chromium context；僅使用
+已明確安裝的 Playwright／Chromium。第一個分頁建立前就安裝請求及 WebSocket 攔截，封鎖
+service worker／下載，啟用瀏覽器 sandbox 與 TLS 驗證。固定參數停用 HTTP/2、QUIC；
+不提供自訂參數、profile、CDP、腳本或執行檔路徑介面。非預期彈窗、對話框、上傳、下載或
+分頁失敗會結束網路並阻止後續命令。封閉型別動作只執行一次，失敗保留不確定旗標。
+語意觀測僅留在記憶體；明確且有長度上限的表單讀回拒絕密碼／檔案／隱藏／秘密欄位。
+清理失敗仍標記未確認。這是 HTTP(S) 自動化邊界；部署及實際應用／瀏覽器驗收仍待完成。
+
 <p align="center">
   <strong>跨平台網頁自動化：Selenium + Playwright，外加一個開箱即用、由 JSON 驅動的動作執行器。</strong>
 </p>
@@ -22,6 +79,8 @@ WebRunner（`je_web_runner`）最初只是一個 Selenium 封裝，如今已成�
 
 > **自動產生的參考文件** —— 每個已註冊的 `WR_*` 命令（簽章 + 摘要）都匯出在 [`docs/reference/command_reference.md`](../docs/reference/command_reference.md)，動作 JSON 檔案的 JSON Schema 則位於 [`docs/reference/webrunner-action-schema.json`](../docs/reference/webrunner-action-schema.json)。
 
+> 商業瀏覽器／裝置雲與 TestRail 整合已移除，包含 Python 匯出與 WR 命令（破壞性變更）。請改用自架 Selenium Grid 或本機 Appium，並以 JSON／JUnit 報告或通用 webhook 輸出結果。保留 Jira 與免費通知整合。定位備援只接受唯一、可見且啟用的元素；智慧等待追蹤 fetch／XHR 與 SPA 路由，皆有逾時限制。
+
 ## 目錄
 
 - [亮點特色](#亮點特色)
@@ -38,7 +97,7 @@ WebRunner（`je_web_runner`）最初只是一個 Selenium 封裝，如今已成�
 - [後端](#後端)
   - [Selenium（預設）](#selenium預設)
   - [Playwright](#playwright)
-  - [Cloud Grid（雲端網格）](#cloud-grid雲端網格)
+  - [自架 Selenium Grid](#自架-selenium-grid)
   - [Appium（行動端）](#appium行動端)
 - [報告](#報告)
 - [可觀測性](#可觀測性)
@@ -75,7 +134,7 @@ WebRunner（`je_web_runner`）最初只是一個 Selenium 封裝，如今已成�
 - **獨立的 CDP / BiDi 模組。** 背景 `CDPEventListener`（WebSocket 迴圈 + 同步的 `send` / `on` / 情境管理器）、用於產生 Chrome DevTools 可載入效能追蹤的 `record_trace(driver, path)`，以及封裝 `driver.network.add_request_handler` / `add_response_handler` / `add_auth_handler` 的 `bidi_network` 模組，用於跨瀏覽器請求攔截。
 - **測試資料與固件。** Faker 整合、工廠模式、testcontainers（Postgres / Redis / 通用）、帶 `${ENV.X}` 佔位符展開的按環境 `.env` 載入器、帶 `${ROW.x}` 的 CSV/JSON 資料驅動執行器。
 - **認證、API、資料庫。** 帶權杖快取的 OAuth2 / OIDC 用戶端憑證 / 密碼 / 更新權杖流程、帶 JSON 斷言的 HTTP API 測試命令、由 SQLAlchemy 支撐的資料庫驗證。
-- **整合。** 帶權杖 + TLS 的 TCP 通訊端伺服器、BrowserStack / Sauce Labs / LambdaTest 雲端網格、Appium 行動端、JIRA + TestRail、Slack / 通用 webhook 通知器、GitHub Actions 內嵌註解、Locust 負載測試。
+- **整合。** 帶權杖 + TLS 的 TCP 通訊端伺服器、自架 Selenium Grid、Appium 行動端、JIRA、Slack / 通用 webhook 通知器、GitHub Actions 內嵌註解、Locust 負載測試。
 - **AI 掛鉤。** 可插拔的 LLM callable 驅動自我修復定位器和自然語言 → 動作 JSON 草稿。
 - **跨平台與多瀏覽器。** Windows、macOS、Linux、Raspberry Pi · Chrome、Chromium、Firefox、Edge、IE、Safari · Chromium、Firefox、WebKit（Playwright）。
 
@@ -141,7 +200,7 @@ flowchart LR
   subgraph Outputs
     REP["Reports<br/>HTML/JSON/XML/JUnit/Allure"]
     OBS["Observability<br/>OTel · dashboard · replay"]
-    NOT["Notifiers<br/>Slack · webhook · GH · JIRA · TestRail"]
+    NOT["Notifiers<br/>Slack · webhook · GH · JIRA"]
   end
 
   A1 --> EXE
@@ -225,7 +284,7 @@ je_web_runner/
     ├── cdp/                     # Raw CDP passthrough
     ├── ci_annotations/          # GitHub Actions ::error::
     ├── cli/                     # CLI parser, watch mode, dispatch
-    ├── cloud_grid/              # BrowserStack / Sauce Labs / LambdaTest
+    ├── cloud_grid/              # Self-hosted Selenium Grid
     ├── dashboard/               # Live progress HTTP server
     ├── database/                # SQL validation (SQLAlchemy)
     ├── data_driven/             # CSV/JSON dataset + ${ROW.x}
@@ -269,7 +328,7 @@ je_web_runner/
     ├── storage/                 # localStorage / session / IDB
     ├── test_data/               # Faker integration
     ├── test_filter/             # Tag filter + dependency graph
-    ├── test_management/         # JIRA + TestRail
+    ├── test_management/         # JIRA
     ├── test_object/             # TestObject + record
     ├── test_record/             # Action recording
     ├── testcontainers_integration/   # Postgres / Redis / generic
@@ -557,30 +616,13 @@ Playwright 後端在 `WR_pw_*` 下涵蓋 Selenium 封裝的大部分日常操作
 
 現有腳本可以逐步遷移到 Playwright；`TestObject` 記錄會自動翻譯為 Playwright 選擇器（`CSS_SELECTOR` → 原樣，`XPATH` → `xpath=…`，`ID` → `#…`，`NAME` → `[name="…"]`，`LINK_TEXT` → `text=…`，`PARTIAL_LINK_TEXT` → `:has-text("…")`）。
 
-### Cloud Grid（雲端網格）
+### 自架 Selenium Grid
 
 ```python
-from je_web_runner.utils.cloud_grid.cloud_drivers import (
-    connect_browserstack,
-    build_browserstack_capabilities,
-)
+from je_web_runner.api.platform import start_remote_driver
 
-connect_browserstack(
-    username="...",
-    access_key="...",
-    capabilities=build_browserstack_capabilities(
-        browser_name="chrome",
-        browser_version="latest",
-        os_name="Windows",
-        os_version="11",
-        project="WebRunner",
-        build="ci-2026-04-26",
-    ),
-)
-# All existing WR_* commands now run against the cloud session.
+start_remote_driver("http://localhost:4444/wd/hub", {"browserName": "chrome"})
 ```
-
-`connect_saucelabs` 與 `connect_lambdatest` 遵循相同的形態。
 
 ### Appium（行動端）
 
@@ -813,14 +855,14 @@ WebRunner 隨附一個 [Model Context Protocol](https://modelcontextprotocol.io/
 python -m je_web_runner.mcp_server
 ```
 
-預設工具清單（22 個工具）公開：
+預設工具清單（28 個工具）公開：
 
 即時瀏覽器執行：
-- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 556 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
+- `webrunner_run_actions` —— 執行任意 `WR_*` 動作清單。涵蓋全部 547 個 `WR_*` 命令，包括進階 WebDriverWrapper 新增項：`WR_attach_to_existing_browser`、`WR_execute_cdp_cmd`、`WR_set_timezone` / `_locale` / `_device_metrics` / `_user_agent` / `_extra_http_headers` / `_geolocation` / `_network_conditions`、`WR_block_urls` / `_set_cache_disabled` / `_set_download_directory`、`WR_save_cookies` / `_load_cookies` / `_clear_origin_storage`、`WR_save_full_page_screenshot` / `_print_page`、`WR_reload(ignore_cache=True)`、`WR_bring_to_front`、`WR_switch_to_window_by_url|title`、`WR_new_window` / `_close_window`、頁面中繼資料取值器、Fetch 攔截原語、`WR_add_script_to_evaluate_on_new_document`……
 - `webrunner_run_action_files` —— 批次執行磁碟上的 JSON 檔案
 - `webrunner_list_commands` —— 探索完整的 `WR_*` 介面面
 
-外加以下工具（無即時瀏覽器）：
+其他工具：
 
 動作 JSON 撰寫與檢查：
 - `webrunner_lint_action`、`webrunner_score_action_locators`、`webrunner_locator_strength`
@@ -841,6 +883,13 @@ python -m je_web_runner.mcp_server
 
 分片與基礎設施：
 - `webrunner_diff_shard`、`webrunner_render_k8s`、`webrunner_partition_shard`
+
+
+本機瀏覽器 agent：
+- `webrunner_observe_page`、`webrunner_agent_step`、`webrunner_run_agent`
+
+Issue 自動化（固定主機設定）：
+- `webrunner_issue_enqueue`、`webrunner_issue_status`、`webrunner_issue_metrics`
 
 ```python
 from je_web_runner.mcp_server import McpServer, Tool, build_default_tools, serve_stdio
@@ -1137,9 +1186,7 @@ python -m je_web_runner.action_lsp
   檔案特定的回歸。
 - **`git_bisect_flake`** —— 僅帳本或探測驅動的 bisect，找出導致測試
   開始失敗的回歸提交。
-- **`test_cost_estimator`** —— 按執行器的價目表（Sauce / BrowserStack /
-  LambdaTest / GitHub Actions）× 帳本分鐘數 → 每套件 / 執行器 / 測試的
-  USD + CO₂ 估算。
+- **`test_cost_estimator`** —— 本機資源估算，可自行提供估算參數；不含商業服務預設費率。
 - **`slack_digest`** —— 渲染 Slack Block-Kit + Teams Adaptive Card +
   純文字測試摘要，含隔離活動、最高風險 PR、成本
   趨勢和通過率變化。
@@ -1171,8 +1218,7 @@ python -m je_web_runner.action_lsp
 
 - **`chrome_profile`** —— 持久化 Chrome 設定檔 + 隱身 +
   snapshot / sync-back。
-- **`device_cloud`** —— 真機雲（BrowserStack / Sauce /
-  LambdaTest）連接器。
+
 - **`otel_bridge`** —— 用於分散式追蹤的 W3C traceparent
   注入。
 - **`otp_interceptor`** —— MailHog / Mailpit / IMAP / SMS OTP 輪詢
@@ -1654,10 +1700,6 @@ recorder_save_recording(
 ```python
 from je_web_runner.utils.notifier.webhook_notifier import notify_run_summary
 from je_web_runner.utils.test_management.jira_client import jira_create_failure_issues
-from je_web_runner.utils.test_management.testrail_client import (
-    testrail_send_results,
-    testrail_results_from_pairs,
-)
 from je_web_runner.utils.ci_annotations.github_annotations import (
     emit_failure_annotations,
     emit_from_junit_xml,
@@ -1699,6 +1741,21 @@ AutoControl 動作失敗時，它所在的 `WR_ac_*` 動作以 `AutoControlBridg
 
 ## AI 輔助
 
+### 本機瀏覽器 Agent
+
+`je_web_runner.api.ai.run_agent(task)` 以 Selenium（預設）或 Playwright 執行可驗證的任務。固定步驟不需模型；自主規劃使用明確指定、已安裝且關閉雲端功能的本機 Ollama 模型，不需付費 API、訂閱或雲端免費額度。
+
+```bash
+python -m http.server 8000 --bind 127.0.0.1 --directory examples/agent_demo
+# 於另一個終端機執行：
+python -m je_web_runner --agent-task examples/agent_form.json --report results/form
+```
+
+另提供 `agent_search.json` 與 `agent_iframe.json`。任務須有 `goal`、HTTP(S) `start_url` 與確定性的 `success` 條件。自主規劃設定 `planner: ollama` 與已安裝的開源 `model` 名稱；固定步驟使用 `steps`。預設最多 25 步、總時限 300 秒、每次操作 15 秒；只有通過驗證的成功才回傳結束碼 0。報告為 `BASE.agent.json`／`.agent.html`，搭配 `--report` 時會儲存已遮蔽的失敗截圖。
+
+MCP 新增 `webrunner_observe_page`、`webrunner_agent_step`、`webrunner_run_agent`；環境變數密鑰由主機端的 `WEBRUNNER_AGENT_ALLOWED_ENV` 限制。任務格式、本機設定、密鑰遮蔽、限制及商業整合遷移方式，見[本機 agent 指南](../docs/source/Zh/doc/integrations/local_agent_doc.rst)與[任務 Schema](../docs/reference/webrunner-agent-schema.json)。
+
+
 ```python
 from je_web_runner.utils.ai_assist.llm_assist import (
     set_llm_callable,
@@ -1718,6 +1775,30 @@ draft = generate_actions_from_prompt("log in as alice and place an order")
 ```
 
 WebRunner 有意**不隨附內建的 LLM 用戶端** —— 邊界是單個 `Callable[[str], str]`，因此更換供應商只需一行。
+
+### 本機 Issue Worker
+
+本機 `IssueWorker` 接收帶有 `automation-ready` 的 GitHub／Jira Cloud issue，使用明確設定的本機 Ollama 模型與離線 Podman 檢查，支援 bug、新功能、重構、測試與文件。合格 issue 會被認領，在獨立 worktree 實作並驗證，再建立待審的 `automation/*` → `dev` PR；來源 issue 保持開啟，交由人工審查。
+
+```bash
+python -m je_web_runner.issue_worker run --config issue-worker.json --dry-run
+python -m je_web_runner.issue_worker run --config issue-worker.json
+python -m je_web_runner.issue_worker watch --config issue-worker.json
+python -m je_web_runner.issue_worker status --config issue-worker.json
+python -m je_web_runner.issue_worker retry --config issue-worker.json --issue github:123
+```
+
+複製 `examples/issue-worker.example.json` 並依[設定指南](../docs/source/Zh/doc/integrations/issue_worker_doc.rst)準備環境。金鑰只由主機環境變數提供，不傳給模型或容器。SQLite 檢查點可恢復程式修正、檢查、發布及進度回報，避免重複 PR。Python 由 `api.orchestration` 提供 `IssueWorker`／`IssueInbox`；MCP 新增 `webrunner_issue_enqueue` 與 `webrunner_issue_status`，只使用主機的 `WEBRUNNER_ISSUE_CONFIG`。MCP 負責排單，另外啟動的 worker 負責處理。預設一次一單、60 秒輪詢、每單 60 分鐘、100 次工具操作、兩輪驗證、20 個檔案及 1000 行變更，不需付費 coding API 或雲端排程。
+
+每個 coding 步驟都會收到有長度限制的已套用變更預覽，以及明確標示為修改前資料的 baseline。主機仍會驗證最終 tree，才交付 PR。
+
+啟用前先執行 `doctor --config issue-worker.json`，加上 `--platform` 才唯讀檢查平台。`health --json` 回報常駐心跳，`stop` 會完成當前單後停止。watch 遇到本機依賴故障時暫停接單。Windows 登入排程由 `scripts/issue_worker_task.ps1` 管理；真實本機驗收使用 `scripts/verify_issue_worker.py`，預設包含 24 小時常駐測試，不會自動安裝服務或下載模型。
+
+設定 `review_enabled=true`（範例已啟用），可依有寫入權限人員的審查或目前 head 的失敗檢查修正原 PR。SQLite 去重回饋，每輪獨立 worktree 並重新完整驗證，以非 force 更新原分支、在原 PR 留下證據。預設每 60 秒輪詢、最多三輪；人工改動 head 或 dev 前進時停止，不重開 PR、不合併、不關閉 issue。 人工補充後可用 `retry-review --config FILE --issue KEY` 在主機限制內接續同一 PR。
+
+啟用 `requirements_enabled` 可在編碼前整理驗收條件，需求不明時先提問。條件引用主機具名檢查或明列人工驗收。選用的主機 `browser_scenarios` 會在離線 Podman 執行強制瀏覽器驗收，可信驗證器與修改中原始碼分開掛載；證據綁定發布 tree 與情境／驗證器摘要。檢查通過仍須業務審查，範例見 `examples/issue-worker-browser.example.json`。
+
+接單結果提供可解釋的分類、參考適合度、標籤優先順序與等待加權；`automation-manual`／`automation-blocked` 保留新排單而不認領。`metrics --config FILE --json` 讀取持久的 run／revision 結果，可加上 `--since-hours`、`--issue` 或 `--report BASE` 篩選歷史及輸出離線互動 HTML／JSON。Python `IssueMetrics` 與唯讀 MCP `webrunner_issue_metrics` 提供相同資料。未追蹤的舊紀錄不列入交付率，PR 交付不代表業務驗收。
 
 ## CLI 用法
 
@@ -1786,7 +1867,7 @@ WebRunner 提供一個自訂例外階層 —— 每個輔助函式都擲出 `Web
 | `HealingError` / `EnvConfigError` / `DataDrivenError` | 自我修復 / 環境 / 資料集              |
 | `HttpAssertionError` / `HttpError`         | HTTP API 斷言                                    |
 | `AccessibilityError` / `LighthouseError`   | 無障礙 / Lighthouse                              |
-| `NotifierError` / `JiraError` / `TestRailError` | 通知 / 測試管理                             |
+| `NotifierError` / `JiraError` | 通知 / 測試管理                             |
 | `CDPError` / `StorageError` / `ServiceWorkerError` | 瀏覽器內部機制                           |
 | `OAuthError` / `DatabaseValidationError`   | 認證 / 資料庫                                    |
 | `NetworkEmulationError` / `LoadTestError`  | 限速 / Locust                                    |

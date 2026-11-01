@@ -1,0 +1,14 @@
+{
+  "goal": "Search locally and extract the answer",
+  "start_url": "http://127.0.0.1:8000/index.html",
+  "steps": [
+    {"kind": "click", "selector": "#search"},
+    {"kind": "fill", "selector": "#query", "value": "book"},
+    {"kind": "click", "selector": "#find"}
+  ],
+  "extract": {"answer": "#answer"},
+  "success": [
+    {"kind": "url_contains", "value": "/details.html"},
+    {"kind": "extracted_equals", "key": "answer", "value": "42"}
+  ]
+}

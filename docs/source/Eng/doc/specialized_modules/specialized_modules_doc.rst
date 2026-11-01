@@ -444,8 +444,7 @@ Two modes:
 ``test_cost_estimator``
 -----------------------
 
-Per-runner rate-card (built-in defaults for Sauce / BrowserStack /
-LambdaTest / GitHub Actions Linux + macOS) × ledger minutes → USD +
+Local resource estimates (zero service cost by default) × ledger minutes → USD +
 CO₂ estimate, with per-test breakdown and a top-N costliest-tests
 markdown report.
 
@@ -506,8 +505,7 @@ Other Specialised Modules
 
 * ``chrome_profile`` — Persistent Chrome profile + stealth +
   snapshot / sync-back.
-* ``device_cloud`` — Real-device cloud connector (BrowserStack /
-  Sauce / LambdaTest).
+
 * ``otel_bridge`` — W3C traceparent injection for distributed tracing.
 * ``otp_interceptor`` — MailHog / Mailpit / IMAP / SMS OTP polling
   for 2FA flows.

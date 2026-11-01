@@ -1,7 +1,7 @@
 # WebRunner Architecture
 
 > Short overview for people and agents.
-> Last verified: 2026-10-11 against the dev-to-main release review.
+> Last verified: 2026-10-25 on feat/managed-browser-sessions (managed SDK contracts).
 
 ## 1. Purpose
 
@@ -37,7 +37,7 @@ wired into the executor as `WR_*` commands, others are reachable only from Pytho
 | --- | --- |
 | Core engine and action I/O | `executor`, `callback`, `package_manager`, `json`, `test_object`, `test_record`, `exception`, `logging`, `file_process`, `xml` |
 | Run orchestration and CI | `async_executor` (asyncio engine, `WR_apw_*`), `cli`, `socket_server`, `watch_mode`, `scheduler`, `sharding`, `test_filter`, `run_ledger`, `pipeline`, `k8s_runner`, `fanout`, `multi_user`, `ab_run` |
-| Browser and driver control | `cdp`, `cdp_tap`, `bidi`, `bidi_backend`, `driver_dispatch`, `chrome_profile`, `browser_pool`, `process_supervisor`, `driver_pin`, `cloud_grid`, `device_cloud`, `appium_integration`, `dom_traversal`, `storage`, `network_emulation`, `smart_wait`, `autocontrol_bridge` (desktop control through AutoControl) |
+| Browser and driver control | `cdp`, `cdp_tap`, `bidi`, `bidi_backend`, `driver_dispatch`, `chrome_profile`, `browser_pool`, `process_supervisor`, `driver_pin`, `cloud_grid` (self-hosted Grid), `appium_integration`, `dom_traversal`, `storage`, `network_emulation`, `smart_wait`, `autocontrol_bridge` (desktop control through AutoControl) |
 | Authoring and code generation | `recorder`, `action_formatter`, `action_templates`, `md_authoring`, `linter`, `schema`, `docs`, `pom_generator`, `sel_to_pw`, `session_to_test`, `openapi_to_e2e`, `project` |
 | Reporting and observability | `generate_report`, `observability`, `otel_bridge`, `trace_recorder`, `failure_bundle`, `replay_studio`, `dashboard`, `live_dashboard`, `notifier`, `ci_annotations`, `test_management` |
 | Reliability, flakes and test governance | `adaptive_retry`, `self_healing`, `flake_detector`, `flakiness_graveyard`, `repro_minimizer`, `failure_triage`, `failure_cluster`, `locator_health`, `mutation_testing`, `impact_analysis`, `coverage_map`, `pr_risk_score`, `test_owners_map` |
@@ -118,6 +118,15 @@ python -m je_web_runner -d DIR [--tag/--exclude-tag] [--rerun-failed LEDGER] [--
 - Second backend pattern: a wrapper module under `webdriver/` plus prefixed `WR_*` registrations, as Playwright does with `WR_pw_*`.
 
 ## 6. Cross-project boundaries
+
+Managed browser retirement adds `ManagedBrowserSession.readonly_contract_version=1` and
+`freeze_readonly() -> ManagedReadOnlySession`, exported through root, api.ai and utils.agent.
+The synchronous host keeps the exact original page/context; it cannot replace an absent context
+with a new browser. Once freeze starts, the original reference permanently loses action/transfer
+authority before its owned network retires. Only then can the fixed read-only view be issued.
+The context identity is metadata, not a JSON session handle or authorization grant. AutoControl's
+retained-helper completion/skill provider is still pending (#22); no GUI or capability declaration
+in this repository substitutes for that consumer integration or native evidence.
 
 | Consumer | How it uses this repo | What it relies on |
 | --- | --- | --- |
@@ -213,3 +222,75 @@ process share one driver (`--parallel-mode process` exists for isolation).
 - A sibling repo starts or stops depending on WebRunner, or changes how it loads it.
 - A hard rule in CLAUDE.md is added or changed, or the extension steps in §5 change.
 - On every edit, refresh the "Last verified" line.
+
+Commercial browser/device cloud and TestRail clients were removed by explicit request. Generic Grid, local Appium, Jira and webhook APIs remain. Healing now rejects ambiguous actionable matches; smart waits track fetch/XHR and SPA routes.
+
+## Local browser agents
+
+`utils/agent/` holds typed TaskSpec / AgentAction / SuccessCondition / AgentReport contracts, the browser adapter,
+fixed-step and local-only Ollama planners, the bounded AgentRunner, task schema and local report writer.
+`api.ai.run_agent` and CLI `--agent-task FILE` share this core. New MCP tools in `mcp_server/agent_tools.py`
+observe/step the existing browser or run a task in its own local wrapper. No agent command accepts arbitrary code.
+A quiet executor with zero retries executes a fixed internal operation; success is checked independently of the planner.
+Owned wrappers are isolated from legacy singletons; borrowed browsers stay open. A process lock serializes agent work.
+Ollama preflight requires cloud-disabled status and installed local weights; requests use loopback only, no proxy or redirects.
+Task environment placeholders are allowlisted; MCP additionally requires the host's `WEBRUNNER_AGENT_ALLOWED_ENV`.
+MCP limits: 100 steps / 300 total seconds / 15 seconds per browser operation. Reports redact entered values and known secrets.
+CLI exits 0 only for verified success and optionally emits BASE.agent.json/html plus masked failure screenshots.
+
+## Issue intake
+
+`utils/issue_worker/` holds host-owned config, normalized snapshots, GitHub/Jira Cloud adapters, a SQLite WAL queue and renewable worker lease. `api.orchestration.IssueInbox` previews or enqueues ready issues. API writes verify bot identity, preserve human labels and update one bot progress comment. The existing browser agent and Jira creation APIs are unchanged.
+
+Issue coding: `utils/ai_assist/local_client.py` shares the original browser Ollama transport without changing its interface. Issue `CodeProcessor` uses a typed coding planner, fenced patches in dedicated worktrees and offline Podman checks. Local prompts include closed, action-specific schemas and require a successful read/search before editing; Git recounts patch hunk metadata while actual context, scope and test-preservation guards remain authoritative. Planner feedback includes a bounded staged diff, current tree and explicitly historical baseline; only host checks establish validation evidence. Requirement/coding inference shares dependency deferral and deadline attribution. Baseline/final evidence and validation tree IDs are checkpointed; no model-controlled host shell or external publisher exists in the coding layer.
+
+Issue worker delivery: `IssueWorker` coordinates renewable local leases, immutable requirement snapshots, isolated coding, exact-tree validation and a host-only GitHub publisher. Every processor checkpoint rereads the issue revision, assignment and manual hold labels, including requirement analysis. Git Database APIs publish without git credential files or token-bearing subprocess arguments. Pending progress reports are a recoverable outbox. CLI `python -m je_web_runner.issue_worker` supports run/watch/status/retry/doctor/health/stop/retry-review; MCP queues or reads jobs through host-only WEBRUNNER_ISSUE_CONFIG. automation/* -> dev is the reviewed issue entry, with dev -> main retained for release.
+
+Issue worker operations: `IssueDoctor` checks local dependencies and optional GET-only platform readiness. A separate fenced `worker_runtime` SQLite row owns watch, renews a ten-second heartbeat, and accepts instance-bound drain requests (45-second stale threshold). Dependency outages pause intake; infrastructure failures preserve resumable jobs. Dedicated logs rotate at 5 MB with five backups. Windows per-user login tasks invoke the checkout through fixed paths; opt-in real model/Podman acceptance and 24-hour soak use local platform fixtures. Existing jobs and MCP authority are unchanged.
+
+PR feedback cycle: opt-in ReviewInbox reads current-head GitHub reviews/inline comments, explicit /webrunner fix discussion requests and failed checks/statuses. Human triggers require API-confirmed write access. SQLite review_events atomically claims immutable, redacted batches. Each bounded round roots a separate worktree at the last owned PR head while cumulative scope remains pinned to original dev. GitHubPublisher.revise fast-forwards the same branch (force=false), reconciles uncertain ref/comment writes, and posts per-round evidence without editing the PR body. Source/PR guards cancel stale work; no merge, close or second PR is authorized.
+
+Requirement/browser evidence: opt-in RequirementAnalyzer borrows the local-only structured client, produces closed AcceptanceCriterion/RequirementPlan values, and asks questions before patching. Host checks and all configured browser_scenarios independently validate final content. BrowserAcceptance snapshots trusted verifier source separately from the edited worktree and mounts both read-only in offline Podman. browser_entry protects its process, starts a credential-free app child, and uses AgentRunner fixed steps/deterministic assertions. Evidence is bound to git tree and scenario/verifier digests, rechecked by the publisher, and displayed per criterion without claiming business completeness.
+
+Intake/history: host triage classifies labels/title prefixes and records advisory suitability plus priority. Explicit manual labels hold admissions; SQL dispatch prioritizes active work/outbox, then label score plus age, with additive legacy schema migration. Each completed run/revision has an immutable outcomes row, independent of subsequent retry snapshots; untracked legacy observations never enter historical rates. IssueMetrics provides local aggregates, per-issue history and offline interactive JSON/HTML. CLI metrics and read-only MCP webrunner_issue_metrics share this evidence, distinguish delivery from business acceptance, and never activate a worker or query a platform.
+
+## Owned browser origin transport SDK
+
+Host integrations can use `BrowserOriginPolicy` and `ScopedBrowserProxy` from Python or
+`je_web_runner.api.ai`. Origin grants are immutable exact HTTP(S) authorities; path/query grants,
+credentials and ambiguous host encodings are rejected. The proxy starts explicitly on authenticated
+loopback, checks each HTTP request and HTTPS CONNECT destination, and closes only retained sockets.
+Every redirect destination remains subject to the same transport check. Private SDK proxy settings
+contain a per-owner credential and belong outside model/task data and logs. Plain HTTP has bounded
+uploads/responses; HTTPS is an opaque TLS tunnel whose certificate validation belongs to the browser.
+Streaming uploads and HTTP protocol upgrades are unsupported. Construction is inert, retired owners
+cannot restart, and incomplete HTTP responses use incomplete chunk framing rather than a successful end.
+The transport uses only the standard library; optional managed sessions use installed Playwright.
+AutoControl target binding is available on its isolated feature branch; deployment and real application acceptance remain open. Native acceptance remains separate from controlled loopback evidence.
+
+`utils/agent/network_policy.py` validates immutable origin configuration. `scoped_proxy.py` owns a nonce-authenticated loopback listener and retained socket objects; `_proxy_server.py` bounds workers, `_proxy_handler.py` checks each destination before a non-retrying upstream operation, and `_proxy_types.py` defines their ownership seam. Proxy credentials never forward to origins. HTTP response re-chunking preserves incomplete transfer failure, duplicate Set-Cookie fields remain intact, and late connection completion cannot send a new payload after retirement. No persisted PID or foreign process is signaled.
+
+Cross-project contract: AutoControlGUI managed browser adapters use these WebRunner interfaces instead of importing browser engines. The session seam applies the private proxy before navigation, blocks unsupported browser transports and reports owned cleanup or an unconfirmed failure. Existing Selenium/Playwright global wrappers retain their behavior.
+
+`managed_browser.py` exposes `ManagedBrowserSession`/`ManagedBrowserError` through Python/root/AI facades. `_managed_owner.py` reuses the existing wrapper lifecycle with a fresh element wrapper; its context hook installs `_managed_guard.py` restrictions and fixed monitoring before the first page. One page and typed actions are allowed; unreviewed UI retires network access. Explicit form readback is bounded and excludes secret controls. HTTP/2/QUIC are disabled to keep the owned HTTP(S) transport contract narrow; TLS validation and Chromium sandbox stay enabled. Failed effects are uncertain, not retried; browser cleanup failure is sticky and transport retirement retains its listener until proof. The host must run this synchronous SDK on its owning helper thread and provide process lifetime enforcement. No native acceptance is claimed.
+
+AutoControlGUI consumer binding: feature branch feat/agent-task-runtime at 1f9c79a8 uses root/AI ManagedBrowserSession and AgentAction inside its owned helper, exact profile/task origins and observation-local DOM indexes. Fake Chromium source-to-source tests exercise the real SDK lifecycle, helper cleanup ACK and hung-effect retirement without installing into shared environments or launching a browser. Deployment and native acceptance remain open.
+
+ManagedBrowserSession.contract_version=1 identifies complete bounded readback. Fixed DOM text/value scripts reject results beyond 8,000 UTF-16 code units before IPC; the Python boundary rechecks length and Unicode validity. No substring is returned for exact comparison. Fill/select reject unsupported values before effect. Text reads refuse marked secret ancestry/descendants; observation previews remain independently bounded. An installed Node executes the fixed scripts with synthetic element objects in unit tests, with no browser/DOM/network process. AutoControl browser compiler consumer is at 988bcbef; deployment and native acceptance remain open.
+
+Managed transfer contract version 1 delegates bounded downloads to `_browser_download.py` and byte-only file inputs to `_browser_upload.py`. TLS validation and each redirect use the retained transport owner and origin policy; no filesystem publication is accepted in the SDK. AutoControl owns rooted file grants and publication. Browser-triggered downloads/file pickers remain blocked; explicit methods are the only transfer seam.
+
+AutoControlGUI consumer 26bfea43 now binds managed transfer version 1: rooted immutable upload snapshots, atomic complete downloads, independent archive manifests and cancellation preserved through foreign SDK context cleanup. Python/root/api.core/AC/MCP/REST/CLI/Builder/GUI share the AutoControl commands while all browser/network operations remain in this SDK. Deployment and real browser evidence remain open (#22).
+
+Cross-project dependency inspection contract: AutoControlGUI 2fff8c88 probes an installed isolated helper through ManagedBrowserSession readback/transfer markers and webdriver.playwright_wrapper._require_playwright(). The existing private hook returns sync_playwright without starting its factory or a browser. Do not rename/remove/change this behavior without updating the consumer and its source-to-source loader contracts. Probe metadata never establishes native/browser execution readiness. Installed environment evidence and wheel hashes are retained by the AutoControl consumer; production setup and paused acceptance remain open.
+
+Permanent read-only lifecycle: `_managed_lifecycle.py` holds the six-field host state (opaque ID,
+monotonic mode, session/page/URL anchor, issued view, active count and actual owning Thread).
+`managed_readonly.py` exposes only bounded reads and cleanup through a closed host callback.
+`managed_browser.py` requires inactive owning-thread preflight, retires transport before issuance,
+and checks the live original context before/after each call. Navigation, including same-URL frame
+navigation, and unexpected UI invalidate the view. Failed retirement cannot restore writes or
+turn later cleanup into confirmed success. `_managed_guard.py` aborts all routes once freezing
+starts. Network-retired DOM reads do not establish a new server response; existing readback and
+transfer versions remain 1. Controlled fake-engine/owned-loopback evidence is separate from
+deferred browser/native/device/24-hour acceptance and production deployment (#22).

@@ -58,6 +58,38 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261101-02 | 2026-11-01 | Install the issue-worker image's review tools as wheels only | #bugfix #security #docker | [2026-11](2026-11.md) |
+| U-20261101-01 | 2026-11-01 | Patch the dependencies named in Dependabot security alerts | #bugfix #deps #security #ci | [2026-11](2026-11.md) |
+| U-20261025-01 | 2026-10-25 | Retain original managed context for permanent read-only review | #done #agent #verification | [2026-10-b](2026-10-b.md) |
+| U-20261024-12 | 2026-10-24 | Record isolated helper runtime-inspection contract | #done #agent #integration | [2026-10-b](2026-10-b.md) |
+| U-20261024-11 | 2026-10-24 | Record rooted AutoControl transfer consumer | #done #agent #integration | [2026-10-b](2026-10-b.md) |
+| U-20261024-10 | 2026-10-24 | Add owned bounded browser transfers | #done #agent #transfers | [2026-10-b](2026-10-b.md) |
+| U-20261024-08 | 2026-10-24 | Record AutoControl managed-session consumer binding | #done #agent #integration | [2026-10-b](2026-10-b.md) |
+| U-20261024-07 | 2026-10-24 | Add isolated managed browser sessions | #done #agent #scope | [2026-10-b](2026-10-b.md) |
+| U-20261024-06 | 2026-10-24 | Fence owned browser network destinations | #done #agent #scope | [2026-10-b](2026-10-b.md) |
+| U-20261024-05 | 2026-10-24 | Defer full-duration acceptance at owner request | #decision #issues #acceptance | [2026-10](2026-10.md) |
+| U-20261024-04 | 2026-10-24 | Pass both-source real local delivery and review acceptance | #snapshot #issues #runtime #acceptance | [2026-10](2026-10.md) |
+| U-20261024-03 | 2026-10-24 | Expose applied diffs and historical baseline in coding feedback | #snapshot #issues #coding | [2026-10](2026-10.md) |
+| U-20261024-02 | 2026-10-24 | Bind evidence names and cancel changed analysis jobs | #snapshot #issues #acceptance | [2026-10](2026-10.md) |
+| U-20261024-01 | 2026-10-24 | Ground local coding actions and recover malformed edits | #snapshot #issues #runtime #fix | [2026-10](2026-10.md) |
+| U-20261023-12 | 2026-10-23 | Verify real container isolation and browser acceptance | #snapshot #issues #runtime | [2026-10](2026-10.md) |
+| U-20261023-11 | 2026-10-23 | Require observed runtime failures and same-PR local acceptance | #snapshot #issues #acceptance | [2026-10](2026-10.md) |
+| U-20261023-10 | 2026-10-23 | Intake quality and local delivery history | #done #issues #triage #metrics | [2026-10](2026-10.md) |
+| U-20261023-09 | 2026-10-23 | Requirement plans and browser acceptance | #done #issues #acceptance #browser | [2026-10](2026-10.md) |
+| U-20261023-08 | 2026-10-23 | Durable same-PR review revisions | #done #issues #review | [2026-10](2026-10.md) |
+| U-20261023-07 | 2026-10-23 | Issue worker readiness and Windows operations | #done #issues #operations #tests | [2026-10](2026-10.md) |
+| U-20261023-06 | 2026-10-23 | Issue worker delivery, CLI and MCP | #done #issues #mcp #cli | [2026-10](2026-10.md) |
+| U-20261023-05 | 2026-10-23 | Isolated local issue coding and validation | #done #issues | [2026-10](2026-10.md) |
+| U-20261023-04 | 2026-10-23 | Durable GitHub and Jira issue intake | #done #issues | [2026-10](2026-10.md) |
+| U-20261023-03 | 2026-10-23 | Agent CLI, MCP, reports and local examples | #done #agent #mcp #cli | [2026-10](2026-10.md) |
+| U-20261023-02 | 2026-10-23 | Local agents with verified task completion | #done #agent | [2026-10](2026-10.md) |
+| U-20261023-01 | 2026-10-23 | Remove commercial clients and harden browser waits | #done #automation | [2026-10](2026-10.md) |
+| U-20261022-06 | 2026-10-22 | Retain SQLAlchemy support on Python 3.10 | #bugfix #deps #ci | [2026-10](2026-10.md) |
+| U-20261022-01 | 2026-10-22 | Preserve complete dependency locks | #bugfix #deps #ci | [2026-10](2026-10.md) |
+| U-20261022-02 | 2026-10-22 | Preserve complete dependency locks | #bugfix #deps #ci | [2026-10](2026-10.md) |
+| U-20261022-03 | 2026-10-22 | Preserve complete dependency locks | #bugfix #deps #ci | [2026-10](2026-10.md) |
+| U-20261022-04 | 2026-10-22 | Preserve complete dependency locks | #bugfix #deps #ci | [2026-10](2026-10.md) |
+| U-20261022-05 | 2026-10-22 | Preserve complete dependency locks | #bugfix #deps #ci | [2026-10](2026-10.md) |
 | U-20261011-02 | 2026-10-11 | Make Firefox option smoke failures fail CI | #done #ci | [2026-10](2026-10.md) |
 | U-20261011-01 | 2026-10-11 | Repair stable release security and browser checks | #done #ci | [2026-10](2026-10.md) |
 | U-20261008-01 | 2026-10-08 | The CLI exits 1 when the run failed; reports go below TestPioneer's artifact directory | #feature #cli #report #testpioneer | [2026-10](2026-10.md) |
@@ -145,5 +177,9 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-10.md](2026-10.md) | 2026-10 | 57 |
+| [2026-11.md](2026-11.md) | 2026-11 | 2 |
+| [2026-10-b.md](2026-10-b.md) | 2026-10 | 8 |
+| [2026-10.md](2026-10.md) | 2026-10 | 80 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
+
+| U-20261024-09 | 2026-10-24 | Preserve complete managed browser readback | #done #agent #verification | [2026-10-b](2026-10-b.md) |

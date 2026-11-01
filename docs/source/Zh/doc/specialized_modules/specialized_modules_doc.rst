@@ -425,8 +425,7 @@ CDP 注入腳本,把 ``Date``、``Date.now``、``performance.now`` 換成
 ``test_cost_estimator``
 -----------------------
 
-每個 runner 的費率(內建 Sauce / BrowserStack / LambdaTest /
-GitHub Actions Linux + macOS 預設值)× ledger 分鐘數 → USD + CO₂
+本機 runner 預設服務費為零，亦可自行提供估算參數× ledger 分鐘數 → USD + CO₂
 估算,並提供每 test 細目與最貴 N 個 test 的 markdown 報告。
 
 ``slack_digest``
@@ -484,8 +483,7 @@ CODEOWNERS 解析器(GitHub 語意:最後一條 match 的規則勝出)+ 每
 
 * ``chrome_profile`` —— 持久化 Chrome profile + stealth + snapshot
   / sync-back。
-* ``device_cloud`` —— 真實裝置雲端連接器(BrowserStack / Sauce /
-  LambdaTest)。
+
 * ``otel_bridge`` —— W3C traceparent 注入,串接分散式追蹤。
 * ``otp_interceptor`` —— MailHog / Mailpit / IMAP / SMS OTP polling,
   用於 2FA 流程。

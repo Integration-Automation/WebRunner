@@ -1,0 +1,30 @@
+{
+  "state_dir": "../../.webrunner-issues/WebRunner-browser",
+  "model": "YOUR_INSTALLED_LOCAL_MODEL",
+  "github_bot": "your-bot-login",
+  "review_enabled": true,
+  "requirements_enabled": true,
+  "image": "localhost/webrunner-issue-worker:local",
+  "browser_scenarios": {
+    "greeting": {
+      "server": ["python", "-m", "http.server", "8765", "--bind", "127.0.0.1", "--directory", "/work/examples/agent_demo"],
+      "port": 8765,
+      "task": {
+        "goal": "Verify the local greeting example",
+        "start_url": "http://127.0.0.1:8765/index.html",
+        "backend": "playwright",
+        "planner": "steps",
+        "headless": true,
+        "timeout": 60,
+        "action_timeout": 5,
+        "steps": [
+          {"kind": "fill", "selector": "#name", "value": "Ada"},
+          {"kind": "click", "selector": "#submit"}
+        ],
+        "success": [
+          {"kind": "text_contains", "selector": "#result", "value": "Hello Ada"}
+        ]
+      }
+    }
+  }
+}

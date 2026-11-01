@@ -67,10 +67,11 @@ class TestSelfHealingSelenium(unittest.TestCase):
         ) as wrapper:
             driver = MagicMock()
             wrapper.current_webdriver = driver
-            driver.find_element.return_value = "primary-elem"
+            element = MagicMock()
+            driver.find_elements.return_value = [element]
             result = find_with_healing_selenium("submit")
-            self.assertEqual(result, "primary-elem")
-            self.assertEqual(driver.find_element.call_count, 1)
+            self.assertIs(result, element)
+            self.assertEqual(driver.find_elements.call_count, 1)
 
     def test_falls_back_when_primary_misses(self):
         test_object_record.save_test_object("submit", "ID")
@@ -80,10 +81,11 @@ class TestSelfHealingSelenium(unittest.TestCase):
         ) as wrapper:
             driver = MagicMock()
             wrapper.current_webdriver = driver
-            driver.find_element.side_effect = [RuntimeError("miss"), "fallback-elem"]
+            element = MagicMock()
+            driver.find_elements.side_effect = [[], [element]]
             result = find_with_healing_selenium("submit")
-            self.assertEqual(result, "fallback-elem")
-            self.assertEqual(driver.find_element.call_count, 2)
+            self.assertIs(result, element)
+            self.assertEqual(driver.find_elements.call_count, 2)
 
     def test_all_misses_raises_healing_error(self):
         test_object_record.save_test_object("submit", "ID")
@@ -93,7 +95,7 @@ class TestSelfHealingSelenium(unittest.TestCase):
         ) as wrapper:
             driver = MagicMock()
             wrapper.current_webdriver = driver
-            driver.find_element.side_effect = RuntimeError("miss")
+            driver.find_elements.side_effect = RuntimeError("miss")
             with self.assertRaises(HealingError):
                 find_with_healing_selenium("submit")
 
@@ -112,10 +114,14 @@ class TestSelfHealingPlaywright(unittest.TestCase):
         ) as wrapper:
             page = MagicMock()
             wrapper.page = page
-            page.query_selector.side_effect = [None, "match"]
+            missing = MagicMock()
+            missing.count.return_value = 0
+            match = MagicMock()
+            match.count.return_value = 1
+            page.locator.side_effect = [missing, match]
             result = find_with_healing_playwright("login")
-            self.assertEqual(result, "match")
-            self.assertEqual(page.query_selector.call_count, 2)
+            self.assertIs(result, match.nth.return_value)
+            self.assertEqual(page.locator.call_count, 2)
 
 
 if __name__ == "__main__":

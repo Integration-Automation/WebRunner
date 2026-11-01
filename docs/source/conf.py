@@ -3,12 +3,11 @@
 # For the full list of built-in configuration values, see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-import os
 import sys
+from pathlib import Path
 
-sys.path.insert(0, os.path.abspath('.'))
 # Reach the repo root so ``import je_web_runner`` works inside autodoc.
-sys.path.insert(0, os.path.abspath(os.path.join(os.pardir, os.pardir)))
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 # -- Project information -----------------------------------------------------
 
@@ -67,4 +66,4 @@ exclude_patterns = []
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = 'sphinx_rtd_theme'
-html_static_path = ['_static']
+html_static_path = ['_static'] if (Path(__file__).resolve().parent / '_static').is_dir() else []

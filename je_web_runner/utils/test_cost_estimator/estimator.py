@@ -1,14 +1,4 @@
-"""
-每個 suite 的雲端費用 / 分鐘數 / CO₂ 估算。
-跑了多久(從 ledger 拿時間) × 在哪種 runner(本地 / SauceLabs / BrowserStack /
-LambdaTest)× 平台每分鐘費率 = 美金。再乘以平均碳排係數 = 估算 CO₂。
-
-These numbers are estimates by design — actual cloud bills include
-session-start overhead, video upload, parallel-slot pricing, regional
-multipliers. The point isn't accounting precision; it's "this suite costs
-$2 / day, that suite costs $200 / day" so you know where to spend
-engineering effort on optimisation.
-"""
+"""Estimate resource use from local runs or explicitly supplied rate cards."""
 from __future__ import annotations
 
 import json
@@ -49,16 +39,6 @@ class RateCard:
 # Sensible defaults; teams should override with their own contract rates.
 DEFAULT_RATE_CARDS: Sequence[RateCard] = (
     RateCard(runner="local", usd_per_minute=0.0, grams_co2_per_minute=2.0),
-    RateCard(runner="saucelabs", usd_per_minute=0.18, grams_co2_per_minute=10.0,
-             minimum_minutes=1.0),
-    RateCard(runner="browserstack", usd_per_minute=0.16, grams_co2_per_minute=10.0,
-             minimum_minutes=1.0),
-    RateCard(runner="lambdatest", usd_per_minute=0.15, grams_co2_per_minute=10.0,
-             minimum_minutes=1.0),
-    RateCard(runner="github_actions_linux", usd_per_minute=0.008,
-             grams_co2_per_minute=4.0),
-    RateCard(runner="github_actions_macos", usd_per_minute=0.08,
-             grams_co2_per_minute=8.0),
 )
 
 

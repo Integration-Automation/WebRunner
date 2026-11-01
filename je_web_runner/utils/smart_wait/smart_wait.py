@@ -20,13 +20,29 @@ class SmartWaitError(WebRunnerException):
 _INSTALL_FETCH_HOOK = """
 (() => {
   if (window.__wrFetchHook) { return; }
+  window.__wrWaitDocument = performance.timeOrigin || Date.now();
   window.__wrFetchInflight = 0;
   const original = window.fetch;
   window.fetch = function(...args) {
     window.__wrFetchInflight += 1;
-    return original.apply(this, args).finally(() => {
+    const finish = () => {
       window.__wrFetchInflight = Math.max(0, window.__wrFetchInflight - 1);
-    });
+    };
+    try { return Promise.resolve(original.apply(this, args)).finally(finish); }
+    catch (error) { finish(); throw error; }
+  };
+  const send = XMLHttpRequest.prototype.send;
+  XMLHttpRequest.prototype.send = function(...args) {
+    window.__wrFetchInflight += 1;
+    let finished = false;
+    const finish = () => {
+      if (finished) { return; }
+      finished = true;
+      window.__wrFetchInflight = Math.max(0, window.__wrFetchInflight - 1);
+    };
+    this.addEventListener('loadend', finish, {once: true});
+    try { return send.apply(this, args); }
+    catch (error) { finish(); throw error; }
   };
   window.__wrFetchHook = true;
 })();
@@ -47,6 +63,9 @@ _INSTALL_HISTORY_HOOK = """
   wrap("pushState");
   wrap("replaceState");
   window.addEventListener("popstate", () => {
+    window.__wrLastRouteChange = Date.now();
+  });
+  window.addEventListener("hashchange", () => {
     window.__wrLastRouteChange = Date.now();
   });
   window.__wrHistoryHook = true;
@@ -105,7 +124,13 @@ def wait_for_fetch_idle(
     install_hooks(driver)
     deadline = time.monotonic() + timeout
     quiet_started: float | None = None
+    previous_document: int | None = None
     while time.monotonic() < deadline:
+        install_hooks(driver)
+        document = _read_int(driver, "(window.__wrWaitDocument || 0)")
+        if document != previous_document:
+            quiet_started = None
+            previous_document = document
         in_flight = _read_int(driver, "(window.__wrFetchInflight || 0)")
         now = time.monotonic()
         if in_flight == 0:
@@ -133,6 +158,7 @@ def wait_for_spa_route_stable(
     install_hooks(driver)
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
+        install_hooks(driver)
         last_change_ms = _read_int(driver, "(window.__wrLastRouteChange || 0)")
         now_ms = _read_int(driver, "Date.now()")
         if (now_ms - last_change_ms) / 1000.0 >= quiet_for:
