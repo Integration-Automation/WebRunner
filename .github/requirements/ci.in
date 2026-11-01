@@ -10,7 +10,9 @@ requests>=2.33.0
 python-dotenv>=1.2.4
 webdriver-manager>=4.0.0
 defusedxml>=0.7.1
-Pillow>=12.3.0
+# Pillow 13.0.0 fixes the 12.x advisories but needs Python >=3.11; 3.10 stays on 12.3.0.
+Pillow>=12.3.0; python_version < "3.11"
+Pillow>=13.0.0; python_version >= "3.11"
 je_action_core>=0.0.3
 faker
 sqlalchemy
