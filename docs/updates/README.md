@@ -58,6 +58,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | ID | Date | Title | Tags | Batch |
 |---|---|---|---|---|
+| U-20261101-02 | 2026-11-01 | Install the issue-worker image's review tools as wheels only | #bugfix #security #docker | [2026-11](2026-11.md) |
 | U-20261101-01 | 2026-11-01 | Patch the dependencies named in Dependabot security alerts | #bugfix #deps #security #ci | [2026-11](2026-11.md) |
 | U-20261025-01 | 2026-10-25 | Retain original managed context for permanent read-only review | #done #agent #verification | [2026-10-b](2026-10-b.md) |
 | U-20261024-12 | 2026-10-24 | Record isolated helper runtime-inspection contract | #done #agent #integration | [2026-10-b](2026-10-b.md) |
@@ -176,7 +177,7 @@ In the same commit: delete the item from `progress.md`, add a `#done` entry here
 
 | File | Period | Entries |
 |---|---|---:|
-| [2026-11.md](2026-11.md) | 2026-11 | 1 |
+| [2026-11.md](2026-11.md) | 2026-11 | 2 |
 | [2026-10-b.md](2026-10-b.md) | 2026-10 | 8 |
 | [2026-10.md](2026-10.md) | 2026-10 | 80 |
 | [2026-09.md](2026-09.md) | 2026-09 | 25 |
