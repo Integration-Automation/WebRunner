@@ -12,7 +12,7 @@ webdriver-manager>=4.0.0
 defusedxml>=0.7.1
 # Pillow 13.0.0 is the first release without the 12.x advisories.
 Pillow>=13.0.0
-je_action_core>=0.0.3
+je_action_core>=0.0.4
 faker
 sqlalchemy
 pytest
