@@ -31,9 +31,11 @@ dependencies = [
     # 4.x is the line this package is developed and tested against.
     "webdriver-manager>=4.0.0",
     "defusedxml>=0.7.1",
-    # Floor set to the first release without the known Pillow advisories;
-    # wheels cover cp310-cp315, so it excludes no supported interpreter.
-    "Pillow>=12.3.0",
+    # Floor set to the first release without the known Pillow advisories. Pillow 13
+    # needs Python 3.11, so 3.10 keeps the 12.3.0 floor; wheels cover every supported
+    # interpreter on each side.
+    "Pillow>=12.3.0; python_version < '3.11'",
+    "Pillow>=13.0.0; python_version >= '3.11'",
     # The action executor is built on the workspace's shared executor core; 0.0.3 adds the hooks it uses
     # (attempt, failure_record, numbered record keys, collect_action_results).
     "je_action_core>=0.0.3",
@@ -60,7 +62,7 @@ classifiers = [
 # only when one of them runs.
 [project.optional-dependencies]
 # 0.0.225 is the first release with AC_write_secret, which WR_ac_basic_auth refuses to run without.
-autocontrol = ["je_auto_control>=0.0.225"]
+autocontrol = ["je_auto_control>=1.1.0"]
 
 # Console scripts: the same entry point as ``python -m je_web_runner``.
 [project.scripts]

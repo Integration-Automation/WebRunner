@@ -21,7 +21,8 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "webdriver-manager>=4.0.0",
     "defusedxml>=0.7.1",
-    "Pillow>=12.3.0",
+    "Pillow>=12.3.0; python_version < '3.11'",
+    "Pillow>=13.0.0; python_version >= '3.11'",
     "je_action_core>=0.0.3",
 ]
 classifiers = [
@@ -37,7 +38,7 @@ classifiers = [
 # only when one of them runs.
 [project.optional-dependencies]
 # 0.0.225 is the first release with AC_write_secret, which WR_ac_basic_auth refuses to run without.
-autocontrol = ["je_auto_control>=0.0.225"]
+autocontrol = ["je_auto_control>=1.1.0"]
 
 # Console scripts: the same entry point as ``python -m je_web_runner``.
 [project.scripts]
