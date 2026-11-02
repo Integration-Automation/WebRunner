@@ -22,7 +22,7 @@ passes the tests and changes what the package ships.
 Requirements
 ------------
 
-* Python **3.10** or later
+* Python **3.11** or later
 * pip **19.3** or later
 
 Dependencies (installed automatically):

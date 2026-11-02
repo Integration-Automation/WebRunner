@@ -4,7 +4,7 @@
 
 WebRunner (`je_web_runner`) is a cross-platform web automation framework built on Selenium. It supports multi-browser parallel execution, JSON-driven action scripts, report generation, and remote automation via TCP sockets.
 
-- **Language:** Python 3.10+
+- **Language:** Python 3.11+
 - **Dependencies:** selenium, requests, python-dotenv, webdriver-manager
 - **Package:** `je_web_runner` (stable) / `je_web_runner_dev` (dev)
 
