@@ -6,7 +6,7 @@ guide covers the local setup, the checks we expect to pass, and the branch
 
 ## Development setup
 
-WebRunner targets **Python 3.10+**.
+WebRunner targets **Python 3.11+**.
 
 ```bash
 # Runtime dependencies

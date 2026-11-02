@@ -12,7 +12,7 @@ authors = [
     { name = "JE-Chen", email = "jechenmailman@gmail.com" },
 ]
 description = "WEB Automation Framework"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license-files = ["LICENSE"]
 # Kept in step with pyproject.toml; see the rationale for each floor there.
 dependencies = [
@@ -21,12 +21,10 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "webdriver-manager>=4.0.0",
     "defusedxml>=0.7.1",
-    "Pillow>=12.3.0; python_version < '3.11'",
-    "Pillow>=13.0.0; python_version >= '3.11'",
+    "Pillow>=13.0.0",
     "je_action_core>=0.0.3",
 ]
 classifiers = [
-    "Programming Language :: Python :: 3.10",
     "Development Status :: 2 - Pre-Alpha",
     "Environment :: Win32 (MS Windows)",
     "Environment :: MacOS X",
